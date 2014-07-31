@@ -15,7 +15,35 @@ func TestParse(t *testing.T) {
 		{
 			"comment.hcl",
 			map[string]interface{}{
-				"foo": "bar",
+				"foo": []interface{}{"bar"},
+			},
+		},
+		{
+			"structure_basic.hcl",
+			map[string]interface{}{
+				"foo": []interface{}{
+					map[string]interface{}{
+						"value": []interface{}{7},
+					},
+				},
+			},
+		},
+		{
+			"structure.hcl",
+			map[string]interface{}{
+				"foo": []interface{}{
+					map[string]interface{}{
+						"bar": []interface{}{
+							map[string]interface{}{
+								"baz": []interface{}{
+									map[string]interface{}{
+										"key": []interface{}{7},
+									},
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 	}

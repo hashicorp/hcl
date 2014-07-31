@@ -17,6 +17,14 @@ func TestLex(t *testing.T) {
 			[]int{IDENTIFIER, EQUAL, STRING, lexEOF},
 		},
 		{
+			"structure_basic.hcl",
+			[]int{
+				IDENTIFIER, LEFTBRACE,
+				IDENTIFIER, EQUAL, NUMBER,
+				RIGHTBRACE, lexEOF,
+			},
+		},
+		{
 			"structure.hcl",
 			[]int{
 				IDENTIFIER, IDENTIFIER, STRING, LEFTBRACE,

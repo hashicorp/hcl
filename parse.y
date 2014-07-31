@@ -11,7 +11,8 @@ package hcl
 	str string
 }
 
-%type   <obj> object
+%type   <obj> block object
+%type   <str> blockId
 
 %token  <num> NUMBER
 %token  <str> IDENTIFIER EQUAL SEMICOLON STRING
@@ -26,9 +27,41 @@ top:
 	}
 
 object:
-	IDENTIFIER EQUAL STRING
+	object SEMICOLON
 	{
-		$$ = map[string]interface{}{$1: $3}
+		$$ = $1
+	}
+|	IDENTIFIER EQUAL NUMBER
+	{
+		$$ = map[string]interface{}{$1: []interface{}{$3}}
+	}
+|	IDENTIFIER EQUAL STRING
+	{
+		$$ = map[string]interface{}{$1: []interface{}{$3}}
+	}
+|	block
+	{
+		$$ = $1
+	}
+
+block:
+	blockId LEFTBRACE object RIGHTBRACE
+	{
+		$$ = map[string]interface{}{$1: []interface{}{$3}}
+	}
+|	blockId block
+	{
+		$$ = map[string]interface{}{$1: []interface{}{$2}}
+	}
+
+blockId:
+	IDENTIFIER
+	{
+		$$ = $1
+	}
+|	STRING
+	{
+		$$ = $1
 	}
 
 %%
