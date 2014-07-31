@@ -2,33 +2,32 @@ package hcl
 
 import (
 	"sync"
+
+	"github.com/hashicorp/terraform/helper/multierror"
 )
 
-// exprErrors are the errors built up from parsing. These should not
+// hclErrors are the errors built up from parsing. These should not
 // be accessed directly.
-var exprErrors []error
-var exprLock sync.Mutex
-var exprResult []map[string]interface{}
+var hclErrors []error
+var hclLock sync.Mutex
+var hclResult map[string]interface{}
 
-/*
-// ExprParse parses the given expression and returns an executable
-// Interpolation.
-func ExprParse(v string) (Interpolation, error) {
-	exprLock.Lock()
-	defer exprLock.Unlock()
-	exprErrors = nil
-	exprResult = nil
+// Parse parses the given string and returns the result.
+func Parse(v string) (map[string]interface{}, error) {
+	hclLock.Lock()
+	defer hclLock.Unlock()
+	hclErrors = nil
+	hclResult = nil
 
 	// Parse
-	exprParse(&exprLex{input: v})
+	hclParse(&hclLex{Input: v})
 
 	// Build up the errors
 	var err error
-	if len(exprErrors) > 0 {
-		err = &multierror.Error{Errors: exprErrors}
-		exprResult = nil
+	if len(hclErrors) > 0 {
+		err = &multierror.Error{Errors: hclErrors}
+		hclResult = nil
 	}
 
-	return exprResult, err
+	return hclResult, err
 }
-*/

@@ -22,7 +22,7 @@ package hcl
 top:
 	object
 	{
-		exprResult = []map[string]interface{}{$1}
+		hclResult = $1
 	}
 
 object:
