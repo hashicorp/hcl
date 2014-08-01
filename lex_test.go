@@ -25,6 +25,20 @@ func TestLex(t *testing.T) {
 			},
 		},
 		{
+			"assign_colon.hcl",
+			[]int{
+				IDENTIFIER, EQUAL, LEFTBRACKET, LEFTBRACE,
+				STRING, COLON, LEFTBRACE,
+				STRING, COLON, LEFTBRACE, RIGHTBRACE, COMMA,
+				STRING, COLON, LEFTBRACKET,
+				NUMBER, COMMA, NUMBER, COMMA, STRING,
+				RIGHTBRACKET, COMMA,
+				RIGHTBRACE,
+				RIGHTBRACE, RIGHTBRACKET,
+				lexEOF,
+			},
+		},
+		{
 			"list.hcl",
 			[]int{
 				IDENTIFIER, EQUAL, LEFTBRACKET,

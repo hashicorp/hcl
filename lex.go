@@ -3,7 +3,6 @@ package hcl
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"strconv"
 	"unicode"
 	"unicode/utf8"
@@ -56,6 +55,8 @@ func (x *hclLex) Lex(yylval *hclSymType) int {
 		}
 
 		switch c {
+		case ':':
+			return COLON
 		case ',':
 			return COMMA
 		case '=':
@@ -143,20 +144,12 @@ func (x *hclLex) lexId(yylval *hclSymType) int {
 			break
 		}
 
-		// If this isn't a character we want in an ID, return out.
-		// One day we should make this a regexp.
-		if c != '_' &&
-			c != '-' &&
-			c != '.' &&
-			c != '*' &&
-			!unicode.IsLetter(c) &&
-			!unicode.IsNumber(c) {
+		if unicode.IsSpace(c) {
 			x.backup()
 			break
 		}
 
 		if _, err := b.WriteRune(c); err != nil {
-			log.Printf("ERR: %s", err)
 			return lexEOF
 		}
 	}
@@ -211,7 +204,6 @@ func (x *hclLex) lexString(yylval *hclSymType) int {
 		}
 
 		if _, err := b.WriteRune(c); err != nil {
-			log.Printf("ERR: %s", err)
 			return lexEOF
 		}
 	}
@@ -259,7 +251,6 @@ func (x *hclLex) backup() {
 // createErr records the given error
 func (x *hclLex) createErr(msg string) {
 	x.err = fmt.Errorf("Line %d, column %d: %s", x.line, x.col, msg)
-	log.Printf("parse error: %s", x.err)
 }
 
 // The parser calls this method on a parse error.

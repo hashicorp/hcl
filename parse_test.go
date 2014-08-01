@@ -12,6 +12,10 @@ func TestParse(t *testing.T) {
 		Err  bool
 	}{
 		{
+			"assign_colon.hcl",
+			true,
+		},
+		{
 			"comment.hcl",
 			false,
 		},
@@ -32,12 +36,12 @@ func TestParse(t *testing.T) {
 			false,
 		},
 		{
-			"assign_deep.hcl",
+			"complex.hcl",
 			false,
 		},
 		{
-			"complex.hcl",
-			false,
+			"assign_deep.hcl",
+			true,
 		},
 	}
 
