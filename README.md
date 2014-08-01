@@ -34,26 +34,14 @@ of the syntax and grammar are listed here.
   * Boolean values: `true`, `false`, `on`, `off`, `yes`, `no`.
 
   * Arrays can be made by wrapping it in `[]`. Example:
-    `["foo", "bar", 42]`.
+    `["foo", "bar", 42]`. Arrays can contain primitives
+    and other arrays, but cannot contain objects. Objects must
+    use the block syntax shown below.
 
-  * Objects (also known as maps) can be made with '{}'. Example:
-    '{ foo = "bar" }'
-
-In addition to these basics, the syntax supports hierarchies of
-sections. These sections are actually syntactic sugar over lists of
-maps, but visually end up looking much better from a configuration
-standpoint. For example, these are nearly equivalent:
+Objects and nested objects are created using the structure shown below:
 
 ```
 variable "ami" {
     description = "the AMI to use"
 }
-
-# is equal to:
-
-variable = [{
-    "ami": {
-        "description": "the AMI to use",
-    }
-}]
 ```
