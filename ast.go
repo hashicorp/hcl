@@ -11,10 +11,20 @@ const (
 type Node interface{}
 
 type ObjectNode struct {
-	Elem map[string][]Node
+	Key  string
+	Elem []Node
 }
 
-type ValueNode struct {
+type AssignmentNode struct {
+	Key   string
+	Value Node
+}
+
+type ListNode struct {
+	Elem []Node
+}
+
+type LiteralNode struct {
 	Type  ValueType
 	Value interface{}
 }

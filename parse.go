@@ -20,7 +20,13 @@ func Parse(v string) (*ObjectNode, error) {
 	hclResult = nil
 
 	// Parse
-	hclParse(&hclLex{Input: v})
+	lex := &hclLex{Input: v}
+	hclParse(lex)
+
+	// If we have an error in the lexer itself, return it
+	if lex.err != nil {
+		return nil, lex.err
+	}
 
 	// Build up the errors
 	var err error

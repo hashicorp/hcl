@@ -13,9 +13,9 @@ package hcl
 	str string
 }
 
-%type   <list> list
-%type   <listitem> listitem
-%type   <obj> block object objectlist
+%type   <list> list objectlist
+%type   <listitem> listitem objectitem
+%type   <obj> block object
 %type   <str> blockId
 
 %token  <num> NUMBER
@@ -28,60 +28,64 @@ top:
 	objectlist
 	{
 		hclResult = &ObjectNode{
-			Elem: $1.Elem,
+			Key:  "",
+			Elem: $1,
 		}
 	}
 
 objectlist:
-	object
+	objectitem
 	{
-		$$ = $1
+		$$ = []Node{$1}
 	}
-|	object objectlist
+|	objectitem objectlist
 	{
-		$$ = $1
-		for k, v := range $2.Elem {
-			if _, ok := $$.Elem[k]; ok {
-				$$.Elem[k] = append($$.Elem[k], v...)
-			} else {
-				$$.Elem[k] = v
-			}
-		}
+		$$ = append($2, $1)
 	}
 
 object:
+	LEFTBRACE objectlist RIGHTBRACE
+	{
+		$$ = ObjectNode{Elem: $2}
+	}
+|	LEFTBRACE RIGHTBRACE
+	{
+		$$ = ObjectNode{}
+	}
+
+objectitem:
 	IDENTIFIER EQUAL NUMBER
 	{
-		$$ = ObjectNode{
-			Elem: map[string][]Node{
-				$1: []Node{
-					ValueNode{
-						Type:  ValueTypeInt,
-						Value: $3,
-					},
-				},
+		$$ = AssignmentNode{
+			Key:   $1,
+			Value: LiteralNode{
+				Type:  ValueTypeInt,
+				Value: $3,
 			},
 		}
 	}
 |	IDENTIFIER EQUAL STRING
 	{
-		$$ = ObjectNode{
-			Elem: map[string][]Node{
-				$1: []Node{
-					ValueNode{
-						Type:  ValueTypeString,
-						Value: $3,
-					},
-				},
+		$$ = AssignmentNode{
+			Key:   $1,
+			Value: LiteralNode{
+				Type:  ValueTypeString,
+				Value: $3,
 			},
+		}
+	}
+|	IDENTIFIER EQUAL object
+	{
+		$$ = AssignmentNode{
+			Key:   $1,
+			Value: $3,
 		}
 	}
 |	IDENTIFIER EQUAL LEFTBRACKET list RIGHTBRACKET
 	{
-		$$ = ObjectNode{
-			Elem: map[string][]Node{
-				$1: $4,
-			},
+		$$ = AssignmentNode{
+			Key:   $1,
+			Value: ListNode{Elem: $4},
 		}
 	}
 |	block
@@ -90,20 +94,16 @@ object:
 	}
 
 block:
-	blockId LEFTBRACE objectlist RIGHTBRACE
+	blockId object
 	{
-		$$ = ObjectNode{
-			Elem: map[string][]Node{
-				$1: []Node{$3},
-			},
-		}
+		$$ = $2
+		$$.Key = $1
 	}
 |	blockId block
 	{
 		$$ = ObjectNode{
-			Elem: map[string][]Node{
-				$1: []Node{$2},
-			},
+			Key:  $1,
+			Elem: []Node{$2},
 		}
 	}
 
