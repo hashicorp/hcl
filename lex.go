@@ -31,8 +31,21 @@ func (x *hclLex) Lex(yylval *hclSymType) int {
 			return lexEOF
 		}
 
-		// Ignore all whitespace
+		// Ignore all whitespace except a newline which we handle
+		// specially later.
 		if unicode.IsSpace(c) {
+			continue
+		}
+
+		// Consume all comments
+		switch c {
+		case '#':
+			fallthrough
+		case '/':
+			// Starting comment
+			if !x.consumeComment(c) {
+				return lexEOF
+			}
 			continue
 		}
 
@@ -43,21 +56,18 @@ func (x *hclLex) Lex(yylval *hclSymType) int {
 		}
 
 		switch c {
+		case ',':
+			return COMMA
 		case '=':
 			return EQUAL
+		case '[':
+			return LEFTBRACKET
+		case ']':
+			return RIGHTBRACKET
 		case '{':
 			return LEFTBRACE
 		case '}':
 			return RIGHTBRACE
-		case ';':
-			return SEMICOLON
-		case '#':
-			fallthrough
-		case '/':
-			// Starting comment
-			if !x.consumeComment(c) {
-				return lexEOF
-			}
 		case '"':
 			return x.lexString(yylval)
 		default:
@@ -220,6 +230,16 @@ func (x *hclLex) next() rune {
 	r, w := utf8.DecodeRuneInString(x.Input[x.pos:])
 	x.width = w
 	x.pos += x.width
+
+	x.col += 1
+	if x.line == 0 {
+		x.line = 1
+	}
+	if r == '\n' {
+		x.line += 1
+		x.col = 0
+	}
+
 	return r
 }
 
@@ -232,15 +252,17 @@ func (x *hclLex) peek() rune {
 
 // backup steps back one rune. Can only be called once per next.
 func (x *hclLex) backup() {
+	x.col -= 1
 	x.pos -= x.width
 }
 
 // createErr records the given error
 func (x *hclLex) createErr(msg string) {
-	x.err = fmt.Errorf("Line %d, column %d: %s", x.col, x.line, msg)
+	x.err = fmt.Errorf("Line %d, column %d: %s", x.line, x.col, msg)
+	log.Printf("parse error: %s", x.err)
 }
 
 // The parser calls this method on a parse error.
 func (x *hclLex) Error(s string) {
-	log.Printf("parse error: %s", s)
+	x.createErr(s)
 }

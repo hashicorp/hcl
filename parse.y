@@ -6,38 +6,83 @@ package hcl
 %}
 
 %union {
+	list []Node
+	listitem Node
 	num int
-	obj map[string]interface{}
+	obj ObjectNode
 	str string
 }
 
-%type   <obj> block object
+%type   <list> list
+%type   <listitem> listitem
+%type   <obj> block object objectlist
 %type   <str> blockId
 
 %token  <num> NUMBER
-%token  <str> IDENTIFIER EQUAL SEMICOLON STRING
-%token  <str> LEFTBRACE RIGHTBRACE
+%token  <str> COMMA IDENTIFIER EQUAL NEWLINE STRING
+%token  <str> LEFTBRACE RIGHTBRACE LEFTBRACKET RIGHTBRACKET
 
 %%
 
 top:
-	object
+	objectlist
 	{
-		hclResult = $1
+		hclResult = &ObjectNode{
+			Elem: $1.Elem,
+		}
 	}
 
-object:
-	object SEMICOLON
+objectlist:
+	object
 	{
 		$$ = $1
 	}
-|	IDENTIFIER EQUAL NUMBER
+|	object objectlist
 	{
-		$$ = map[string]interface{}{$1: []interface{}{$3}}
+		$$ = $1
+		for k, v := range $2.Elem {
+			if _, ok := $$.Elem[k]; ok {
+				$$.Elem[k] = append($$.Elem[k], v...)
+			} else {
+				$$.Elem[k] = v
+			}
+		}
+	}
+
+object:
+	IDENTIFIER EQUAL NUMBER
+	{
+		$$ = ObjectNode{
+			Elem: map[string][]Node{
+				$1: []Node{
+					ValueNode{
+						Type:  ValueTypeInt,
+						Value: $3,
+					},
+				},
+			},
+		}
 	}
 |	IDENTIFIER EQUAL STRING
 	{
-		$$ = map[string]interface{}{$1: []interface{}{$3}}
+		$$ = ObjectNode{
+			Elem: map[string][]Node{
+				$1: []Node{
+					ValueNode{
+						Type:  ValueTypeString,
+						Value: $3,
+					},
+				},
+			},
+		}
+	}
+|	IDENTIFIER EQUAL LEFTBRACKET list RIGHTBRACKET
+	{
+		$$ = ObjectNode{
+			Elem: map[string][]Node{
+				$1: $4,
+			},
+		}
 	}
 |	block
 	{
@@ -45,17 +90,49 @@ object:
 	}
 
 block:
-	blockId LEFTBRACE object RIGHTBRACE
+	blockId LEFTBRACE objectlist RIGHTBRACE
 	{
-		$$ = map[string]interface{}{$1: []interface{}{$3}}
+		$$ = ObjectNode{
+			Elem: map[string][]Node{
+				$1: []Node{$3},
+			},
+		}
 	}
 |	blockId block
 	{
-		$$ = map[string]interface{}{$1: []interface{}{$2}}
+		$$ = ObjectNode{
+			Elem: map[string][]Node{
+				$1: []Node{$2},
+			},
+		}
 	}
 
 blockId:
 	IDENTIFIER
+	{
+		$$ = $1
+	}
+|	STRING
+	{
+		$$ = $1
+	}
+
+list:
+	listitem
+	{
+		$$ = []Node{$1}
+	}
+|	list COMMA listitem
+	{
+		$$ = append($1, $3)
+	}
+
+listitem:
+	object
+	{
+		$$ = $1
+	}
+|	NUMBER
 	{
 		$$ = $1
 	}

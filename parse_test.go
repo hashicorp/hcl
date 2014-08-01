@@ -10,34 +10,51 @@ import (
 func TestParse(t *testing.T) {
 	cases := []struct {
 		Input  string
-		Output map[string]interface{}
+		Output *ObjectNode
 	}{
 		{
 			"comment.hcl",
-			map[string]interface{}{
-				"foo": []interface{}{"bar"},
-			},
-		},
-		{
-			"structure_basic.hcl",
-			map[string]interface{}{
-				"foo": []interface{}{
-					map[string]interface{}{
-						"value": []interface{}{7},
+			&ObjectNode{
+				Elem: map[string][]Node{
+					"foo": []Node{
+						ValueNode{
+							Type:  ValueTypeString,
+							Value: "bar",
+						},
 					},
 				},
 			},
 		},
 		{
-			"structure.hcl",
-			map[string]interface{}{
-				"foo": []interface{}{
-					map[string]interface{}{
-						"bar": []interface{}{
-							map[string]interface{}{
-								"baz": []interface{}{
-									map[string]interface{}{
-										"key": []interface{}{7},
+			"multiple.hcl",
+			&ObjectNode{
+				Elem: map[string][]Node{
+					"foo": []Node{
+						ValueNode{
+							Type:  ValueTypeString,
+							Value: "bar",
+						},
+					},
+					"key": []Node{
+						ValueNode{
+							Type:  ValueTypeInt,
+							Value: 7,
+						},
+					},
+				},
+			},
+		},
+		{
+			"structure_basic.hcl",
+			&ObjectNode{
+				Elem: map[string][]Node{
+					"foo": []Node{
+						ObjectNode{
+							Elem: map[string][]Node{
+								"value": []Node{
+									ValueNode{
+										Type:  ValueTypeInt,
+										Value: 7,
 									},
 								},
 							},
@@ -45,6 +62,48 @@ func TestParse(t *testing.T) {
 					},
 				},
 			},
+		},
+		{
+			"structure.hcl",
+			&ObjectNode{
+				Elem: map[string][]Node{
+					"foo": []Node{
+						ObjectNode{
+							Elem: map[string][]Node{
+								"bar": []Node{
+									ObjectNode{
+										Elem: map[string][]Node{
+											"baz": []Node{
+												ObjectNode{
+													Elem: map[string][]Node{
+														"key": []Node{
+															ValueNode{
+																Type:  ValueTypeInt,
+																Value: 7,
+															},
+														},
+
+														"foo": []Node{
+															ValueNode{
+																Type:  ValueTypeString,
+																Value: "bar",
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			"complex.hcl",
+			nil,
 		},
 	}
 

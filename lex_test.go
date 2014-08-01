@@ -17,6 +17,22 @@ func TestLex(t *testing.T) {
 			[]int{IDENTIFIER, EQUAL, STRING, lexEOF},
 		},
 		{
+			"multiple.hcl",
+			[]int{
+				IDENTIFIER, EQUAL, STRING,
+				IDENTIFIER, EQUAL, NUMBER,
+				lexEOF,
+			},
+		},
+		{
+			"list.hcl",
+			[]int{
+				IDENTIFIER, EQUAL, LEFTBRACKET,
+				NUMBER, COMMA, NUMBER, COMMA, STRING,
+				RIGHTBRACKET, lexEOF,
+			},
+		},
+		{
 			"structure_basic.hcl",
 			[]int{
 				IDENTIFIER, LEFTBRACE,
@@ -28,7 +44,8 @@ func TestLex(t *testing.T) {
 			"structure.hcl",
 			[]int{
 				IDENTIFIER, IDENTIFIER, STRING, LEFTBRACE,
-				IDENTIFIER, EQUAL, NUMBER, SEMICOLON,
+				IDENTIFIER, EQUAL, NUMBER,
+				IDENTIFIER, EQUAL, STRING,
 				RIGHTBRACE, lexEOF,
 			},
 		},
@@ -56,7 +73,9 @@ func TestLex(t *testing.T) {
 		}
 
 		if !reflect.DeepEqual(actual, tc.Output) {
-			t.Fatalf("Input: %s\n\nBad: %#v", tc.Input, actual)
+			t.Fatalf(
+				"Input: %s\n\nBad: %#v\n\nExpected: %#v",
+				tc.Input, actual, tc.Output)
 		}
 	}
 }

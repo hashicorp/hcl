@@ -10,10 +10,10 @@ import (
 // be accessed directly.
 var hclErrors []error
 var hclLock sync.Mutex
-var hclResult map[string]interface{}
+var hclResult *ObjectNode
 
 // Parse parses the given string and returns the result.
-func Parse(v string) (map[string]interface{}, error) {
+func Parse(v string) (*ObjectNode, error) {
 	hclLock.Lock()
 	defer hclLock.Unlock()
 	hclErrors = nil
