@@ -118,8 +118,10 @@ func TestParse(t *testing.T) {
 			t.Fatalf("err: %s", err)
 		}
 
-		if !reflect.DeepEqual(actual, tc.Output) {
-			t.Fatalf("Input: %s\n\nBad: %#v", tc.Input, actual)
+		if tc.Output != nil {
+			if !reflect.DeepEqual(actual, tc.Output) {
+				t.Fatalf("Input: %s\n\nBad: %#v", tc.Input, actual)
+			}
 		}
 	}
 }
