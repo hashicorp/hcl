@@ -134,11 +134,17 @@ listitem:
 	}
 |	NUMBER
 	{
-		$$ = $1
+		$$ = LiteralNode{
+			Type:  ValueTypeInt,
+			Value: $1,
+		}
 	}
 |	STRING
 	{
-		$$ = $1
+		$$ = LiteralNode{
+			Type:  ValueTypeString,
+			Value: $1,
+		}
 	}
 
 %%

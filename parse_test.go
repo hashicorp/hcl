@@ -9,7 +9,7 @@ import (
 func TestParse(t *testing.T) {
 	cases := []struct {
 		Name string
-		Err bool
+		Err  bool
 	}{
 		{
 			"comment.hcl",
