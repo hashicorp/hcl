@@ -55,8 +55,6 @@ func (x *hclLex) Lex(yylval *hclSymType) int {
 		}
 
 		switch c {
-		case ':':
-			return COLON
 		case ',':
 			return COMMA
 		case '=':

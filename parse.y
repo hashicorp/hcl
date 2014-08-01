@@ -19,7 +19,7 @@ package hcl
 %type   <str> blockId
 
 %token  <num> NUMBER
-%token  <str> COLON COMMA IDENTIFIER EQUAL NEWLINE STRING
+%token  <str> COMMA IDENTIFIER EQUAL NEWLINE STRING
 %token  <str> LEFTBRACE RIGHTBRACE LEFTBRACKET RIGHTBRACKET
 
 %%
