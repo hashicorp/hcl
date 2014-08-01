@@ -3,11 +3,58 @@ package hcl
 import (
 	"io/ioutil"
 	"path/filepath"
-	"reflect"
 	"testing"
 )
 
 func TestParse(t *testing.T) {
+	cases := []struct {
+		Name string
+		Err bool
+	}{
+		{
+			"comment.hcl",
+			false,
+		},
+		{
+			"multiple.hcl",
+			false,
+		},
+		{
+			"structure.hcl",
+			false,
+		},
+		{
+			"structure_basic.hcl",
+			false,
+		},
+		{
+			"structure_empty.hcl",
+			false,
+		},
+		{
+			"assign_deep.hcl",
+			false,
+		},
+		{
+			"complex.hcl",
+			false,
+		},
+	}
+
+	for _, tc := range cases {
+		d, err := ioutil.ReadFile(filepath.Join(fixtureDir, tc.Name))
+		if err != nil {
+			t.Fatalf("err: %s", err)
+		}
+
+		_, err = Parse(string(d))
+		if (err != nil) != tc.Err {
+			t.Fatalf("Input: %s\n\nError: %s", tc.Name, err)
+		}
+	}
+}
+
+/*
 	cases := []struct {
 		Input  string
 		Output *ObjectNode
@@ -105,7 +152,6 @@ func TestParse(t *testing.T) {
 					},
 				},
 			},
-		*/
 		{
 			"complex.hcl",
 			nil,
@@ -130,3 +176,4 @@ func TestParse(t *testing.T) {
 		}
 	}
 }
+*/
