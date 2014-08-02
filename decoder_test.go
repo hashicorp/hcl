@@ -20,6 +20,13 @@ func TestDecode(t *testing.T) {
 				"foo": "bar",
 			},
 		},
+		{
+			"structure.hcl",
+			false,
+			map[string]interface{}{
+				"foo": "bar",
+			},
+		},
 	}
 
 	for _, tc := range cases {

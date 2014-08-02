@@ -21,9 +21,9 @@ import (
 
 %type   <list> list
 %type   <klist> objectlist
-%type   <kitem> objectitem
+%type   <kitem> objectitem block
 %type   <listitem> listitem
-%type   <obj> block object
+%type   <obj> object
 %type   <str> blockId
 
 %token  <num> NUMBER
@@ -104,14 +104,25 @@ objectitem:
 block:
 	blockId object
 	{
-		$$ = $2
-		$$.K = $1
+		$$ = ast.AssignmentNode{
+			K:     $1,
+			Value: ast.ListNode{
+				Elem: []ast.Node{$2},
+			},
+		}
 	}
 |	blockId block
 	{
-		$$ = ast.ObjectNode{
-			K:    $1,
+		obj := ast.ObjectNode{
+			K:    $2.Key(),
 			Elem: []ast.KeyedNode{$2},
+		}
+
+		$$ = ast.AssignmentNode{
+			K:     $1,
+			Value: ast.ListNode{
+				Elem: []ast.Node{obj},
+			},
 		}
 	}
 

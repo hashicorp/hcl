@@ -21,16 +21,20 @@ func Decode(out interface{}, in string) error {
 // DecodeAST is a lower-level version of Decode. It decodes a
 // raw AST into the given output.
 func DecodeAST(out interface{}, obj *ast.ObjectNode) error {
-	return decode("", *obj, reflect.ValueOf(out).Elem())
+	return decode("root", *obj, reflect.ValueOf(out).Elem())
 }
 
 func decode(name string, n ast.Node, result reflect.Value) error {
 	switch result.Kind() {
+	case reflect.Int:
+		return decodeInt(name, n, result)
 	case reflect.Interface:
 		// When we see an interface, we make our own thing
 		return decodeInterface(name, n, result)
 	case reflect.Map:
 		return decodeMap(name, n, result)
+	case reflect.Slice:
+		return decodeSlice(name, n, result)
 	case reflect.String:
 		return decodeString(name, n, result)
 	default:
@@ -40,15 +44,66 @@ func decode(name string, n ast.Node, result reflect.Value) error {
 	return nil
 }
 
+func decodeInt(name string, raw ast.Node, result reflect.Value) error {
+	n, ok := raw.(ast.LiteralNode)
+	if !ok {
+		return fmt.Errorf("%s: not a literal type", name)
+	}
+
+	switch n.Type {
+	case ast.ValueTypeInt:
+		result.SetInt(int64(n.Value.(int)))
+	default:
+		return fmt.Errorf("%s: unknown type %s", name, n.Type)
+	}
+
+	return nil
+}
+
 func decodeInterface(name string, raw ast.Node, result reflect.Value) error {
 	var set reflect.Value
+	redecode := true
 
 	switch n := raw.(type) {
 	case ast.ObjectNode:
+		redecode = false
 		result := make(map[string]interface{})
+
+		for _, elem := range n.Elem {
+			n := elem.(ast.AssignmentNode)
+
+			raw := new(interface{})
+			err := decode(
+				name, n.Value, reflect.Indirect(reflect.ValueOf(raw)))
+			if err != nil {
+				return err
+			}
+
+			result[n.Key()] = *raw
+		}
+
+		set = reflect.ValueOf(result)
+	case ast.ListNode:
+		redecode = false
+		result := make([]interface{}, 0, len(n.Elem))
+
+		for _, elem := range n.Elem {
+			raw := new(interface{})
+			err := decode(
+				name, elem, reflect.Indirect(reflect.ValueOf(raw)))
+			if err != nil {
+				return err
+			}
+
+			result = append(result, *raw)
+		}
+
 		set = reflect.ValueOf(result)
 	case ast.LiteralNode:
 		switch n.Type {
+		case ast.ValueTypeInt:
+			var result int
+			set = reflect.Indirect(reflect.New(reflect.TypeOf(result)))
 		case ast.ValueTypeString:
 			set = reflect.Indirect(reflect.New(reflect.TypeOf("")))
 		default:
@@ -62,10 +117,12 @@ func decodeInterface(name string, raw ast.Node, result reflect.Value) error {
 			name, raw)
 	}
 
-	// Revisit the node so that we can use the newly instantiated
-	// thing and populate it.
-	if err := decode(name, raw, set); err != nil {
-		return err
+	if redecode {
+		// Revisit the node so that we can use the newly instantiated
+		// thing and populate it.
+		if err := decode(name, raw, set); err != nil {
+			return err
+		}
 	}
 
 	// Set the result to what its supposed to be, then reset
@@ -100,7 +157,7 @@ func decodeMap(name string, raw ast.Node, result reflect.Value) error {
 		n := elem.(ast.AssignmentNode)
 
 		// Make the field name
-		fieldName := fmt.Sprintf("%s[%s]", name, n.Key())
+		fieldName := fmt.Sprintf("%s.%s", name, n.Key())
 
 		// Get the key/value as reflection values
 		key := reflect.ValueOf(n.Key())
@@ -126,6 +183,19 @@ func decodeMap(name string, raw ast.Node, result reflect.Value) error {
 	return nil
 }
 
+func decodeSlice(name string, raw ast.Node, result reflect.Value) error {
+	// Create the slice
+	resultType := result.Type()
+	resultElemType := resultType.Elem()
+	resultSliceType := reflect.SliceOf(resultElemType)
+	resultSlice := reflect.MakeSlice(
+		resultSliceType, 0, 0)
+
+	result.Set(resultSlice)
+
+	return nil
+}
+
 func decodeString(name string, raw ast.Node, result reflect.Value) error {
 	n, ok := raw.(ast.LiteralNode)
 	if !ok {
@@ -134,7 +204,6 @@ func decodeString(name string, raw ast.Node, result reflect.Value) error {
 
 	switch n.Type {
 	case ast.ValueTypeString:
-		println(n.Value.(string))
 		result.SetString(n.Value.(string))
 	default:
 		return fmt.Errorf("%s: unknown type %s", name, n.Type)
