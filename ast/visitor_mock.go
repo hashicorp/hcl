@@ -1,4 +1,4 @@
-package hcl
+package ast
 
 // MockVisitor is a visitor implementation that can be used for tests
 // and simply records the nodes that it has visited.

@@ -3,14 +3,18 @@
 %{
 package hcl
 
+import (
+	"github.com/hashicorp/hcl/ast"
+)
+
 %}
 
 %union {
-	list []Node
-	listitem Node
-	num int
-	obj ObjectNode
-	str string
+	list     []ast.Node
+	listitem ast.Node
+	num      int
+	obj      ast.ObjectNode
+	str      string
 }
 
 %type   <list> list objectlist
@@ -27,7 +31,7 @@ package hcl
 top:
 	objectlist
 	{
-		hclResult = &ObjectNode{
+		hclResult = &ast.ObjectNode{
 			Key:  "",
 			Elem: $1,
 		}
@@ -36,7 +40,7 @@ top:
 objectlist:
 	objectitem
 	{
-		$$ = []Node{$1}
+		$$ = []ast.Node{$1}
 	}
 |	objectitem objectlist
 	{
@@ -46,46 +50,46 @@ objectlist:
 object:
 	LEFTBRACE objectlist RIGHTBRACE
 	{
-		$$ = ObjectNode{Elem: $2}
+		$$ = ast.ObjectNode{Elem: $2}
 	}
 |	LEFTBRACE RIGHTBRACE
 	{
-		$$ = ObjectNode{}
+		$$ = ast.ObjectNode{}
 	}
 
 objectitem:
 	IDENTIFIER EQUAL NUMBER
 	{
-		$$ = AssignmentNode{
+		$$ = ast.AssignmentNode{
 			Key:   $1,
-			Value: LiteralNode{
-				Type:  ValueTypeInt,
+			Value: ast.LiteralNode{
+				Type:  ast.ValueTypeInt,
 				Value: $3,
 			},
 		}
 	}
 |	IDENTIFIER EQUAL STRING
 	{
-		$$ = AssignmentNode{
+		$$ = ast.AssignmentNode{
 			Key:   $1,
-			Value: LiteralNode{
-				Type:  ValueTypeString,
+			Value: ast.LiteralNode{
+				Type:  ast.ValueTypeString,
 				Value: $3,
 			},
 		}
 	}
 |	IDENTIFIER EQUAL object
 	{
-		$$ = AssignmentNode{
+		$$ = ast.AssignmentNode{
 			Key:   $1,
 			Value: $3,
 		}
 	}
 |	IDENTIFIER EQUAL LEFTBRACKET list RIGHTBRACKET
 	{
-		$$ = AssignmentNode{
+		$$ = ast.AssignmentNode{
 			Key:   $1,
-			Value: ListNode{Elem: $4},
+			Value: ast.ListNode{Elem: $4},
 		}
 	}
 |	block
@@ -101,9 +105,9 @@ block:
 	}
 |	blockId block
 	{
-		$$ = ObjectNode{
+		$$ = ast.ObjectNode{
 			Key:  $1,
-			Elem: []Node{$2},
+			Elem: []ast.Node{$2},
 		}
 	}
 
@@ -120,7 +124,7 @@ blockId:
 list:
 	listitem
 	{
-		$$ = []Node{$1}
+		$$ = []ast.Node{$1}
 	}
 |	list COMMA listitem
 	{
@@ -130,15 +134,15 @@ list:
 listitem:
 	NUMBER
 	{
-		$$ = LiteralNode{
-			Type:  ValueTypeInt,
+		$$ = ast.LiteralNode{
+			Type:  ast.ValueTypeInt,
 			Value: $1,
 		}
 	}
 |	STRING
 	{
-		$$ = LiteralNode{
-			Type:  ValueTypeString,
+		$$ = ast.LiteralNode{
+			Type:  ast.ValueTypeString,
 			Value: $1,
 		}
 	}

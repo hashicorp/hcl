@@ -1,4 +1,4 @@
-package hcl
+package ast
 
 import (
 	"reflect"

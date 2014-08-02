@@ -1,4 +1,4 @@
-package hcl
+package ast
 
 // ValueType is an enum represnting the type of a value in
 // a LiteralNode.
@@ -8,6 +8,8 @@ const (
 	ValueTypeUnknown ValueType = iota
 	ValueTypeInt
 	ValueTypeString
+	ValueTypeBool
+	ValueTypeNil
 )
 
 // Node is implemented by all AST nodes for HCL.

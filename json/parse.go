@@ -1,4 +1,4 @@
-package hcl
+package json
 
 import (
 	"sync"
@@ -7,22 +7,22 @@ import (
 	"github.com/hashicorp/terraform/helper/multierror"
 )
 
-// hclErrors are the errors built up from parsing. These should not
+// jsonErrors are the errors built up from parsing. These should not
 // be accessed directly.
-var hclErrors []error
-var hclLock sync.Mutex
-var hclResult *ast.ObjectNode
+var jsonErrors []error
+var jsonLock sync.Mutex
+var jsonResult *ast.ObjectNode
 
 // Parse parses the given string and returns the result.
 func Parse(v string) (*ast.ObjectNode, error) {
-	hclLock.Lock()
-	defer hclLock.Unlock()
-	hclErrors = nil
-	hclResult = nil
+	jsonLock.Lock()
+	defer jsonLock.Unlock()
+	jsonErrors = nil
+	jsonResult = nil
 
 	// Parse
-	lex := &hclLex{Input: v}
-	hclParse(lex)
+	lex := &jsonLex{Input: v}
+	jsonParse(lex)
 
 	// If we have an error in the lexer itself, return it
 	if lex.err != nil {
@@ -31,10 +31,10 @@ func Parse(v string) (*ast.ObjectNode, error) {
 
 	// Build up the errors
 	var err error
-	if len(hclErrors) > 0 {
-		err = &multierror.Error{Errors: hclErrors}
-		hclResult = nil
+	if len(jsonErrors) > 0 {
+		err = &multierror.Error{Errors: jsonErrors}
+		jsonResult = nil
 	}
 
-	return hclResult, err
+	return jsonResult, err
 }
