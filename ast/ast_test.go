@@ -7,13 +7,13 @@ import (
 
 func TestAssignmentNode_accept(t *testing.T) {
 	n := AssignmentNode{
-		Key:   "foo",
+		K:     "foo",
 		Value: LiteralNode{Value: "foo"},
 	}
 
 	expected := []Node{
-		n.Value,
 		n,
+		n.Value,
 	}
 
 	v := new(MockVisitor)
@@ -33,9 +33,9 @@ func TestListNode_accept(t *testing.T) {
 	}
 
 	expected := []Node{
+		n,
 		n.Elem[0],
 		n.Elem[1],
-		n,
 	}
 
 	v := new(MockVisitor)
@@ -48,17 +48,19 @@ func TestListNode_accept(t *testing.T) {
 
 func TestObjectNode_accept(t *testing.T) {
 	n := ObjectNode{
-		Key: "foo",
-		Elem: []Node{
-			LiteralNode{Value: "foo"},
-			LiteralNode{Value: "bar"},
+		K: "foo",
+		Elem: []KeyedNode{
+			AssignmentNode{K: "foo", Value: LiteralNode{Value: "foo"}},
+			AssignmentNode{K: "bar", Value: LiteralNode{Value: "bar"}},
 		},
 	}
 
 	expected := []Node{
-		n.Elem[0],
-		n.Elem[1],
 		n,
+		n.Elem[0],
+		n.Elem[0].(AssignmentNode).Value,
+		n.Elem[1],
+		n.Elem[1].(AssignmentNode).Value,
 	}
 
 	v := new(MockVisitor)

@@ -11,14 +11,18 @@ import (
 
 %union {
 	list     []ast.Node
+	klist    []ast.KeyedNode
+	kitem    ast.KeyedNode
 	listitem ast.Node
 	num      int
 	obj      ast.ObjectNode
 	str      string
 }
 
-%type   <list> list objectlist
-%type   <listitem> listitem objectitem
+%type   <list> list
+%type   <klist> objectlist
+%type   <kitem> objectitem
+%type   <listitem> listitem
 %type   <obj> block object
 %type   <str> blockId
 
@@ -32,7 +36,7 @@ top:
 	objectlist
 	{
 		hclResult = &ast.ObjectNode{
-			Key:  "",
+			K:    "",
 			Elem: $1,
 		}
 	}
@@ -40,7 +44,7 @@ top:
 objectlist:
 	objectitem
 	{
-		$$ = []ast.Node{$1}
+		$$ = []ast.KeyedNode{$1}
 	}
 |	objectitem objectlist
 	{
@@ -61,7 +65,7 @@ objectitem:
 	IDENTIFIER EQUAL NUMBER
 	{
 		$$ = ast.AssignmentNode{
-			Key:   $1,
+			K:     $1,
 			Value: ast.LiteralNode{
 				Type:  ast.ValueTypeInt,
 				Value: $3,
@@ -71,7 +75,7 @@ objectitem:
 |	IDENTIFIER EQUAL STRING
 	{
 		$$ = ast.AssignmentNode{
-			Key:   $1,
+			K:     $1,
 			Value: ast.LiteralNode{
 				Type:  ast.ValueTypeString,
 				Value: $3,
@@ -81,14 +85,14 @@ objectitem:
 |	IDENTIFIER EQUAL object
 	{
 		$$ = ast.AssignmentNode{
-			Key:   $1,
+			K:     $1,
 			Value: $3,
 		}
 	}
 |	IDENTIFIER EQUAL LEFTBRACKET list RIGHTBRACKET
 	{
 		$$ = ast.AssignmentNode{
-			Key:   $1,
+			K:     $1,
 			Value: ast.ListNode{Elem: $4},
 		}
 	}
@@ -101,13 +105,13 @@ block:
 	blockId object
 	{
 		$$ = $2
-		$$.Key = $1
+		$$.K = $1
 	}
 |	blockId block
 	{
 		$$ = ast.ObjectNode{
-			Key:  $1,
-			Elem: []ast.Node{$2},
+			K:    $1,
+			Elem: []ast.KeyedNode{$2},
 		}
 	}
 

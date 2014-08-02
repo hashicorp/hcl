@@ -17,6 +17,13 @@ type Node interface {
 	Accept(Visitor)
 }
 
+// KeyedNode is a node that has a key associated with it.
+type KeyedNode interface {
+	Node
+
+	Key() string
+}
+
 // Visitor is the interface that must be implemented by any
 // structures who want to be visited as part of the visitor pattern
 // on the AST.
@@ -29,14 +36,14 @@ type Visitor interface {
 // be validated/removed at a semantic check, rather than at a
 // syntax level.
 type ObjectNode struct {
-	Key  string
-	Elem []Node
+	K    string
+	Elem []KeyedNode
 }
 
 // AssignmentNode represents a direct assignment with an equals
 // sign.
 type AssignmentNode struct {
-	Key   string
+	K     string
 	Value Node
 }
 
@@ -52,24 +59,32 @@ type LiteralNode struct {
 }
 
 func (n ObjectNode) Accept(v Visitor) {
+	v.Visit(n)
+
 	for _, e := range n.Elem {
 		e.Accept(v)
 	}
+}
 
-	v.Visit(n)
+func (n ObjectNode) Key() string {
+	return n.K
 }
 
 func (n AssignmentNode) Accept(v Visitor) {
-	n.Value.Accept(v)
 	v.Visit(n)
+	n.Value.Accept(v)
+}
+
+func (n AssignmentNode) Key() string {
+	return n.K
 }
 
 func (n ListNode) Accept(v Visitor) {
+	v.Visit(n)
+
 	for _, e := range n.Elem {
 		e.Accept(v)
 	}
-
-	v.Visit(n)
 }
 
 func (n LiteralNode) Accept(v Visitor) {

@@ -12,6 +12,8 @@ import (
 type hclSymType struct {
 	yys      int
 	list     []ast.Node
+	klist    []ast.KeyedNode
+	kitem    ast.KeyedNode
 	listitem ast.Node
 	num      int
 	obj      ast.ObjectNode
@@ -47,7 +49,7 @@ const hclEofCode = 1
 const hclErrCode = 2
 const hclMaxDepth = 200
 
-//line parse.y:150
+//line parse.y:154
 
 //line yacctab:1
 var hclExca = []int{
@@ -79,12 +81,12 @@ var hclPact = []int{
 }
 var hclPgo = []int{
 
-	0, 29, 4, 0, 28, 25, 12, 26, 5,
+	0, 29, 4, 28, 0, 25, 12, 26, 5,
 }
 var hclR1 = []int{
 
-	0, 8, 2, 2, 6, 6, 4, 4, 4, 4,
-	4, 5, 5, 7, 7, 1, 1, 3, 3,
+	0, 8, 2, 2, 6, 6, 3, 3, 3, 3,
+	3, 5, 5, 7, 7, 1, 1, 4, 4,
 }
 var hclR2 = []int{
 
@@ -93,9 +95,9 @@ var hclR2 = []int{
 }
 var hclChk = []int{
 
-	-1000, -8, -2, -4, 6, -5, -7, 9, -2, 7,
+	-1000, -8, -2, -3, 6, -5, -7, 9, -2, 7,
 	-6, -5, 10, 6, 4, 9, -6, 12, -2, 11,
-	-1, -3, 4, 9, 11, 13, 5, -3,
+	-1, -4, 4, 9, 11, 13, 5, -4,
 }
 var hclDef = []int{
 
@@ -342,38 +344,38 @@ hcldefault:
 	switch hclnt {
 
 	case 1:
-		//line parse.y:33
+		//line parse.y:37
 		{
 			hclResult = &ast.ObjectNode{
-				Key:  "",
-				Elem: hclS[hclpt-0].list,
+				K:    "",
+				Elem: hclS[hclpt-0].klist,
 			}
 		}
 	case 2:
-		//line parse.y:42
-		{
-			hclVAL.list = []ast.Node{hclS[hclpt-0].listitem}
-		}
-	case 3:
 		//line parse.y:46
 		{
-			hclVAL.list = append(hclS[hclpt-0].list, hclS[hclpt-1].listitem)
+			hclVAL.klist = []ast.KeyedNode{hclS[hclpt-0].kitem}
+		}
+	case 3:
+		//line parse.y:50
+		{
+			hclVAL.klist = append(hclS[hclpt-0].klist, hclS[hclpt-1].kitem)
 		}
 	case 4:
-		//line parse.y:52
+		//line parse.y:56
 		{
-			hclVAL.obj = ast.ObjectNode{Elem: hclS[hclpt-1].list}
+			hclVAL.obj = ast.ObjectNode{Elem: hclS[hclpt-1].klist}
 		}
 	case 5:
-		//line parse.y:56
+		//line parse.y:60
 		{
 			hclVAL.obj = ast.ObjectNode{}
 		}
 	case 6:
-		//line parse.y:62
+		//line parse.y:66
 		{
-			hclVAL.listitem = ast.AssignmentNode{
-				Key: hclS[hclpt-2].str,
+			hclVAL.kitem = ast.AssignmentNode{
+				K: hclS[hclpt-2].str,
 				Value: ast.LiteralNode{
 					Type:  ast.ValueTypeInt,
 					Value: hclS[hclpt-0].num,
@@ -381,10 +383,10 @@ hcldefault:
 			}
 		}
 	case 7:
-		//line parse.y:72
+		//line parse.y:76
 		{
-			hclVAL.listitem = ast.AssignmentNode{
-				Key: hclS[hclpt-2].str,
+			hclVAL.kitem = ast.AssignmentNode{
+				K: hclS[hclpt-2].str,
 				Value: ast.LiteralNode{
 					Type:  ast.ValueTypeString,
 					Value: hclS[hclpt-0].str,
@@ -392,62 +394,62 @@ hcldefault:
 			}
 		}
 	case 8:
-		//line parse.y:82
+		//line parse.y:86
 		{
-			hclVAL.listitem = ast.AssignmentNode{
-				Key:   hclS[hclpt-2].str,
+			hclVAL.kitem = ast.AssignmentNode{
+				K:     hclS[hclpt-2].str,
 				Value: hclS[hclpt-0].obj,
 			}
 		}
 	case 9:
-		//line parse.y:89
+		//line parse.y:93
 		{
-			hclVAL.listitem = ast.AssignmentNode{
-				Key:   hclS[hclpt-4].str,
+			hclVAL.kitem = ast.AssignmentNode{
+				K:     hclS[hclpt-4].str,
 				Value: ast.ListNode{Elem: hclS[hclpt-1].list},
 			}
 		}
 	case 10:
-		//line parse.y:96
+		//line parse.y:100
 		{
-			hclVAL.listitem = hclS[hclpt-0].obj
+			hclVAL.kitem = hclS[hclpt-0].obj
 		}
 	case 11:
-		//line parse.y:102
+		//line parse.y:106
 		{
 			hclVAL.obj = hclS[hclpt-0].obj
-			hclVAL.obj.Key = hclS[hclpt-1].str
+			hclVAL.obj.K = hclS[hclpt-1].str
 		}
 	case 12:
-		//line parse.y:107
+		//line parse.y:111
 		{
 			hclVAL.obj = ast.ObjectNode{
-				Key:  hclS[hclpt-1].str,
-				Elem: []ast.Node{hclS[hclpt-0].obj},
+				K:    hclS[hclpt-1].str,
+				Elem: []ast.KeyedNode{hclS[hclpt-0].obj},
 			}
 		}
 	case 13:
-		//line parse.y:116
-		{
-			hclVAL.str = hclS[hclpt-0].str
-		}
-	case 14:
 		//line parse.y:120
 		{
 			hclVAL.str = hclS[hclpt-0].str
 		}
+	case 14:
+		//line parse.y:124
+		{
+			hclVAL.str = hclS[hclpt-0].str
+		}
 	case 15:
-		//line parse.y:126
+		//line parse.y:130
 		{
 			hclVAL.list = []ast.Node{hclS[hclpt-0].listitem}
 		}
 	case 16:
-		//line parse.y:130
+		//line parse.y:134
 		{
 			hclVAL.list = append(hclS[hclpt-2].list, hclS[hclpt-0].listitem)
 		}
 	case 17:
-		//line parse.y:136
+		//line parse.y:140
 		{
 			hclVAL.listitem = ast.LiteralNode{
 				Type:  ast.ValueTypeInt,
@@ -455,7 +457,7 @@ hcldefault:
 			}
 		}
 	case 18:
-		//line parse.y:143
+		//line parse.y:147
 		{
 			hclVAL.listitem = ast.LiteralNode{
 				Type:  ast.ValueTypeString,

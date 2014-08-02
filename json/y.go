@@ -14,6 +14,7 @@ type jsonSymType struct {
 	array  ast.ListNode
 	assign ast.AssignmentNode
 	item   ast.Node
+	klist  []ast.KeyedNode
 	list   []ast.Node
 	num    int
 	str    string
@@ -57,7 +58,7 @@ const jsonEofCode = 1
 const jsonErrCode = 2
 const jsonMaxDepth = 200
 
-//line parse.y:136
+//line parse.y:138
 
 //line yacctab:1
 var jsonExca = []int{
@@ -89,12 +90,12 @@ var jsonPact = []int{
 }
 var jsonPgo = []int{
 
-	0, 34, 32, 17, 0, 23, 29, 31,
+	0, 34, 32, 17, 23, 0, 29, 31,
 }
 var jsonR1 = []int{
 
-	0, 7, 6, 6, 5, 5, 2, 3, 3, 3,
-	3, 3, 3, 3, 1, 1, 4, 4,
+	0, 7, 6, 6, 4, 4, 2, 3, 3, 3,
+	3, 3, 3, 3, 1, 1, 5, 5,
 }
 var jsonR2 = []int{
 
@@ -103,9 +104,9 @@ var jsonR2 = []int{
 }
 var jsonChk = []int{
 
-	-1000, -7, -6, 11, -5, 12, -2, 10, 12, 6,
-	5, -5, -3, 10, 4, -6, -1, 15, 16, 17,
-	13, 14, -4, -3, 14, 6, -4,
+	-1000, -7, -6, 11, -4, 12, -2, 10, 12, 6,
+	5, -4, -3, 10, 4, -6, -1, 15, 16, 17,
+	13, 14, -5, -3, 14, 6, -5,
 }
 var jsonDef = []int{
 
@@ -352,41 +353,41 @@ jsondefault:
 	switch jsonnt {
 
 	case 1:
-		//line parse.y:37
+		//line parse.y:39
 		{
 			obj := jsonS[jsonpt-0].obj
 			jsonResult = &obj
 		}
 	case 2:
-		//line parse.y:44
+		//line parse.y:46
 		{
-			jsonVAL.obj = ast.ObjectNode{Elem: jsonS[jsonpt-1].list}
+			jsonVAL.obj = ast.ObjectNode{Elem: jsonS[jsonpt-1].klist}
 		}
 	case 3:
-		//line parse.y:48
+		//line parse.y:50
 		{
 			jsonVAL.obj = ast.ObjectNode{}
 		}
 	case 4:
-		//line parse.y:54
+		//line parse.y:56
 		{
-			jsonVAL.list = []ast.Node{jsonS[jsonpt-0].assign}
+			jsonVAL.klist = []ast.KeyedNode{jsonS[jsonpt-0].assign}
 		}
 	case 5:
-		//line parse.y:58
+		//line parse.y:60
 		{
-			jsonVAL.list = append(jsonS[jsonpt-0].list, jsonS[jsonpt-2].assign)
+			jsonVAL.klist = append(jsonS[jsonpt-0].klist, jsonS[jsonpt-2].assign)
 		}
 	case 6:
-		//line parse.y:64
+		//line parse.y:66
 		{
 			jsonVAL.assign = ast.AssignmentNode{
-				Key:   jsonS[jsonpt-2].str,
+				K:     jsonS[jsonpt-2].str,
 				Value: jsonS[jsonpt-0].item,
 			}
 		}
 	case 7:
-		//line parse.y:73
+		//line parse.y:75
 		{
 			jsonVAL.item = ast.LiteralNode{
 				Type:  ast.ValueTypeString,
@@ -394,7 +395,7 @@ jsondefault:
 			}
 		}
 	case 8:
-		//line parse.y:80
+		//line parse.y:82
 		{
 			jsonVAL.item = ast.LiteralNode{
 				Type:  ast.ValueTypeInt,
@@ -402,17 +403,17 @@ jsondefault:
 			}
 		}
 	case 9:
-		//line parse.y:87
+		//line parse.y:89
 		{
 			jsonVAL.item = jsonS[jsonpt-0].obj
 		}
 	case 10:
-		//line parse.y:91
+		//line parse.y:93
 		{
 			jsonVAL.item = jsonS[jsonpt-0].array
 		}
 	case 11:
-		//line parse.y:95
+		//line parse.y:97
 		{
 			jsonVAL.item = ast.LiteralNode{
 				Type:  ast.ValueTypeBool,
@@ -420,7 +421,7 @@ jsondefault:
 			}
 		}
 	case 12:
-		//line parse.y:102
+		//line parse.y:104
 		{
 			jsonVAL.item = ast.LiteralNode{
 				Type:  ast.ValueTypeBool,
@@ -428,7 +429,7 @@ jsondefault:
 			}
 		}
 	case 13:
-		//line parse.y:109
+		//line parse.y:111
 		{
 			jsonVAL.item = ast.LiteralNode{
 				Type:  ast.ValueTypeNil,
@@ -436,22 +437,22 @@ jsondefault:
 			}
 		}
 	case 14:
-		//line parse.y:118
+		//line parse.y:120
 		{
 			jsonVAL.array = ast.ListNode{}
 		}
 	case 15:
-		//line parse.y:122
+		//line parse.y:124
 		{
 			jsonVAL.array = ast.ListNode{Elem: jsonS[jsonpt-1].list}
 		}
 	case 16:
-		//line parse.y:128
+		//line parse.y:130
 		{
 			jsonVAL.list = []ast.Node{jsonS[jsonpt-0].item}
 		}
 	case 17:
-		//line parse.y:132
+		//line parse.y:134
 		{
 			jsonVAL.list = append(jsonS[jsonpt-0].list, jsonS[jsonpt-2].item)
 		}

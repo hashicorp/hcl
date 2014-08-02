@@ -13,6 +13,7 @@ import (
 	array    ast.ListNode
 	assign   ast.AssignmentNode
 	item     ast.Node
+	klist    []ast.KeyedNode
 	list     []ast.Node
 	num      int
 	str      string
@@ -22,7 +23,8 @@ import (
 %type	<array> array
 %type	<assign> pair
 %type	<item> value
-%type	<list> elements members
+%type	<klist> members
+%type	<list> elements
 %type	<obj> object
 
 %token  <num> NUMBER
@@ -52,7 +54,7 @@ object:
 members:
 	pair
 	{
-		$$ = []ast.Node{$1}
+		$$ = []ast.KeyedNode{$1}
 	}
 |	pair COMMA members
 	{
@@ -63,7 +65,7 @@ pair:
 	STRING COLON value
 	{
 		$$ = ast.AssignmentNode{
-			Key:   $1,
+			K:     $1,
 			Value: $3,
 		}
 	}
