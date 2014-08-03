@@ -24,7 +24,16 @@ func TestDecode(t *testing.T) {
 			"structure.hcl",
 			false,
 			map[string]interface{}{
-				"foo": "bar",
+				"foo": []interface{}{
+					map[string]interface{}{
+						"baz": []interface{}{
+							map[string]interface{}{
+								"key": 7,
+								"foo": "bar",
+							},
+						},
+					},
+				},
 			},
 		},
 	}
