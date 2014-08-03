@@ -78,6 +78,10 @@ func TestDecode_equal(t *testing.T) {
 			"structure_multi.hcl",
 			"structure_multi.json",
 		},
+		{
+			"structure2.hcl",
+			"structure2.json",
+		},
 	}
 
 	for _, tc := range cases {
