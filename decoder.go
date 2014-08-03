@@ -21,9 +21,9 @@ func Decode(out interface{}, in string) error {
 
 // DecodeAST is a lower-level version of Decode. It decodes a
 // raw AST into the given output.
-func DecodeAST(out interface{}, obj *ast.ObjectNode) error {
+func DecodeAST(out interface{}, n ast.Node) error {
 	var d decoder
-	return d.decode("root", *obj, reflect.ValueOf(out).Elem())
+	return d.decode("root", n, reflect.ValueOf(out).Elem())
 }
 
 type decoder struct{}
@@ -38,6 +38,12 @@ func (d *decoder) decode(name string, n ast.Node, result reflect.Value) error {
 		if elem.IsValid() {
 			k = elem
 		}
+	}
+
+	// If we have a pointer, unpointer it
+	switch rn := n.(type) {
+	case *ast.ObjectNode:
+		n = *rn
 	}
 
 	switch k.Kind() {
