@@ -21,10 +21,13 @@ func Decode(out interface{}, in string) error {
 // DecodeAST is a lower-level version of Decode. It decodes a
 // raw AST into the given output.
 func DecodeAST(out interface{}, obj *ast.ObjectNode) error {
-	return decode("root", *obj, reflect.ValueOf(out).Elem())
+	var d decoder
+	return d.decode("root", *obj, reflect.ValueOf(out).Elem())
 }
 
-func decode(name string, n ast.Node, result reflect.Value) error {
+type decoder struct{}
+
+func (d *decoder) decode(name string, n ast.Node, result reflect.Value) error {
 	k := result
 
 	// If we have an interface with a valid value, we use that
@@ -38,16 +41,16 @@ func decode(name string, n ast.Node, result reflect.Value) error {
 
 	switch k.Kind() {
 	case reflect.Int:
-		return decodeInt(name, n, result)
+		return d.decodeInt(name, n, result)
 	case reflect.Interface:
 		// When we see an interface, we make our own thing
-		return decodeInterface(name, n, result)
+		return d.decodeInterface(name, n, result)
 	case reflect.Map:
-		return decodeMap(name, n, result)
+		return d.decodeMap(name, n, result)
 	case reflect.Slice:
-		return decodeSlice(name, n, result)
+		return d.decodeSlice(name, n, result)
 	case reflect.String:
-		return decodeString(name, n, result)
+		return d.decodeString(name, n, result)
 	default:
 		return fmt.Errorf("%s: unknown kind: %s", name, result.Kind())
 	}
@@ -55,7 +58,7 @@ func decode(name string, n ast.Node, result reflect.Value) error {
 	return nil
 }
 
-func decodeInt(name string, raw ast.Node, result reflect.Value) error {
+func (d *decoder) decodeInt(name string, raw ast.Node, result reflect.Value) error {
 	n, ok := raw.(ast.LiteralNode)
 	if !ok {
 		return fmt.Errorf("%s: not a literal type", name)
@@ -71,7 +74,7 @@ func decodeInt(name string, raw ast.Node, result reflect.Value) error {
 	return nil
 }
 
-func decodeInterface(name string, raw ast.Node, result reflect.Value) error {
+func (d *decoder) decodeInterface(name string, raw ast.Node, result reflect.Value) error {
 	var set reflect.Value
 	redecode := true
 
@@ -98,7 +101,7 @@ func decodeInterface(name string, raw ast.Node, result reflect.Value) error {
 
 		for _, elem := range n.Elem {
 			raw := new(interface{})
-			err := decode(
+			err := d.decode(
 				name, elem, reflect.Indirect(reflect.ValueOf(raw)))
 			if err != nil {
 				return err
@@ -133,7 +136,7 @@ func decodeInterface(name string, raw ast.Node, result reflect.Value) error {
 	if redecode {
 		// Revisit the node so that we can use the newly instantiated
 		// thing and populate it.
-		if err := decode(name, raw, result); err != nil {
+		if err := d.decode(name, raw, result); err != nil {
 			return err
 		}
 	}
@@ -141,7 +144,7 @@ func decodeInterface(name string, raw ast.Node, result reflect.Value) error {
 	return nil
 }
 
-func decodeMap(name string, raw ast.Node, result reflect.Value) error {
+func (d *decoder) decodeMap(name string, raw ast.Node, result reflect.Value) error {
 	obj, ok := raw.(ast.ObjectNode)
 	if !ok {
 		return fmt.Errorf("%s: not an object type", name)
@@ -195,7 +198,7 @@ func decodeMap(name string, raw ast.Node, result reflect.Value) error {
 		}
 
 		// Decode!
-		if err := decode(fieldName, objValue, val); err != nil {
+		if err := d.decode(fieldName, objValue, val); err != nil {
 			return err
 		}
 
@@ -208,7 +211,7 @@ func decodeMap(name string, raw ast.Node, result reflect.Value) error {
 	return nil
 }
 
-func decodeSlice(name string, raw ast.Node, result reflect.Value) error {
+func (d *decoder) decodeSlice(name string, raw ast.Node, result reflect.Value) error {
 	n, ok := raw.(ast.ListNode)
 	if !ok {
 		return fmt.Errorf("%s: not a list type", name)
@@ -235,7 +238,7 @@ func decodeSlice(name string, raw ast.Node, result reflect.Value) error {
 
 		// Decode
 		val := reflect.Indirect(reflect.New(resultElemType))
-		if err := decode(fieldName, elem, val); err != nil {
+		if err := d.decode(fieldName, elem, val); err != nil {
 			return err
 		}
 
@@ -247,7 +250,7 @@ func decodeSlice(name string, raw ast.Node, result reflect.Value) error {
 	return nil
 }
 
-func decodeString(name string, raw ast.Node, result reflect.Value) error {
+func (d *decoder) decodeString(name string, raw ast.Node, result reflect.Value) error {
 	n, ok := raw.(ast.LiteralNode)
 	if !ok {
 		return fmt.Errorf("%s: not a literal type", name)
