@@ -3,6 +3,7 @@ package hcl
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 
 	"github.com/hashicorp/hcl/ast"
 )
@@ -145,6 +146,19 @@ func (d *decoder) decodeInterface(name string, raw ast.Node, result reflect.Valu
 }
 
 func (d *decoder) decodeMap(name string, raw ast.Node, result reflect.Value) error {
+	// If we have a list, then we decode each element into a map
+	if list, ok := raw.(ast.ListNode); ok {
+		for i, elem := range list.Elem {
+			fieldName := fmt.Sprintf("%s.%d", name, i)
+			err := d.decode(fieldName, elem, result)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+
 	obj, ok := raw.(ast.ObjectNode)
 	if !ok {
 		return fmt.Errorf("%s: not an object type", name)
@@ -257,10 +271,13 @@ func (d *decoder) decodeString(name string, raw ast.Node, result reflect.Value) 
 	}
 
 	switch n.Type {
+	case ast.ValueTypeInt:
+		result.Set(reflect.ValueOf(
+			strconv.FormatInt(int64(n.Value.(int)), 10)))
 	case ast.ValueTypeString:
 		result.Set(reflect.ValueOf(n.Value.(string)))
 	default:
-		return fmt.Errorf("%s: unknown type %s", name, n.Type)
+		return fmt.Errorf("%s: unknown type to string: %s", name, n.Type)
 	}
 
 	return nil

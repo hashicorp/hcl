@@ -117,3 +117,23 @@ func TestDecode_equal(t *testing.T) {
 		}
 	}
 }
+
+func TestDecode_flatMap(t *testing.T) {
+	var val map[string]map[string]string
+
+	err := Decode(&val, testReadFile(t, "structure_flatmap.hcl"))
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	expected := map[string]map[string]string{
+		"foo": map[string]string{
+			"foo": "bar",
+			"key": "7",
+		},
+	}
+
+	if !reflect.DeepEqual(val, expected) {
+		t.Fatalf("Actual: %#v\n\nExpected: %#v", val, expected)
+	}
+}

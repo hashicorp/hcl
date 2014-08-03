@@ -1,10 +1,12 @@
+TEST?=./...
+
 default: test
 
 fmt: hcl/y.go json/y.go
 	go fmt ./...
 
 test: hcl/y.go json/y.go
-	go test ./...
+	go test $(TEST) $(TESTARGS)
 
 hcl/y.go: hcl/parse.y
 	cd hcl && \
