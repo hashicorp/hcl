@@ -13,6 +13,37 @@ HCL is heavily inspired by
 [libucl](https://github.com/vstakhov/libucl),
 nginx configuration, and others similar.
 
+## Why?
+
+A common question when viewing HCL is to ask the question: why not
+JSON, YAML, etc.?
+
+Prior to HCL, the tools we built at [HashiCorp](http://www.hashicorp.com)
+used a variety of configuration languages from full programming languages
+such as Ruby to complete data structure languages such as JSON. What we
+learned is that some people wanted human-friendly configuration languages
+and some people wanted machine-friendly languages.
+
+JSON fits a nice balance in this, but is fairly verbose and most
+importantly doesn't support comments. With YAML, we found that beginners
+had a really hard time determining what the actual structure was, and
+ended up guessing more than not whether to use a hyphen, colon, etc.
+in order to represent some configuration key.
+
+Full programming languages such as Ruby enable complex behavior
+a configuration language shouldn't usually allow, and also forces
+people to learn some set of Ruby.
+
+Because of this, we decided to create our own configuration language
+that is JSON-compatible. Our configuration language (HCL) is designed
+to be written and modified by humans. The API for HCL allows JSON
+as an input so that it is also machine-friendly (machines can generate
+JSON instead of trying to generate HCL).
+
+Our goal with HCL is not to alienate other configuration languages.
+It is instead to provide HCL as a specialized language for our tools,
+and JSON as the interoperability layer.
+
 ## Syntax
 
 The complete grammar
