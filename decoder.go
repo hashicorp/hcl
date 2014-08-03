@@ -63,7 +63,7 @@ func decodeInt(name string, raw ast.Node, result reflect.Value) error {
 
 	switch n.Type {
 	case ast.ValueTypeInt:
-		result.SetInt(int64(n.Value.(int)))
+		result.Set(reflect.ValueOf(int64(n.Value.(int))))
 	default:
 		return fmt.Errorf("%s: unknown type %s", name, n.Type)
 	}
@@ -86,6 +86,13 @@ func decodeInterface(name string, raw ast.Node, result reflect.Value) error {
 
 		set = result
 	case ast.ListNode:
+		/*
+			var temp []interface{}
+			tempVal := reflect.ValueOf(temp)
+			result := reflect.MakeSlice(
+				reflect.SliceOf(tempVal.Type().Elem()), 0, 0)
+			set = result
+		*/
 		redecode = false
 		result := make([]interface{}, 0, len(n.Elem))
 
@@ -119,17 +126,18 @@ func decodeInterface(name string, raw ast.Node, result reflect.Value) error {
 			name, raw)
 	}
 
+	// Set the result to what its supposed to be, then reset
+	// result so we don't reflect into this method anymore.
+	result.Set(set)
+
 	if redecode {
 		// Revisit the node so that we can use the newly instantiated
 		// thing and populate it.
-		if err := decode(name, raw, set); err != nil {
+		if err := decode(name, raw, result); err != nil {
 			return err
 		}
 	}
 
-	// Set the result to what its supposed to be, then reset
-	// result so we don't reflect into this method anymore.
-	result.Set(set)
 	return nil
 }
 
@@ -137,6 +145,13 @@ func decodeMap(name string, raw ast.Node, result reflect.Value) error {
 	obj, ok := raw.(ast.ObjectNode)
 	if !ok {
 		return fmt.Errorf("%s: not an object type", name)
+	}
+
+	// If we have an interface, then we can address the interface,
+	// but not the slice itself, so get the element but set the interface
+	set := result
+	if result.Kind() == reflect.Interface {
+		result = result.Elem()
 	}
 
 	resultType := result.Type()
@@ -189,9 +204,7 @@ func decodeMap(name string, raw ast.Node, result reflect.Value) error {
 	}
 
 	// Set the final map if we can
-	if result.CanAddr() {
-		result.Set(resultMap)
-	}
+	set.Set(resultMap)
 	return nil
 }
 
@@ -242,7 +255,7 @@ func decodeString(name string, raw ast.Node, result reflect.Value) error {
 
 	switch n.Type {
 	case ast.ValueTypeString:
-		result.SetString(n.Value.(string))
+		result.Set(reflect.ValueOf(n.Value.(string)))
 	default:
 		return fmt.Errorf("%s: unknown type %s", name, n.Type)
 	}
