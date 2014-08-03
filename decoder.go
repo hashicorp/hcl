@@ -25,7 +25,18 @@ func DecodeAST(out interface{}, obj *ast.ObjectNode) error {
 }
 
 func decode(name string, n ast.Node, result reflect.Value) error {
-	switch result.Kind() {
+	k := result
+
+	// If we have an interface with a valid value, we use that
+	// for the check.
+	if result.Kind() == reflect.Interface {
+		elem := result.Elem()
+		if elem.IsValid() {
+			k = elem
+		}
+	}
+
+	switch k.Kind() {
 	case reflect.Int:
 		return decodeInt(name, n, result)
 	case reflect.Interface:
@@ -185,15 +196,41 @@ func decodeMap(name string, raw ast.Node, result reflect.Value) error {
 }
 
 func decodeSlice(name string, raw ast.Node, result reflect.Value) error {
-	// Create the slice
+	n, ok := raw.(ast.ListNode)
+	if !ok {
+		return fmt.Errorf("%s: not a list type", name)
+	}
+
+	// If we have an interface, then we can address the interface,
+	// but not the slice itself, so get the element but set the interface
+	set := result
+	if result.Kind() == reflect.Interface {
+		result = result.Elem()
+	}
+
+	// Create the slice if it isn't nil
 	resultType := result.Type()
 	resultElemType := resultType.Elem()
-	resultSliceType := reflect.SliceOf(resultElemType)
-	resultSlice := reflect.MakeSlice(
-		resultSliceType, 0, 0)
+	if result.IsNil() {
+		resultSliceType := reflect.SliceOf(resultElemType)
+		result = reflect.MakeSlice(
+			resultSliceType, 0, 0)
+	}
 
-	result.Set(resultSlice)
+	for i, elem := range n.Elem {
+		fieldName := fmt.Sprintf("%s[%d]", name, i)
 
+		// Decode
+		val := reflect.Indirect(reflect.New(resultElemType))
+		if err := decode(fieldName, elem, val); err != nil {
+			return err
+		}
+
+		// Append it onto the slice
+		result = reflect.Append(result, val)
+	}
+
+	set.Set(result)
 	return nil
 }
 

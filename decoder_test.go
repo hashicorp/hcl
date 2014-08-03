@@ -44,7 +44,7 @@ func TestDecode(t *testing.T) {
 			t.Fatalf("err: %s", err)
 		}
 
-		var out map[string]interface{}
+		var out interface{}
 		err = Decode(&out, string(d))
 		if (err != nil) != tc.Err {
 			t.Fatalf("Input: %s\n\nError: %s", tc.File, err)
@@ -71,6 +71,10 @@ func TestDecode_equal(t *testing.T) {
 		{
 			"structure.hcl",
 			"structure_flat.json",
+		},
+		{
+			"structure_multi.hcl",
+			"structure_multi.json",
 		},
 	}
 
