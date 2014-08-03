@@ -67,8 +67,28 @@ func (n ObjectNode) Accept(v Visitor) {
 	}
 }
 
+// Get returns all the elements of this object with the given key.
+// This is a case-sensitive search.
+func (n ObjectNode) Get(k string) []KeyedNode {
+	result := make([]KeyedNode, 0, 1)
+	for _, elem := range n.Elem {
+		if elem.Key() == k {
+			result = append(result, elem)
+		}
+	}
+
+	return result
+}
+
+// Key returns the key of this object. If this is "", then it is
+// the root object.
 func (n ObjectNode) Key() string {
 	return n.K
+}
+
+// Len returns the number of elements of this object.
+func (n ObjectNode) Len() int {
+	return len(n.Elem)
 }
 
 func (n AssignmentNode) Accept(v Visitor) {
