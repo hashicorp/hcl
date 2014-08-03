@@ -66,23 +66,14 @@ func decodeInterface(name string, raw ast.Node, result reflect.Value) error {
 
 	switch n := raw.(type) {
 	case ast.ObjectNode:
-		redecode = false
-		result := make(map[string]interface{})
+		var temp map[string]interface{}
+		tempVal := reflect.ValueOf(temp)
+		result := reflect.MakeMap(
+			reflect.MapOf(
+				reflect.TypeOf(""),
+				tempVal.Type().Elem()))
 
-		for _, elem := range n.Elem {
-			n := elem.(ast.AssignmentNode)
-
-			raw := new(interface{})
-			err := decode(
-				name, n.Value, reflect.Indirect(reflect.ValueOf(raw)))
-			if err != nil {
-				return err
-			}
-
-			result[n.Key()] = *raw
-		}
-
-		set = reflect.ValueOf(result)
+		set = result
 	case ast.ListNode:
 		redecode = false
 		result := make([]interface{}, 0, len(n.Elem))
@@ -155,6 +146,14 @@ func decodeMap(name string, raw ast.Node, result reflect.Value) error {
 	// Go through each element and decode it.
 	for _, elem := range obj.Elem {
 		n := elem.(ast.AssignmentNode)
+		objValue := n.Value
+
+		// If we have an object node, expand to a list of objects
+		if _, ok := objValue.(ast.ObjectNode); ok {
+			objValue = ast.ListNode{
+				Elem: []ast.Node{objValue},
+			}
+		}
 
 		// Make the field name
 		fieldName := fmt.Sprintf("%s.%s", name, n.Key())
@@ -170,7 +169,7 @@ func decodeMap(name string, raw ast.Node, result reflect.Value) error {
 		}
 
 		// Decode!
-		if err := decode(fieldName, n.Value, val); err != nil {
+		if err := decode(fieldName, objValue, val); err != nil {
 			return err
 		}
 
@@ -178,8 +177,10 @@ func decodeMap(name string, raw ast.Node, result reflect.Value) error {
 		resultMap.SetMapIndex(key, val)
 	}
 
-	// Set the final map
-	result.Set(resultMap)
+	// Set the final map if we can
+	if result.CanAddr() {
+		result.Set(resultMap)
+	}
 	return nil
 }
 

@@ -68,6 +68,10 @@ func TestDecode_equal(t *testing.T) {
 			"structure.hcl",
 			"structure.json",
 		},
+		{
+			"structure.hcl",
+			"structure_flat.json",
+		},
 	}
 
 	for _, tc := range cases {
@@ -96,7 +100,10 @@ func TestDecode_equal(t *testing.T) {
 		}
 
 		if !reflect.DeepEqual(i1, i2) {
-			t.Fatalf("%#v\n\n%#v", i1, i2)
+			t.Fatalf(
+				"%s != %s\n\n%#v\n\n%#v",
+				tc.One, tc.Two,
+				i1, i2)
 		}
 	}
 }
