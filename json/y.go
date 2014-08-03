@@ -5,10 +5,13 @@ import __yyfmt__ "fmt"
 
 //line parse.y:5
 import (
+	"fmt"
+	"strconv"
+
 	"github.com/hashicorp/hcl/ast"
 )
 
-//line parse.y:12
+//line parse.y:15
 type jsonSymType struct {
 	yys    int
 	array  ast.ListNode
@@ -35,6 +38,8 @@ const RIGHTBRACKET = 57356
 const TRUE = 57357
 const FALSE = 57358
 const NULL = 57359
+const MINUS = 57360
+const PERIOD = 57361
 
 var jsonToknames = []string{
 	"NUMBER",
@@ -51,6 +56,8 @@ var jsonToknames = []string{
 	"TRUE",
 	"FALSE",
 	"NULL",
+	"MINUS",
+	"PERIOD",
 }
 var jsonStatenames = []string{}
 
@@ -58,7 +65,7 @@ const jsonEofCode = 1
 const jsonErrCode = 2
 const jsonMaxDepth = 200
 
-//line parse.y:138
+//line parse.y:178
 
 //line yacctab:1
 var jsonExca = []int{
@@ -67,52 +74,59 @@ var jsonExca = []int{
 	-2, 0,
 }
 
-const jsonNprod = 18
+const jsonNprod = 23
 const jsonPrivate = 57344
 
 var jsonTokenNames []string
 var jsonStates []string
 
-const jsonLast = 35
+const jsonLast = 45
 
 var jsonAct = []int{
 
-	22, 14, 24, 7, 8, 5, 3, 13, 3, 14,
-	20, 21, 17, 18, 19, 13, 3, 23, 20, 7,
-	17, 18, 19, 4, 25, 9, 26, 10, 12, 15,
-	2, 1, 6, 11, 16,
+	27, 23, 25, 20, 23, 31, 8, 13, 3, 3,
+	21, 26, 17, 18, 19, 22, 23, 7, 22, 5,
+	28, 7, 13, 3, 4, 21, 29, 17, 18, 19,
+	22, 12, 32, 33, 11, 9, 10, 30, 15, 2,
+	1, 24, 14, 6, 16,
 }
 var jsonPact = []int{
 
-	-5, -1000, -1000, -7, -8, -1000, 19, 22, -1000, 9,
-	5, -1000, -1000, -1000, -1000, -1000, -1000, -1000, -1000, -1000,
-	-3, -1000, -12, 18, -1000, 5, -1000,
+	-2, -1000, -1000, 7, -6, -1000, 29, 31, -1000, 11,
+	12, -1000, -1000, -1000, -1000, -1000, -1000, -1000, -1000, -1000,
+	-17, -3, 0, -1000, -1000, 33, -1000, -9, 26, -1000,
+	-1000, -1000, 12, -1000,
 }
 var jsonPgo = []int{
 
-	0, 34, 32, 17, 23, 0, 29, 31,
+	0, 44, 43, 20, 42, 24, 0, 3, 38, 41,
+	40,
 }
 var jsonR1 = []int{
 
-	0, 7, 6, 6, 4, 4, 2, 3, 3, 3,
-	3, 3, 3, 3, 1, 1, 5, 5,
+	0, 10, 8, 8, 5, 5, 2, 3, 3, 3,
+	3, 3, 3, 3, 1, 1, 6, 6, 4, 4,
+	7, 7, 9,
 }
 var jsonR2 = []int{
 
 	0, 1, 3, 2, 1, 3, 3, 1, 1, 1,
-	1, 1, 1, 1, 2, 3, 1, 3,
+	1, 1, 1, 1, 2, 3, 1, 3, 1, 2,
+	2, 1, 2,
 }
 var jsonChk = []int{
 
-	-1000, -7, -6, 11, -4, 12, -2, 10, 12, 6,
-	5, -4, -3, 10, 4, -6, -1, 15, 16, 17,
-	13, 14, -5, -3, 14, 6, -5,
+	-1000, -10, -8, 11, -5, 12, -2, 10, 12, 6,
+	5, -5, -3, 10, -4, -8, -1, 15, 16, 17,
+	-7, 13, 18, 4, -9, 19, 14, -6, -3, -7,
+	4, 14, 6, -6,
 }
 var jsonDef = []int{
 
 	0, -2, 1, 0, 0, 3, 4, 0, 2, 0,
 	0, 5, 6, 7, 8, 9, 10, 11, 12, 13,
-	0, 14, 0, 16, 15, 0, 17,
+	18, 0, 0, 21, 19, 0, 14, 0, 16, 20,
+	22, 15, 0, 17,
 }
 var jsonTok1 = []int{
 
@@ -121,7 +135,7 @@ var jsonTok1 = []int{
 var jsonTok2 = []int{
 
 	2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
-	12, 13, 14, 15, 16, 17,
+	12, 13, 14, 15, 16, 17, 18, 19,
 }
 var jsonTok3 = []int{
 	0,
@@ -353,33 +367,33 @@ jsondefault:
 	switch jsonnt {
 
 	case 1:
-		//line parse.y:39
+		//line parse.y:44
 		{
 			obj := jsonS[jsonpt-0].obj
 			jsonResult = &obj
 		}
 	case 2:
-		//line parse.y:46
+		//line parse.y:51
 		{
 			jsonVAL.obj = ast.ObjectNode{Elem: jsonS[jsonpt-1].klist}
 		}
 	case 3:
-		//line parse.y:50
+		//line parse.y:55
 		{
 			jsonVAL.obj = ast.ObjectNode{}
 		}
 	case 4:
-		//line parse.y:56
+		//line parse.y:61
 		{
 			jsonVAL.klist = []ast.KeyedNode{jsonS[jsonpt-0].assign}
 		}
 	case 5:
-		//line parse.y:60
+		//line parse.y:65
 		{
 			jsonVAL.klist = append(jsonS[jsonpt-0].klist, jsonS[jsonpt-2].assign)
 		}
 	case 6:
-		//line parse.y:66
+		//line parse.y:71
 		{
 			jsonVAL.assign = ast.AssignmentNode{
 				K:     jsonS[jsonpt-2].str,
@@ -387,7 +401,7 @@ jsondefault:
 			}
 		}
 	case 7:
-		//line parse.y:75
+		//line parse.y:80
 		{
 			jsonVAL.item = ast.LiteralNode{
 				Type:  ast.ValueTypeString,
@@ -395,25 +409,22 @@ jsondefault:
 			}
 		}
 	case 8:
-		//line parse.y:82
+		//line parse.y:87
 		{
-			jsonVAL.item = ast.LiteralNode{
-				Type:  ast.ValueTypeInt,
-				Value: jsonS[jsonpt-0].num,
-			}
+			jsonVAL.item = jsonS[jsonpt-0].item
 		}
 	case 9:
-		//line parse.y:89
+		//line parse.y:91
 		{
 			jsonVAL.item = jsonS[jsonpt-0].obj
 		}
 	case 10:
-		//line parse.y:93
+		//line parse.y:95
 		{
 			jsonVAL.item = jsonS[jsonpt-0].array
 		}
 	case 11:
-		//line parse.y:97
+		//line parse.y:99
 		{
 			jsonVAL.item = ast.LiteralNode{
 				Type:  ast.ValueTypeBool,
@@ -421,7 +432,7 @@ jsondefault:
 			}
 		}
 	case 12:
-		//line parse.y:104
+		//line parse.y:106
 		{
 			jsonVAL.item = ast.LiteralNode{
 				Type:  ast.ValueTypeBool,
@@ -429,7 +440,7 @@ jsondefault:
 			}
 		}
 	case 13:
-		//line parse.y:111
+		//line parse.y:113
 		{
 			jsonVAL.item = ast.LiteralNode{
 				Type:  ast.ValueTypeNil,
@@ -437,24 +448,61 @@ jsondefault:
 			}
 		}
 	case 14:
-		//line parse.y:120
+		//line parse.y:122
 		{
 			jsonVAL.array = ast.ListNode{}
 		}
 	case 15:
-		//line parse.y:124
+		//line parse.y:126
 		{
 			jsonVAL.array = ast.ListNode{Elem: jsonS[jsonpt-1].list}
 		}
 	case 16:
-		//line parse.y:130
+		//line parse.y:132
 		{
 			jsonVAL.list = []ast.Node{jsonS[jsonpt-0].item}
 		}
 	case 17:
-		//line parse.y:134
+		//line parse.y:136
 		{
 			jsonVAL.list = append(jsonS[jsonpt-0].list, jsonS[jsonpt-2].item)
+		}
+	case 18:
+		//line parse.y:142
+		{
+			jsonVAL.item = ast.LiteralNode{
+				Type:  ast.ValueTypeInt,
+				Value: jsonS[jsonpt-0].num,
+			}
+		}
+	case 19:
+		//line parse.y:149
+		{
+			fs := fmt.Sprintf("%d.%s", jsonS[jsonpt-1].num, jsonS[jsonpt-0].str)
+			f, err := strconv.ParseFloat(fs, 64)
+			if err != nil {
+				panic(err)
+			}
+
+			jsonVAL.item = ast.LiteralNode{
+				Type:  ast.ValueTypeFloat,
+				Value: f,
+			}
+		}
+	case 20:
+		//line parse.y:164
+		{
+			jsonVAL.num = jsonS[jsonpt-0].num * -1
+		}
+	case 21:
+		//line parse.y:168
+		{
+			jsonVAL.num = jsonS[jsonpt-0].num
+		}
+	case 22:
+		//line parse.y:174
+		{
+			jsonVAL.str = strconv.FormatInt(int64(jsonS[jsonpt-0].num), 10)
 		}
 	}
 	goto jsonstack /* stack new state and value */

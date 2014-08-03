@@ -43,6 +43,10 @@ func (x *jsonLex) Lex(yylval *jsonSymType) int {
 		}
 
 		switch c {
+		case '.':
+			return PERIOD
+		case '-':
+			return MINUS
 		case ':':
 			return COLON
 		case ',':

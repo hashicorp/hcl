@@ -23,6 +23,10 @@ func TestParse(t *testing.T) {
 			"array.json",
 			false,
 		},
+		{
+			"types.json",
+			false,
+		},
 	}
 
 	for _, tc := range cases {

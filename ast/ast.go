@@ -6,6 +6,7 @@ type ValueType byte
 
 const (
 	ValueTypeUnknown ValueType = iota
+	ValueTypeFloat
 	ValueTypeInt
 	ValueTypeString
 	ValueTypeBool

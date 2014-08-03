@@ -4,6 +4,9 @@
 package json
 
 import (
+	"fmt"
+	"strconv"
+
 	"github.com/hashicorp/hcl/ast"
 )
 
@@ -22,15 +25,17 @@ import (
 
 %type	<array> array
 %type	<assign> pair
-%type	<item> value
+%type	<item> value number
 %type	<klist> members
 %type	<list> elements
+%type	<num> int
 %type	<obj> object
+%type	<str> frac
 
 %token  <num> NUMBER
 %token  <str> COLON COMMA IDENTIFIER EQUAL NEWLINE STRING
 %token  <str> LEFTBRACE RIGHTBRACE LEFTBRACKET RIGHTBRACKET
-%token  <str> TRUE FALSE NULL
+%token  <str> TRUE FALSE NULL MINUS PERIOD
 
 %%
 
@@ -78,12 +83,9 @@ value:
 			Value: $1,
 		}
 	}
-|	NUMBER
+|	number
 	{
-		$$ = ast.LiteralNode{
-			Type:  ast.ValueTypeInt,
-			Value: $1,
-		}
+		$$ = $1
 	}
 |	object
 	{
@@ -133,6 +135,44 @@ elements:
 |	value COMMA elements
 	{
 		$$ = append($3, $1)
+	}
+
+number:
+	int
+	{
+		$$ = ast.LiteralNode{
+			Type:  ast.ValueTypeInt,
+			Value: $1,
+		}
+	}
+|	int frac
+	{
+		fs := fmt.Sprintf("%d.%s", $1, $2)
+		f, err := strconv.ParseFloat(fs, 64)
+		if err != nil {
+			panic(err)
+		}
+
+		$$ = ast.LiteralNode{
+			Type:  ast.ValueTypeFloat,
+			Value: f,
+		}
+	}
+
+int:
+	MINUS int
+	{
+		$$ = $2 * -1
+	}
+|	NUMBER
+	{
+		$$ = $1
+	}
+
+frac:
+	PERIOD NUMBER
+	{
+		$$ = strconv.FormatInt(int64($2), 10)
 	}
 
 %%
