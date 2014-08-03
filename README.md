@@ -5,6 +5,10 @@ by HashiCorp. The goal of HCL is to build a structured configuration language
 that is both human and machine friendly for use with command-line tools, but
 specifically targeted towards DevOps tools, servers, etc.
 
+HCL is also fully JSON compatible. That is, JSON can be used as completely
+valid input to a system expecting HCL. This helps makes systems
+interoperable with other systems.
+
 HCL is heavily inspired by
 [libucl](https://github.com/vstakhov/libucl),
 nginx configuration, and others similar.
