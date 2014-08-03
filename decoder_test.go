@@ -55,3 +55,48 @@ func TestDecode(t *testing.T) {
 		}
 	}
 }
+
+func TestDecode_equal(t *testing.T) {
+	cases := []struct {
+		One, Two string
+	}{
+		{
+			"basic.hcl",
+			"basic.json",
+		},
+		{
+			"structure.hcl",
+			"structure.json",
+		},
+	}
+
+	for _, tc := range cases {
+		p1 := filepath.Join(fixtureDir, tc.One)
+		p2 := filepath.Join(fixtureDir, tc.Two)
+
+		d1, err := ioutil.ReadFile(p1)
+		if err != nil {
+			t.Fatalf("err: %s", err)
+		}
+
+		d2, err := ioutil.ReadFile(p2)
+		if err != nil {
+			t.Fatalf("err: %s", err)
+		}
+
+		var i1, i2 interface{}
+		err = Decode(&i1, string(d1))
+		if err != nil {
+			t.Fatalf("err: %s", err)
+		}
+
+		err = Decode(&i2, string(d2))
+		if err != nil {
+			t.Fatalf("err: %s", err)
+		}
+
+		if !reflect.DeepEqual(i1, i2) {
+			t.Fatalf("%#v\n\n%#v", i1, i2)
+		}
+	}
+}
