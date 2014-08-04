@@ -202,8 +202,7 @@ func (d *decoder) decodeMap(name string, raw ast.Node, result reflect.Value) err
 	}
 
 	// Go through each element and decode it.
-	for _, elem := range obj.Elem {
-		n := elem.(ast.AssignmentNode)
+	for _, n := range obj.Elem {
 		objValue := n.Value
 
 		// If we have an object node, expand to a list of objects

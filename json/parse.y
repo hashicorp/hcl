@@ -16,7 +16,7 @@ import (
 	array    ast.ListNode
 	assign   ast.AssignmentNode
 	item     ast.Node
-	klist    []ast.KeyedNode
+	klist    []ast.AssignmentNode
 	list     []ast.Node
 	num      int
 	str      string
@@ -59,7 +59,7 @@ object:
 members:
 	pair
 	{
-		$$ = []ast.KeyedNode{$1}
+		$$ = []ast.AssignmentNode{$1}
 	}
 |	pair COMMA members
 	{

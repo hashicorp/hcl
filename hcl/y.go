@@ -16,8 +16,8 @@ type hclSymType struct {
 	yys      int
 	item     ast.Node
 	list     []ast.Node
-	klist    []ast.KeyedNode
-	kitem    ast.KeyedNode
+	alist    []ast.AssignmentNode
+	aitem    ast.AssignmentNode
 	listitem ast.Node
 	num      int
 	obj      ast.ObjectNode
@@ -363,23 +363,23 @@ hcldefault:
 		{
 			hclResult = &ast.ObjectNode{
 				K:    "",
-				Elem: hclS[hclpt-0].klist,
+				Elem: hclS[hclpt-0].alist,
 			}
 		}
 	case 2:
 		//line parse.y:52
 		{
-			hclVAL.klist = []ast.KeyedNode{hclS[hclpt-0].kitem}
+			hclVAL.alist = []ast.AssignmentNode{hclS[hclpt-0].aitem}
 		}
 	case 3:
 		//line parse.y:56
 		{
-			hclVAL.klist = append(hclS[hclpt-0].klist, hclS[hclpt-1].kitem)
+			hclVAL.alist = append(hclS[hclpt-0].alist, hclS[hclpt-1].aitem)
 		}
 	case 4:
 		//line parse.y:62
 		{
-			hclVAL.obj = ast.ObjectNode{Elem: hclS[hclpt-1].klist}
+			hclVAL.obj = ast.ObjectNode{Elem: hclS[hclpt-1].alist}
 		}
 	case 5:
 		//line parse.y:66
@@ -389,7 +389,7 @@ hcldefault:
 	case 6:
 		//line parse.y:72
 		{
-			hclVAL.kitem = ast.AssignmentNode{
+			hclVAL.aitem = ast.AssignmentNode{
 				K:     hclS[hclpt-2].str,
 				Value: hclS[hclpt-0].item,
 			}
@@ -397,7 +397,7 @@ hcldefault:
 	case 7:
 		//line parse.y:79
 		{
-			hclVAL.kitem = ast.AssignmentNode{
+			hclVAL.aitem = ast.AssignmentNode{
 				K: hclS[hclpt-2].str,
 				Value: ast.LiteralNode{
 					Type:  ast.ValueTypeString,
@@ -408,7 +408,7 @@ hcldefault:
 	case 8:
 		//line parse.y:89
 		{
-			hclVAL.kitem = ast.AssignmentNode{
+			hclVAL.aitem = ast.AssignmentNode{
 				K:     hclS[hclpt-2].str,
 				Value: hclS[hclpt-0].obj,
 			}
@@ -416,7 +416,7 @@ hcldefault:
 	case 9:
 		//line parse.y:96
 		{
-			hclVAL.kitem = ast.AssignmentNode{
+			hclVAL.aitem = ast.AssignmentNode{
 				K:     hclS[hclpt-4].str,
 				Value: ast.ListNode{Elem: hclS[hclpt-1].list},
 			}
@@ -424,12 +424,12 @@ hcldefault:
 	case 10:
 		//line parse.y:103
 		{
-			hclVAL.kitem = hclS[hclpt-0].kitem
+			hclVAL.aitem = hclS[hclpt-0].aitem
 		}
 	case 11:
 		//line parse.y:109
 		{
-			hclVAL.kitem = ast.AssignmentNode{
+			hclVAL.aitem = ast.AssignmentNode{
 				K: hclS[hclpt-1].str,
 				Value: ast.ListNode{
 					Elem: []ast.Node{hclS[hclpt-0].obj},
@@ -440,11 +440,11 @@ hcldefault:
 		//line parse.y:118
 		{
 			obj := ast.ObjectNode{
-				K:    hclS[hclpt-0].kitem.Key(),
-				Elem: []ast.KeyedNode{hclS[hclpt-0].kitem},
+				K:    hclS[hclpt-0].aitem.Key(),
+				Elem: []ast.AssignmentNode{hclS[hclpt-0].aitem},
 			}
 
-			hclVAL.kitem = ast.AssignmentNode{
+			hclVAL.aitem = ast.AssignmentNode{
 				K: hclS[hclpt-1].str,
 				Value: ast.ListNode{
 					Elem: []ast.Node{obj},

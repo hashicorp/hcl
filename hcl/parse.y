@@ -15,8 +15,8 @@ import (
 %union {
 	item     ast.Node
 	list     []ast.Node
-	klist    []ast.KeyedNode
-	kitem    ast.KeyedNode
+	alist    []ast.AssignmentNode
+	aitem    ast.AssignmentNode
 	listitem ast.Node
 	num      int
 	obj      ast.ObjectNode
@@ -25,8 +25,8 @@ import (
 
 %type   <item> number
 %type   <list> list
-%type   <klist> objectlist
-%type   <kitem> objectitem block
+%type   <alist> objectlist
+%type   <aitem> objectitem block
 %type   <listitem> listitem
 %type   <num> int
 %type   <obj> object
@@ -50,7 +50,7 @@ top:
 objectlist:
 	objectitem
 	{
-		$$ = []ast.KeyedNode{$1}
+		$$ = []ast.AssignmentNode{$1}
 	}
 |	objectitem objectlist
 	{
@@ -118,7 +118,7 @@ block:
 	{
 		obj := ast.ObjectNode{
 			K:    $2.Key(),
-			Elem: []ast.KeyedNode{$2},
+			Elem: []ast.AssignmentNode{$2},
 		}
 
 		$$ = ast.AssignmentNode{

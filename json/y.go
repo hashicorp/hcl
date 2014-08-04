@@ -17,7 +17,7 @@ type jsonSymType struct {
 	array  ast.ListNode
 	assign ast.AssignmentNode
 	item   ast.Node
-	klist  []ast.KeyedNode
+	klist  []ast.AssignmentNode
 	list   []ast.Node
 	num    int
 	str    string
@@ -385,7 +385,7 @@ jsondefault:
 	case 4:
 		//line parse.y:61
 		{
-			jsonVAL.klist = []ast.KeyedNode{jsonS[jsonpt-0].assign}
+			jsonVAL.klist = []ast.AssignmentNode{jsonS[jsonpt-0].assign}
 		}
 	case 5:
 		//line parse.y:65

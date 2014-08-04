@@ -49,7 +49,7 @@ func TestListNode_accept(t *testing.T) {
 func TestObjectNode_accept(t *testing.T) {
 	n := ObjectNode{
 		K: "foo",
-		Elem: []KeyedNode{
+		Elem: []AssignmentNode{
 			AssignmentNode{K: "foo", Value: LiteralNode{Value: "foo"}},
 			AssignmentNode{K: "bar", Value: LiteralNode{Value: "bar"}},
 		},
@@ -58,9 +58,9 @@ func TestObjectNode_accept(t *testing.T) {
 	expected := []Node{
 		n,
 		n.Elem[0],
-		n.Elem[0].(AssignmentNode).Value,
+		n.Elem[0].Value,
 		n.Elem[1],
-		n.Elem[1].(AssignmentNode).Value,
+		n.Elem[1].Value,
 	}
 
 	v := new(MockVisitor)
@@ -74,7 +74,7 @@ func TestObjectNode_accept(t *testing.T) {
 func TestObjectNodeGet(t *testing.T) {
 	n := ObjectNode{
 		K: "foo",
-		Elem: []KeyedNode{
+		Elem: []AssignmentNode{
 			AssignmentNode{K: "foo", Value: LiteralNode{Value: "foo"}},
 			AssignmentNode{K: "bar", Value: LiteralNode{Value: "bar"}},
 			AssignmentNode{K: "foo", Value: LiteralNode{Value: "baz"}},

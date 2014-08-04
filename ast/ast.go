@@ -42,7 +42,7 @@ type Visitor interface {
 // syntax level.
 type ObjectNode struct {
 	K    string
-	Elem []KeyedNode
+	Elem []AssignmentNode
 }
 
 // AssignmentNode represents a direct assignment with an equals
@@ -82,12 +82,7 @@ func (n ObjectNode) Get(k string, insensitive bool) []Node {
 			}
 		}
 
-		switch n := elem.(type) {
-		case AssignmentNode:
-			result = append(result, n.Value)
-		default:
-			panic("unknown type")
-		}
+		result = append(result, elem.Value)
 	}
 
 	return result
@@ -119,6 +114,19 @@ func (n ListNode) Accept(v Visitor) {
 	for _, e := range n.Elem {
 		e.Accept(v)
 	}
+}
+
+func (n ListNode) Flatten() ListNode {
+	var elem []Node
+	for _, e := range n.Elem {
+		if ln, ok := e.(ListNode); ok {
+			elem = append(elem, ln.Flatten().Elem...)
+		} else {
+			elem = append(elem, e)
+		}
+	}
+
+	return ListNode{Elem: elem}
 }
 
 func (n LiteralNode) Accept(v Visitor) {
