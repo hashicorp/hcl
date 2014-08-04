@@ -109,9 +109,7 @@ block:
 	{
 		$$ = ast.AssignmentNode{
 			K:     $1,
-			Value: ast.ListNode{
-				Elem: []ast.Node{$2},
-			},
+			Value: $2,
 		}
 	}
 |	blockId block
@@ -123,9 +121,7 @@ block:
 
 		$$ = ast.AssignmentNode{
 			K:     $1,
-			Value: ast.ListNode{
-				Elem: []ast.Node{obj},
-			},
+			Value: obj,
 		}
 	}
 
