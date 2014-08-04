@@ -55,6 +55,10 @@ func (x *hclLex) Lex(yylval *hclSymType) int {
 		}
 
 		switch c {
+		case '.':
+			return PERIOD
+		case '-':
+			return MINUS
 		case ',':
 			return COMMA
 		case '=':

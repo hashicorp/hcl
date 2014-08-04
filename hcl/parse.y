@@ -4,12 +4,16 @@
 package hcl
 
 import (
+	"fmt"
+	"strconv"
+
 	"github.com/hashicorp/hcl/ast"
 )
 
 %}
 
 %union {
+	item     ast.Node
 	list     []ast.Node
 	klist    []ast.KeyedNode
 	kitem    ast.KeyedNode
@@ -19,16 +23,18 @@ import (
 	str      string
 }
 
+%type   <item> number
 %type   <list> list
 %type   <klist> objectlist
 %type   <kitem> objectitem block
 %type   <listitem> listitem
+%type   <num> int
 %type   <obj> object
-%type   <str> blockId
+%type   <str> blockId frac
 
 %token  <num> NUMBER
-%token  <str> COMMA IDENTIFIER EQUAL NEWLINE STRING
-%token  <str> LEFTBRACE RIGHTBRACE LEFTBRACKET RIGHTBRACKET
+%token  <str> COMMA IDENTIFIER EQUAL NEWLINE STRING MINUS
+%token  <str> LEFTBRACE RIGHTBRACE LEFTBRACKET RIGHTBRACKET PERIOD
 
 %%
 
@@ -62,14 +68,11 @@ object:
 	}
 
 objectitem:
-	IDENTIFIER EQUAL NUMBER
+	IDENTIFIER EQUAL number
 	{
 		$$ = ast.AssignmentNode{
 			K:     $1,
-			Value: ast.LiteralNode{
-				Type:  ast.ValueTypeInt,
-				Value: $3,
-			},
+			Value: $3,
 		}
 	}
 |	IDENTIFIER EQUAL STRING
@@ -147,12 +150,9 @@ list:
 	}
 
 listitem:
-	NUMBER
+	number
 	{
-		$$ = ast.LiteralNode{
-			Type:  ast.ValueTypeInt,
-			Value: $1,
-		}
+		$$ = $1
 	}
 |	STRING
 	{
@@ -160,6 +160,44 @@ listitem:
 			Type:  ast.ValueTypeString,
 			Value: $1,
 		}
+	}
+
+number:
+	int
+	{
+		$$ = ast.LiteralNode{
+			Type:  ast.ValueTypeInt,
+			Value: $1,
+		}
+	}
+|	int frac
+	{
+		fs := fmt.Sprintf("%d.%s", $1, $2)
+		f, err := strconv.ParseFloat(fs, 64)
+		if err != nil {
+			panic(err)
+		}
+
+		$$ = ast.LiteralNode{
+			Type:  ast.ValueTypeFloat,
+			Value: f,
+		}
+	}
+
+int:
+	MINUS int
+	{
+		$$ = $2 * -1
+	}
+|	NUMBER
+	{
+		$$ = $1
+	}
+
+frac:
+	PERIOD NUMBER
+	{
+		$$ = strconv.FormatInt(int64($2), 10)
 	}
 
 %%

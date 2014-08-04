@@ -43,6 +43,10 @@ func TestParse(t *testing.T) {
 			"assign_deep.hcl",
 			true,
 		},
+		{
+			"types.hcl",
+			false,
+		},
 	}
 
 	for _, tc := range cases {
