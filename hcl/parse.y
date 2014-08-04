@@ -107,6 +107,7 @@ objectitem:
 block:
 	blockId object
 	{
+		$2.K = $1
 		$$ = ast.AssignmentNode{
 			K:     $1,
 			Value: $2,

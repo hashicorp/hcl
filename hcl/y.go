@@ -57,7 +57,7 @@ const hclEofCode = 1
 const hclErrCode = 2
 const hclMaxDepth = 200
 
-//line parse.y:199
+//line parse.y:200
 
 //line yacctab:1
 var hclExca = []int{
@@ -429,13 +429,14 @@ hcldefault:
 	case 11:
 		//line parse.y:109
 		{
+			hclS[hclpt-0].obj.K = hclS[hclpt-1].str
 			hclVAL.aitem = ast.AssignmentNode{
 				K:     hclS[hclpt-1].str,
 				Value: hclS[hclpt-0].obj,
 			}
 		}
 	case 12:
-		//line parse.y:116
+		//line parse.y:117
 		{
 			obj := ast.ObjectNode{
 				K:    hclS[hclpt-0].aitem.Key(),
@@ -448,32 +449,32 @@ hcldefault:
 			}
 		}
 	case 13:
-		//line parse.y:130
+		//line parse.y:131
 		{
 			hclVAL.str = hclS[hclpt-0].str
 		}
 	case 14:
-		//line parse.y:134
+		//line parse.y:135
 		{
 			hclVAL.str = hclS[hclpt-0].str
 		}
 	case 15:
-		//line parse.y:140
+		//line parse.y:141
 		{
 			hclVAL.list = []ast.Node{hclS[hclpt-0].listitem}
 		}
 	case 16:
-		//line parse.y:144
+		//line parse.y:145
 		{
 			hclVAL.list = append(hclS[hclpt-2].list, hclS[hclpt-0].listitem)
 		}
 	case 17:
-		//line parse.y:150
+		//line parse.y:151
 		{
 			hclVAL.listitem = hclS[hclpt-0].item
 		}
 	case 18:
-		//line parse.y:154
+		//line parse.y:155
 		{
 			hclVAL.listitem = ast.LiteralNode{
 				Type:  ast.ValueTypeString,
@@ -481,7 +482,7 @@ hcldefault:
 			}
 		}
 	case 19:
-		//line parse.y:163
+		//line parse.y:164
 		{
 			hclVAL.item = ast.LiteralNode{
 				Type:  ast.ValueTypeInt,
@@ -489,7 +490,7 @@ hcldefault:
 			}
 		}
 	case 20:
-		//line parse.y:170
+		//line parse.y:171
 		{
 			fs := fmt.Sprintf("%d.%s", hclS[hclpt-1].num, hclS[hclpt-0].str)
 			f, err := strconv.ParseFloat(fs, 64)
@@ -503,17 +504,17 @@ hcldefault:
 			}
 		}
 	case 21:
-		//line parse.y:185
+		//line parse.y:186
 		{
 			hclVAL.num = hclS[hclpt-0].num * -1
 		}
 	case 22:
-		//line parse.y:189
+		//line parse.y:190
 		{
 			hclVAL.num = hclS[hclpt-0].num
 		}
 	case 23:
-		//line parse.y:195
+		//line parse.y:196
 		{
 			hclVAL.str = strconv.FormatInt(int64(hclS[hclpt-0].num), 10)
 		}
