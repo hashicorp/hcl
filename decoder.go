@@ -176,7 +176,7 @@ func (d *decoder) decodeMap(name string, raw ast.Node, result reflect.Value) err
 
 	obj, ok := raw.(ast.ObjectNode)
 	if !ok {
-		return fmt.Errorf("%s: not an object type", name)
+		return fmt.Errorf("%s: not an object type (%T)", name, obj)
 	}
 
 	// If we have an interface, then we can address the interface,
@@ -313,9 +313,23 @@ func (d *decoder) decodeString(name string, raw ast.Node, result reflect.Value) 
 }
 
 func (d *decoder) decodeStruct(name string, raw ast.Node, result reflect.Value) error {
+	// If we have a list, then we decode each element into a map
+	if list, ok := raw.(ast.ListNode); ok {
+		for i, elem := range list.Elem {
+			fieldName := fmt.Sprintf("%s.%d", name, i)
+			err := d.decode(fieldName, elem, result)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+
 	obj, ok := raw.(ast.ObjectNode)
 	if !ok {
-		return fmt.Errorf("%s: not an object type", name)
+		return fmt.Errorf(
+			"%s: not an object type for struct (%T)", name, raw)
 	}
 
 	// This slice will keep track of all the structs we'll be decoding.
