@@ -1,5 +1,9 @@
 package ast
 
+import (
+	"strings"
+)
+
 // ValueType is an enum represnting the type of a value in
 // a LiteralNode.
 type ValueType byte
@@ -69,11 +73,13 @@ func (n ObjectNode) Accept(v Visitor) {
 
 // Get returns all the elements of this object with the given key.
 // This is a case-sensitive search.
-func (n ObjectNode) Get(k string) []Node {
+func (n ObjectNode) Get(k string, insensitive bool) []Node {
 	result := make([]Node, 0, 1)
 	for _, elem := range n.Elem {
 		if elem.Key() != k {
-			continue
+			if !insensitive || !strings.EqualFold(elem.Key(), k) {
+				continue
+			}
 		}
 
 		switch n := elem.(type) {

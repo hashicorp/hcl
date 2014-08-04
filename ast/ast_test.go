@@ -86,7 +86,7 @@ func TestObjectNodeGet(t *testing.T) {
 		LiteralNode{Value: "baz"},
 	}
 
-	actual := n.Get("foo")
+	actual := n.Get("foo", false)
 
 	if !reflect.DeepEqual(actual, expected) {
 		t.Fatalf("bad: %#v", actual)

@@ -419,39 +419,20 @@ func (d *decoder) decodeStruct(name string, raw ast.Node, result reflect.Value) 
 		}
 
 		// Find the element matching this name
-		var elem ast.Node
-		elemKey := fieldName
-		if elems := obj.Get(fieldName); len(elems) > 0 {
-			elem = elems[len(elems)-1]
-		} else {
-			// Do a slower search by iterating over each key and
-			// doing case-insensitive search.
-			for _, v := range obj.Elem {
-				if strings.EqualFold(v.Key(), fieldName) {
-					elem = v
-					elemKey = v.Key()
-					break
-				}
-			}
-
-			if elem == nil {
-				// No key matching this field.
-				continue
-			}
-		}
-
-		// Make sure we get the value of the element
-		if an, ok := elem.(ast.AssignmentNode); ok {
-			elem = an.Value
+		elems := obj.Get(fieldName, true)
+		if len(elems) == 0 {
+			continue
 		}
 
 		// Track the used key
-		usedKeys[elemKey] = struct{}{}
+		usedKeys[fieldName] = struct{}{}
 
 		// Create the field name and decode
 		fieldName = fmt.Sprintf("%s.%s", name, fieldName)
-		if err := d.decode(fieldName, elem, field); err != nil {
-			return err
+		for _, elem := range elems {
+			if err := d.decode(fieldName, elem, field); err != nil {
+				return err
+			}
 		}
 
 		decodedFields = append(decodedFields, fieldType.Name)
