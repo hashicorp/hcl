@@ -160,3 +160,26 @@ func TestDecode_structure(t *testing.T) {
 		t.Fatalf("Actual: %#v\n\nExpected: %#v", actual, expected)
 	}
 }
+
+func TestDecode_structurePtr(t *testing.T) {
+	type V struct {
+		Key int
+		Foo string
+	}
+
+	var actual *V
+
+	err := Decode(&actual, testReadFile(t, "flat.hcl"))
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	expected := &V{
+		Key: 7,
+		Foo: "bar",
+	}
+
+	if !reflect.DeepEqual(actual, expected) {
+		t.Fatalf("Actual: %#v\n\nExpected: %#v", actual, expected)
+	}
+}

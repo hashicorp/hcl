@@ -70,3 +70,25 @@ func TestObjectNode_accept(t *testing.T) {
 		t.Fatalf("bad: %#v", v.Nodes)
 	}
 }
+
+func TestObjectNodeGet(t *testing.T) {
+	n := ObjectNode{
+		K: "foo",
+		Elem: []KeyedNode{
+			AssignmentNode{K: "foo", Value: LiteralNode{Value: "foo"}},
+			AssignmentNode{K: "bar", Value: LiteralNode{Value: "bar"}},
+			AssignmentNode{K: "foo", Value: LiteralNode{Value: "baz"}},
+		},
+	}
+
+	expected := []Node{
+		LiteralNode{Value: "foo"},
+		LiteralNode{Value: "baz"},
+	}
+
+	actual := n.Get("foo")
+
+	if !reflect.DeepEqual(actual, expected) {
+		t.Fatalf("bad: %#v", actual)
+	}
+}

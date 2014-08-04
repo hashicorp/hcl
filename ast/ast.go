@@ -69,11 +69,18 @@ func (n ObjectNode) Accept(v Visitor) {
 
 // Get returns all the elements of this object with the given key.
 // This is a case-sensitive search.
-func (n ObjectNode) Get(k string) []KeyedNode {
-	result := make([]KeyedNode, 0, 1)
+func (n ObjectNode) Get(k string) []Node {
+	result := make([]Node, 0, 1)
 	for _, elem := range n.Elem {
-		if elem.Key() == k {
-			result = append(result, elem)
+		if elem.Key() != k {
+			continue
+		}
+
+		switch n := elem.(type) {
+		case AssignmentNode:
+			result = append(result, n.Value)
+		default:
+			panic("unknown type")
 		}
 	}
 
