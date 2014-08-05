@@ -13,6 +13,7 @@ import (
 %}
 
 %union {
+	b        bool
 	item     ast.Node
 	list     []ast.Node
 	alist    []ast.AssignmentNode
@@ -32,6 +33,7 @@ import (
 %type   <obj> object
 %type   <str> blockId frac
 
+%token  <b> BOOL
 %token  <num> NUMBER
 %token  <str> COMMA IDENTIFIER EQUAL NEWLINE STRING MINUS
 %token  <str> LEFTBRACE RIGHTBRACE LEFTBRACKET RIGHTBRACKET PERIOD
@@ -73,6 +75,16 @@ objectitem:
 		$$ = ast.AssignmentNode{
 			K:     $1,
 			Value: $3,
+		}
+	}
+|	IDENTIFIER EQUAL BOOL
+	{
+		$$ = ast.AssignmentNode{
+			K:     $1,
+			Value: ast.LiteralNode{
+				Type:  ast.ValueTypeBool,
+				Value: $3,
+			},
 		}
 	}
 |	IDENTIFIER EQUAL STRING

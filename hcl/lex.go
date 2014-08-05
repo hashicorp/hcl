@@ -157,6 +157,16 @@ func (x *hclLex) lexId(yylval *hclSymType) int {
 	}
 
 	yylval.str = b.String()
+
+	switch yylval.str {
+	case "true":
+		yylval.b = true
+		return BOOL
+	case "false":
+		yylval.b = false
+		return BOOL
+	}
+
 	return IDENTIFIER
 }
 
