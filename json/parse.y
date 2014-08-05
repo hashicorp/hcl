@@ -61,9 +61,9 @@ members:
 	{
 		$$ = []ast.AssignmentNode{$1}
 	}
-|	pair COMMA members
+|	members COMMA pair
 	{
-		$$ = append($3, $1)
+		$$ = append($1, $3)
 	}
 
 pair:
@@ -132,9 +132,9 @@ elements:
 	{
 		$$ = []ast.Node{$1}
 	}
-|	value COMMA elements
+|	elements COMMA value
 	{
-		$$ = append($3, $1)
+		$$ = append($1, $3)
 	}
 
 number:

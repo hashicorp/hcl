@@ -52,9 +52,9 @@ objectlist:
 	{
 		$$ = []ast.AssignmentNode{$1}
 	}
-|	objectitem objectlist
+|	objectlist objectitem
 	{
-		$$ = append($2, $1)
+		$$ = append($1, $2)
 	}
 
 object:
