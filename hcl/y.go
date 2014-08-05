@@ -16,10 +16,11 @@ type hclSymType struct {
 	yys      int
 	b        bool
 	item     ast.Node
-	list     []ast.Node
+	list     ast.ListNode
 	alist    []ast.AssignmentNode
 	aitem    ast.AssignmentNode
 	listitem ast.Node
+	nodes    []ast.Node
 	num      int
 	obj      ast.ObjectNode
 	str      string
@@ -60,7 +61,7 @@ const hclEofCode = 1
 const hclErrCode = 2
 const hclMaxDepth = 200
 
-//line parse.y:212
+//line parse.y:226
 
 //line yacctab:1
 var hclExca = []int{
@@ -69,59 +70,60 @@ var hclExca = []int{
 	-2, 0,
 }
 
-const hclNprod = 25
+const hclNprod = 27
 const hclPrivate = 57344
 
 var hclTokenNames []string
 var hclStates []string
 
-const hclLast = 49
+const hclLast = 52
 
 var hclAct = []int{
 
-	25, 3, 19, 29, 8, 15, 21, 2, 33, 34,
-	1, 16, 20, 12, 9, 18, 4, 32, 4, 7,
-	22, 7, 31, 30, 8, 4, 10, 13, 7, 21,
-	7, 23, 12, 21, 35, 20, 17, 26, 27, 20,
-	28, 5, 6, 24, 0, 0, 0, 14, 11,
+	29, 3, 19, 26, 8, 15, 22, 9, 36, 34,
+	2, 16, 21, 12, 22, 20, 22, 35, 1, 31,
+	21, 31, 21, 23, 32, 8, 28, 4, 4, 4,
+	7, 7, 7, 33, 24, 13, 22, 37, 7, 10,
+	12, 30, 21, 5, 25, 6, 27, 18, 0, 17,
+	11, 14,
 }
 var hclPact = []int{
 
-	11, -1000, 11, -1000, 6, -1000, 20, -1000, -1000, 1,
-	-1000, -1000, 18, -1000, -1000, -1000, -1000, -1000, 28, -13,
-	24, -1000, 9, -1000, 2, -1000, -1000, -1000, -1000, 4,
-	-1000, -1000, -1000, 28, -1000, -1000,
+	22, -1000, 22, -1000, -1, -1000, 28, -1000, -1000, 1,
+	-1000, -1000, 21, -1000, -1000, -1000, -1000, -1000, -1000, -13,
+	11, 31, -1000, 20, -1000, -1000, 4, 2, -1000, -1000,
+	-1000, -1000, -1000, -1000, -1000, -1000, 9, -1000,
 }
 var hclPgo = []int{
 
-	0, 37, 43, 7, 1, 41, 0, 2, 26, 42,
-	40, 10,
+	0, 41, 47, 10, 1, 43, 0, 46, 2, 39,
+	45, 44, 18,
 }
 var hclR1 = []int{
 
-	0, 11, 3, 3, 8, 8, 4, 4, 4, 4,
-	4, 4, 5, 5, 9, 9, 2, 2, 6, 6,
-	1, 1, 7, 7, 10,
+	0, 12, 3, 3, 9, 9, 4, 4, 4, 4,
+	4, 4, 5, 5, 10, 10, 2, 2, 7, 7,
+	6, 6, 1, 1, 8, 8, 11,
 }
 var hclR2 = []int{
 
 	0, 1, 1, 2, 3, 2, 3, 3, 3, 3,
-	5, 1, 2, 2, 1, 1, 1, 3, 1, 1,
-	1, 2, 2, 1, 2,
+	3, 1, 2, 2, 1, 1, 3, 2, 1, 3,
+	1, 1, 1, 2, 2, 1, 2,
 }
 var hclChk = []int{
 
-	-1000, -11, -3, -4, 7, -5, -9, 10, -4, 8,
-	-8, -5, 12, 7, -1, 4, 10, -8, 14, -7,
-	11, 5, -3, 13, -2, -6, -1, 10, -10, 16,
-	-7, 13, 15, 6, 5, -6,
+	-1000, -12, -3, -4, 7, -5, -10, 10, -4, 8,
+	-9, -5, 12, 7, -1, 4, 10, -9, -2, -8,
+	14, 11, 5, -3, 13, -11, 16, -7, 15, -6,
+	-1, 10, -8, 13, 5, 15, 6, -6,
 }
 var hclDef = []int{
 
 	0, -2, 1, 2, 14, 11, 0, 15, 3, 0,
-	12, 13, 0, 14, 6, 7, 8, 9, 0, 20,
-	0, 23, 0, 5, 0, 16, 18, 19, 21, 0,
-	22, 4, 10, 0, 24, 17,
+	12, 13, 0, 14, 6, 7, 8, 9, 10, 22,
+	0, 0, 25, 0, 5, 23, 0, 0, 17, 18,
+	20, 21, 24, 4, 26, 16, 0, 19,
 }
 var hclTok1 = []int{
 
@@ -362,7 +364,7 @@ hcldefault:
 	switch hclnt {
 
 	case 1:
-		//line parse.y:45
+		//line parse.y:47
 		{
 			hclResult = &ast.ObjectNode{
 				K:    "",
@@ -370,27 +372,27 @@ hcldefault:
 			}
 		}
 	case 2:
-		//line parse.y:54
+		//line parse.y:56
 		{
 			hclVAL.alist = []ast.AssignmentNode{hclS[hclpt-0].aitem}
 		}
 	case 3:
-		//line parse.y:58
+		//line parse.y:60
 		{
 			hclVAL.alist = append(hclS[hclpt-1].alist, hclS[hclpt-0].aitem)
 		}
 	case 4:
-		//line parse.y:64
+		//line parse.y:66
 		{
 			hclVAL.obj = ast.ObjectNode{Elem: hclS[hclpt-1].alist}
 		}
 	case 5:
-		//line parse.y:68
+		//line parse.y:70
 		{
 			hclVAL.obj = ast.ObjectNode{}
 		}
 	case 6:
-		//line parse.y:74
+		//line parse.y:76
 		{
 			hclVAL.aitem = ast.AssignmentNode{
 				K:     hclS[hclpt-2].str,
@@ -398,7 +400,7 @@ hcldefault:
 			}
 		}
 	case 7:
-		//line parse.y:81
+		//line parse.y:83
 		{
 			hclVAL.aitem = ast.AssignmentNode{
 				K: hclS[hclpt-2].str,
@@ -409,7 +411,7 @@ hcldefault:
 			}
 		}
 	case 8:
-		//line parse.y:91
+		//line parse.y:93
 		{
 			hclVAL.aitem = ast.AssignmentNode{
 				K: hclS[hclpt-2].str,
@@ -420,7 +422,7 @@ hcldefault:
 			}
 		}
 	case 9:
-		//line parse.y:101
+		//line parse.y:103
 		{
 			hclVAL.aitem = ast.AssignmentNode{
 				K:     hclS[hclpt-2].str,
@@ -428,20 +430,20 @@ hcldefault:
 			}
 		}
 	case 10:
-		//line parse.y:108
+		//line parse.y:110
 		{
 			hclVAL.aitem = ast.AssignmentNode{
-				K:     hclS[hclpt-4].str,
-				Value: ast.ListNode{Elem: hclS[hclpt-1].list},
+				K:     hclS[hclpt-2].str,
+				Value: hclS[hclpt-0].list,
 			}
 		}
 	case 11:
-		//line parse.y:115
+		//line parse.y:117
 		{
 			hclVAL.aitem = hclS[hclpt-0].aitem
 		}
 	case 12:
-		//line parse.y:121
+		//line parse.y:123
 		{
 			hclS[hclpt-0].obj.K = hclS[hclpt-1].str
 			hclVAL.aitem = ast.AssignmentNode{
@@ -450,7 +452,7 @@ hcldefault:
 			}
 		}
 	case 13:
-		//line parse.y:129
+		//line parse.y:131
 		{
 			obj := ast.ObjectNode{
 				K:    hclS[hclpt-0].aitem.Key(),
@@ -463,48 +465,60 @@ hcldefault:
 			}
 		}
 	case 14:
-		//line parse.y:143
+		//line parse.y:145
 		{
 			hclVAL.str = hclS[hclpt-0].str
 		}
 	case 15:
-		//line parse.y:147
+		//line parse.y:149
 		{
 			hclVAL.str = hclS[hclpt-0].str
 		}
 	case 16:
-		//line parse.y:153
+		//line parse.y:155
 		{
-			hclVAL.list = []ast.Node{hclS[hclpt-0].listitem}
+			hclVAL.list = ast.ListNode{
+				Elem: hclS[hclpt-1].nodes,
+			}
 		}
 	case 17:
-		//line parse.y:157
+		//line parse.y:161
 		{
-			hclVAL.list = append(hclS[hclpt-2].list, hclS[hclpt-0].listitem)
+			hclVAL.list = ast.ListNode{}
 		}
 	case 18:
-		//line parse.y:163
+		//line parse.y:167
+		{
+			hclVAL.nodes = []ast.Node{hclS[hclpt-0].listitem}
+		}
+	case 19:
+		//line parse.y:171
+		{
+			hclVAL.nodes = append(hclS[hclpt-2].nodes, hclS[hclpt-0].listitem)
+		}
+	case 20:
+		//line parse.y:177
 		{
 			hclVAL.listitem = hclS[hclpt-0].item
 		}
-	case 19:
-		//line parse.y:167
+	case 21:
+		//line parse.y:181
 		{
 			hclVAL.listitem = ast.LiteralNode{
 				Type:  ast.ValueTypeString,
 				Value: hclS[hclpt-0].str,
 			}
 		}
-	case 20:
-		//line parse.y:176
+	case 22:
+		//line parse.y:190
 		{
 			hclVAL.item = ast.LiteralNode{
 				Type:  ast.ValueTypeInt,
 				Value: hclS[hclpt-0].num,
 			}
 		}
-	case 21:
-		//line parse.y:183
+	case 23:
+		//line parse.y:197
 		{
 			fs := fmt.Sprintf("%d.%s", hclS[hclpt-1].num, hclS[hclpt-0].str)
 			f, err := strconv.ParseFloat(fs, 64)
@@ -517,18 +531,18 @@ hcldefault:
 				Value: f,
 			}
 		}
-	case 22:
-		//line parse.y:198
+	case 24:
+		//line parse.y:212
 		{
 			hclVAL.num = hclS[hclpt-0].num * -1
 		}
-	case 23:
-		//line parse.y:202
+	case 25:
+		//line parse.y:216
 		{
 			hclVAL.num = hclS[hclpt-0].num
 		}
-	case 24:
-		//line parse.y:208
+	case 26:
+		//line parse.y:222
 		{
 			hclVAL.str = strconv.FormatInt(int64(hclS[hclpt-0].num), 10)
 		}

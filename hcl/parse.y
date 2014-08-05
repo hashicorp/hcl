@@ -15,10 +15,11 @@ import (
 %union {
 	b        bool
 	item     ast.Node
-	list     []ast.Node
+	list     ast.ListNode
 	alist    []ast.AssignmentNode
 	aitem    ast.AssignmentNode
 	listitem ast.Node
+	nodes    []ast.Node
 	num      int
 	obj      ast.ObjectNode
 	str      string
@@ -29,6 +30,7 @@ import (
 %type   <alist> objectlist
 %type   <aitem> objectitem block
 %type   <listitem> listitem
+%type   <nodes> listitems
 %type   <num> int
 %type   <obj> object
 %type   <str> blockId frac
@@ -104,11 +106,11 @@ objectitem:
 			Value: $3,
 		}
 	}
-|	IDENTIFIER EQUAL LEFTBRACKET list RIGHTBRACKET
+|	IDENTIFIER EQUAL list
 	{
 		$$ = ast.AssignmentNode{
 			K:     $1,
-			Value: ast.ListNode{Elem: $4},
+			Value: $3,
 		}
 	}
 |	block
@@ -149,11 +151,23 @@ blockId:
 	}
 
 list:
+	LEFTBRACKET listitems RIGHTBRACKET
+	{
+		$$ = ast.ListNode{
+			Elem: $2,
+		}
+	}
+|	LEFTBRACKET RIGHTBRACKET
+	{
+		$$ = ast.ListNode{}
+	}
+
+listitems:
 	listitem
 	{
 		$$ = []ast.Node{$1}
 	}
-|	list COMMA listitem
+|	listitems COMMA listitem
 	{
 		$$ = append($1, $3)
 	}
