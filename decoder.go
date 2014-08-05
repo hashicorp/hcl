@@ -51,6 +51,8 @@ func (d *decoder) decode(name string, n ast.Node, result reflect.Value) error {
 	}
 
 	switch k.Kind() {
+	case reflect.Bool:
+		return d.decodeBool(name, n, result)
 	case reflect.Int:
 		return d.decodeInt(name, n, result)
 	case reflect.Interface:
@@ -69,6 +71,22 @@ func (d *decoder) decode(name string, n ast.Node, result reflect.Value) error {
 	default:
 		return fmt.Errorf(
 			"%s: unknown kind to decode into: %s", name, result.Kind())
+	}
+
+	return nil
+}
+
+func (d *decoder) decodeBool(name string, raw ast.Node, result reflect.Value) error {
+	n, ok := raw.(ast.LiteralNode)
+	if !ok {
+		return fmt.Errorf("%s: not a literal type", name)
+	}
+
+	switch n.Type {
+	case ast.ValueTypeBool:
+		result.Set(reflect.ValueOf(n.Value.(bool)))
+	default:
+		return fmt.Errorf("%s: unknown type %s", name, n.Type)
 	}
 
 	return nil
@@ -129,6 +147,9 @@ func (d *decoder) decodeInterface(name string, raw ast.Node, result reflect.Valu
 		set = reflect.ValueOf(result)
 	case ast.LiteralNode:
 		switch n.Type {
+		case ast.ValueTypeBool:
+			var result bool
+			set = reflect.Indirect(reflect.New(reflect.TypeOf(result)))
 		case ast.ValueTypeInt:
 			var result int
 			set = reflect.Indirect(reflect.New(reflect.TypeOf(result)))
