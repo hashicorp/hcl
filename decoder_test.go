@@ -188,9 +188,11 @@ func TestDecode_structureArray(t *testing.T) {
 	// This test is extracted from a failure in Consul (consul.io),
 	// hence the interesting structure naming.
 
+	type KeyPolicyType string
+
 	type KeyPolicy struct {
 		Prefix string `hcl:",key"`
-		Policy string
+		Policy KeyPolicyType
 	}
 
 	type Policy struct {

@@ -323,9 +323,9 @@ func (d *decoder) decodeString(name string, raw ast.Node, result reflect.Value) 
 	switch n.Type {
 	case ast.ValueTypeInt:
 		result.Set(reflect.ValueOf(
-			strconv.FormatInt(int64(n.Value.(int)), 10)))
+			strconv.FormatInt(int64(n.Value.(int)), 10)).Convert(result.Type()))
 	case ast.ValueTypeString:
-		result.Set(reflect.ValueOf(n.Value.(string)))
+		result.Set(reflect.ValueOf(n.Value.(string)).Convert(result.Type()))
 	default:
 		return fmt.Errorf("%s: unknown type to string: %s", name, n.Type)
 	}
