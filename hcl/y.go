@@ -455,7 +455,7 @@ hcldefault:
 		//line parse.y:131
 		{
 			obj := ast.ObjectNode{
-				K:    hclS[hclpt-0].aitem.Key(),
+				K:    hclS[hclpt-1].str,
 				Elem: []ast.AssignmentNode{hclS[hclpt-0].aitem},
 			}
 

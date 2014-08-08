@@ -130,7 +130,7 @@ block:
 |	blockId block
 	{
 		obj := ast.ObjectNode{
-			K:    $2.Key(),
+			K:    $1,
 			Elem: []ast.AssignmentNode{$2},
 		}
 

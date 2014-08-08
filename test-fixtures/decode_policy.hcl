@@ -11,5 +11,5 @@ key "foo/bar/" {
 }
 
 key "foo/bar/baz" {
-	polizy = "deny"
+	policy = "deny"
 }
