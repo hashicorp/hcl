@@ -197,13 +197,6 @@ func TestDecode_structureArray(t *testing.T) {
 		Keys []KeyPolicy `hcl:"key"`
 	}
 
-	var actual Policy
-
-	err := Decode(&actual, testReadFile(t, "decode_policy.hcl"))
-	if err != nil {
-		t.Fatalf("err: %s", err)
-	}
-
 	expected := Policy{
 		Keys: []KeyPolicy{
 			KeyPolicy{
@@ -225,7 +218,21 @@ func TestDecode_structureArray(t *testing.T) {
 		},
 	}
 
-	if !reflect.DeepEqual(actual, expected) {
-		t.Fatalf("Actual: %#v\n\nExpected: %#v", actual, expected)
+	files := []string{
+		"decode_policy.hcl",
+		"decode_policy.json",
+	}
+
+	for _, f := range files {
+		var actual Policy
+
+		err := Decode(&actual, testReadFile(t, f))
+		if err != nil {
+			t.Fatalf("err: %s", err)
+		}
+
+		if !reflect.DeepEqual(actual, expected) {
+			t.Fatalf("Input: %s\n\nActual: %#v\n\nExpected: %#v", f, actual, expected)
+		}
 	}
 }

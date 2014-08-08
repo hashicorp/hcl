@@ -451,8 +451,15 @@ func (d *decoder) decodeStruct(name string, raw ast.Node, result reflect.Value) 
 		// Create the field name and decode
 		fieldName = fmt.Sprintf("%s.%s", name, fieldName)
 		for _, elem := range elems {
+			// If it is a sub-object, go through all the fields
 			if obj, ok := elem.(ast.ObjectNode); ok {
-				elem = obj.Elem[0].Value
+				for _, elem := range obj.Elem {
+					if err := d.decode(fieldName, elem.Value, field); err != nil {
+						return err
+					}
+				}
+
+				continue
 			}
 
 			if err := d.decode(fieldName, elem, field); err != nil {

@@ -69,9 +69,15 @@ members:
 pair:
 	STRING COLON value
 	{
+		value := $3
+		if obj, ok := value.(ast.ObjectNode); ok {
+			obj.K = $1
+			value = obj
+		}
+
 		$$ = ast.AssignmentNode{
 			K:     $1,
-			Value: $3,
+			Value: value,
 		}
 	}
 

@@ -65,7 +65,7 @@ const jsonEofCode = 1
 const jsonErrCode = 2
 const jsonMaxDepth = 200
 
-//line parse.y:178
+//line parse.y:184
 
 //line yacctab:1
 var jsonExca = []int{
@@ -395,13 +395,19 @@ jsondefault:
 	case 6:
 		//line parse.y:71
 		{
+			value := jsonS[jsonpt-0].item
+			if obj, ok := value.(ast.ObjectNode); ok {
+				obj.K = jsonS[jsonpt-2].str
+				value = obj
+			}
+
 			jsonVAL.assign = ast.AssignmentNode{
 				K:     jsonS[jsonpt-2].str,
-				Value: jsonS[jsonpt-0].item,
+				Value: value,
 			}
 		}
 	case 7:
-		//line parse.y:80
+		//line parse.y:86
 		{
 			jsonVAL.item = ast.LiteralNode{
 				Type:  ast.ValueTypeString,
@@ -409,22 +415,22 @@ jsondefault:
 			}
 		}
 	case 8:
-		//line parse.y:87
+		//line parse.y:93
 		{
 			jsonVAL.item = jsonS[jsonpt-0].item
 		}
 	case 9:
-		//line parse.y:91
+		//line parse.y:97
 		{
 			jsonVAL.item = jsonS[jsonpt-0].obj
 		}
 	case 10:
-		//line parse.y:95
+		//line parse.y:101
 		{
 			jsonVAL.item = jsonS[jsonpt-0].array
 		}
 	case 11:
-		//line parse.y:99
+		//line parse.y:105
 		{
 			jsonVAL.item = ast.LiteralNode{
 				Type:  ast.ValueTypeBool,
@@ -432,7 +438,7 @@ jsondefault:
 			}
 		}
 	case 12:
-		//line parse.y:106
+		//line parse.y:112
 		{
 			jsonVAL.item = ast.LiteralNode{
 				Type:  ast.ValueTypeBool,
@@ -440,7 +446,7 @@ jsondefault:
 			}
 		}
 	case 13:
-		//line parse.y:113
+		//line parse.y:119
 		{
 			jsonVAL.item = ast.LiteralNode{
 				Type:  ast.ValueTypeNil,
@@ -448,27 +454,27 @@ jsondefault:
 			}
 		}
 	case 14:
-		//line parse.y:122
+		//line parse.y:128
 		{
 			jsonVAL.array = ast.ListNode{}
 		}
 	case 15:
-		//line parse.y:126
+		//line parse.y:132
 		{
 			jsonVAL.array = ast.ListNode{Elem: jsonS[jsonpt-1].list}
 		}
 	case 16:
-		//line parse.y:132
+		//line parse.y:138
 		{
 			jsonVAL.list = []ast.Node{jsonS[jsonpt-0].item}
 		}
 	case 17:
-		//line parse.y:136
+		//line parse.y:142
 		{
 			jsonVAL.list = append(jsonS[jsonpt-2].list, jsonS[jsonpt-0].item)
 		}
 	case 18:
-		//line parse.y:142
+		//line parse.y:148
 		{
 			jsonVAL.item = ast.LiteralNode{
 				Type:  ast.ValueTypeInt,
@@ -476,7 +482,7 @@ jsondefault:
 			}
 		}
 	case 19:
-		//line parse.y:149
+		//line parse.y:155
 		{
 			fs := fmt.Sprintf("%d.%s", jsonS[jsonpt-1].num, jsonS[jsonpt-0].str)
 			f, err := strconv.ParseFloat(fs, 64)
@@ -490,17 +496,17 @@ jsondefault:
 			}
 		}
 	case 20:
-		//line parse.y:164
+		//line parse.y:170
 		{
 			jsonVAL.num = jsonS[jsonpt-0].num * -1
 		}
 	case 21:
-		//line parse.y:168
+		//line parse.y:174
 		{
 			jsonVAL.num = jsonS[jsonpt-0].num
 		}
 	case 22:
-		//line parse.y:174
+		//line parse.y:180
 		{
 			jsonVAL.str = strconv.FormatInt(int64(jsonS[jsonpt-0].num), 10)
 		}
