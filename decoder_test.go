@@ -183,3 +183,49 @@ func TestDecode_structurePtr(t *testing.T) {
 		t.Fatalf("Actual: %#v\n\nExpected: %#v", actual, expected)
 	}
 }
+
+func TestDecode_structureArray(t *testing.T) {
+	// This test is extracted from a failure in Consul (consul.io),
+	// hence the interesting structure naming.
+
+	type KeyPolicy struct {
+		Prefix string `hcl:",key"`
+		Policy string
+	}
+
+	type Policy struct {
+		Keys []KeyPolicy `hcl:"key"`
+	}
+
+	var actual Policy
+
+	err := Decode(&actual, testReadFile(t, "decode_policy.hcl"))
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	expected := Policy{
+		Keys: []KeyPolicy{
+			KeyPolicy{
+				Prefix: "",
+				Policy: "read",
+			},
+			KeyPolicy{
+				Prefix: "foo/",
+				Policy: "write",
+			},
+			KeyPolicy{
+				Prefix: "foo/bar/",
+				Policy: "read",
+			},
+			KeyPolicy{
+				Prefix: "foo/bar/baz",
+				Policy: "deny",
+			},
+		},
+	}
+
+	if !reflect.DeepEqual(actual, expected) {
+		t.Fatalf("Actual: %#v\n\nExpected: %#v", actual, expected)
+	}
+}

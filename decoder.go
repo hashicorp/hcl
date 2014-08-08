@@ -277,7 +277,8 @@ func (d *decoder) decodePtr(name string, raw ast.Node, result reflect.Value) err
 func (d *decoder) decodeSlice(name string, raw ast.Node, result reflect.Value) error {
 	n, ok := raw.(ast.ListNode)
 	if !ok {
-		return fmt.Errorf("%s: not a list type", name)
+		// If it isn't a list, we turn it into one
+		n = ast.ListNode{Elem: []ast.Node{raw}}
 	}
 
 	// If we have an interface, then we can address the interface,
