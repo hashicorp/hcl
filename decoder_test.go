@@ -238,3 +238,45 @@ func TestDecode_structureArray(t *testing.T) {
 		}
 	}
 }
+
+func TestDecode_structureMap(t *testing.T) {
+	// This test is extracted from a failure in Terraform (terraform.io),
+	// hence the interesting structure naming.
+
+	type hclVariable struct {
+		Default     interface{}
+		Description string
+		Fields      []string `hcl:",decodedFields"`
+	}
+
+	type rawConfig struct {
+		Variable map[string]hclVariable
+	}
+
+	expected := rawConfig{
+		Variable: map[string]hclVariable{
+			"foo": hclVariable{
+				Default:     "bar",
+				Description: "bar",
+			},
+		},
+	}
+
+	files := []string{
+		//"decode_tf_variable.hcl",
+		"decode_tf_variable.json",
+	}
+
+	for _, f := range files {
+		var actual rawConfig
+
+		err := Decode(&actual, testReadFile(t, f))
+		if err != nil {
+			t.Fatalf("err: %s", err)
+		}
+
+		if !reflect.DeepEqual(actual, expected) {
+			t.Fatalf("Input: %s\n\nActual: %#v\n\nExpected: %#v", f, actual, expected)
+		}
+	}
+}
