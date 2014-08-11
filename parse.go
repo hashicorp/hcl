@@ -3,15 +3,14 @@ package hcl
 import (
 	"fmt"
 
-	"github.com/hashicorp/hcl/ast"
 	"github.com/hashicorp/hcl/hcl"
 	"github.com/hashicorp/hcl/json"
 )
 
-// Parse parses the given input and returns the root of the AST.
+// Parse parses the given input and returns the root object.
 //
 // The input format can be either HCL or JSON.
-func Parse(input string) (*ast.ObjectNode, error) {
+func Parse(input string) (*hcl.Object, error) {
 	switch lexMode(input) {
 	case lexModeHcl:
 		return hcl.Parse(input)

@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/hashicorp/hcl/ast"
+	"github.com/hashicorp/hcl/hcl"
 )
 
 // This is the tag to use with structures to have settings for HCL
@@ -20,19 +20,19 @@ func Decode(out interface{}, in string) error {
 		return err
 	}
 
-	return DecodeAST(out, obj)
+	return DecodeObject(out, obj)
 }
 
-// DecodeAST is a lower-level version of Decode. It decodes a
-// raw AST into the given output.
-func DecodeAST(out interface{}, n ast.Node) error {
+// DecodeObject is a lower-level version of Decode. It decodes a
+// raw Object into the given output.
+func DecodeObject(out interface{}, n *hcl.Object) error {
 	var d decoder
 	return d.decode("root", n, reflect.ValueOf(out).Elem())
 }
 
 type decoder struct{}
 
-func (d *decoder) decode(name string, n ast.Node, result reflect.Value) error {
+func (d *decoder) decode(name string, o *hcl.Object, result reflect.Value) error {
 	k := result
 
 	// If we have an interface with a valid value, we use that
@@ -44,30 +44,24 @@ func (d *decoder) decode(name string, n ast.Node, result reflect.Value) error {
 		}
 	}
 
-	// If we have a pointer, unpointer it
-	switch rn := n.(type) {
-	case *ast.ObjectNode:
-		n = *rn
-	}
-
 	switch k.Kind() {
 	case reflect.Bool:
-		return d.decodeBool(name, n, result)
+		return d.decodeBool(name, o, result)
 	case reflect.Int:
-		return d.decodeInt(name, n, result)
+		return d.decodeInt(name, o, result)
 	case reflect.Interface:
 		// When we see an interface, we make our own thing
-		return d.decodeInterface(name, n, result)
+		return d.decodeInterface(name, o, result)
 	case reflect.Map:
-		return d.decodeMap(name, n, result)
+		return d.decodeMap(name, o, result)
 	case reflect.Ptr:
-		return d.decodePtr(name, n, result)
+		return d.decodePtr(name, o, result)
 	case reflect.Slice:
-		return d.decodeSlice(name, n, result)
+		return d.decodeSlice(name, o, result)
 	case reflect.String:
-		return d.decodeString(name, n, result)
+		return d.decodeString(name, o, result)
 	case reflect.Struct:
-		return d.decodeStruct(name, n, result)
+		return d.decodeStruct(name, o, result)
 	default:
 		return fmt.Errorf(
 			"%s: unknown kind to decode into: %s", name, result.Kind())
@@ -76,44 +70,34 @@ func (d *decoder) decode(name string, n ast.Node, result reflect.Value) error {
 	return nil
 }
 
-func (d *decoder) decodeBool(name string, raw ast.Node, result reflect.Value) error {
-	n, ok := raw.(ast.LiteralNode)
-	if !ok {
-		return fmt.Errorf("%s: not a literal type", name)
-	}
-
-	switch n.Type {
-	case ast.ValueTypeBool:
-		result.Set(reflect.ValueOf(n.Value.(bool)))
+func (d *decoder) decodeBool(name string, o *hcl.Object, result reflect.Value) error {
+	switch o.Type {
+	case hcl.ValueTypeBool:
+		result.Set(reflect.ValueOf(o.Value.(bool)))
 	default:
-		return fmt.Errorf("%s: unknown type %s", name, n.Type)
+		return fmt.Errorf("%s: unknown type %s", name, o.Type)
 	}
 
 	return nil
 }
 
-func (d *decoder) decodeInt(name string, raw ast.Node, result reflect.Value) error {
-	n, ok := raw.(ast.LiteralNode)
-	if !ok {
-		return fmt.Errorf("%s: not a literal type", name)
-	}
-
-	switch n.Type {
-	case ast.ValueTypeInt:
-		result.Set(reflect.ValueOf(n.Value.(int)))
+func (d *decoder) decodeInt(name string, o *hcl.Object, result reflect.Value) error {
+	switch o.Type {
+	case hcl.ValueTypeInt:
+		result.Set(reflect.ValueOf(o.Value.(int)))
 	default:
-		return fmt.Errorf("%s: unknown type %s", name, n.Type)
+		return fmt.Errorf("%s: unknown type %s", name, o.Type)
 	}
 
 	return nil
 }
 
-func (d *decoder) decodeInterface(name string, raw ast.Node, result reflect.Value) error {
+func (d *decoder) decodeInterface(name string, o *hcl.Object, result reflect.Value) error {
 	var set reflect.Value
 	redecode := true
 
-	switch n := raw.(type) {
-	case ast.ObjectNode:
+	switch o.Type {
+	case hcl.ValueTypeObject:
 		var temp map[string]interface{}
 		tempVal := reflect.ValueOf(temp)
 		result := reflect.MakeMap(
@@ -122,7 +106,7 @@ func (d *decoder) decodeInterface(name string, raw ast.Node, result reflect.Valu
 				tempVal.Type().Elem()))
 
 		set = result
-	case ast.ListNode:
+	case hcl.ValueTypeList:
 		/*
 			var temp []interface{}
 			tempVal := reflect.ValueOf(temp)
@@ -131,9 +115,10 @@ func (d *decoder) decodeInterface(name string, raw ast.Node, result reflect.Valu
 			set = result
 		*/
 		redecode = false
-		result := make([]interface{}, 0, len(n.Elem))
+		list := o.Value.([]*hcl.Object)
+		result := make([]interface{}, 0, len(list))
 
-		for _, elem := range n.Elem {
+		for _, elem := range list {
 			raw := new(interface{})
 			err := d.decode(
 				name, elem, reflect.Indirect(reflect.ValueOf(raw)))
@@ -145,25 +130,18 @@ func (d *decoder) decodeInterface(name string, raw ast.Node, result reflect.Valu
 		}
 
 		set = reflect.ValueOf(result)
-	case ast.LiteralNode:
-		switch n.Type {
-		case ast.ValueTypeBool:
-			var result bool
-			set = reflect.Indirect(reflect.New(reflect.TypeOf(result)))
-		case ast.ValueTypeInt:
-			var result int
-			set = reflect.Indirect(reflect.New(reflect.TypeOf(result)))
-		case ast.ValueTypeString:
-			set = reflect.Indirect(reflect.New(reflect.TypeOf("")))
-		default:
-			return fmt.Errorf(
-				"%s: unknown literal type: %s",
-				name, n.Type)
-		}
+	case hcl.ValueTypeBool:
+		var result bool
+		set = reflect.Indirect(reflect.New(reflect.TypeOf(result)))
+	case hcl.ValueTypeInt:
+		var result int
+		set = reflect.Indirect(reflect.New(reflect.TypeOf(result)))
+	case hcl.ValueTypeString:
+		set = reflect.Indirect(reflect.New(reflect.TypeOf("")))
 	default:
 		return fmt.Errorf(
 			"%s: cannot decode into interface: %T",
-			name, raw)
+			name, o)
 	}
 
 	// Set the result to what its supposed to be, then reset
@@ -173,7 +151,7 @@ func (d *decoder) decodeInterface(name string, raw ast.Node, result reflect.Valu
 	if redecode {
 		// Revisit the node so that we can use the newly instantiated
 		// thing and populate it.
-		if err := d.decode(name, raw, result); err != nil {
+		if err := d.decode(name, o, result); err != nil {
 			return err
 		}
 	}
@@ -181,23 +159,9 @@ func (d *decoder) decodeInterface(name string, raw ast.Node, result reflect.Valu
 	return nil
 }
 
-func (d *decoder) decodeMap(name string, raw ast.Node, result reflect.Value) error {
-	// If we have a list, then we decode each element into a map
-	if list, ok := raw.(ast.ListNode); ok {
-		for i, elem := range list.Elem {
-			fieldName := fmt.Sprintf("%s.%d", name, i)
-			err := d.decode(fieldName, elem, result)
-			if err != nil {
-				return err
-			}
-		}
-
-		return nil
-	}
-
-	obj, ok := raw.(ast.ObjectNode)
-	if !ok {
-		return fmt.Errorf("%s: not an object type (%T)", name, obj)
+func (d *decoder) decodeMap(name string, o *hcl.Object, result reflect.Value) error {
+	if o.Type != hcl.ValueTypeObject {
+		return fmt.Errorf("%s: not an object type (%s)", name, o.Type)
 	}
 
 	// If we have an interface, then we can address the interface,
@@ -223,6 +187,7 @@ func (d *decoder) decodeMap(name string, raw ast.Node, result reflect.Value) err
 	}
 
 	// Go through each element and decode it.
+	/*
 	for _, n := range obj.Elem {
 		objValue := n.Value
 
@@ -254,19 +219,20 @@ func (d *decoder) decodeMap(name string, raw ast.Node, result reflect.Value) err
 		// Set the value on the map
 		resultMap.SetMapIndex(key, val)
 	}
+	*/
 
 	// Set the final map if we can
 	set.Set(resultMap)
 	return nil
 }
 
-func (d *decoder) decodePtr(name string, raw ast.Node, result reflect.Value) error {
+func (d *decoder) decodePtr(name string, o *hcl.Object, result reflect.Value) error {
 	// Create an element of the concrete (non pointer) type and decode
 	// into that. Then set the value of the pointer to this type.
 	resultType := result.Type()
 	resultElemType := resultType.Elem()
 	val := reflect.New(resultElemType)
-	if err := d.decode(name, raw, reflect.Indirect(val)); err != nil {
+	if err := d.decode(name, o, reflect.Indirect(val)); err != nil {
 		return err
 	}
 
@@ -274,13 +240,7 @@ func (d *decoder) decodePtr(name string, raw ast.Node, result reflect.Value) err
 	return nil
 }
 
-func (d *decoder) decodeSlice(name string, raw ast.Node, result reflect.Value) error {
-	n, ok := raw.(ast.ListNode)
-	if !ok {
-		// If it isn't a list, we turn it into one
-		n = ast.ListNode{Elem: []ast.Node{raw}}
-	}
-
+func (d *decoder) decodeSlice(name string, o *hcl.Object, result reflect.Value) error {
 	// If we have an interface, then we can address the interface,
 	// but not the slice itself, so get the element but set the interface
 	set := result
@@ -297,6 +257,7 @@ func (d *decoder) decodeSlice(name string, raw ast.Node, result reflect.Value) e
 			resultSliceType, 0, 0)
 	}
 
+	/*
 	for i, elem := range n.Elem {
 		fieldName := fmt.Sprintf("%s[%d]", name, i)
 
@@ -309,48 +270,30 @@ func (d *decoder) decodeSlice(name string, raw ast.Node, result reflect.Value) e
 		// Append it onto the slice
 		result = reflect.Append(result, val)
 	}
+	*/
 
 	set.Set(result)
 	return nil
 }
 
-func (d *decoder) decodeString(name string, raw ast.Node, result reflect.Value) error {
-	n, ok := raw.(ast.LiteralNode)
-	if !ok {
-		return fmt.Errorf("%s: not a literal type", name)
-	}
-
-	switch n.Type {
-	case ast.ValueTypeInt:
+func (d *decoder) decodeString(name string, o *hcl.Object, result reflect.Value) error {
+	switch o.Type {
+	case hcl.ValueTypeInt:
 		result.Set(reflect.ValueOf(
-			strconv.FormatInt(int64(n.Value.(int)), 10)).Convert(result.Type()))
-	case ast.ValueTypeString:
-		result.Set(reflect.ValueOf(n.Value.(string)).Convert(result.Type()))
+			strconv.FormatInt(int64(o.Value.(int)), 10)).Convert(result.Type()))
+	case hcl.ValueTypeString:
+		result.Set(reflect.ValueOf(o.Value.(string)).Convert(result.Type()))
 	default:
-		return fmt.Errorf("%s: unknown type to string: %s", name, n.Type)
+		return fmt.Errorf("%s: unknown type to string: %s", name, o.Type)
 	}
 
 	return nil
 }
 
-func (d *decoder) decodeStruct(name string, raw ast.Node, result reflect.Value) error {
-	// If we have a list, then we decode each element into a map
-	if list, ok := raw.(ast.ListNode); ok {
-		for i, elem := range list.Elem {
-			fieldName := fmt.Sprintf("%s.%d", name, i)
-			err := d.decode(fieldName, elem, result)
-			if err != nil {
-				return err
-			}
-		}
-
-		return nil
-	}
-
-	obj, ok := raw.(ast.ObjectNode)
-	if !ok {
+func (d *decoder) decodeStruct(name string, o *hcl.Object, result reflect.Value) error {
+	if o.Type != hcl.ValueTypeObject {
 		return fmt.Errorf(
-			"%s: not an object type for struct (%T)", name, raw)
+			"%s: not an object type for struct (%T)", name, o)
 	}
 
 	// This slice will keep track of all the structs we'll be decoding.
@@ -401,10 +344,11 @@ func (d *decoder) decodeStruct(name string, raw ast.Node, result reflect.Value) 
 		}
 	}
 
-	usedKeys := make(map[string]struct{})
+	//usedKeys := make(map[string]struct{})
 	decodedFields := make([]string, 0, len(fields))
 	decodedFieldsVal := make([]reflect.Value, 0)
 	unusedKeysVal := make([]reflect.Value, 0)
+	/*
 	for fieldType, field := range fields {
 		if !field.IsValid() {
 			// This should never happen
@@ -427,7 +371,7 @@ func (d *decoder) decodeStruct(name string, raw ast.Node, result reflect.Value) 
 				decodedFieldsVal = append(decodedFieldsVal, field)
 				continue
 			case "key":
-				field.SetString(obj.Key())
+				field.SetString(o.Key)
 				continue
 			case "unusedKeys":
 				unusedKeysVal = append(unusedKeysVal, field)
@@ -469,6 +413,7 @@ func (d *decoder) decodeStruct(name string, raw ast.Node, result reflect.Value) 
 
 		decodedFields = append(decodedFields, fieldType.Name)
 	}
+	*/
 
 	for _, v := range decodedFieldsVal {
 		v.Set(reflect.ValueOf(decodedFields))
@@ -476,6 +421,7 @@ func (d *decoder) decodeStruct(name string, raw ast.Node, result reflect.Value) 
 
 	// If we want to know what keys are unused, compile that
 	if len(unusedKeysVal) > 0 {
+		/*
 		unusedKeys := make([]string, 0, int(obj.Len())-len(usedKeys))
 
 		for _, elem := range obj.Elem {
@@ -492,6 +438,7 @@ func (d *decoder) decodeStruct(name string, raw ast.Node, result reflect.Value) 
 		for _, v := range unusedKeysVal {
 			v.Set(reflect.ValueOf(unusedKeys))
 		}
+		*/
 	}
 
 	return nil
