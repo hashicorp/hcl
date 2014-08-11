@@ -47,7 +47,7 @@ and JSON as the interoperability layer.
 ## Syntax
 
 The complete grammar
-[can be found here](https://github.com/hashicorp/hcl/blob/master/parse.y),
+[can be found here](https://github.com/hashicorp/hcl/blob/master/hcl/parse.y),
 if you're more comfortable reading specifics, but a high-level overview
 of the syntax and grammar are listed here.
 
