@@ -187,22 +187,13 @@ func (d *decoder) decodeMap(name string, o *hcl.Object, result reflect.Value) er
 	}
 
 	// Go through each element and decode it.
-	/*
-	for _, n := range obj.Elem {
-		objValue := n.Value
-
-		// If we have an object node, expand to a list of objects
-		if _, ok := objValue.(ast.ObjectNode); ok {
-			objValue = ast.ListNode{
-				Elem: []ast.Node{objValue},
-			}
-		}
-
+	m := o.Value.(map[string]*hcl.Object)
+	for _, o := range m {
 		// Make the field name
-		fieldName := fmt.Sprintf("%s.%s", name, n.Key())
+		fieldName := fmt.Sprintf("%s.%s", name, o.Key)
 
 		// Get the key/value as reflection values
-		key := reflect.ValueOf(n.Key())
+		key := reflect.ValueOf(o.Key)
 		val := reflect.Indirect(reflect.New(resultElemType))
 
 		// If we have a pre-existing value in the map, use that
@@ -212,14 +203,13 @@ func (d *decoder) decodeMap(name string, o *hcl.Object, result reflect.Value) er
 		}
 
 		// Decode!
-		if err := d.decode(fieldName, objValue, val); err != nil {
+		if err := d.decode(fieldName, o, val); err != nil {
 			return err
 		}
 
 		// Set the value on the map
 		resultMap.SetMapIndex(key, val)
 	}
-	*/
 
 	// Set the final map if we can
 	set.Set(resultMap)

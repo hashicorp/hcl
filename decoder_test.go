@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestDecode(t *testing.T) {
+func TestDecode_interface(t *testing.T) {
 	cases := []struct {
 		File string
 		Err  bool
