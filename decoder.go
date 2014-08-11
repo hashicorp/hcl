@@ -334,11 +334,10 @@ func (d *decoder) decodeStruct(name string, o *hcl.Object, result reflect.Value)
 		}
 	}
 
-	//usedKeys := make(map[string]struct{})
+	usedKeys := make(map[string]struct{})
 	decodedFields := make([]string, 0, len(fields))
 	decodedFieldsVal := make([]reflect.Value, 0)
 	unusedKeysVal := make([]reflect.Value, 0)
-	/*
 	for fieldType, field := range fields {
 		if !field.IsValid() {
 			// This should never happen
@@ -374,8 +373,8 @@ func (d *decoder) decodeStruct(name string, o *hcl.Object, result reflect.Value)
 		}
 
 		// Find the element matching this name
-		elems := obj.Get(fieldName, true)
-		if len(elems) == 0 {
+		obj := o.Get(fieldName, true)
+		if obj == nil {
 			continue
 		}
 
@@ -384,26 +383,12 @@ func (d *decoder) decodeStruct(name string, o *hcl.Object, result reflect.Value)
 
 		// Create the field name and decode
 		fieldName = fmt.Sprintf("%s.%s", name, fieldName)
-		for _, elem := range elems {
-			// If it is a sub-object, go through all the fields
-			if obj, ok := elem.(ast.ObjectNode); ok {
-				for _, elem := range obj.Elem {
-					if err := d.decode(fieldName, elem.Value, field); err != nil {
-						return err
-					}
-				}
-
-				continue
-			}
-
-			if err := d.decode(fieldName, elem, field); err != nil {
-				return err
-			}
+		if err := d.decode(fieldName, obj, field); err != nil {
+			return err
 		}
 
 		decodedFields = append(decodedFields, fieldType.Name)
 	}
-	*/
 
 	for _, v := range decodedFieldsVal {
 		v.Set(reflect.ValueOf(decodedFields))
