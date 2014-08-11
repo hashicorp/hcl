@@ -3,7 +3,7 @@ package json
 import (
 	"sync"
 
-	"github.com/hashicorp/hcl/ast"
+	"github.com/hashicorp/hcl/hcl"
 	"github.com/hashicorp/terraform/helper/multierror"
 )
 
@@ -11,10 +11,10 @@ import (
 // be accessed directly.
 var jsonErrors []error
 var jsonLock sync.Mutex
-var jsonResult *ast.ObjectNode
+var jsonResult *hcl.Object
 
 // Parse parses the given string and returns the result.
-func Parse(v string) (*ast.ObjectNode, error) {
+func Parse(v string) (*hcl.Object, error) {
 	jsonLock.Lock()
 	defer jsonLock.Unlock()
 	jsonErrors = nil

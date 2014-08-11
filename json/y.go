@@ -8,20 +8,16 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/hashicorp/hcl/ast"
+	"github.com/hashicorp/hcl/hcl"
 )
 
 //line parse.y:15
 type jsonSymType struct {
-	yys    int
-	array  ast.ListNode
-	assign ast.AssignmentNode
-	item   ast.Node
-	klist  []ast.AssignmentNode
-	list   []ast.Node
-	num    int
-	str    string
-	obj    ast.ObjectNode
+	yys     int
+	num     int
+	str     string
+	obj     *hcl.Object
+	objlist []*hcl.Object
 }
 
 const NUMBER = 57346
@@ -65,7 +61,7 @@ const jsonEofCode = 1
 const jsonErrCode = 2
 const jsonMaxDepth = 200
 
-//line parse.y:184
+//line parse.y:173
 
 //line yacctab:1
 var jsonExca = []int{
@@ -88,7 +84,7 @@ var jsonAct = []int{
 	21, 26, 17, 18, 19, 22, 30, 23, 22, 7,
 	1, 5, 28, 13, 3, 29, 21, 32, 17, 18,
 	19, 22, 9, 33, 6, 31, 15, 2, 8, 24,
-	27, 4, 14, 16, 11,
+	4, 27, 16, 14, 11,
 }
 var jsonPact = []int{
 
@@ -99,14 +95,14 @@ var jsonPact = []int{
 }
 var jsonPgo = []int{
 
-	0, 43, 34, 0, 42, 41, 40, 2, 36, 39,
+	0, 2, 43, 36, 34, 0, 42, 41, 40, 39,
 	20,
 }
 var jsonR1 = []int{
 
-	0, 10, 8, 8, 5, 5, 2, 3, 3, 3,
-	3, 3, 3, 3, 1, 1, 6, 6, 4, 4,
-	7, 7, 9,
+	0, 10, 3, 3, 8, 8, 4, 5, 5, 5,
+	5, 5, 5, 5, 6, 6, 7, 7, 2, 2,
+	1, 1, 9,
 }
 var jsonR2 = []int{
 
@@ -116,10 +112,10 @@ var jsonR2 = []int{
 }
 var jsonChk = []int{
 
-	-1000, -10, -8, 11, -5, 12, -2, 10, 12, 6,
-	5, -2, -3, 10, -4, -8, -1, 15, 16, 17,
-	-7, 13, 18, 4, -9, 19, 14, -6, -3, -7,
-	4, 14, 6, -3,
+	-1000, -10, -3, 11, -8, 12, -4, 10, 12, 6,
+	5, -4, -5, 10, -2, -3, -6, 15, 16, 17,
+	-1, 13, 18, 4, -9, 19, 14, -7, -5, -1,
+	4, 14, 6, -5,
 }
 var jsonDef = []int{
 
@@ -367,122 +363,119 @@ jsondefault:
 	switch jsonnt {
 
 	case 1:
-		//line parse.y:44
+		//line parse.y:36
 		{
-			obj := jsonS[jsonpt-0].obj
-			jsonResult = &obj
+			jsonResult = jsonS[jsonpt-0].obj
 		}
 	case 2:
-		//line parse.y:51
+		//line parse.y:42
 		{
-			jsonVAL.obj = ast.ObjectNode{Elem: jsonS[jsonpt-1].klist}
+			jsonVAL.obj = &hcl.Object{
+				Type:  hcl.ValueTypeObject,
+				Value: hcl.ObjectList(jsonS[jsonpt-1].objlist).Map(),
+			}
 		}
 	case 3:
-		//line parse.y:55
+		//line parse.y:49
 		{
-			jsonVAL.obj = ast.ObjectNode{}
+			jsonVAL.obj = &hcl.Object{Type: hcl.ValueTypeObject}
 		}
 	case 4:
-		//line parse.y:61
+		//line parse.y:55
 		{
-			jsonVAL.klist = []ast.AssignmentNode{jsonS[jsonpt-0].assign}
+			jsonVAL.objlist = []*hcl.Object{jsonS[jsonpt-0].obj}
 		}
 	case 5:
-		//line parse.y:65
+		//line parse.y:59
 		{
-			jsonVAL.klist = append(jsonS[jsonpt-2].klist, jsonS[jsonpt-0].assign)
+			jsonVAL.objlist = append(jsonS[jsonpt-2].objlist, jsonS[jsonpt-0].obj)
 		}
 	case 6:
-		//line parse.y:71
+		//line parse.y:65
 		{
-			value := jsonS[jsonpt-0].item
-			if obj, ok := value.(ast.ObjectNode); ok {
-				obj.K = jsonS[jsonpt-2].str
-				value = obj
-			}
-
-			jsonVAL.assign = ast.AssignmentNode{
-				K:     jsonS[jsonpt-2].str,
-				Value: value,
-			}
+			jsonS[jsonpt-0].obj.Key = jsonS[jsonpt-2].str
+			jsonVAL.obj = jsonS[jsonpt-0].obj
 		}
 	case 7:
-		//line parse.y:86
+		//line parse.y:72
 		{
-			jsonVAL.item = ast.LiteralNode{
-				Type:  ast.ValueTypeString,
+			jsonVAL.obj = &hcl.Object{
+				Type:  hcl.ValueTypeString,
 				Value: jsonS[jsonpt-0].str,
 			}
 		}
 	case 8:
-		//line parse.y:93
+		//line parse.y:79
 		{
-			jsonVAL.item = jsonS[jsonpt-0].item
+			jsonVAL.obj = jsonS[jsonpt-0].obj
 		}
 	case 9:
-		//line parse.y:97
+		//line parse.y:83
 		{
-			jsonVAL.item = jsonS[jsonpt-0].obj
+			jsonVAL.obj = jsonS[jsonpt-0].obj
 		}
 	case 10:
-		//line parse.y:101
+		//line parse.y:87
 		{
-			jsonVAL.item = jsonS[jsonpt-0].array
+			jsonVAL.obj = &hcl.Object{
+				Type:  hcl.ValueTypeList,
+				Value: jsonS[jsonpt-0].objlist,
+			}
 		}
 	case 11:
-		//line parse.y:105
+		//line parse.y:94
 		{
-			jsonVAL.item = ast.LiteralNode{
-				Type:  ast.ValueTypeBool,
+			jsonVAL.obj = &hcl.Object{
+				Type:  hcl.ValueTypeBool,
 				Value: true,
 			}
 		}
 	case 12:
-		//line parse.y:112
+		//line parse.y:101
 		{
-			jsonVAL.item = ast.LiteralNode{
-				Type:  ast.ValueTypeBool,
+			jsonVAL.obj = &hcl.Object{
+				Type:  hcl.ValueTypeBool,
 				Value: false,
 			}
 		}
 	case 13:
-		//line parse.y:119
+		//line parse.y:108
 		{
-			jsonVAL.item = ast.LiteralNode{
-				Type:  ast.ValueTypeNil,
+			jsonVAL.obj = &hcl.Object{
+				Type:  hcl.ValueTypeNil,
 				Value: nil,
 			}
 		}
 	case 14:
-		//line parse.y:128
+		//line parse.y:117
 		{
-			jsonVAL.array = ast.ListNode{}
+			jsonVAL.objlist = nil
 		}
 	case 15:
-		//line parse.y:132
+		//line parse.y:121
 		{
-			jsonVAL.array = ast.ListNode{Elem: jsonS[jsonpt-1].list}
+			jsonVAL.objlist = jsonS[jsonpt-1].objlist
 		}
 	case 16:
-		//line parse.y:138
+		//line parse.y:127
 		{
-			jsonVAL.list = []ast.Node{jsonS[jsonpt-0].item}
+			jsonVAL.objlist = []*hcl.Object{jsonS[jsonpt-0].obj}
 		}
 	case 17:
-		//line parse.y:142
+		//line parse.y:131
 		{
-			jsonVAL.list = append(jsonS[jsonpt-2].list, jsonS[jsonpt-0].item)
+			jsonVAL.objlist = append(jsonS[jsonpt-2].objlist, jsonS[jsonpt-0].obj)
 		}
 	case 18:
-		//line parse.y:148
+		//line parse.y:137
 		{
-			jsonVAL.item = ast.LiteralNode{
-				Type:  ast.ValueTypeInt,
+			jsonVAL.obj = &hcl.Object{
+				Type:  hcl.ValueTypeInt,
 				Value: jsonS[jsonpt-0].num,
 			}
 		}
 	case 19:
-		//line parse.y:155
+		//line parse.y:144
 		{
 			fs := fmt.Sprintf("%d.%s", jsonS[jsonpt-1].num, jsonS[jsonpt-0].str)
 			f, err := strconv.ParseFloat(fs, 64)
@@ -490,23 +483,23 @@ jsondefault:
 				panic(err)
 			}
 
-			jsonVAL.item = ast.LiteralNode{
-				Type:  ast.ValueTypeFloat,
+			jsonVAL.obj = &hcl.Object{
+				Type:  hcl.ValueTypeFloat,
 				Value: f,
 			}
 		}
 	case 20:
-		//line parse.y:170
+		//line parse.y:159
 		{
 			jsonVAL.num = jsonS[jsonpt-0].num * -1
 		}
 	case 21:
-		//line parse.y:174
+		//line parse.y:163
 		{
 			jsonVAL.num = jsonS[jsonpt-0].num
 		}
 	case 22:
-		//line parse.y:180
+		//line parse.y:169
 		{
 			jsonVAL.str = strconv.FormatInt(int64(jsonS[jsonpt-0].num), 10)
 		}

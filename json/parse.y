@@ -7,29 +7,21 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/hashicorp/hcl/ast"
+	"github.com/hashicorp/hcl/hcl"
 )
 
 %}
 
 %union {
-	array    ast.ListNode
-	assign   ast.AssignmentNode
-	item     ast.Node
-	klist    []ast.AssignmentNode
-	list     []ast.Node
 	num      int
 	str      string
-	obj      ast.ObjectNode
+	obj      *hcl.Object
+	objlist  []*hcl.Object
 }
 
-%type	<array> array
-%type	<assign> pair
-%type	<item> value number
-%type	<klist> members
-%type	<list> elements
 %type	<num> int
-%type	<obj> object
+%type	<obj> number object pair value
+%type	<objlist> array elements members
 %type	<str> frac
 
 %token  <num> NUMBER
@@ -42,24 +34,26 @@ import (
 top:
 	object
 	{
-		obj := $1
-		jsonResult = &obj
+		jsonResult = $1
 	}
 
 object:
 	LEFTBRACE members RIGHTBRACE
 	{
-		$$ = ast.ObjectNode{Elem: $2}
+		$$ = &hcl.Object{
+			Type:  hcl.ValueTypeObject,
+			Value: hcl.ObjectList($2).Map(),
+		}
 	}
 |	LEFTBRACE RIGHTBRACE
 	{
-		$$ = ast.ObjectNode{}
+		$$ = &hcl.Object{Type: hcl.ValueTypeObject}
 	}
 
 members:
 	pair
 	{
-		$$ = []ast.AssignmentNode{$1}
+		$$ = []*hcl.Object{$1}
 	}
 |	members COMMA pair
 	{
@@ -69,23 +63,15 @@ members:
 pair:
 	STRING COLON value
 	{
-		value := $3
-		if obj, ok := value.(ast.ObjectNode); ok {
-			obj.K = $1
-			value = obj
-		}
-
-		$$ = ast.AssignmentNode{
-			K:     $1,
-			Value: value,
-		}
+		$3.Key = $1
+		$$ = $3
 	}
 
 value:
 	STRING
 	{
-		$$ = ast.LiteralNode{
-			Type:  ast.ValueTypeString,
+		$$ = &hcl.Object{
+			Type:  hcl.ValueTypeString,
 			Value: $1,
 		}
 	}
@@ -99,26 +85,29 @@ value:
 	}
 |	array
 	{
-		$$ = $1
+		$$ = &hcl.Object{
+			Type:  hcl.ValueTypeList,
+			Value: $1,
+		}
 	}
 |	TRUE
 	{
-		$$ = ast.LiteralNode{
-			Type:  ast.ValueTypeBool,
+		$$ = &hcl.Object{
+			Type:  hcl.ValueTypeBool,
 			Value: true,
 		}
 	}
 |	FALSE
 	{
-		$$ = ast.LiteralNode{
-			Type:  ast.ValueTypeBool,
+		$$ = &hcl.Object{
+			Type:  hcl.ValueTypeBool,
 			Value: false,
 		}
 	}
 |	NULL
 	{
-		$$ = ast.LiteralNode{
-			Type:  ast.ValueTypeNil,
+		$$ = &hcl.Object{
+			Type:  hcl.ValueTypeNil,
 			Value: nil,
 		}
 	}
@@ -126,17 +115,17 @@ value:
 array:
 	LEFTBRACKET RIGHTBRACKET
 	{
-		$$ = ast.ListNode{}
+		$$ = nil
 	}
 |	LEFTBRACKET elements RIGHTBRACKET
 	{
-		$$ = ast.ListNode{Elem: $2}
+		$$ = $2
 	}
 
 elements:
 	value
 	{
-		$$ = []ast.Node{$1}
+		$$ = []*hcl.Object{$1}
 	}
 |	elements COMMA value
 	{
@@ -146,8 +135,8 @@ elements:
 number:
 	int
 	{
-		$$ = ast.LiteralNode{
-			Type:  ast.ValueTypeInt,
+		$$ = &hcl.Object{
+			Type:  hcl.ValueTypeInt,
 			Value: $1,
 		}
 	}
@@ -159,8 +148,8 @@ number:
 			panic(err)
 		}
 
-		$$ = ast.LiteralNode{
-			Type:  ast.ValueTypeFloat,
+		$$ = &hcl.Object{
+			Type:  hcl.ValueTypeFloat,
 			Value: f,
 		}
 	}
