@@ -3,7 +3,6 @@ package hcl
 import (
 	"sync"
 
-	"github.com/hashicorp/hcl/ast"
 	"github.com/hashicorp/terraform/helper/multierror"
 )
 
@@ -11,10 +10,10 @@ import (
 // be accessed directly.
 var hclErrors []error
 var hclLock sync.Mutex
-var hclResult *ast.ObjectNode
+var hclResult *Object
 
 // Parse parses the given string and returns the result.
-func Parse(v string) (*ast.ObjectNode, error) {
+func Parse(v string) (*Object, error) {
 	hclLock.Lock()
 	defer hclLock.Unlock()
 	hclErrors = nil

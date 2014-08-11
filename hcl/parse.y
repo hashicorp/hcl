@@ -6,33 +6,22 @@ package hcl
 import (
 	"fmt"
 	"strconv"
-
-	"github.com/hashicorp/hcl/ast"
 )
 
 %}
 
 %union {
 	b        bool
-	item     ast.Node
-	list     ast.ListNode
-	alist    []ast.AssignmentNode
-	aitem    ast.AssignmentNode
-	listitem ast.Node
-	nodes    []ast.Node
 	num      int
-	obj      ast.ObjectNode
 	str      string
+	obj      *Object
+	objlist  []*Object
 }
 
-%type   <item> number
-%type   <list> list
-%type   <alist> objectlist
-%type   <aitem> objectitem block
-%type   <listitem> listitem
-%type   <nodes> listitems
 %type   <num> int
-%type   <obj> object
+%type   <objlist> list listitems objectlist
+%type   <obj> block number object objectitem
+%type   <obj> listitem
 %type   <str> blockId frac
 
 %token  <b> BOOL
@@ -45,16 +34,16 @@ import (
 top:
 	objectlist
 	{
-		hclResult = &ast.ObjectNode{
-			K:    "",
-			Elem: $1,
+		hclResult = &Object{
+			Type:  ValueTypeObject,
+			Value: ObjectList($1).Map(),
 		}
 	}
 
 objectlist:
 	objectitem
 	{
-		$$ = []ast.AssignmentNode{$1}
+		$$ = []*Object{$1}
 	}
 |	objectlist objectitem
 	{
@@ -64,52 +53,53 @@ objectlist:
 object:
 	LEFTBRACE objectlist RIGHTBRACE
 	{
-		$$ = ast.ObjectNode{Elem: $2}
+		$$ = &Object{
+			Type:  ValueTypeObject,
+			Value: ObjectList($2).Map(),
+		}
 	}
 |	LEFTBRACE RIGHTBRACE
 	{
-		$$ = ast.ObjectNode{}
+		$$ = &Object{
+			Type: ValueTypeObject,
+		}
 	}
 
 objectitem:
 	IDENTIFIER EQUAL number
 	{
-		$$ = ast.AssignmentNode{
-			K:     $1,
-			Value: $3,
-		}
+		$$ = $3
+		$$.Key = $1
 	}
 |	IDENTIFIER EQUAL BOOL
 	{
-		$$ = ast.AssignmentNode{
-			K:     $1,
-			Value: ast.LiteralNode{
-				Type:  ast.ValueTypeBool,
-				Value: $3,
-			},
+		$$ = &Object{
+			Key:   $1,
+			Type:  ValueTypeBool,
+			Value: $3,
 		}
 	}
 |	IDENTIFIER EQUAL STRING
 	{
-		$$ = ast.AssignmentNode{
-			K:     $1,
-			Value: ast.LiteralNode{
-				Type:  ast.ValueTypeString,
-				Value: $3,
-			},
+		$$ = &Object{
+			Key:   $1,
+			Type:  ValueTypeString,
+			Value: $3,
 		}
 	}
 |	IDENTIFIER EQUAL object
 	{
-		$$ = ast.AssignmentNode{
-			K:     $1,
+		$$ = &Object{
+			Key:   $1,
+			Type:  ValueTypeObject,
 			Value: $3,
 		}
 	}
 |	IDENTIFIER EQUAL list
 	{
-		$$ = ast.AssignmentNode{
-			K:     $1,
+		$$ = &Object{
+			Key:   $1,
+			Type:  ValueTypeList,
 			Value: $3,
 		}
 	}
@@ -121,22 +111,15 @@ objectitem:
 block:
 	blockId object
 	{
-		$2.K = $1
-		$$ = ast.AssignmentNode{
-			K:     $1,
-			Value: $2,
-		}
+		$2.Key = $1
+		$$ = $2
 	}
 |	blockId block
 	{
-		obj := ast.ObjectNode{
-			K:    $1,
-			Elem: []ast.AssignmentNode{$2},
-		}
-
-		$$ = ast.AssignmentNode{
-			K:     $1,
-			Value: obj,
+		$$ = &Object{
+			Key:   $1,
+			Type:  ValueTypeObject,
+			Value: map[string]*Object{$1: $2},
 		}
 	}
 
@@ -153,19 +136,17 @@ blockId:
 list:
 	LEFTBRACKET listitems RIGHTBRACKET
 	{
-		$$ = ast.ListNode{
-			Elem: $2,
-		}
+		$$ = $2
 	}
 |	LEFTBRACKET RIGHTBRACKET
 	{
-		$$ = ast.ListNode{}
+		$$ = nil
 	}
 
 listitems:
 	listitem
 	{
-		$$ = []ast.Node{$1}
+		$$ = []*Object{$1}
 	}
 |	listitems COMMA listitem
 	{
@@ -179,8 +160,8 @@ listitem:
 	}
 |	STRING
 	{
-		$$ = ast.LiteralNode{
-			Type:  ast.ValueTypeString,
+		$$ = &Object{
+			Type:  ValueTypeString,
 			Value: $1,
 		}
 	}
@@ -188,8 +169,8 @@ listitem:
 number:
 	int
 	{
-		$$ = ast.LiteralNode{
-			Type:  ast.ValueTypeInt,
+		$$ = &Object{
+			Type:  ValueTypeInt,
 			Value: $1,
 		}
 	}
@@ -201,8 +182,8 @@ number:
 			panic(err)
 		}
 
-		$$ = ast.LiteralNode{
-			Type:  ast.ValueTypeFloat,
+		$$ = &Object{
+			Type:  ValueTypeFloat,
 			Value: f,
 		}
 	}
