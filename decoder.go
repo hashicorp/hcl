@@ -199,6 +199,7 @@ func (d *decoder) decodeMap(name string, o *hcl.Object, result reflect.Value) er
 	current := o
 	for current != nil {
 		if current.Value == nil {
+			current = current.Next
 			continue
 		}
 

@@ -20,6 +20,17 @@ func TestDecode_interface(t *testing.T) {
 				"foo": "bar",
 			},
 		},
+		{
+			"empty.hcl",
+			false,
+			map[string]interface{}{
+				"resource": map[string]interface{}{
+					"aws_instance": map[string]interface{}{
+						"db": map[string]interface{}{},
+					},
+				},
+			},
+		},
 		/*
 			{
 				"structure.hcl",
@@ -67,10 +78,10 @@ func TestDecode_equal(t *testing.T) {
 			"basic.json",
 		},
 		/*
-		{
-			"structure.hcl",
-			"structure.json",
-		},
+			{
+				"structure.hcl",
+				"structure.json",
+			},
 		*/
 		{
 			"structure.hcl",
