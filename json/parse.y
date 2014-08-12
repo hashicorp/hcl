@@ -42,7 +42,7 @@ object:
 	{
 		$$ = &hcl.Object{
 			Type:  hcl.ValueTypeObject,
-			Value: hcl.ObjectList($2).Map(),
+			Value: hcl.ObjectList($2).Flat(),
 		}
 	}
 |	LEFTBRACE RIGHTBRACE

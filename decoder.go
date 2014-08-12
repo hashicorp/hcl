@@ -3,6 +3,7 @@ package hcl
 import (
 	"fmt"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -98,6 +99,14 @@ func (d *decoder) decodeInterface(name string, o *hcl.Object, result reflect.Val
 
 	switch o.Type {
 	case hcl.ValueTypeObject:
+		/*
+			var temp []map[string]interface{}
+			tempVal := reflect.ValueOf(temp)
+			result := reflect.MakeSlice(
+				reflect.SliceOf(tempVal.Type().Elem()), 0, int(o.Len()))
+			set = result
+		*/
+
 		var temp map[string]interface{}
 		tempVal := reflect.ValueOf(temp)
 		result := reflect.MakeMap(
@@ -187,28 +196,33 @@ func (d *decoder) decodeMap(name string, o *hcl.Object, result reflect.Value) er
 	}
 
 	// Go through each element and decode it.
-	m := o.Value.(map[string]*hcl.Object)
-	for _, o := range m {
-		// Make the field name
-		fieldName := fmt.Sprintf("%s.%s", name, o.Key)
+	current := o
+	for current != nil {
+		m := current.Value.([]*hcl.Object)
+		for _, o := range m {
+			// Make the field name
+			fieldName := fmt.Sprintf("%s.%s", name, o.Key)
 
-		// Get the key/value as reflection values
-		key := reflect.ValueOf(o.Key)
-		val := reflect.Indirect(reflect.New(resultElemType))
+			// Get the key/value as reflection values
+			key := reflect.ValueOf(o.Key)
+			val := reflect.Indirect(reflect.New(resultElemType))
 
-		// If we have a pre-existing value in the map, use that
-		oldVal := resultMap.MapIndex(key)
-		if oldVal.IsValid() {
-			val.Set(oldVal)
+			// If we have a pre-existing value in the map, use that
+			oldVal := resultMap.MapIndex(key)
+			if oldVal.IsValid() {
+				val.Set(oldVal)
+			}
+
+			// Decode!
+			if err := d.decode(fieldName, o, val); err != nil {
+				return err
+			}
+
+			// Set the value on the map
+			resultMap.SetMapIndex(key, val)
 		}
 
-		// Decode!
-		if err := d.decode(fieldName, o, val); err != nil {
-			return err
-		}
-
-		// Set the value on the map
-		resultMap.SetMapIndex(key, val)
+		current = current.Next
 	}
 
 	// Set the final map if we can
@@ -247,20 +261,26 @@ func (d *decoder) decodeSlice(name string, o *hcl.Object, result reflect.Value) 
 			resultSliceType, 0, 0)
 	}
 
-	/*
-	for i, elem := range n.Elem {
-		fieldName := fmt.Sprintf("%s[%d]", name, i)
+	i := 0
+	current := o
+	for current != nil {
+		for _, o := range current.Elem(true) {
+			fieldName := fmt.Sprintf("%s[%d]", name, i)
 
-		// Decode
-		val := reflect.Indirect(reflect.New(resultElemType))
-		if err := d.decode(fieldName, elem, val); err != nil {
-			return err
+			// Decode
+			val := reflect.Indirect(reflect.New(resultElemType))
+			if err := d.decode(fieldName, o, val); err != nil {
+				return err
+			}
+
+			// Append it onto the slice
+			result = reflect.Append(result, val)
+
+			i += 1
 		}
 
-		// Append it onto the slice
-		result = reflect.Append(result, val)
+		current = current.Next
 	}
-	*/
 
 	set.Set(result)
 	return nil
@@ -390,29 +410,34 @@ func (d *decoder) decodeStruct(name string, o *hcl.Object, result reflect.Value)
 		decodedFields = append(decodedFields, fieldType.Name)
 	}
 
-	for _, v := range decodedFieldsVal {
-		v.Set(reflect.ValueOf(decodedFields))
+	if len(decodedFieldsVal) > 0 {
+		// Sort it so that it is deterministic
+		sort.Strings(decodedFields)
+
+		for _, v := range decodedFieldsVal {
+			v.Set(reflect.ValueOf(decodedFields))
+		}
 	}
 
 	// If we want to know what keys are unused, compile that
 	if len(unusedKeysVal) > 0 {
 		/*
-		unusedKeys := make([]string, 0, int(obj.Len())-len(usedKeys))
+			unusedKeys := make([]string, 0, int(obj.Len())-len(usedKeys))
 
-		for _, elem := range obj.Elem {
-			k := elem.Key()
-			if _, ok := usedKeys[k]; !ok {
-				unusedKeys = append(unusedKeys, k)
+			for _, elem := range obj.Elem {
+				k := elem.Key()
+				if _, ok := usedKeys[k]; !ok {
+					unusedKeys = append(unusedKeys, k)
+				}
 			}
-		}
 
-		if len(unusedKeys) == 0 {
-			unusedKeys = nil
-		}
+			if len(unusedKeys) == 0 {
+				unusedKeys = nil
+			}
 
-		for _, v := range unusedKeysVal {
-			v.Set(reflect.ValueOf(unusedKeys))
-		}
+			for _, v := range unusedKeysVal {
+				v.Set(reflect.ValueOf(unusedKeys))
+			}
 		*/
 	}
 

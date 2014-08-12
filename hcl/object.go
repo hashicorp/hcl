@@ -1,6 +1,7 @@
 package hcl
 
 import (
+	"fmt"
 	"strings"
 )
 
@@ -28,6 +29,11 @@ type Object struct {
 	Next  *Object
 }
 
+// GoStrig is an implementation of the GoStringer interface.
+func (o *Object) GoString() string {
+	return fmt.Sprintf("*%#v", *o)
+}
+
 // Get gets all the objects that match the given key.
 //
 // It returns the resulting objects as a single Object structure with
@@ -37,39 +43,63 @@ func (o *Object) Get(k string, insensitive bool) *Object {
 		return nil
 	}
 
-	var current, result *Object
-	m := o.Value.(map[string]*Object)
-	for _, o := range m {
+	for _, o := range o.Elem(true) {
 		if o.Key != k {
 			if !insensitive || !strings.EqualFold(o.Key, k) {
 				continue
 			}
 		}
 
-		o2 := *o
-		o2.Next = nil
-		if result == nil {
-			result = &o2
-			current = result
-		} else {
-			current.Next = &o2
-			current = current.Next
-		}
+		return o
 	}
 
-	return result
+	return nil
+}
+
+// Elem returns all the elements that are part of this object.
+func (o *Object) Elem(expand bool) []*Object {
+	if !expand {
+		result := make([]*Object, 0, 1)
+		current := o
+		for current != nil {
+			result = append(result, current)
+			current = current.Next
+		}
+
+		return result
+	}
+
+	switch o.Type {
+	case ValueTypeObject:
+		return o.Value.([]*Object)
+	}
+
+	panic(fmt.Sprintf("Elem not supported for: %s", o.Type))
+}
+
+// Len returns the number of objects in this object structure.
+func (o *Object) Len() (i int) {
+	current := o
+	for current != nil {
+		i += 1
+		current = current.Next
+	}
+
+	return
 }
 
 // ObjectList is a list of objects.
 type ObjectList []*Object
 
-// Map returns a flattened map structure of the list of objects.
-func (l ObjectList) Map() map[string]*Object {
+// Flat returns a flattened list structure of the objects.
+func (l ObjectList) Flat() []*Object {
 	m := make(map[string]*Object)
+	result := make([]*Object, 0, len(l))
 	for _, obj := range l {
 		prev, ok := m[obj.Key]
 		if !ok {
 			m[obj.Key] = obj
+			result = append(result, obj)
 			continue
 		}
 
@@ -79,5 +109,5 @@ func (l ObjectList) Map() map[string]*Object {
 		prev.Next = obj
 	}
 
-	return m
+	return result
 }

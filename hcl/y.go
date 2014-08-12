@@ -54,7 +54,7 @@ const hclEofCode = 1
 const hclErrCode = 2
 const hclMaxDepth = 200
 
-//line parse.y:207
+//line parse.y:204
 
 //line yacctab:1
 var hclExca = []int{
@@ -361,7 +361,7 @@ hcldefault:
 		{
 			hclResult = &Object{
 				Type:  ValueTypeObject,
-				Value: ObjectList(hclS[hclpt-0].objlist).Map(),
+				Value: ObjectList(hclS[hclpt-0].objlist).Flat(),
 			}
 		}
 	case 2:
@@ -379,7 +379,7 @@ hcldefault:
 		{
 			hclVAL.obj = &Object{
 				Type:  ValueTypeObject,
-				Value: ObjectList(hclS[hclpt-1].objlist).Map(),
+				Value: ObjectList(hclS[hclpt-1].objlist).Flat(),
 			}
 		}
 	case 5:
@@ -416,14 +416,11 @@ hcldefault:
 	case 9:
 		//line parse.y:91
 		{
-			hclVAL.obj = &Object{
-				Key:   hclS[hclpt-2].str,
-				Type:  ValueTypeObject,
-				Value: hclS[hclpt-0].obj,
-			}
+			hclS[hclpt-0].obj.Key = hclS[hclpt-2].str
+			hclVAL.obj = hclS[hclpt-0].obj
 		}
 	case 10:
-		//line parse.y:99
+		//line parse.y:96
 		{
 			hclVAL.obj = &Object{
 				Key:   hclS[hclpt-2].str,
@@ -432,62 +429,62 @@ hcldefault:
 			}
 		}
 	case 11:
-		//line parse.y:107
+		//line parse.y:104
 		{
 			hclVAL.obj = hclS[hclpt-0].obj
 		}
 	case 12:
-		//line parse.y:113
+		//line parse.y:110
 		{
 			hclS[hclpt-0].obj.Key = hclS[hclpt-1].str
 			hclVAL.obj = hclS[hclpt-0].obj
 		}
 	case 13:
-		//line parse.y:118
+		//line parse.y:115
 		{
 			hclVAL.obj = &Object{
 				Key:   hclS[hclpt-1].str,
 				Type:  ValueTypeObject,
-				Value: map[string]*Object{hclS[hclpt-1].str: hclS[hclpt-0].obj},
+				Value: []*Object{hclS[hclpt-0].obj},
 			}
 		}
 	case 14:
-		//line parse.y:128
+		//line parse.y:125
 		{
 			hclVAL.str = hclS[hclpt-0].str
 		}
 	case 15:
-		//line parse.y:132
+		//line parse.y:129
 		{
 			hclVAL.str = hclS[hclpt-0].str
 		}
 	case 16:
-		//line parse.y:138
+		//line parse.y:135
 		{
 			hclVAL.objlist = hclS[hclpt-1].objlist
 		}
 	case 17:
-		//line parse.y:142
+		//line parse.y:139
 		{
 			hclVAL.objlist = nil
 		}
 	case 18:
-		//line parse.y:148
+		//line parse.y:145
 		{
 			hclVAL.objlist = []*Object{hclS[hclpt-0].obj}
 		}
 	case 19:
-		//line parse.y:152
+		//line parse.y:149
 		{
 			hclVAL.objlist = append(hclS[hclpt-2].objlist, hclS[hclpt-0].obj)
 		}
 	case 20:
-		//line parse.y:158
+		//line parse.y:155
 		{
 			hclVAL.obj = hclS[hclpt-0].obj
 		}
 	case 21:
-		//line parse.y:162
+		//line parse.y:159
 		{
 			hclVAL.obj = &Object{
 				Type:  ValueTypeString,
@@ -495,7 +492,7 @@ hcldefault:
 			}
 		}
 	case 22:
-		//line parse.y:171
+		//line parse.y:168
 		{
 			hclVAL.obj = &Object{
 				Type:  ValueTypeInt,
@@ -503,7 +500,7 @@ hcldefault:
 			}
 		}
 	case 23:
-		//line parse.y:178
+		//line parse.y:175
 		{
 			fs := fmt.Sprintf("%d.%s", hclS[hclpt-1].num, hclS[hclpt-0].str)
 			f, err := strconv.ParseFloat(fs, 64)
@@ -517,17 +514,17 @@ hcldefault:
 			}
 		}
 	case 24:
-		//line parse.y:193
+		//line parse.y:190
 		{
 			hclVAL.num = hclS[hclpt-0].num * -1
 		}
 	case 25:
-		//line parse.y:197
+		//line parse.y:194
 		{
 			hclVAL.num = hclS[hclpt-0].num
 		}
 	case 26:
-		//line parse.y:203
+		//line parse.y:200
 		{
 			hclVAL.str = strconv.FormatInt(int64(hclS[hclpt-0].num), 10)
 		}

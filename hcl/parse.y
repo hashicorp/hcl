@@ -36,7 +36,7 @@ top:
 	{
 		hclResult = &Object{
 			Type:  ValueTypeObject,
-			Value: ObjectList($1).Map(),
+			Value: ObjectList($1).Flat(),
 		}
 	}
 
@@ -55,7 +55,7 @@ object:
 	{
 		$$ = &Object{
 			Type:  ValueTypeObject,
-			Value: ObjectList($2).Map(),
+			Value: ObjectList($2).Flat(),
 		}
 	}
 |	LEFTBRACE RIGHTBRACE
@@ -89,11 +89,8 @@ objectitem:
 	}
 |	IDENTIFIER EQUAL object
 	{
-		$$ = &Object{
-			Key:   $1,
-			Type:  ValueTypeObject,
-			Value: $3,
-		}
+		$3.Key = $1
+		$$ = $3
 	}
 |	IDENTIFIER EQUAL list
 	{
@@ -119,7 +116,7 @@ block:
 		$$ = &Object{
 			Key:   $1,
 			Type:  ValueTypeObject,
-			Value: map[string]*Object{$1: $2},
+			Value: []*Object{$2},
 		}
 	}
 

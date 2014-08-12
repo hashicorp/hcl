@@ -372,7 +372,7 @@ jsondefault:
 		{
 			jsonVAL.obj = &hcl.Object{
 				Type:  hcl.ValueTypeObject,
-				Value: hcl.ObjectList(jsonS[jsonpt-1].objlist).Map(),
+				Value: hcl.ObjectList(jsonS[jsonpt-1].objlist).Flat(),
 			}
 		}
 	case 3:

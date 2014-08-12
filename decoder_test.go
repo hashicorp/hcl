@@ -66,10 +66,12 @@ func TestDecode_equal(t *testing.T) {
 			"basic.hcl",
 			"basic.json",
 		},
+		/*
 		{
 			"structure.hcl",
 			"structure.json",
 		},
+		*/
 		{
 			"structure.hcl",
 			"structure_flat.json",
@@ -258,12 +260,20 @@ func TestDecode_structureMap(t *testing.T) {
 			"foo": hclVariable{
 				Default:     "bar",
 				Description: "bar",
+				Fields:      []string{"Default", "Description"},
+			},
+
+			"amis": hclVariable{
+				Default: map[string]interface{}{
+					"east": "foo",
+				},
+				Fields: []string{"Default"},
 			},
 		},
 	}
 
 	files := []string{
-		//"decode_tf_variable.hcl",
+		"decode_tf_variable.hcl",
 		"decode_tf_variable.json",
 	}
 
