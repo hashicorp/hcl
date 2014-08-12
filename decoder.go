@@ -198,6 +198,10 @@ func (d *decoder) decodeMap(name string, o *hcl.Object, result reflect.Value) er
 	// Go through each element and decode it.
 	current := o
 	for current != nil {
+		if current.Value == nil {
+			continue
+		}
+
 		m := current.Value.([]*hcl.Object)
 		for _, o := range m {
 			// Make the field name

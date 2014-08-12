@@ -69,12 +69,14 @@ func (o *Object) Elem(expand bool) []*Object {
 		return result
 	}
 
-	switch o.Type {
-	case ValueTypeObject:
-		if o.Value == nil {
-			return nil
-		}
+	if o.Value == nil {
+		return nil
+	}
 
+	switch o.Type {
+	case ValueTypeList:
+		return o.Value.([]*Object)
+	case ValueTypeObject:
 		return o.Value.([]*Object)
 	}
 
