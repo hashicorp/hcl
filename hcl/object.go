@@ -71,6 +71,10 @@ func (o *Object) Elem(expand bool) []*Object {
 
 	switch o.Type {
 	case ValueTypeObject:
+		if o.Value == nil {
+			return nil
+		}
+
 		return o.Value.([]*Object)
 	}
 
