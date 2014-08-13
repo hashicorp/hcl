@@ -59,7 +59,7 @@ of the syntax and grammar are listed here.
     matter). The value can be any primitive: a string, number, boolean,
     object, or list.
 
-  * Strings are double-quoted and can continue any UTF-8 characters.
+  * Strings are double-quoted and can contain any UTF-8 characters.
     Example: `"Hello, World"`
 
   * Numbers are assumed to be base 10. If you prefix a number with 0x,
