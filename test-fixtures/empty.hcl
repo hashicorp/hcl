@@ -1,1 +1,1 @@
-resource "aws_instance" "db" {}
+resource "foo" {}

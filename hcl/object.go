@@ -62,7 +62,10 @@ func (o *Object) Elem(expand bool) []*Object {
 		result := make([]*Object, 0, 1)
 		current := o
 		for current != nil {
-			result = append(result, current)
+			obj := *current
+			obj.Next = nil
+			result = append(result, &obj)
+
 			current = current.Next
 		}
 
@@ -77,10 +80,14 @@ func (o *Object) Elem(expand bool) []*Object {
 	case ValueTypeList:
 		return o.Value.([]*Object)
 	case ValueTypeObject:
-		return o.Value.([]*Object)
+		result := make([]*Object, 0, 5)
+		for _, obj := range o.Elem(false) {
+			result = append(result, obj.Value.([]*Object)...)
+		}
+		return result
+	default:
+		return []*Object{o}
 	}
-
-	panic(fmt.Sprintf("Elem not supported for: %s", o.Type))
 }
 
 // Len returns the number of objects in this object structure.

@@ -24,31 +24,61 @@ func TestDecode_interface(t *testing.T) {
 			"empty.hcl",
 			false,
 			map[string]interface{}{
-				"resource": map[string]interface{}{
-					"aws_instance": map[string]interface{}{
-						"db": map[string]interface{}{},
-					},
-				},
-			},
-		},
-		/*
-			{
-				"structure.hcl",
-				false,
-				map[string]interface{}{
-					"foo": []interface{}{
-						map[string]interface{}{
-							"baz": []interface{}{
-								map[string]interface{}{
-									"foo": "bar",
-									"key": 7,
-								},
-							},
+				"resource": []map[string]interface{}{
+					map[string]interface{}{
+						"foo": []map[string]interface{}{
+							map[string]interface{}{},
 						},
 					},
 				},
 			},
-		*/
+		},
+		{
+			"terraform_heroku.hcl",
+			false,
+			map[string]interface{}{
+				"name": "terraform-test-app",
+				"config_vars": []map[string]interface{}{
+					map[string]interface{}{
+						"FOO": "bar",
+					},
+				},
+			},
+		},
+		{
+			"structure_multi.hcl",
+			false,
+			map[string]interface{}{
+				"foo": []map[string]interface{}{
+					map[string]interface{}{
+						"baz": []map[string]interface{}{
+							map[string]interface{}{"key": 7},
+						},
+					},
+					map[string]interface{}{
+						"bar": []map[string]interface{}{
+							map[string]interface{}{"key": 12},
+						},
+					},
+				},
+			},
+		},
+		{
+			"structure_multi.json",
+			false,
+			map[string]interface{}{
+				"foo": []map[string]interface{}{
+					map[string]interface{}{
+						"baz": []map[string]interface{}{
+							map[string]interface{}{"key": 7},
+						},
+						"bar": []map[string]interface{}{
+							map[string]interface{}{"key": 12},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tc := range cases {
@@ -88,12 +118,8 @@ func TestDecode_equal(t *testing.T) {
 			"structure_flat.json",
 		},
 		{
-			"structure_multi.hcl",
-			"structure_multi.json",
-		},
-		{
-			"structure2.hcl",
-			"structure2.json",
+			"terraform_heroku.hcl",
+			"terraform_heroku.json",
 		},
 	}
 
@@ -209,7 +235,7 @@ func TestDecode_structureArray(t *testing.T) {
 	}
 
 	type Policy struct {
-		Keys []KeyPolicy `hcl:"key"`
+		Keys []KeyPolicy `hcl:"key,expand"`
 	}
 
 	expected := Policy{
@@ -275,8 +301,10 @@ func TestDecode_structureMap(t *testing.T) {
 			},
 
 			"amis": hclVariable{
-				Default: map[string]interface{}{
-					"east": "foo",
+				Default: []map[string]interface{}{
+					map[string]interface{}{
+						"east": "foo",
+					},
 				},
 				Fields: []string{"Default"},
 			},
@@ -293,7 +321,7 @@ func TestDecode_structureMap(t *testing.T) {
 
 		err := Decode(&actual, testReadFile(t, f))
 		if err != nil {
-			t.Fatalf("err: %s", err)
+			t.Fatalf("Input: %s\n\nerr: %s", f, err)
 		}
 
 		if !reflect.DeepEqual(actual, expected) {

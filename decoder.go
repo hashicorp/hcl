@@ -99,22 +99,22 @@ func (d *decoder) decodeInterface(name string, o *hcl.Object, result reflect.Val
 
 	switch o.Type {
 	case hcl.ValueTypeObject:
-		/*
+		if name == "root" {
+			var temp map[string]interface{}
+			tempVal := reflect.ValueOf(temp)
+			result := reflect.MakeMap(
+				reflect.MapOf(
+					reflect.TypeOf(""),
+					tempVal.Type().Elem()))
+
+			set = result
+		} else {
 			var temp []map[string]interface{}
 			tempVal := reflect.ValueOf(temp)
 			result := reflect.MakeSlice(
 				reflect.SliceOf(tempVal.Type().Elem()), 0, int(o.Len()))
 			set = result
-		*/
-
-		var temp map[string]interface{}
-		tempVal := reflect.ValueOf(temp)
-		result := reflect.MakeMap(
-			reflect.MapOf(
-				reflect.TypeOf(""),
-				tempVal.Type().Elem()))
-
-		set = result
+		}
 	case hcl.ValueTypeList:
 		/*
 			var temp []interface{}
@@ -170,7 +170,7 @@ func (d *decoder) decodeInterface(name string, o *hcl.Object, result reflect.Val
 
 func (d *decoder) decodeMap(name string, o *hcl.Object, result reflect.Value) error {
 	if o.Type != hcl.ValueTypeObject {
-		return fmt.Errorf("%s: not an object type (%s)", name, o.Type)
+		return fmt.Errorf("%s: not an object type for map (%s)", name, o.Type)
 	}
 
 	// If we have an interface, then we can address the interface,
@@ -196,15 +196,12 @@ func (d *decoder) decodeMap(name string, o *hcl.Object, result reflect.Value) er
 	}
 
 	// Go through each element and decode it.
-	current := o
-	for current != nil {
-		if current.Value == nil {
-			current = current.Next
+	for _, o := range o.Elem(false) {
+		if o.Value == nil {
 			continue
 		}
 
-		m := current.Value.([]*hcl.Object)
-		for _, o := range m {
+		for _, o := range o.Elem(true) {
 			// Make the field name
 			fieldName := fmt.Sprintf("%s.%s", name, o.Key)
 
@@ -226,8 +223,6 @@ func (d *decoder) decodeMap(name string, o *hcl.Object, result reflect.Value) er
 			// Set the value on the map
 			resultMap.SetMapIndex(key, val)
 		}
-
-		current = current.Next
 	}
 
 	// Set the final map if we can
@@ -266,25 +261,29 @@ func (d *decoder) decodeSlice(name string, o *hcl.Object, result reflect.Value) 
 			resultSliceType, 0, 0)
 	}
 
+	// Determine how we're doing this
+	expand := true
+	switch o.Type {
+	case hcl.ValueTypeObject:
+		expand = false
+	default:
+		// Array or anything else: we expand values and take it all
+	}
+
 	i := 0
-	current := o
-	for current != nil {
-		for _, o := range current.Elem(true) {
-			fieldName := fmt.Sprintf("%s[%d]", name, i)
+	for _, o := range o.Elem(expand) {
+		fieldName := fmt.Sprintf("%s[%d]", name, i)
 
-			// Decode
-			val := reflect.Indirect(reflect.New(resultElemType))
-			if err := d.decode(fieldName, o, val); err != nil {
-				return err
-			}
-
-			// Append it onto the slice
-			result = reflect.Append(result, val)
-
-			i += 1
+		// Decode
+		val := reflect.Indirect(reflect.New(resultElemType))
+		if err := d.decode(fieldName, o, val); err != nil {
+			return err
 		}
 
-		current = current.Next
+		// Append it onto the slice
+		result = reflect.Append(result, val)
+
+		i += 1
 	}
 
 	set.Set(result)
@@ -308,7 +307,7 @@ func (d *decoder) decodeString(name string, o *hcl.Object, result reflect.Value)
 func (d *decoder) decodeStruct(name string, o *hcl.Object, result reflect.Value) error {
 	if o.Type != hcl.ValueTypeObject {
 		return fmt.Errorf(
-			"%s: not an object type for struct (%T)", name, o)
+			"%s: not an object type for struct (%s)", name, o.Type)
 	}
 
 	// This slice will keep track of all the structs we'll be decoding.
@@ -377,10 +376,16 @@ func (d *decoder) decodeStruct(name string, o *hcl.Object, result reflect.Value)
 
 		fieldName := fieldType.Name
 
+		// This is whether or not we expand the object into its children
+		// later.
+		expand := false
+
 		tagValue := fieldType.Tag.Get(tagName)
 		tagParts := strings.SplitN(tagValue, ",", 2)
 		if len(tagParts) >= 2 {
 			switch tagParts[1] {
+			case "expand":
+				expand = true
 			case "decodedFields":
 				decodedFieldsVal = append(decodedFieldsVal, field)
 				continue
@@ -406,10 +411,13 @@ func (d *decoder) decodeStruct(name string, o *hcl.Object, result reflect.Value)
 		// Track the used key
 		usedKeys[fieldName] = struct{}{}
 
-		// Create the field name and decode
+		// Create the field name and decode. We range over the elements
+		// because we actually want the value.
 		fieldName = fmt.Sprintf("%s.%s", name, fieldName)
-		if err := d.decode(fieldName, obj, field); err != nil {
-			return err
+		for _, obj := range obj.Elem(expand) {
+			if err := d.decode(fieldName, obj, field); err != nil {
+				return err
+			}
 		}
 
 		decodedFields = append(decodedFields, fieldType.Name)
