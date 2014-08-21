@@ -115,7 +115,7 @@ func TestDecode_interface(t *testing.T) {
 			"structure_list.json",
 			false,
 			map[string]interface{}{
-				"foo": []map[string]interface{}{
+				"foo": []interface{}{
 					map[string]interface{}{
 						"key": 7,
 					},
@@ -125,10 +125,32 @@ func TestDecode_interface(t *testing.T) {
 				},
 			},
 		},
+		{
+			"structure_list_deep.json",
+			false,
+			map[string]interface{}{
+				"bar": []map[string]interface{}{
+					map[string]interface{}{
+						"foo": []map[string]interface{}{
+							map[string]interface{}{
+								"name": "terraform_example",
+								"ingress": []interface{}{
+									map[string]interface{}{
+										"from_port": 22,
+									},
+									map[string]interface{}{
+										"from_port": 80,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tc := range cases {
-		if tc.File != "empty.hcl" { continue }
 		d, err := ioutil.ReadFile(filepath.Join(fixtureDir, tc.File))
 		if err != nil {
 			t.Fatalf("err: %s", err)

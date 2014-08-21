@@ -31,8 +31,8 @@ func DecodeObject(out interface{}, n *hcl.Object) error {
 	return d.decode("root", n, reflect.ValueOf(out).Elem())
 }
 
-type decoder struct{
-	last, current reflect.Kind
+type decoder struct {
+	stack []reflect.Kind
 }
 
 func (d *decoder) decode(name string, o *hcl.Object, result reflect.Value) error {
@@ -47,10 +47,15 @@ func (d *decoder) decode(name string, o *hcl.Object, result reflect.Value) error
 		}
 	}
 
-	// Keep track of the last known type and the current since we use
-	// some context to determine things.
-	d.last = d.current
-	d.current = k.Kind()
+	// Push current onto stack unless it is an interface.
+	if k.Kind() != reflect.Interface {
+		d.stack = append(d.stack, k.Kind())
+
+		// Schedule a pop
+		defer func() {
+			d.stack = d.stack[:len(d.stack)-1]
+		}()
+	}
 
 	switch k.Kind() {
 	case reflect.Bool:
@@ -122,7 +127,7 @@ func (d *decoder) decodeInterface(name string, o *hcl.Object, result reflect.Val
 		// If we're at the root or we're directly within a slice, then we
 		// decode objects into map[string]interface{}, otherwise we decode
 		// them into lists.
-		if d.last == reflect.Invalid || d.last == reflect.Slice {
+		if len(d.stack) == 0 || d.stack[len(d.stack)-1] == reflect.Slice {
 			var temp map[string]interface{}
 			tempVal := reflect.ValueOf(temp)
 			result := reflect.MakeMap(
@@ -139,29 +144,11 @@ func (d *decoder) decodeInterface(name string, o *hcl.Object, result reflect.Val
 			set = result
 		}
 	case hcl.ValueTypeList:
-		/*
-			var temp []interface{}
-			tempVal := reflect.ValueOf(temp)
-			result := reflect.MakeSlice(
-				reflect.SliceOf(tempVal.Type().Elem()), 0, 0)
-			set = result
-		*/
-		redecode = false
-		list := o.Value.([]*hcl.Object)
-		result := make([]interface{}, 0, len(list))
-
-		for _, elem := range list {
-			raw := new(interface{})
-			err := d.decode(
-				name, elem, reflect.Indirect(reflect.ValueOf(raw)))
-			if err != nil {
-				return err
-			}
-
-			result = append(result, *raw)
-		}
-
-		set = reflect.ValueOf(result)
+		var temp []interface{}
+		tempVal := reflect.ValueOf(temp)
+		result := reflect.MakeSlice(
+			reflect.SliceOf(tempVal.Type().Elem()), 0, 0)
+		set = result
 	case hcl.ValueTypeBool:
 		var result bool
 		set = reflect.Indirect(reflect.New(reflect.TypeOf(result)))
