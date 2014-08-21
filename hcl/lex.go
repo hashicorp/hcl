@@ -224,6 +224,8 @@ func (x *hclLex) lexNumber(yylval *hclSymType) int {
 
 // lexString extracts a string from the input
 func (x *hclLex) lexString(yylval *hclSymType) int {
+	braces := 0
+
 	var b bytes.Buffer
 	for {
 		c := x.next()
@@ -232,8 +234,23 @@ func (x *hclLex) lexString(yylval *hclSymType) int {
 		}
 
 		// String end
-		if c == '"' {
+		if c == '"' && braces == 0 {
 			break
+		}
+
+		// If we're starting into variable, mark it
+		if braces == 0 && c == '$' && x.peek() == '{' {
+			braces += 1
+
+			if _, err := b.WriteRune(c); err != nil {
+				return lexEOF
+			}
+			c = x.next()
+		} else if braces > 0 && c == '{' {
+			braces += 1
+		}
+		if braces > 0 && c == '}' {
+			braces -= 1
 		}
 
 		if _, err := b.WriteRune(c); err != nil {

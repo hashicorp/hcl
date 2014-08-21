@@ -125,6 +125,11 @@ func (x *jsonLex) lexString(yylval *jsonSymType) int {
 			break
 		}
 
+		// If we're escaping a quote, then escape the quote
+		if c == '\\' && x.peek() == '"' {
+			c = x.next()
+		}
+
 		if _, err := b.WriteRune(c); err != nil {
 			return lexEOF
 		}

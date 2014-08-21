@@ -18,6 +18,7 @@ func TestDecode_interface(t *testing.T) {
 			false,
 			map[string]interface{}{
 				"foo": "bar",
+				"bar": "${file(\"bing/bong.txt\")}",
 			},
 		},
 		{
