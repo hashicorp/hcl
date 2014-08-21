@@ -48,6 +48,8 @@ func (d *decoder) decode(name string, o *hcl.Object, result reflect.Value) error
 	switch k.Kind() {
 	case reflect.Bool:
 		return d.decodeBool(name, o, result)
+	case reflect.Float64:
+		return d.decodeFloat(name, o, result)
 	case reflect.Int:
 		return d.decodeInt(name, o, result)
 	case reflect.Interface:
@@ -65,7 +67,7 @@ func (d *decoder) decode(name string, o *hcl.Object, result reflect.Value) error
 		return d.decodeStruct(name, o, result)
 	default:
 		return fmt.Errorf(
-			"%s: unknown kind to decode into: %s", name, result.Kind())
+			"%s: unknown kind to decode into: %s", name, k.Kind())
 	}
 
 	return nil
@@ -75,6 +77,17 @@ func (d *decoder) decodeBool(name string, o *hcl.Object, result reflect.Value) e
 	switch o.Type {
 	case hcl.ValueTypeBool:
 		result.Set(reflect.ValueOf(o.Value.(bool)))
+	default:
+		return fmt.Errorf("%s: unknown type %s", name, o.Type)
+	}
+
+	return nil
+}
+
+func (d *decoder) decodeFloat(name string, o *hcl.Object, result reflect.Value) error {
+	switch o.Type {
+	case hcl.ValueTypeFloat:
+		result.Set(reflect.ValueOf(o.Value.(float64)))
 	default:
 		return fmt.Errorf("%s: unknown type %s", name, o.Type)
 	}
@@ -141,6 +154,9 @@ func (d *decoder) decodeInterface(name string, o *hcl.Object, result reflect.Val
 		set = reflect.ValueOf(result)
 	case hcl.ValueTypeBool:
 		var result bool
+		set = reflect.Indirect(reflect.New(reflect.TypeOf(result)))
+	case hcl.ValueTypeFloat:
+		var result float64
 		set = reflect.Indirect(reflect.New(reflect.TypeOf(result)))
 	case hcl.ValueTypeInt:
 		var result int

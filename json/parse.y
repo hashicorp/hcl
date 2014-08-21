@@ -22,12 +22,12 @@ import (
 %type	<num> int
 %type	<obj> number object pair value
 %type	<objlist> array elements members
-%type	<str> frac
+%type	<str> exp frac
 
 %token  <num> NUMBER
 %token  <str> COLON COMMA IDENTIFIER EQUAL NEWLINE STRING
 %token  <str> LEFTBRACE RIGHTBRACE LEFTBRACKET RIGHTBRACKET
-%token  <str> TRUE FALSE NULL MINUS PERIOD
+%token  <str> TRUE FALSE NULL MINUS PERIOD EPLUS EMINUS
 
 %%
 
@@ -153,6 +153,19 @@ number:
 			Value: f,
 		}
 	}
+|   int exp
+    {
+		fs := fmt.Sprintf("%d%s", $1, $2)
+		f, err := strconv.ParseFloat(fs, 64)
+		if err != nil {
+			panic(err)
+		}
+
+		$$ = &hcl.Object{
+			Type:  hcl.ValueTypeFloat,
+			Value: f,
+		}
+    }
 
 int:
 	MINUS int
@@ -163,6 +176,16 @@ int:
 	{
 		$$ = $1
 	}
+
+exp:
+    EPLUS NUMBER
+    {
+        $$ = "e" + strconv.FormatInt(int64($2), 10)
+    }
+|   EMINUS NUMBER
+    {
+        $$ = "e-" + strconv.FormatInt(int64($2), 10)
+    }
 
 frac:
 	PERIOD NUMBER

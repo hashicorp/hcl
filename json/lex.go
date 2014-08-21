@@ -43,6 +43,18 @@ func (x *jsonLex) Lex(yylval *jsonSymType) int {
 		}
 
 		switch c {
+		case 'e':
+			fallthrough
+		case 'E':
+			switch x.next() {
+			case '+':
+				return EPLUS
+			case '-':
+				return EMINUS
+			default:
+				x.backup()
+				return EPLUS
+			}
 		case '.':
 			return PERIOD
 		case '-':
