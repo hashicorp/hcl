@@ -94,6 +94,8 @@ func (x *hclLex) Lex(yylval *hclSymType) int {
 			return RIGHTBRACE
 		case '"':
 			return x.lexString(yylval)
+		case '<':
+			return x.lexHeredoc(yylval)
 		default:
 			x.backup()
 			return x.lexId(yylval)
@@ -191,6 +193,86 @@ func (x *hclLex) lexId(yylval *hclSymType) int {
 	return IDENTIFIER
 }
 
+// lexHeredoc extracts a string from the input in heredoc format
+func (x *hclLex) lexHeredoc(yylval *hclSymType) int {
+	if x.next() != '<' {
+		x.createErr("Heredoc must start with <<")
+		return lexEOF
+	}
+
+	// Now determine the marker
+	var buf bytes.Buffer
+	for {
+		c := x.next()
+		if c == lexEOF {
+			return lexEOF
+		}
+
+		// Newline signals the end of the marker
+		if c == '\n' {
+			break
+		}
+
+		if _, err := buf.WriteRune(c); err != nil {
+			return lexEOF
+		}
+	}
+
+	marker := buf.String()
+	if marker == "" {
+		x.createErr("Heredoc must have a marker, e.g. <<FOO")
+		return lexEOF
+	}
+
+	check := true
+	buf.Reset()
+	for {
+		c := x.next()
+
+		// If we're checking, then check to see if we see the marker
+		if check {
+			check = false
+
+			var cs []rune
+			for _, r := range marker {
+				if r != c {
+					break
+				}
+
+				cs = append(cs, c)
+				c = x.next()
+			}
+			if len(cs) == len(marker) {
+				break
+			}
+
+			if len(cs) > 0 {
+				for _, c := range cs {
+					if _, err := buf.WriteRune(c); err != nil {
+						return lexEOF
+					}
+				}
+			}
+		}
+
+		if c == lexEOF {
+			return lexEOF
+		}
+
+		// If we hit a newline, then reset to check
+		if c == '\n' {
+			check = true
+		}
+
+		if _, err := buf.WriteRune(c); err != nil {
+			return lexEOF
+		}
+	}
+
+	yylval.str = buf.String()
+	return STRING
+}
+
 // lexNumber lexes out a number
 func (x *hclLex) lexNumber(yylval *hclSymType) int {
 	var b bytes.Buffer
@@ -236,6 +318,12 @@ func (x *hclLex) lexString(yylval *hclSymType) int {
 		// String end
 		if c == '"' && braces == 0 {
 			break
+		}
+
+		// If we hit a newline, then its an error
+		if c == '\n' {
+			x.createErr(fmt.Sprintf("Newline before string closed"))
+			return lexEOF
 		}
 
 		// If we're starting into variable, mark it

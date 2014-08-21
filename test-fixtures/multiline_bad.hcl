@@ -1,2 +1,4 @@
-foo = "bar
-baz"
+foo = <<EOF
+bar
+baz
+EOF
