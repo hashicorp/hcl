@@ -43,6 +43,15 @@ func TestDecode_interface(t *testing.T) {
 			},
 		},
 		{
+			"scientific.hcl",
+			false,
+			map[string]interface{}{
+				"a": 1e-10,
+				"b": 1e+10,
+				"c": 1e10,
+			},
+		},
+		{
 			"terraform_heroku.hcl",
 			false,
 			map[string]interface{}{

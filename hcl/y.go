@@ -32,6 +32,8 @@ const RIGHTBRACE = 57355
 const LEFTBRACKET = 57356
 const RIGHTBRACKET = 57357
 const PERIOD = 57358
+const EPLUS = 57359
+const EMINUS = 57360
 
 var hclToknames = []string{
 	"BOOL",
@@ -47,6 +49,8 @@ var hclToknames = []string{
 	"LEFTBRACKET",
 	"RIGHTBRACKET",
 	"PERIOD",
+	"EPLUS",
+	"EMINUS",
 }
 var hclStatenames = []string{}
 
@@ -54,7 +58,7 @@ const hclEofCode = 1
 const hclErrCode = 2
 const hclMaxDepth = 200
 
-//line parse.y:204
+//line parse.y:228
 
 //line yacctab:1
 var hclExca = []int{
@@ -63,60 +67,63 @@ var hclExca = []int{
 	-2, 0,
 }
 
-const hclNprod = 27
+const hclNprod = 30
 const hclPrivate = 57344
 
 var hclTokenNames []string
 var hclStates []string
 
-const hclLast = 52
+const hclLast = 56
 
 var hclAct = []int{
 
-	29, 3, 19, 26, 8, 15, 22, 9, 36, 34,
-	2, 16, 21, 12, 22, 20, 22, 35, 1, 31,
-	21, 31, 21, 23, 32, 8, 28, 4, 4, 4,
-	7, 7, 7, 33, 24, 13, 22, 37, 7, 10,
-	12, 30, 21, 5, 25, 6, 27, 18, 0, 17,
-	11, 14,
+	32, 3, 19, 41, 8, 27, 28, 29, 15, 22,
+	10, 33, 40, 22, 16, 21, 12, 22, 20, 21,
+	17, 14, 34, 21, 35, 8, 4, 31, 4, 7,
+	13, 7, 36, 7, 24, 12, 2, 4, 22, 9,
+	7, 5, 42, 34, 21, 39, 38, 37, 11, 23,
+	1, 25, 26, 6, 30, 18,
 }
 var hclPact = []int{
 
-	22, -1000, 22, -1000, -1, -1000, 28, -1000, -1000, 1,
-	-1000, -1000, 21, -1000, -1000, -1000, -1000, -1000, -1000, -13,
-	11, 31, -1000, 20, -1000, -1000, 4, 2, -1000, -1000,
-	-1000, -1000, -1000, -1000, -1000, -1000, 9, -1000,
+	30, -1000, 30, -1000, 31, -1000, 23, -1000, -1000, 4,
+	-1000, -1000, 21, -1000, -1000, -1000, -1000, -1000, -1000, -11,
+	12, 8, -1000, 19, -1000, -1000, -1000, 42, 41, 40,
+	-3, -1000, -1000, -1000, -1000, -1000, -1000, -1000, -1000, -1000,
+	-1000, 33, -1000,
 }
 var hclPgo = []int{
 
-	0, 2, 47, 46, 10, 43, 41, 39, 1, 0,
-	45, 44, 18,
+	0, 2, 55, 54, 36, 41, 11, 10, 1, 0,
+	53, 52, 51, 50,
 }
 var hclR1 = []int{
 
-	0, 12, 4, 4, 7, 7, 8, 8, 8, 8,
+	0, 13, 4, 4, 7, 7, 8, 8, 8, 8,
 	8, 8, 5, 5, 10, 10, 2, 2, 3, 3,
-	9, 9, 6, 6, 1, 1, 11,
+	9, 9, 6, 6, 6, 1, 1, 11, 11, 12,
 }
 var hclR2 = []int{
 
 	0, 1, 1, 2, 3, 2, 3, 3, 3, 3,
 	3, 1, 2, 2, 1, 1, 3, 2, 1, 3,
-	1, 1, 1, 2, 2, 1, 2,
+	1, 1, 1, 2, 2, 2, 1, 2, 2, 2,
 }
 var hclChk = []int{
 
-	-1000, -12, -4, -8, 7, -5, -10, 10, -8, 8,
+	-1000, -13, -4, -8, 7, -5, -10, 10, -8, 8,
 	-7, -5, 12, 7, -6, 4, 10, -7, -2, -1,
-	14, 11, 5, -4, 13, -11, 16, -3, 15, -9,
-	-6, 10, -1, 13, 5, 15, 6, -9,
+	14, 11, 5, -4, 13, -12, -11, 16, 17, 18,
+	-3, 15, -9, -6, 10, -1, 13, 5, 5, 5,
+	15, 6, -9,
 }
 var hclDef = []int{
 
 	0, -2, 1, 2, 14, 11, 0, 15, 3, 0,
 	12, 13, 0, 14, 6, 7, 8, 9, 10, 22,
-	0, 0, 25, 0, 5, 23, 0, 0, 17, 18,
-	20, 21, 24, 4, 26, 16, 0, 19,
+	0, 0, 26, 0, 5, 23, 24, 0, 0, 0,
+	0, 17, 18, 20, 21, 25, 4, 29, 27, 28,
+	16, 0, 19,
 }
 var hclTok1 = []int{
 
@@ -125,7 +132,7 @@ var hclTok1 = []int{
 var hclTok2 = []int{
 
 	2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
-	12, 13, 14, 15, 16,
+	12, 13, 14, 15, 16, 17, 18,
 }
 var hclTok3 = []int{
 	0,
@@ -357,7 +364,7 @@ hcldefault:
 	switch hclnt {
 
 	case 1:
-		//line parse.y:36
+		//line parse.y:37
 		{
 			hclResult = &Object{
 				Type:  ValueTypeObject,
@@ -365,17 +372,17 @@ hcldefault:
 			}
 		}
 	case 2:
-		//line parse.y:45
+		//line parse.y:46
 		{
 			hclVAL.objlist = []*Object{hclS[hclpt-0].obj}
 		}
 	case 3:
-		//line parse.y:49
+		//line parse.y:50
 		{
 			hclVAL.objlist = append(hclS[hclpt-1].objlist, hclS[hclpt-0].obj)
 		}
 	case 4:
-		//line parse.y:55
+		//line parse.y:56
 		{
 			hclVAL.obj = &Object{
 				Type:  ValueTypeObject,
@@ -383,20 +390,20 @@ hcldefault:
 			}
 		}
 	case 5:
-		//line parse.y:62
+		//line parse.y:63
 		{
 			hclVAL.obj = &Object{
 				Type: ValueTypeObject,
 			}
 		}
 	case 6:
-		//line parse.y:70
+		//line parse.y:71
 		{
 			hclVAL.obj = hclS[hclpt-0].obj
 			hclVAL.obj.Key = hclS[hclpt-2].str
 		}
 	case 7:
-		//line parse.y:75
+		//line parse.y:76
 		{
 			hclVAL.obj = &Object{
 				Key:   hclS[hclpt-2].str,
@@ -405,7 +412,7 @@ hcldefault:
 			}
 		}
 	case 8:
-		//line parse.y:83
+		//line parse.y:84
 		{
 			hclVAL.obj = &Object{
 				Key:   hclS[hclpt-2].str,
@@ -414,13 +421,13 @@ hcldefault:
 			}
 		}
 	case 9:
-		//line parse.y:91
+		//line parse.y:92
 		{
 			hclS[hclpt-0].obj.Key = hclS[hclpt-2].str
 			hclVAL.obj = hclS[hclpt-0].obj
 		}
 	case 10:
-		//line parse.y:96
+		//line parse.y:97
 		{
 			hclVAL.obj = &Object{
 				Key:   hclS[hclpt-2].str,
@@ -429,18 +436,18 @@ hcldefault:
 			}
 		}
 	case 11:
-		//line parse.y:104
+		//line parse.y:105
 		{
 			hclVAL.obj = hclS[hclpt-0].obj
 		}
 	case 12:
-		//line parse.y:110
+		//line parse.y:111
 		{
 			hclS[hclpt-0].obj.Key = hclS[hclpt-1].str
 			hclVAL.obj = hclS[hclpt-0].obj
 		}
 	case 13:
-		//line parse.y:115
+		//line parse.y:116
 		{
 			hclVAL.obj = &Object{
 				Key:   hclS[hclpt-1].str,
@@ -449,42 +456,42 @@ hcldefault:
 			}
 		}
 	case 14:
-		//line parse.y:125
+		//line parse.y:126
 		{
 			hclVAL.str = hclS[hclpt-0].str
 		}
 	case 15:
-		//line parse.y:129
+		//line parse.y:130
 		{
 			hclVAL.str = hclS[hclpt-0].str
 		}
 	case 16:
-		//line parse.y:135
+		//line parse.y:136
 		{
 			hclVAL.objlist = hclS[hclpt-1].objlist
 		}
 	case 17:
-		//line parse.y:139
+		//line parse.y:140
 		{
 			hclVAL.objlist = nil
 		}
 	case 18:
-		//line parse.y:145
+		//line parse.y:146
 		{
 			hclVAL.objlist = []*Object{hclS[hclpt-0].obj}
 		}
 	case 19:
-		//line parse.y:149
+		//line parse.y:150
 		{
 			hclVAL.objlist = append(hclS[hclpt-2].objlist, hclS[hclpt-0].obj)
 		}
 	case 20:
-		//line parse.y:155
+		//line parse.y:156
 		{
 			hclVAL.obj = hclS[hclpt-0].obj
 		}
 	case 21:
-		//line parse.y:159
+		//line parse.y:160
 		{
 			hclVAL.obj = &Object{
 				Type:  ValueTypeString,
@@ -492,7 +499,7 @@ hcldefault:
 			}
 		}
 	case 22:
-		//line parse.y:168
+		//line parse.y:169
 		{
 			hclVAL.obj = &Object{
 				Type:  ValueTypeInt,
@@ -500,7 +507,7 @@ hcldefault:
 			}
 		}
 	case 23:
-		//line parse.y:175
+		//line parse.y:176
 		{
 			fs := fmt.Sprintf("%d.%s", hclS[hclpt-1].num, hclS[hclpt-0].str)
 			f, err := strconv.ParseFloat(fs, 64)
@@ -514,17 +521,41 @@ hcldefault:
 			}
 		}
 	case 24:
-		//line parse.y:190
+		//line parse.y:189
+		{
+			fs := fmt.Sprintf("%d%s", hclS[hclpt-1].num, hclS[hclpt-0].str)
+			f, err := strconv.ParseFloat(fs, 64)
+			if err != nil {
+				panic(err)
+			}
+
+			hclVAL.obj = &Object{
+				Type:  ValueTypeFloat,
+				Value: f,
+			}
+		}
+	case 25:
+		//line parse.y:204
 		{
 			hclVAL.num = hclS[hclpt-0].num * -1
 		}
-	case 25:
-		//line parse.y:194
+	case 26:
+		//line parse.y:208
 		{
 			hclVAL.num = hclS[hclpt-0].num
 		}
-	case 26:
-		//line parse.y:200
+	case 27:
+		//line parse.y:214
+		{
+			hclVAL.str = "e" + strconv.FormatInt(int64(hclS[hclpt-0].num), 10)
+		}
+	case 28:
+		//line parse.y:218
+		{
+			hclVAL.str = "e-" + strconv.FormatInt(int64(hclS[hclpt-0].num), 10)
+		}
+	case 29:
+		//line parse.y:224
 		{
 			hclVAL.str = strconv.FormatInt(int64(hclS[hclpt-0].num), 10)
 		}

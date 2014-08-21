@@ -22,12 +22,13 @@ import (
 %type   <objlist> list listitems objectlist
 %type   <obj> block number object objectitem
 %type   <obj> listitem
-%type   <str> blockId frac
+%type   <str> blockId exp frac
 
 %token  <b> BOOL
 %token  <num> NUMBER
 %token  <str> COMMA IDENTIFIER EQUAL NEWLINE STRING MINUS
 %token  <str> LEFTBRACE RIGHTBRACE LEFTBRACKET RIGHTBRACKET PERIOD
+%token  <str> EPLUS EMINUS
 
 %%
 
@@ -184,6 +185,19 @@ number:
 			Value: f,
 		}
 	}
+|   int exp
+    {
+		fs := fmt.Sprintf("%d%s", $1, $2)
+		f, err := strconv.ParseFloat(fs, 64)
+		if err != nil {
+			panic(err)
+		}
+
+		$$ = &Object{
+			Type:  ValueTypeFloat,
+			Value: f,
+		}
+    }
 
 int:
 	MINUS int
@@ -194,6 +208,16 @@ int:
 	{
 		$$ = $1
 	}
+
+exp:
+    EPLUS NUMBER
+    {
+        $$ = "e" + strconv.FormatInt(int64($2), 10)
+    }
+|   EMINUS NUMBER
+    {
+        $$ = "e-" + strconv.FormatInt(int64($2), 10)
+    }
 
 frac:
 	PERIOD NUMBER

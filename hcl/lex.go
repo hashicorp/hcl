@@ -16,10 +16,11 @@ const lexEOF = 0
 type hclLex struct {
 	Input string
 
-	pos       int
-	width     int
-	col, line int
-	err       error
+	lastNumber bool
+	pos        int
+	width      int
+	col, line  int
+	err        error
 }
 
 // The parser calls this method to get each new token.
@@ -50,9 +51,29 @@ func (x *hclLex) Lex(yylval *hclSymType) int {
 
 		// If it is a number, lex the number
 		if c >= '0' && c <= '9' {
+			x.lastNumber = true
 			x.backup()
 			return x.lexNumber(yylval)
 		}
+
+		// This is a hacky way to find 'e' and lex it, but it works.
+		if x.lastNumber {
+			switch c {
+			case 'e':
+				fallthrough
+			case 'E':
+				switch x.next() {
+				case '+':
+					return EPLUS
+				case '-':
+					return EMINUS
+				default:
+					x.backup()
+					return EPLUS
+				}
+			}
+		}
+		x.lastNumber = false
 
 		switch c {
 		case '.':
