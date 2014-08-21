@@ -31,7 +31,9 @@ func DecodeObject(out interface{}, n *hcl.Object) error {
 	return d.decode("root", n, reflect.ValueOf(out).Elem())
 }
 
-type decoder struct{}
+type decoder struct{
+	last, current reflect.Kind
+}
 
 func (d *decoder) decode(name string, o *hcl.Object, result reflect.Value) error {
 	k := result
@@ -44,6 +46,11 @@ func (d *decoder) decode(name string, o *hcl.Object, result reflect.Value) error
 			k = elem
 		}
 	}
+
+	// Keep track of the last known type and the current since we use
+	// some context to determine things.
+	d.last = d.current
+	d.current = k.Kind()
 
 	switch k.Kind() {
 	case reflect.Bool:
@@ -112,7 +119,10 @@ func (d *decoder) decodeInterface(name string, o *hcl.Object, result reflect.Val
 
 	switch o.Type {
 	case hcl.ValueTypeObject:
-		if name == "root" {
+		// If we're at the root or we're directly within a slice, then we
+		// decode objects into map[string]interface{}, otherwise we decode
+		// them into lists.
+		if d.last == reflect.Invalid || d.last == reflect.Slice {
 			var temp map[string]interface{}
 			tempVal := reflect.ValueOf(temp)
 			result := reflect.MakeMap(

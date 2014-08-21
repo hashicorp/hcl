@@ -97,9 +97,38 @@ func TestDecode_interface(t *testing.T) {
 				},
 			},
 		},
+		{
+			"structure_list.hcl",
+			false,
+			map[string]interface{}{
+				"foo": []map[string]interface{}{
+					map[string]interface{}{
+						"key": 7,
+					},
+					map[string]interface{}{
+						"key": 12,
+					},
+				},
+			},
+		},
+		{
+			"structure_list.json",
+			false,
+			map[string]interface{}{
+				"foo": []map[string]interface{}{
+					map[string]interface{}{
+						"key": 7,
+					},
+					map[string]interface{}{
+						"key": 12,
+					},
+				},
+			},
+		},
 	}
 
 	for _, tc := range cases {
+		if tc.File != "empty.hcl" { continue }
 		d, err := ioutil.ReadFile(filepath.Join(fixtureDir, tc.File))
 		if err != nil {
 			t.Fatalf("err: %s", err)
