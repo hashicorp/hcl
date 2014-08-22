@@ -34,6 +34,7 @@ func (x *hclLex) Lex(yylval *hclSymType) int {
 		// Ignore all whitespace except a newline which we handle
 		// specially later.
 		if unicode.IsSpace(c) {
+			x.lastNumber = false
 			continue
 		}
 
