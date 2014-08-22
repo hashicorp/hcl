@@ -65,7 +65,7 @@ const jsonEofCode = 1
 const jsonErrCode = 2
 const jsonMaxDepth = 200
 
-//line parse.y:196
+//line parse.y:209
 
 //line yacctab:1
 var jsonExca = []int{
@@ -74,59 +74,60 @@ var jsonExca = []int{
 	-2, 0,
 }
 
-const jsonNprod = 26
+const jsonNprod = 27
 const jsonPrivate = 57344
 
 var jsonTokenNames []string
 var jsonStates []string
 
-const jsonLast = 50
+const jsonLast = 53
 
 var jsonAct = []int{
 
-	12, 23, 26, 27, 28, 23, 3, 13, 3, 20,
-	21, 29, 17, 18, 19, 22, 7, 23, 5, 22,
-	7, 9, 31, 13, 3, 37, 21, 8, 17, 18,
-	19, 22, 32, 36, 6, 10, 35, 34, 38, 33,
-	15, 2, 1, 24, 11, 25, 4, 30, 16, 14,
+	12, 23, 25, 26, 27, 28, 23, 13, 3, 20,
+	21, 29, 17, 18, 19, 22, 3, 23, 27, 28,
+	22, 7, 31, 13, 3, 38, 21, 33, 17, 18,
+	19, 22, 32, 37, 9, 7, 6, 5, 10, 39,
+	8, 36, 35, 34, 15, 2, 11, 1, 24, 4,
+	30, 16, 14,
 }
 var jsonPact = []int{
 
-	-5, -1000, -1000, 6, 15, -1000, -1000, 30, -1000, 10,
+	5, -1000, -1000, 25, 28, -1000, -1000, 33, -1000, 11,
 	13, -1000, -1000, -1000, -1000, -1000, -1000, -1000, -1000, -1000,
-	-17, -3, 1, -1000, -1000, -1000, 35, 33, 32, -1000,
-	19, -1000, -1000, -1000, -1000, -1000, -1000, 13, -1000,
+	-16, -3, 2, -1000, -2, -1000, 39, 38, 37, -1000,
+	19, -1000, -1000, -1000, -1000, -1000, -1000, -1000, 13, -1000,
 }
 var jsonPgo = []int{
 
-	0, 9, 49, 40, 34, 0, 48, 47, 46, 45,
-	43, 42,
+	0, 9, 52, 44, 36, 0, 51, 50, 49, 2,
+	48, 47,
 }
 var jsonR1 = []int{
 
 	0, 11, 3, 3, 8, 8, 4, 5, 5, 5,
 	5, 5, 5, 5, 6, 6, 7, 7, 2, 2,
-	2, 1, 1, 9, 9, 10,
+	2, 2, 1, 1, 9, 9, 10,
 }
 var jsonR2 = []int{
 
 	0, 1, 3, 2, 1, 3, 3, 1, 1, 1,
 	1, 1, 1, 1, 2, 3, 1, 3, 1, 2,
-	2, 2, 1, 2, 2, 2,
+	2, 3, 2, 1, 2, 2, 2,
 }
 var jsonChk = []int{
 
 	-1000, -11, -3, 11, -8, 12, -4, 10, 12, 6,
 	5, -4, -5, 10, -2, -3, -6, 15, 16, 17,
 	-1, 13, 18, 4, -10, -9, 19, 20, 21, 14,
-	-7, -5, -1, 4, 4, 4, 14, 6, -5,
+	-7, -5, -1, -9, 4, 4, 4, 14, 6, -5,
 }
 var jsonDef = []int{
 
 	0, -2, 1, 0, 0, 3, 4, 0, 2, 0,
 	0, 5, 6, 7, 8, 9, 10, 11, 12, 13,
-	18, 0, 0, 22, 19, 20, 0, 0, 0, 14,
-	0, 16, 21, 25, 23, 24, 15, 0, 17,
+	18, 0, 0, 23, 19, 20, 0, 0, 0, 14,
+	0, 16, 22, 21, 26, 24, 25, 15, 0, 17,
 }
 var jsonTok1 = []int{
 
@@ -507,27 +508,41 @@ jsondefault:
 			}
 		}
 	case 21:
-		//line parse.y:172
+		//line parse.y:170
+		{
+			fs := fmt.Sprintf("%d.%s%s", jsonS[jsonpt-2].num, jsonS[jsonpt-1].str, jsonS[jsonpt-0].str)
+			f, err := strconv.ParseFloat(fs, 64)
+			if err != nil {
+				panic(err)
+			}
+
+			jsonVAL.obj = &hcl.Object{
+				Type:  hcl.ValueTypeFloat,
+				Value: f,
+			}
+		}
+	case 22:
+		//line parse.y:185
 		{
 			jsonVAL.num = jsonS[jsonpt-0].num * -1
 		}
-	case 22:
-		//line parse.y:176
+	case 23:
+		//line parse.y:189
 		{
 			jsonVAL.num = jsonS[jsonpt-0].num
 		}
-	case 23:
-		//line parse.y:182
+	case 24:
+		//line parse.y:195
 		{
 			jsonVAL.str = "e" + strconv.FormatInt(int64(jsonS[jsonpt-0].num), 10)
 		}
-	case 24:
-		//line parse.y:186
+	case 25:
+		//line parse.y:199
 		{
 			jsonVAL.str = "e-" + strconv.FormatInt(int64(jsonS[jsonpt-0].num), 10)
 		}
-	case 25:
-		//line parse.y:192
+	case 26:
+		//line parse.y:205
 		{
 			jsonVAL.str = strconv.FormatInt(int64(jsonS[jsonpt-0].num), 10)
 		}

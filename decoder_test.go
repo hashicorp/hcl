@@ -51,6 +51,9 @@ func TestDecode_interface(t *testing.T) {
 				"a": 1e-10,
 				"b": 1e+10,
 				"c": 1e10,
+				"d": 1.2e-10,
+				"e": 1.2e+10,
+				"f": 1.2e10,
 			},
 		},
 		{
@@ -60,6 +63,9 @@ func TestDecode_interface(t *testing.T) {
 				"a": 1e-10,
 				"b": 1e+10,
 				"c": 1e10,
+				"d": 1.2e-10,
+				"e": 1.2e+10,
+				"f": 1.2e10,
 			},
 		},
 		{

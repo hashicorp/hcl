@@ -198,6 +198,19 @@ number:
 			Value: f,
 		}
     }
+|   int frac exp
+    {
+		fs := fmt.Sprintf("%d.%s%s", $1, $2, $3)
+		f, err := strconv.ParseFloat(fs, 64)
+		if err != nil {
+			panic(err)
+		}
+
+		$$ = &Object{
+			Type:  ValueTypeFloat,
+			Value: f,
+		}
+    }
 
 int:
 	MINUS int
