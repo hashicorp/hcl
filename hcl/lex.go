@@ -170,7 +170,7 @@ func (x *hclLex) lexId(yylval *hclSymType) int {
 			break
 		}
 
-		if unicode.IsSpace(c) {
+		if !unicode.IsDigit(c) && !unicode.IsLetter(c) && c != '_' {
 			x.backup()
 			break
 		}
