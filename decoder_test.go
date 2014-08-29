@@ -25,8 +25,9 @@ func TestDecode_interface(t *testing.T) {
 			"basic_squish.hcl",
 			false,
 			map[string]interface{}{
-				"foo": "bar",
-				"bar": "${file(\"bing/bong.txt\")}",
+				"foo":     "bar",
+				"bar":     "${file(\"bing/bong.txt\")}",
+				"foo-bar": "baz",
 			},
 		},
 		{
