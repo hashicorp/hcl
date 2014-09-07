@@ -164,6 +164,7 @@ func (x *hclLex) consumeComment(c rune) bool {
 // lexId lexes an identifier
 func (x *hclLex) lexId(yylval *hclSymType) int {
 	var b bytes.Buffer
+	first := true
 	for {
 		c := x.next()
 		if c == lexEOF {
@@ -172,9 +173,16 @@ func (x *hclLex) lexId(yylval *hclSymType) int {
 
 		if !unicode.IsDigit(c) && !unicode.IsLetter(c) && c != '_' && c != '-' {
 			x.backup()
+
+			if first {
+				x.createErr("Invalid identifier")
+				return lexEOF
+			}
+
 			break
 		}
 
+		first = false
 		if _, err := b.WriteRune(c); err != nil {
 			return lexEOF
 		}
