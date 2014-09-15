@@ -10,6 +10,10 @@ func TestLexMode(t *testing.T) {
 		Mode  lexModeValue
 	}{
 		{
+			"",
+			lexModeHcl,
+		},
+		{
 			"foo",
 			lexModeHcl,
 		},

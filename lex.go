@@ -27,5 +27,5 @@ func lexMode(v string) lexModeValue {
 		}
 	}
 
-	return lexModeUnknown
+	return lexModeHcl
 }
