@@ -24,6 +24,10 @@ func TestParse(t *testing.T) {
 			false,
 		},
 		{
+			"empty.hcl",
+			false,
+		},
+		{
 			"multiple.hcl",
 			false,
 		},
