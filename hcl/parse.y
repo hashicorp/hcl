@@ -33,7 +33,10 @@ import (
 %%
 
 top:
-	objectlist
+   {
+        hclResult = &Object{Type: ValueTypeObject}
+    }
+|   objectlist
 	{
 		hclResult = &Object{
 			Type:  ValueTypeObject,

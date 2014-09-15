@@ -17,6 +17,10 @@ func TestLex(t *testing.T) {
 			[]int{IDENTIFIER, EQUAL, STRING, lexEOF},
 		},
 		{
+			"comment_single.hcl",
+			[]int{lexEOF},
+		},
+		{
 			"multiple.hcl",
 			[]int{
 				IDENTIFIER, EQUAL, STRING,
