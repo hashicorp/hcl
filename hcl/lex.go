@@ -16,11 +16,12 @@ const lexEOF = 0
 type hclLex struct {
 	Input string
 
-	lastNumber bool
-	pos        int
-	width      int
-	col, line  int
-	err        error
+	lastNumber        bool
+	pos               int
+	width             int
+	col, line         int
+	lastCol, lastLine int
+	err               error
 }
 
 // The parser calls this method to get each new token.
@@ -82,7 +83,7 @@ func (x *hclLex) Lex(yylval *hclSymType) int {
 		case '-':
 			return MINUS
 		case ',':
-			return COMMA
+			return x.lexComma()
 		case '=':
 			return EQUAL
 		case '[':
@@ -159,6 +160,27 @@ func (x *hclLex) consumeComment(c rune) bool {
 			return true
 		}
 	}
+}
+
+// lexComma reads the comma
+func (x *hclLex) lexComma() int {
+	for {
+		c := x.peek()
+
+		// Consume space
+		if unicode.IsSpace(c) {
+			x.next()
+			continue
+		}
+
+		if c == ']' {
+			return COMMAEND
+		}
+
+		break
+	}
+
+	return COMMA
 }
 
 // lexId lexes an identifier

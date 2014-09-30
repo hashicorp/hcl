@@ -28,6 +28,10 @@ func TestParse(t *testing.T) {
 			false,
 		},
 		{
+			"list_comma.hcl",
+			false,
+		},
+		{
 			"multiple.hcl",
 			false,
 		},

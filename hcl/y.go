@@ -22,23 +22,25 @@ type hclSymType struct {
 const BOOL = 57346
 const NUMBER = 57347
 const COMMA = 57348
-const IDENTIFIER = 57349
-const EQUAL = 57350
-const NEWLINE = 57351
-const STRING = 57352
-const MINUS = 57353
-const LEFTBRACE = 57354
-const RIGHTBRACE = 57355
-const LEFTBRACKET = 57356
-const RIGHTBRACKET = 57357
-const PERIOD = 57358
-const EPLUS = 57359
-const EMINUS = 57360
+const COMMAEND = 57349
+const IDENTIFIER = 57350
+const EQUAL = 57351
+const NEWLINE = 57352
+const STRING = 57353
+const MINUS = 57354
+const LEFTBRACE = 57355
+const RIGHTBRACE = 57356
+const LEFTBRACKET = 57357
+const RIGHTBRACKET = 57358
+const PERIOD = 57359
+const EPLUS = 57360
+const EMINUS = 57361
 
 var hclToknames = []string{
 	"BOOL",
 	"NUMBER",
 	"COMMA",
+	"COMMAEND",
 	"IDENTIFIER",
 	"EQUAL",
 	"NEWLINE",
@@ -58,7 +60,7 @@ const hclEofCode = 1
 const hclErrCode = 2
 const hclMaxDepth = 200
 
-//line parse.y:244
+//line parse.y:248
 
 //line yacctab:1
 var hclExca = []int{
@@ -67,65 +69,66 @@ var hclExca = []int{
 	-2, 0,
 }
 
-const hclNprod = 32
+const hclNprod = 33
 const hclPrivate = 57344
 
 var hclTokenNames []string
 var hclStates []string
 
-const hclLast = 60
+const hclLast = 61
 
 var hclAct = []int{
 
-	32, 26, 3, 19, 42, 8, 27, 28, 29, 28,
-	29, 15, 22, 41, 22, 5, 9, 16, 21, 12,
-	21, 20, 11, 22, 40, 35, 8, 37, 34, 21,
-	1, 4, 4, 31, 7, 7, 13, 36, 24, 7,
-	22, 12, 2, 43, 4, 34, 21, 7, 10, 33,
-	39, 38, 25, 6, 30, 23, 18, 0, 17, 14,
+	32, 26, 3, 19, 9, 8, 27, 28, 29, 28,
+	29, 15, 22, 4, 22, 40, 7, 22, 16, 21,
+	12, 21, 20, 34, 21, 35, 8, 37, 31, 42,
+	43, 1, 4, 39, 4, 7, 38, 7, 36, 41,
+	24, 13, 22, 44, 7, 2, 12, 10, 34, 21,
+	33, 25, 5, 6, 30, 18, 0, 17, 23, 11,
+	14,
 }
 var hclPact = []int{
 
-	37, -1000, 37, -1000, 8, -1000, 29, -1000, -1000, 7,
-	-1000, -1000, 25, -1000, -1000, -1000, -1000, -1000, -1000, -10,
-	18, 9, -1000, 24, -1000, -8, -1000, 46, 45, 19,
-	-2, -1000, -1000, -1000, -1000, -1000, -1000, -1000, -1000, -1000,
-	-1000, -1000, 35, -1000,
+	5, -1000, 5, -1000, -5, -1000, 33, -1000, -1000, 7,
+	-1000, -1000, 26, -1000, -1000, -1000, -1000, -1000, -1000, -11,
+	12, 9, -1000, 24, -1000, -9, -1000, 31, 28, 10,
+	23, -1000, -1000, -1000, -1000, -1000, -1000, -1000, -1000, -1000,
+	-1000, -1000, 37, -1000, -1000,
 }
 var hclPgo = []int{
 
-	0, 3, 56, 54, 42, 15, 49, 48, 2, 0,
-	53, 1, 52, 30,
+	0, 3, 55, 54, 45, 52, 50, 47, 2, 0,
+	53, 1, 51, 31,
 }
 var hclR1 = []int{
 
 	0, 13, 13, 4, 4, 7, 7, 8, 8, 8,
 	8, 8, 8, 5, 5, 10, 10, 2, 2, 3,
-	3, 9, 9, 6, 6, 6, 6, 1, 1, 11,
-	11, 12,
+	3, 3, 9, 9, 6, 6, 6, 6, 1, 1,
+	11, 11, 12,
 }
 var hclR2 = []int{
 
 	0, 0, 1, 1, 2, 3, 2, 3, 3, 3,
 	3, 3, 1, 2, 2, 1, 1, 3, 2, 1,
-	3, 1, 1, 1, 2, 2, 3, 2, 1, 2,
-	2, 2,
+	3, 2, 1, 1, 1, 2, 2, 3, 2, 1,
+	2, 2, 2,
 }
 var hclChk = []int{
 
-	-1000, -13, -4, -8, 7, -5, -10, 10, -8, 8,
-	-7, -5, 12, 7, -6, 4, 10, -7, -2, -1,
-	14, 11, 5, -4, 13, -12, -11, 16, 17, 18,
-	-3, 15, -9, -6, 10, -1, 13, -11, 5, 5,
-	5, 15, 6, -9,
+	-1000, -13, -4, -8, 8, -5, -10, 11, -8, 9,
+	-7, -5, 13, 8, -6, 4, 11, -7, -2, -1,
+	15, 12, 5, -4, 14, -12, -11, 17, 18, 19,
+	-3, 16, -9, -6, 11, -1, 14, -11, 5, 5,
+	5, 16, 6, 7, -9,
 }
 var hclDef = []int{
 
 	1, -2, 2, 3, 15, 12, 0, 16, 4, 0,
-	13, 14, 0, 15, 7, 8, 9, 10, 11, 23,
-	0, 0, 28, 0, 6, 24, 25, 0, 0, 0,
-	0, 18, 19, 21, 22, 27, 5, 26, 31, 29,
-	30, 17, 0, 20,
+	13, 14, 0, 15, 7, 8, 9, 10, 11, 24,
+	0, 0, 29, 0, 6, 25, 26, 0, 0, 0,
+	0, 18, 19, 22, 23, 28, 5, 27, 32, 30,
+	31, 17, 0, 21, 20,
 }
 var hclTok1 = []int{
 
@@ -134,7 +137,7 @@ var hclTok1 = []int{
 var hclTok2 = []int{
 
 	2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
-	12, 13, 14, 15, 16, 17, 18,
+	12, 13, 14, 15, 16, 17, 18, 19,
 }
 var hclTok3 = []int{
 	0,
@@ -493,28 +496,33 @@ hcldefault:
 			hclVAL.objlist = append(hclS[hclpt-2].objlist, hclS[hclpt-0].obj)
 		}
 	case 21:
-		//line parse.y:159
+		//line parse.y:157
 		{
-			hclVAL.obj = hclS[hclpt-0].obj
+			hclVAL.objlist = hclS[hclpt-1].objlist
 		}
 	case 22:
 		//line parse.y:163
+		{
+			hclVAL.obj = hclS[hclpt-0].obj
+		}
+	case 23:
+		//line parse.y:167
 		{
 			hclVAL.obj = &Object{
 				Type:  ValueTypeString,
 				Value: hclS[hclpt-0].str,
 			}
 		}
-	case 23:
-		//line parse.y:172
+	case 24:
+		//line parse.y:176
 		{
 			hclVAL.obj = &Object{
 				Type:  ValueTypeInt,
 				Value: hclS[hclpt-0].num,
 			}
 		}
-	case 24:
-		//line parse.y:179
+	case 25:
+		//line parse.y:183
 		{
 			fs := fmt.Sprintf("%d.%s", hclS[hclpt-1].num, hclS[hclpt-0].str)
 			f, err := strconv.ParseFloat(fs, 64)
@@ -527,8 +535,8 @@ hcldefault:
 				Value: f,
 			}
 		}
-	case 25:
-		//line parse.y:192
+	case 26:
+		//line parse.y:196
 		{
 			fs := fmt.Sprintf("%d%s", hclS[hclpt-1].num, hclS[hclpt-0].str)
 			f, err := strconv.ParseFloat(fs, 64)
@@ -541,8 +549,8 @@ hcldefault:
 				Value: f,
 			}
 		}
-	case 26:
-		//line parse.y:205
+	case 27:
+		//line parse.y:209
 		{
 			fs := fmt.Sprintf("%d.%s%s", hclS[hclpt-2].num, hclS[hclpt-1].str, hclS[hclpt-0].str)
 			f, err := strconv.ParseFloat(fs, 64)
@@ -555,28 +563,28 @@ hcldefault:
 				Value: f,
 			}
 		}
-	case 27:
-		//line parse.y:220
-		{
-			hclVAL.num = hclS[hclpt-0].num * -1
-		}
 	case 28:
 		//line parse.y:224
 		{
-			hclVAL.num = hclS[hclpt-0].num
+			hclVAL.num = hclS[hclpt-0].num * -1
 		}
 	case 29:
-		//line parse.y:230
+		//line parse.y:228
 		{
-			hclVAL.str = "e" + strconv.FormatInt(int64(hclS[hclpt-0].num), 10)
+			hclVAL.num = hclS[hclpt-0].num
 		}
 	case 30:
 		//line parse.y:234
 		{
-			hclVAL.str = "e-" + strconv.FormatInt(int64(hclS[hclpt-0].num), 10)
+			hclVAL.str = "e" + strconv.FormatInt(int64(hclS[hclpt-0].num), 10)
 		}
 	case 31:
-		//line parse.y:240
+		//line parse.y:238
+		{
+			hclVAL.str = "e-" + strconv.FormatInt(int64(hclS[hclpt-0].num), 10)
+		}
+	case 32:
+		//line parse.y:244
 		{
 			hclVAL.str = strconv.FormatInt(int64(hclS[hclpt-0].num), 10)
 		}
