@@ -111,6 +111,13 @@ func (d *decoder) decodeInt(name string, o *hcl.Object, result reflect.Value) er
 	switch o.Type {
 	case hcl.ValueTypeInt:
 		result.Set(reflect.ValueOf(o.Value.(int)))
+	case hcl.ValueTypeString:
+		v, err := strconv.ParseInt(o.Value.(string), 0, 0)
+		if err != nil {
+			return err
+		}
+
+		result.SetInt(int64(v))
 	default:
 		return fmt.Errorf("%s: unknown type %s", name, o.Type)
 	}

@@ -424,3 +424,18 @@ func TestDecode_structureMap(t *testing.T) {
 		}
 	}
 }
+
+func TestDecode_intString(t *testing.T) {
+	var value struct {
+		Count int
+	}
+
+	err := Decode(&value, testReadFile(t, "basic_int_string.hcl"))
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	if value.Count != 3 {
+		t.Fatalf("bad: %#v", value.Count)
+	}
+}
