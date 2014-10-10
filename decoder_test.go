@@ -425,6 +425,14 @@ func TestDecode_structureMap(t *testing.T) {
 	}
 }
 
+func TestDecode_interfaceNonPointer(t *testing.T) {
+	var value interface{}
+	err := Decode(value, testReadFile(t, "basic_int_string.hcl"))
+	if err == nil {
+		t.Fatal("should error")
+	}
+}
+
 func TestDecode_intString(t *testing.T) {
 	var value struct {
 		Count int

@@ -1,6 +1,7 @@
 package hcl
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"sort"
@@ -27,8 +28,13 @@ func Decode(out interface{}, in string) error {
 // DecodeObject is a lower-level version of Decode. It decodes a
 // raw Object into the given output.
 func DecodeObject(out interface{}, n *hcl.Object) error {
+	val := reflect.ValueOf(out)
+	if val.Kind() != reflect.Ptr {
+		return errors.New("result must be a pointer")
+	}
+
 	var d decoder
-	return d.decode("root", n, reflect.ValueOf(out).Elem())
+	return d.decode("root", n, val.Elem())
 }
 
 type decoder struct {
