@@ -357,6 +357,19 @@ func (x *hclLex) lexString(yylval *hclSymType) int {
 			return lexEOF
 		}
 
+		// If we're escaping a quote, then escape the quote
+		if c == '\\' {
+			n := x.next()
+			switch n {
+			case '"':
+				c = n
+			case 'n':
+				c = '\n'
+			default:
+				x.backup()
+			}
+		}
+
 		// If we're starting into variable, mark it
 		if braces == 0 && c == '$' && x.peek() == '{' {
 			braces += 1

@@ -44,6 +44,13 @@ func TestDecode_interface(t *testing.T) {
 			},
 		},
 		{
+			"escape.hcl",
+			false,
+			map[string]interface{}{
+				"foo": "bar\"baz",
+			},
+		},
+		{
 			"multiline_bad.hcl",
 			false,
 			map[string]interface{}{"foo": "bar\nbaz\n"},
