@@ -66,7 +66,7 @@ of the syntax and grammar are listed here.
     it is treated as a hexadecimal. If it is prefixed with 0, it is
     treated as an octal. Numbers can be in scientific notation: "1e10".
 
-  * Boolean values: `true`, `false`, `on`, `off`, `yes`, `no`.
+  * Boolean values: `true`, `false`
 
   * Arrays can be made by wrapping it in `[]`. Example:
     `["foo", "bar", 42]`. Arrays can contain primitives
