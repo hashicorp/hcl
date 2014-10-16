@@ -29,7 +29,7 @@ type Object struct {
 	Next  *Object
 }
 
-// GoStrig is an implementation of the GoStringer interface.
+// GoString is an implementation of the GoStringer interface.
 func (o *Object) GoString() string {
 	return fmt.Sprintf("*%#v", *o)
 }
