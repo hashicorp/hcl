@@ -47,7 +47,7 @@ func TestDecode_interface(t *testing.T) {
 			"escape.hcl",
 			false,
 			map[string]interface{}{
-				"foo": "bar\"baz",
+				"foo": "bar\"baz\\n",
 			},
 		},
 		{
@@ -196,7 +196,7 @@ func TestDecode_interface(t *testing.T) {
 		}
 
 		if !reflect.DeepEqual(out, tc.Out) {
-			t.Fatalf("Input: %s\n\n%#v\n\n%#v", tc.File, out, tc.Out)
+			t.Fatalf("Input: %s\n\nActual: %#v\n\nExpected: %#v", tc.File, out, tc.Out)
 		}
 	}
 }

@@ -365,6 +365,8 @@ func (x *hclLex) lexString(yylval *hclSymType) int {
 				c = n
 			case 'n':
 				c = '\n'
+			case '\\':
+				c = n
 			default:
 				x.backup()
 			}
