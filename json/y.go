@@ -14,32 +14,35 @@ import (
 //line parse.y:15
 type jsonSymType struct {
 	yys     int
+	f       float64
 	num     int
 	str     string
 	obj     *hcl.Object
 	objlist []*hcl.Object
 }
 
-const NUMBER = 57346
-const COLON = 57347
-const COMMA = 57348
-const IDENTIFIER = 57349
-const EQUAL = 57350
-const NEWLINE = 57351
-const STRING = 57352
-const LEFTBRACE = 57353
-const RIGHTBRACE = 57354
-const LEFTBRACKET = 57355
-const RIGHTBRACKET = 57356
-const TRUE = 57357
-const FALSE = 57358
-const NULL = 57359
-const MINUS = 57360
-const PERIOD = 57361
-const EPLUS = 57362
-const EMINUS = 57363
+const FLOAT = 57346
+const NUMBER = 57347
+const COLON = 57348
+const COMMA = 57349
+const IDENTIFIER = 57350
+const EQUAL = 57351
+const NEWLINE = 57352
+const STRING = 57353
+const LEFTBRACE = 57354
+const RIGHTBRACE = 57355
+const LEFTBRACKET = 57356
+const RIGHTBRACKET = 57357
+const TRUE = 57358
+const FALSE = 57359
+const NULL = 57360
+const MINUS = 57361
+const PERIOD = 57362
+const EPLUS = 57363
+const EMINUS = 57364
 
 var jsonToknames = []string{
+	"FLOAT",
 	"NUMBER",
 	"COLON",
 	"COMMA",
@@ -65,7 +68,7 @@ const jsonEofCode = 1
 const jsonErrCode = 2
 const jsonMaxDepth = 200
 
-//line parse.y:209
+//line parse.y:210
 
 //line yacctab:1
 var jsonExca = []int{
@@ -74,7 +77,7 @@ var jsonExca = []int{
 	-2, 0,
 }
 
-const jsonNprod = 27
+const jsonNprod = 28
 const jsonPrivate = 57344
 
 var jsonTokenNames []string
@@ -84,50 +87,50 @@ const jsonLast = 53
 
 var jsonAct = []int{
 
-	12, 23, 25, 26, 27, 28, 23, 13, 3, 20,
-	21, 29, 17, 18, 19, 22, 3, 23, 27, 28,
-	22, 7, 31, 13, 3, 38, 21, 33, 17, 18,
-	19, 22, 32, 37, 9, 7, 6, 5, 10, 39,
-	8, 36, 35, 34, 15, 2, 11, 1, 24, 4,
-	30, 16, 14,
+	12, 25, 24, 3, 20, 27, 28, 7, 13, 3,
+	21, 22, 30, 17, 18, 19, 23, 25, 24, 26,
+	25, 24, 36, 32, 13, 3, 10, 22, 33, 17,
+	18, 19, 23, 35, 34, 23, 38, 9, 7, 39,
+	5, 29, 6, 8, 37, 15, 2, 1, 4, 31,
+	16, 14, 11,
 }
 var jsonPact = []int{
 
-	5, -1000, -1000, 25, 28, -1000, -1000, 33, -1000, 11,
+	-9, -1000, -1000, 27, 30, -1000, -1000, 20, -1000, -4,
 	13, -1000, -1000, -1000, -1000, -1000, -1000, -1000, -1000, -1000,
-	-16, -3, 2, -1000, -2, -1000, 39, 38, 37, -1000,
-	19, -1000, -1000, -1000, -1000, -1000, -1000, -1000, 13, -1000,
+	-16, -16, -3, 16, -1000, -1000, -1000, 28, 17, -1000,
+	-1000, 29, -1000, -1000, -1000, -1000, -1000, -1000, 13, -1000,
 }
 var jsonPgo = []int{
 
-	0, 9, 52, 44, 36, 0, 51, 50, 49, 2,
-	48, 47,
+	0, 10, 4, 51, 45, 42, 0, 50, 49, 48,
+	19, 47,
 }
 var jsonR1 = []int{
 
-	0, 11, 3, 3, 8, 8, 4, 5, 5, 5,
-	5, 5, 5, 5, 6, 6, 7, 7, 2, 2,
-	2, 2, 1, 1, 9, 9, 10,
+	0, 11, 4, 4, 9, 9, 5, 6, 6, 6,
+	6, 6, 6, 6, 7, 7, 8, 8, 3, 3,
+	3, 3, 2, 2, 1, 1, 10, 10,
 }
 var jsonR2 = []int{
 
 	0, 1, 3, 2, 1, 3, 3, 1, 1, 1,
-	1, 1, 1, 1, 2, 3, 1, 3, 1, 2,
-	2, 3, 2, 1, 2, 2, 2,
+	1, 1, 1, 1, 2, 3, 1, 3, 1, 1,
+	2, 2, 2, 1, 2, 1, 2, 2,
 }
 var jsonChk = []int{
 
-	-1000, -11, -3, 11, -8, 12, -4, 10, 12, 6,
-	5, -4, -5, 10, -2, -3, -6, 15, 16, 17,
-	-1, 13, 18, 4, -10, -9, 19, 20, 21, 14,
-	-7, -5, -1, -9, 4, 4, 4, 14, 6, -5,
+	-1000, -11, -4, 12, -9, 13, -5, 11, 13, 7,
+	6, -5, -6, 11, -3, -4, -7, 16, 17, 18,
+	-2, -1, 14, 19, 5, 4, -10, 21, 22, -10,
+	15, -8, -6, -2, -1, 5, 5, 15, 7, -6,
 }
 var jsonDef = []int{
 
 	0, -2, 1, 0, 0, 3, 4, 0, 2, 0,
 	0, 5, 6, 7, 8, 9, 10, 11, 12, 13,
-	18, 0, 0, 23, 19, 20, 0, 0, 0, 14,
-	0, 16, 22, 21, 26, 24, 25, 15, 0, 17,
+	18, 19, 0, 0, 23, 25, 20, 0, 0, 21,
+	14, 0, 16, 22, 24, 26, 27, 15, 0, 17,
 }
 var jsonTok1 = []int{
 
@@ -137,6 +140,7 @@ var jsonTok2 = []int{
 
 	2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
 	12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+	22,
 }
 var jsonTok3 = []int{
 	0,
@@ -368,12 +372,12 @@ jsondefault:
 	switch jsonnt {
 
 	case 1:
-		//line parse.y:36
+		//line parse.y:39
 		{
 			jsonResult = jsonS[jsonpt-0].obj
 		}
 	case 2:
-		//line parse.y:42
+		//line parse.y:45
 		{
 			jsonVAL.obj = &hcl.Object{
 				Type:  hcl.ValueTypeObject,
@@ -381,28 +385,28 @@ jsondefault:
 			}
 		}
 	case 3:
-		//line parse.y:49
+		//line parse.y:52
 		{
 			jsonVAL.obj = &hcl.Object{Type: hcl.ValueTypeObject}
 		}
 	case 4:
-		//line parse.y:55
+		//line parse.y:58
 		{
 			jsonVAL.objlist = []*hcl.Object{jsonS[jsonpt-0].obj}
 		}
 	case 5:
-		//line parse.y:59
+		//line parse.y:62
 		{
 			jsonVAL.objlist = append(jsonS[jsonpt-2].objlist, jsonS[jsonpt-0].obj)
 		}
 	case 6:
-		//line parse.y:65
+		//line parse.y:68
 		{
 			jsonS[jsonpt-0].obj.Key = jsonS[jsonpt-2].str
 			jsonVAL.obj = jsonS[jsonpt-0].obj
 		}
 	case 7:
-		//line parse.y:72
+		//line parse.y:75
 		{
 			jsonVAL.obj = &hcl.Object{
 				Type:  hcl.ValueTypeString,
@@ -410,17 +414,17 @@ jsondefault:
 			}
 		}
 	case 8:
-		//line parse.y:79
+		//line parse.y:82
 		{
 			jsonVAL.obj = jsonS[jsonpt-0].obj
 		}
 	case 9:
-		//line parse.y:83
+		//line parse.y:86
 		{
 			jsonVAL.obj = jsonS[jsonpt-0].obj
 		}
 	case 10:
-		//line parse.y:87
+		//line parse.y:90
 		{
 			jsonVAL.obj = &hcl.Object{
 				Type:  hcl.ValueTypeList,
@@ -428,7 +432,7 @@ jsondefault:
 			}
 		}
 	case 11:
-		//line parse.y:94
+		//line parse.y:97
 		{
 			jsonVAL.obj = &hcl.Object{
 				Type:  hcl.ValueTypeBool,
@@ -436,7 +440,7 @@ jsondefault:
 			}
 		}
 	case 12:
-		//line parse.y:101
+		//line parse.y:104
 		{
 			jsonVAL.obj = &hcl.Object{
 				Type:  hcl.ValueTypeBool,
@@ -444,7 +448,7 @@ jsondefault:
 			}
 		}
 	case 13:
-		//line parse.y:108
+		//line parse.y:111
 		{
 			jsonVAL.obj = &hcl.Object{
 				Type:  hcl.ValueTypeNil,
@@ -452,27 +456,27 @@ jsondefault:
 			}
 		}
 	case 14:
-		//line parse.y:117
+		//line parse.y:120
 		{
 			jsonVAL.objlist = nil
 		}
 	case 15:
-		//line parse.y:121
+		//line parse.y:124
 		{
 			jsonVAL.objlist = jsonS[jsonpt-1].objlist
 		}
 	case 16:
-		//line parse.y:127
+		//line parse.y:130
 		{
 			jsonVAL.objlist = []*hcl.Object{jsonS[jsonpt-0].obj}
 		}
 	case 17:
-		//line parse.y:131
+		//line parse.y:134
 		{
 			jsonVAL.objlist = append(jsonS[jsonpt-2].objlist, jsonS[jsonpt-0].obj)
 		}
 	case 18:
-		//line parse.y:137
+		//line parse.y:140
 		{
 			jsonVAL.obj = &hcl.Object{
 				Type:  hcl.ValueTypeInt,
@@ -480,21 +484,15 @@ jsondefault:
 			}
 		}
 	case 19:
-		//line parse.y:144
+		//line parse.y:147
 		{
-			fs := fmt.Sprintf("%d.%s", jsonS[jsonpt-1].num, jsonS[jsonpt-0].str)
-			f, err := strconv.ParseFloat(fs, 64)
-			if err != nil {
-				panic(err)
-			}
-
 			jsonVAL.obj = &hcl.Object{
 				Type:  hcl.ValueTypeFloat,
-				Value: f,
+				Value: jsonS[jsonpt-0].f,
 			}
 		}
 	case 20:
-		//line parse.y:157
+		//line parse.y:154
 		{
 			fs := fmt.Sprintf("%d%s", jsonS[jsonpt-1].num, jsonS[jsonpt-0].str)
 			f, err := strconv.ParseFloat(fs, 64)
@@ -508,9 +506,9 @@ jsondefault:
 			}
 		}
 	case 21:
-		//line parse.y:170
+		//line parse.y:167
 		{
-			fs := fmt.Sprintf("%d.%s%s", jsonS[jsonpt-2].num, jsonS[jsonpt-1].str, jsonS[jsonpt-0].str)
+			fs := fmt.Sprintf("%f%s", jsonS[jsonpt-1].f, jsonS[jsonpt-0].str)
 			f, err := strconv.ParseFloat(fs, 64)
 			if err != nil {
 				panic(err)
@@ -522,29 +520,34 @@ jsondefault:
 			}
 		}
 	case 22:
-		//line parse.y:185
+		//line parse.y:182
 		{
 			jsonVAL.num = jsonS[jsonpt-0].num * -1
 		}
 	case 23:
-		//line parse.y:189
+		//line parse.y:186
 		{
 			jsonVAL.num = jsonS[jsonpt-0].num
 		}
 	case 24:
-		//line parse.y:195
+		//line parse.y:192
+		{
+			jsonVAL.f = jsonS[jsonpt-0].f * -1
+		}
+	case 25:
+		//line parse.y:196
+		{
+			jsonVAL.f = jsonS[jsonpt-0].f
+		}
+	case 26:
+		//line parse.y:202
 		{
 			jsonVAL.str = "e" + strconv.FormatInt(int64(jsonS[jsonpt-0].num), 10)
 		}
-	case 25:
-		//line parse.y:199
+	case 27:
+		//line parse.y:206
 		{
 			jsonVAL.str = "e-" + strconv.FormatInt(int64(jsonS[jsonpt-0].num), 10)
-		}
-	case 26:
-		//line parse.y:205
-		{
-			jsonVAL.str = strconv.FormatInt(int64(jsonS[jsonpt-0].num), 10)
 		}
 	}
 	goto jsonstack /* stack new state and value */

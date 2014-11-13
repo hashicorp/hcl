@@ -13,6 +13,7 @@ import (
 type hclSymType struct {
 	yys     int
 	b       bool
+	f       float64
 	num     int
 	str     string
 	obj     *Object
@@ -20,24 +21,26 @@ type hclSymType struct {
 }
 
 const BOOL = 57346
-const NUMBER = 57347
-const COMMA = 57348
-const COMMAEND = 57349
-const IDENTIFIER = 57350
-const EQUAL = 57351
-const NEWLINE = 57352
-const STRING = 57353
-const MINUS = 57354
-const LEFTBRACE = 57355
-const RIGHTBRACE = 57356
-const LEFTBRACKET = 57357
-const RIGHTBRACKET = 57358
-const PERIOD = 57359
-const EPLUS = 57360
-const EMINUS = 57361
+const FLOAT = 57347
+const NUMBER = 57348
+const COMMA = 57349
+const COMMAEND = 57350
+const IDENTIFIER = 57351
+const EQUAL = 57352
+const NEWLINE = 57353
+const STRING = 57354
+const MINUS = 57355
+const LEFTBRACE = 57356
+const RIGHTBRACE = 57357
+const LEFTBRACKET = 57358
+const RIGHTBRACKET = 57359
+const PERIOD = 57360
+const EPLUS = 57361
+const EMINUS = 57362
 
 var hclToknames = []string{
 	"BOOL",
+	"FLOAT",
 	"NUMBER",
 	"COMMA",
 	"COMMAEND",
@@ -60,7 +63,7 @@ const hclEofCode = 1
 const hclErrCode = 2
 const hclMaxDepth = 200
 
-//line parse.y:258
+//line parse.y:259
 
 //line yacctab:1
 var hclExca = []int{
@@ -68,73 +71,73 @@ var hclExca = []int{
 	1, -1,
 	-2, 0,
 	-1, 6,
-	9, 7,
+	10, 7,
 	-2, 17,
 	-1, 7,
-	9, 8,
+	10, 8,
 	-2, 18,
 }
 
-const hclNprod = 35
+const hclNprod = 36
 const hclPrivate = 57344
 
 var hclTokenNames []string
 var hclStates []string
 
-const hclLast = 63
+const hclLast = 62
 
 var hclAct = []int{
 
-	34, 28, 3, 21, 10, 9, 29, 30, 31, 30,
-	31, 17, 24, 42, 6, 44, 45, 7, 18, 23,
-	13, 41, 22, 40, 24, 43, 1, 37, 9, 39,
-	36, 23, 2, 6, 6, 33, 7, 7, 14, 38,
-	26, 15, 24, 13, 24, 46, 25, 11, 36, 23,
-	35, 23, 27, 5, 4, 8, 32, 20, 19, 0,
-	0, 16, 12,
+	35, 3, 21, 22, 9, 30, 31, 29, 17, 26,
+	25, 26, 25, 10, 26, 25, 18, 24, 13, 24,
+	23, 37, 24, 44, 45, 42, 34, 38, 39, 9,
+	32, 6, 6, 43, 7, 7, 2, 40, 28, 26,
+	25, 6, 41, 11, 7, 46, 37, 24, 14, 36,
+	27, 15, 5, 13, 19, 1, 4, 8, 33, 20,
+	16, 12,
 }
 var hclPact = []int{
 
-	6, -1000, 6, -1000, -5, -1000, -1000, -1000, 30, -1000,
-	7, -1000, -1000, 26, -1000, -1000, -1000, -1000, -1000, -1000,
-	-1000, -11, 19, 39, -1000, 25, -1000, -9, -1000, 18,
-	16, 8, 9, -1000, -1000, -1000, -1000, -1000, -1000, -1000,
-	-1000, -1000, -1000, -1000, 37, -1000, -1000,
+	32, -1000, 32, -1000, 3, -1000, -1000, -1000, 39, -1000,
+	4, -1000, -1000, 23, -1000, -1000, -1000, -1000, -1000, -1000,
+	-1000, -14, -14, 9, 6, -1000, -1000, 22, -1000, -1000,
+	36, 19, -1000, 16, -1000, -1000, -1000, -1000, -1000, -1000,
+	-1000, -1000, -1000, -1000, 34, -1000, -1000,
 }
 var hclPgo = []int{
 
-	0, 3, 57, 56, 32, 53, 50, 47, 2, 0,
-	55, 1, 54, 52, 26,
+	0, 3, 2, 59, 58, 36, 52, 49, 43, 1,
+	0, 57, 7, 56, 55,
 }
 var hclR1 = []int{
 
-	0, 14, 14, 4, 4, 7, 7, 12, 12, 8,
-	8, 8, 8, 8, 8, 5, 5, 10, 10, 2,
-	2, 3, 3, 3, 9, 9, 6, 6, 6, 6,
-	1, 1, 11, 11, 13,
+	0, 14, 14, 5, 5, 8, 8, 13, 13, 9,
+	9, 9, 9, 9, 9, 6, 6, 11, 11, 3,
+	3, 4, 4, 4, 10, 10, 7, 7, 7, 7,
+	2, 2, 1, 1, 12, 12,
 }
 var hclR2 = []int{
 
 	0, 0, 1, 1, 2, 3, 2, 1, 1, 3,
 	3, 3, 3, 3, 1, 2, 2, 1, 1, 3,
-	2, 1, 3, 2, 1, 1, 1, 2, 2, 3,
-	2, 1, 2, 2, 2,
+	2, 1, 3, 2, 1, 1, 1, 1, 2, 2,
+	2, 1, 2, 1, 2, 2,
 }
 var hclChk = []int{
 
-	-1000, -14, -4, -8, -12, -5, 8, 11, -10, -8,
-	9, -7, -5, 13, 8, 11, -6, 4, 11, -7,
-	-2, -1, 15, 12, 5, -4, 14, -13, -11, 17,
-	18, 19, -3, 16, -9, -6, 11, -1, 14, -11,
-	5, 5, 5, 16, 6, 7, -9,
+	-1000, -14, -5, -9, -13, -6, 9, 12, -11, -9,
+	10, -8, -6, 14, 9, 12, -7, 4, 12, -8,
+	-3, -2, -1, 16, 13, 6, 5, -5, 15, -12,
+	19, 20, -12, -4, 17, -10, -7, 12, -2, -1,
+	15, 6, 6, 17, 7, 8, -10,
 }
 var hclDef = []int{
 
 	1, -2, 2, 3, 0, 14, -2, -2, 0, 4,
 	0, 15, 16, 0, 17, 18, 9, 10, 11, 12,
-	13, 26, 0, 0, 31, 0, 6, 27, 28, 0,
-	0, 0, 0, 20, 21, 24, 25, 30, 5, 29,
-	34, 32, 33, 19, 0, 23, 22,
+	13, 26, 27, 0, 0, 31, 33, 0, 6, 28,
+	0, 0, 29, 0, 20, 21, 24, 25, 30, 32,
+	5, 34, 35, 19, 0, 23, 22,
 }
 var hclTok1 = []int{
 
@@ -143,7 +146,7 @@ var hclTok1 = []int{
 var hclTok2 = []int{
 
 	2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
-	12, 13, 14, 15, 16, 17, 18, 19,
+	12, 13, 14, 15, 16, 17, 18, 19, 20,
 }
 var hclTok3 = []int{
 	0,
@@ -375,12 +378,12 @@ hcldefault:
 	switch hclnt {
 
 	case 1:
-		//line parse.y:36
+		//line parse.y:39
 		{
 			hclResult = &Object{Type: ValueTypeObject}
 		}
 	case 2:
-		//line parse.y:40
+		//line parse.y:43
 		{
 			hclResult = &Object{
 				Type:  ValueTypeObject,
@@ -388,17 +391,17 @@ hcldefault:
 			}
 		}
 	case 3:
-		//line parse.y:49
+		//line parse.y:52
 		{
 			hclVAL.objlist = []*Object{hclS[hclpt-0].obj}
 		}
 	case 4:
-		//line parse.y:53
+		//line parse.y:56
 		{
 			hclVAL.objlist = append(hclS[hclpt-1].objlist, hclS[hclpt-0].obj)
 		}
 	case 5:
-		//line parse.y:59
+		//line parse.y:62
 		{
 			hclVAL.obj = &Object{
 				Type:  ValueTypeObject,
@@ -406,30 +409,30 @@ hcldefault:
 			}
 		}
 	case 6:
-		//line parse.y:66
+		//line parse.y:69
 		{
 			hclVAL.obj = &Object{
 				Type: ValueTypeObject,
 			}
 		}
 	case 7:
-		//line parse.y:74
+		//line parse.y:77
 		{
 			hclVAL.str = hclS[hclpt-0].str
 		}
 	case 8:
-		//line parse.y:78
+		//line parse.y:81
 		{
 			hclVAL.str = hclS[hclpt-0].str
 		}
 	case 9:
-		//line parse.y:84
+		//line parse.y:87
 		{
 			hclVAL.obj = hclS[hclpt-0].obj
 			hclVAL.obj.Key = hclS[hclpt-2].str
 		}
 	case 10:
-		//line parse.y:89
+		//line parse.y:92
 		{
 			hclVAL.obj = &Object{
 				Key:   hclS[hclpt-2].str,
@@ -438,7 +441,7 @@ hcldefault:
 			}
 		}
 	case 11:
-		//line parse.y:97
+		//line parse.y:100
 		{
 			hclVAL.obj = &Object{
 				Key:   hclS[hclpt-2].str,
@@ -447,13 +450,13 @@ hcldefault:
 			}
 		}
 	case 12:
-		//line parse.y:105
+		//line parse.y:108
 		{
 			hclS[hclpt-0].obj.Key = hclS[hclpt-2].str
 			hclVAL.obj = hclS[hclpt-0].obj
 		}
 	case 13:
-		//line parse.y:110
+		//line parse.y:113
 		{
 			hclVAL.obj = &Object{
 				Key:   hclS[hclpt-2].str,
@@ -462,18 +465,18 @@ hcldefault:
 			}
 		}
 	case 14:
-		//line parse.y:118
+		//line parse.y:121
 		{
 			hclVAL.obj = hclS[hclpt-0].obj
 		}
 	case 15:
-		//line parse.y:124
+		//line parse.y:127
 		{
 			hclS[hclpt-0].obj.Key = hclS[hclpt-1].str
 			hclVAL.obj = hclS[hclpt-0].obj
 		}
 	case 16:
-		//line parse.y:129
+		//line parse.y:132
 		{
 			hclVAL.obj = &Object{
 				Key:   hclS[hclpt-1].str,
@@ -482,47 +485,47 @@ hcldefault:
 			}
 		}
 	case 17:
-		//line parse.y:139
+		//line parse.y:142
 		{
 			hclVAL.str = hclS[hclpt-0].str
 		}
 	case 18:
-		//line parse.y:143
+		//line parse.y:146
 		{
 			hclVAL.str = hclS[hclpt-0].str
 		}
 	case 19:
-		//line parse.y:149
+		//line parse.y:152
 		{
 			hclVAL.objlist = hclS[hclpt-1].objlist
 		}
 	case 20:
-		//line parse.y:153
+		//line parse.y:156
 		{
 			hclVAL.objlist = nil
 		}
 	case 21:
-		//line parse.y:159
+		//line parse.y:162
 		{
 			hclVAL.objlist = []*Object{hclS[hclpt-0].obj}
 		}
 	case 22:
-		//line parse.y:163
+		//line parse.y:166
 		{
 			hclVAL.objlist = append(hclS[hclpt-2].objlist, hclS[hclpt-0].obj)
 		}
 	case 23:
-		//line parse.y:167
+		//line parse.y:170
 		{
 			hclVAL.objlist = hclS[hclpt-1].objlist
 		}
 	case 24:
-		//line parse.y:173
+		//line parse.y:176
 		{
 			hclVAL.obj = hclS[hclpt-0].obj
 		}
 	case 25:
-		//line parse.y:177
+		//line parse.y:180
 		{
 			hclVAL.obj = &Object{
 				Type:  ValueTypeString,
@@ -530,7 +533,7 @@ hcldefault:
 			}
 		}
 	case 26:
-		//line parse.y:186
+		//line parse.y:189
 		{
 			hclVAL.obj = &Object{
 				Type:  ValueTypeInt,
@@ -538,21 +541,15 @@ hcldefault:
 			}
 		}
 	case 27:
-		//line parse.y:193
+		//line parse.y:196
 		{
-			fs := fmt.Sprintf("%d.%s", hclS[hclpt-1].num, hclS[hclpt-0].str)
-			f, err := strconv.ParseFloat(fs, 64)
-			if err != nil {
-				panic(err)
-			}
-
 			hclVAL.obj = &Object{
 				Type:  ValueTypeFloat,
-				Value: f,
+				Value: hclS[hclpt-0].f,
 			}
 		}
 	case 28:
-		//line parse.y:206
+		//line parse.y:203
 		{
 			fs := fmt.Sprintf("%d%s", hclS[hclpt-1].num, hclS[hclpt-0].str)
 			f, err := strconv.ParseFloat(fs, 64)
@@ -566,9 +563,9 @@ hcldefault:
 			}
 		}
 	case 29:
-		//line parse.y:219
+		//line parse.y:216
 		{
-			fs := fmt.Sprintf("%d.%s%s", hclS[hclpt-2].num, hclS[hclpt-1].str, hclS[hclpt-0].str)
+			fs := fmt.Sprintf("%f%s", hclS[hclpt-1].f, hclS[hclpt-0].str)
 			f, err := strconv.ParseFloat(fs, 64)
 			if err != nil {
 				panic(err)
@@ -580,29 +577,34 @@ hcldefault:
 			}
 		}
 	case 30:
-		//line parse.y:234
+		//line parse.y:231
 		{
 			hclVAL.num = hclS[hclpt-0].num * -1
 		}
 	case 31:
-		//line parse.y:238
+		//line parse.y:235
 		{
 			hclVAL.num = hclS[hclpt-0].num
 		}
 	case 32:
-		//line parse.y:244
+		//line parse.y:241
+		{
+			hclVAL.f = hclS[hclpt-0].f * -1
+		}
+	case 33:
+		//line parse.y:245
+		{
+			hclVAL.f = hclS[hclpt-0].f
+		}
+	case 34:
+		//line parse.y:251
 		{
 			hclVAL.str = "e" + strconv.FormatInt(int64(hclS[hclpt-0].num), 10)
 		}
-	case 33:
-		//line parse.y:248
+	case 35:
+		//line parse.y:255
 		{
 			hclVAL.str = "e-" + strconv.FormatInt(int64(hclS[hclpt-0].num), 10)
-		}
-	case 34:
-		//line parse.y:254
-		{
-			hclVAL.str = strconv.FormatInt(int64(hclS[hclpt-0].num), 10)
 		}
 	}
 	goto hclstack /* stack new state and value */

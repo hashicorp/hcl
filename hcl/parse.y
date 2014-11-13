@@ -12,19 +12,22 @@ import (
 
 %union {
 	b        bool
+	f        float64
 	num      int
 	str      string
 	obj      *Object
 	objlist  []*Object
 }
 
+%type   <f> float
 %type   <num> int
 %type   <objlist> list listitems objectlist
 %type   <obj> block number object objectitem
 %type   <obj> listitem
-%type   <str> blockId exp objectkey frac
+%type   <str> blockId exp objectkey
 
 %token  <b> BOOL
+%token  <f> FLOAT
 %token  <num> NUMBER
 %token  <str> COMMA COMMAEND IDENTIFIER EQUAL NEWLINE STRING MINUS
 %token  <str> LEFTBRACE RIGHTBRACE LEFTBRACKET RIGHTBRACKET PERIOD
@@ -189,17 +192,11 @@ number:
 			Value: $1,
 		}
 	}
-|	int frac
+|	float
 	{
-		fs := fmt.Sprintf("%d.%s", $1, $2)
-		f, err := strconv.ParseFloat(fs, 64)
-		if err != nil {
-			panic(err)
-		}
-
 		$$ = &Object{
 			Type:  ValueTypeFloat,
-			Value: f,
+			Value: $1,
 		}
 	}
 |   int exp
@@ -215,9 +212,9 @@ number:
 			Value: f,
 		}
     }
-|   int frac exp
+|   float exp
     {
-		fs := fmt.Sprintf("%d.%s%s", $1, $2, $3)
+		fs := fmt.Sprintf("%f%s", $1, $2)
 		f, err := strconv.ParseFloat(fs, 64)
 		if err != nil {
 			panic(err)
@@ -239,6 +236,16 @@ int:
 		$$ = $1
 	}
 
+float:
+	 MINUS float
+	{
+		$$ = $2 * -1
+	}
+|	FLOAT
+	{
+		$$ = $1
+	}
+
 exp:
     EPLUS NUMBER
     {
@@ -248,11 +255,5 @@ exp:
     {
         $$ = "e-" + strconv.FormatInt(int64($2), 10)
     }
-
-frac:
-	PERIOD NUMBER
-	{
-		$$ = strconv.FormatInt(int64($2), 10)
-	}
 
 %%

@@ -51,6 +51,13 @@ func TestDecode_interface(t *testing.T) {
 			},
 		},
 		{
+			"float.hcl",
+			false,
+			map[string]interface{}{
+				"a": 1.02,
+			},
+		},
+		{
 			"multiline_bad.hcl",
 			false,
 			map[string]interface{}{"foo": "bar\nbaz\n"},
@@ -208,6 +215,10 @@ func TestDecode_equal(t *testing.T) {
 		{
 			"basic.hcl",
 			"basic.json",
+		},
+		{
+			"float.hcl",
+			"float.json",
 		},
 		/*
 			{

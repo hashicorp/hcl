@@ -307,14 +307,21 @@ func (x *hclLex) lexHeredoc(yylval *hclSymType) int {
 // lexNumber lexes out a number
 func (x *hclLex) lexNumber(yylval *hclSymType) int {
 	var b bytes.Buffer
+	gotPeriod := false
 	for {
 		c := x.next()
 		if c == lexEOF {
 			break
 		}
 
-		// No more numeric characters
-		if c < '0' || c > '9' {
+		if c == '.' {
+			if gotPeriod {
+				x.backup()
+				break
+			}
+
+			gotPeriod = true
+		} else if c < '0' || c > '9' {
 			x.backup()
 			break
 		}
@@ -325,14 +332,25 @@ func (x *hclLex) lexNumber(yylval *hclSymType) int {
 		}
 	}
 
-	v, err := strconv.ParseInt(b.String(), 0, 0)
+	if !gotPeriod {
+		v, err := strconv.ParseInt(b.String(), 0, 0)
+		if err != nil {
+			x.createErr(fmt.Sprintf("Expected number: %s", err))
+			return lexEOF
+		}
+
+		yylval.num = int(v)
+		return NUMBER
+	}
+
+	f, err := strconv.ParseFloat(b.String(), 64)
 	if err != nil {
-		x.createErr(fmt.Sprintf("Expected number: %s", err))
+		x.createErr(fmt.Sprintf("Expected float: %s", err))
 		return lexEOF
 	}
 
-	yylval.num = int(v)
-	return NUMBER
+	yylval.f = float64(f)
+	return FLOAT
 }
 
 // lexString extracts a string from the input
