@@ -22,7 +22,7 @@ import (
 %type   <objlist> list listitems objectlist
 %type   <obj> block number object objectitem
 %type   <obj> listitem
-%type   <str> blockId exp frac
+%type   <str> blockId exp objectkey frac
 
 %token  <b> BOOL
 %token  <num> NUMBER
@@ -69,13 +69,23 @@ object:
 		}
 	}
 
+objectkey:
+	IDENTIFIER
+	{
+		$$ = $1
+	}
+|	STRING
+	{
+		$$ = $1
+	}
+
 objectitem:
-	IDENTIFIER EQUAL number
+	objectkey EQUAL number
 	{
 		$$ = $3
 		$$.Key = $1
 	}
-|	IDENTIFIER EQUAL BOOL
+|	objectkey EQUAL BOOL
 	{
 		$$ = &Object{
 			Key:   $1,
@@ -83,7 +93,7 @@ objectitem:
 			Value: $3,
 		}
 	}
-|	IDENTIFIER EQUAL STRING
+|	objectkey EQUAL STRING
 	{
 		$$ = &Object{
 			Key:   $1,
@@ -91,12 +101,12 @@ objectitem:
 			Value: $3,
 		}
 	}
-|	IDENTIFIER EQUAL object
+|	objectkey EQUAL object
 	{
 		$3.Key = $1
 		$$ = $3
 	}
-|	IDENTIFIER EQUAL list
+|	objectkey EQUAL list
 	{
 		$$ = &Object{
 			Key:   $1,
