@@ -74,9 +74,49 @@ func (x *jsonLex) Lex(yylval *jsonSymType) int {
 		case '"':
 			return x.lexString(yylval)
 		default:
-			x.createErr(fmt.Sprintf("unexpected character: %c", c))
+			x.backup()
+			return x.lexId(yylval)
+		}
+	}
+}
+
+// lexId lexes an identifier
+func (x *jsonLex) lexId(yylval *jsonSymType) int {
+	var b bytes.Buffer
+	first := true
+	for {
+		c := x.next()
+		if c == lexEOF {
+			break
+		}
+
+		if !unicode.IsDigit(c) && !unicode.IsLetter(c) && c != '_' && c != '-' {
+			x.backup()
+
+			if first {
+				x.createErr("Invalid identifier")
+				return lexEOF
+			}
+
+			break
+		}
+
+		first = false
+		if _, err := b.WriteRune(c); err != nil {
 			return lexEOF
 		}
+	}
+
+	switch v := b.String(); v {
+	case "true":
+		return TRUE
+	case "false":
+		return FALSE
+	case "null":
+		return NULL
+	default:
+		x.createErr(fmt.Sprintf("Invalid identifier: %s", v))
+		return lexEOF
 	}
 }
 
