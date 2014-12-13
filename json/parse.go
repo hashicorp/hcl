@@ -4,7 +4,7 @@ import (
 	"sync"
 
 	"github.com/hashicorp/hcl/hcl"
-	"github.com/hashicorp/terraform/helper/multierror"
+	"github.com/hashicorp/hcl/helper/multierror"
 )
 
 // jsonErrors are the errors built up from parsing. These should not
