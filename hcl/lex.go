@@ -193,7 +193,8 @@ func (x *hclLex) lexId(yylval *hclSymType) int {
 			break
 		}
 
-		if !unicode.IsDigit(c) && !unicode.IsLetter(c) && c != '_' && c != '-' {
+		if !unicode.IsDigit(c) && !unicode.IsLetter(c) &&
+			c != '_' && c != '-' && c != '.' {
 			x.backup()
 
 			if first {
