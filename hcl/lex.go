@@ -86,6 +86,8 @@ func (x *hclLex) Lex(yylval *hclSymType) int {
 			return x.lexComma()
 		case '=':
 			return EQUAL
+		case ':':
+			return COLON
 		case '[':
 			return LEFTBRACKET
 		case ']':

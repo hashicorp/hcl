@@ -31,7 +31,7 @@ import (
 %token  <num> NUMBER
 %token  <str> COMMA COMMAEND IDENTIFIER EQUAL NEWLINE STRING MINUS
 %token  <str> LEFTBRACE RIGHTBRACE LEFTBRACKET RIGHTBRACKET PERIOD
-%token  <str> EPLUS EMINUS
+%token  <str> EPLUS EMINUS COLON
 
 %%
 
@@ -110,6 +110,40 @@ objectitem:
 		$$ = $3
 	}
 |	objectkey EQUAL list
+	{
+		$$ = &Object{
+			Key:   $1,
+			Type:  ValueTypeList,
+			Value: $3,
+		}
+	}
+|	objectkey COLON number
+	{
+		$$ = $3
+		$$.Key = $1
+	}
+|	objectkey COLON BOOL
+	{
+		$$ = &Object{
+			Key:   $1,
+			Type:  ValueTypeBool,
+			Value: $3,
+		}
+	}
+|	objectkey COLON STRING
+	{
+		$$ = &Object{
+			Key:   $1,
+			Type:  ValueTypeString,
+			Value: $3,
+		}
+	}
+|	objectkey COLON object
+	{
+		$3.Key = $1
+		$$ = $3
+	}
+|	objectkey COLON list
 	{
 		$$ = &Object{
 			Key:   $1,
