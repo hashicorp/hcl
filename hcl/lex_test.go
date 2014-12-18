@@ -37,10 +37,6 @@ func TestLex(t *testing.T) {
 			},
 		},
 		{
-			"old.hcl",
-			[]int{IDENTIFIER, EQUAL, LEFTBRACE, STRING, lexEOF},
-		},
-		{
 			"structure_basic.hcl",
 			[]int{
 				IDENTIFIER, LEFTBRACE,
