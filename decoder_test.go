@@ -104,6 +104,22 @@ func TestDecode_interface(t *testing.T) {
 			},
 		},
 		{
+			"structure_colon.hcl",
+			false,
+			map[string]interface{}{
+				"foo": []map[string]interface{}{
+					map[string]interface{}{
+						"baz": []map[string]interface{}{
+							map[string]interface{}{
+								"key": 7,
+								"foo": "bar",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			"structure_multi.hcl",
 			false,
 			map[string]interface{}{
