@@ -11,7 +11,25 @@ import (
 )
 
 func main() {
-	d, err := ioutil.ReadAll(os.Stdin)
+	args := os.Args
+
+	if 2 != len(args) {
+		usage()
+	}
+
+	file := args[1]
+
+	var d []byte
+	var err error
+
+	if "-h" == file {
+		usage()
+	} else if "-" == file {
+		d, err = ioutil.ReadAll(os.Stdin)
+	} else {
+		d, err = ioutil.ReadFile(file)
+	}
+
 	if err != nil {
 		log.Fatalf("err: %s", err)
 	}
@@ -28,4 +46,9 @@ func main() {
 	}
 
 	fmt.Println(string(out))
+}
+
+func usage() {
+	fmt.Fprintln(os.Stderr, "usage: hcl2json <file>")
+	os.Exit(1)
 }
