@@ -8,6 +8,8 @@ import (
 	"unicode/utf8"
 )
 
+//go:generate go tool yacc -p "json" parse.y
+
 // This marks the end of the lexer
 const lexEOF = 0
 

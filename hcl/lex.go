@@ -8,6 +8,8 @@ import (
 	"unicode/utf8"
 )
 
+//go:generate go tool yacc -p "hcl" parse.y
+
 // The parser expects the lexer to return 0 on EOF.
 const lexEOF = 0
 
