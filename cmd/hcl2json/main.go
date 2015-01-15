@@ -11,21 +11,36 @@ import (
 )
 
 func main() {
-	args := os.Args
+	cli := &CLI{
+		Args:   os.Args,
+		Stdin:  os.Stdin,
+		Stdout: os.Stdout,
+		Stderr: os.Stderr,
+	}
+	os.Exit(cli.Run())
+}
 
-	if 2 != len(args) {
-		usage()
+type CLI struct {
+	Args   []string
+	Stdin  *os.File
+	Stdout *os.File
+	Stderr *os.File
+}
+
+func (c *CLI) Run() int {
+	if 2 != len(c.Args) {
+		c.Usage()
 	}
 
-	file := args[1]
+	file := c.Args[1]
 
 	var d []byte
 	var err error
 
 	if "-h" == file {
-		usage()
+		return c.Usage()
 	} else if "-" == file {
-		d, err = ioutil.ReadAll(os.Stdin)
+		d, err = ioutil.ReadAll(c.Stdin)
 	} else {
 		d, err = ioutil.ReadFile(file)
 	}
@@ -40,15 +55,17 @@ func main() {
 		log.Fatalf("err: %s", err)
 	}
 
-	out, err := json.MarshalIndent(obj, "", "  ")
+	res, err := json.MarshalIndent(obj, "", "  ")
 	if err != nil {
 		log.Fatalf("err: %s", err)
 	}
 
-	fmt.Println(string(out))
+	fmt.Fprintln(c.Stdout, string(res))
+
+	return 0
 }
 
-func usage() {
-	fmt.Fprintln(os.Stderr, "usage: hcl2json <file>")
-	os.Exit(1)
+func (c *CLI) Usage() int {
+	fmt.Fprintln(c.Stderr, "usage: hcl2json <file>")
+	return 1
 }
