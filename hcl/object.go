@@ -5,6 +5,8 @@ import (
 	"strings"
 )
 
+//go:generate stringer -type=ValueType
+
 // ValueType is an enum represnting the type of a value in
 // a LiteralNode.
 type ValueType byte

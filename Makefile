@@ -11,4 +11,7 @@ test: generate
 generate:
 	go generate ./...
 
-.PHONY: default generate test
+updatedeps:
+	go get -u golang.org/x/tools/cmd/stringer
+
+.PHONY: default generate test updatedeps
