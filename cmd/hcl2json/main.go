@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -22,14 +23,14 @@ func main() {
 
 type CLI struct {
 	Args   []string
-	Stdin  *os.File
-	Stdout *os.File
-	Stderr *os.File
+	Stdin  io.Reader
+	Stdout io.Writer
+	Stderr io.Writer
 }
 
 func (c *CLI) Run() int {
 	if 2 != len(c.Args) {
-		c.Usage()
+		return c.Usage()
 	}
 
 	file := c.Args[1]
