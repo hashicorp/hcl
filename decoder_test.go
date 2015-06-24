@@ -196,6 +196,12 @@ func TestDecode_interface(t *testing.T) {
 				"bar": "value",
 			},
 		},
+
+		{
+			"unterminated_block_comment.hcl",
+			true,
+			nil,
+		},
 	}
 
 	for _, tc := range cases {
