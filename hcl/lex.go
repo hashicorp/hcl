@@ -149,17 +149,12 @@ func (x *hclLex) consumeComment(c rune) bool {
 		case '*':
 			c = x.next()
 			if c == '/' {
-				nested--
+				return true
 			} else {
 				x.backup()
 			}
 		default:
 			// Continue
-		}
-
-		// If we're done with the comment, return!
-		if nested == 0 {
-			return true
 		}
 	}
 }

@@ -6,7 +6,6 @@
 /*
 Baz
 */
-*/
 
 # Another
 
