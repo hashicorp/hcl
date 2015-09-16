@@ -63,6 +63,15 @@ func TestLex(t *testing.T) {
 				RIGHTBRACE, lexEOF,
 			},
 		},
+		{
+			"array_comment.hcl",
+			[]int{
+				IDENTIFIER, EQUAL, LEFTBRACKET,
+				STRING, COMMA,
+				STRING, COMMA,
+				RIGHTBRACKET, lexEOF,
+			},
+		},
 	}
 
 	for _, tc := range cases {
