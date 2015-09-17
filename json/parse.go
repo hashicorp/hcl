@@ -1,10 +1,11 @@
 package json
 
 import (
+	"strings"
 	"sync"
 
-	"github.com/hashicorp/hcl/hcl"
 	"github.com/hashicorp/go-multierror"
+	"github.com/hashicorp/hcl/hcl"
 )
 
 // jsonErrors are the errors built up from parsing. These should not
@@ -33,8 +34,38 @@ func Parse(v string) (*hcl.Object, error) {
 	var err error
 	if len(jsonErrors) > 0 {
 		err = &multierror.Error{Errors: jsonErrors}
-		jsonResult = nil
+		return nil, err
 	}
 
-	return jsonResult, err
+	// Remove any keys we consider comments
+	removeComments(jsonResult)
+
+	return jsonResult, nil
+}
+
+func removeComments(o *hcl.Object) {
+	if o.Type != hcl.ValueTypeObject {
+		return
+	}
+
+	members := o.Value.([]*hcl.Object)
+	newMembers := make([]*hcl.Object, 0, len(members))
+
+	for _, obj := range members {
+		if isComment(obj.Key) {
+			continue
+		}
+
+		newMembers = append(newMembers, obj)
+
+		if obj.Type == hcl.ValueTypeObject {
+			removeComments(obj)
+		}
+	}
+
+	o.Value = newMembers
+}
+
+func isComment(key string) bool {
+	return strings.HasPrefix(key, "//")
 }

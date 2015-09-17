@@ -1,0 +1,7 @@
+{
+    "//thing": "is ignored",
+	"foo": {
+        "//nested": "is also ignored",
+		"bar": [1,2]
+	}
+}
