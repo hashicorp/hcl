@@ -6,10 +6,13 @@ import (
 	"fmt"
 	"go/scanner"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime/pprof"
 	"strings"
+
+	"github.com/hashicorp/hcl"
 )
 
 func main() {
@@ -71,14 +74,14 @@ func usage() {
 	os.Exit(2)
 }
 
-func isGoFile(f os.FileInfo) bool {
-	// ignore non-Go files
-	name := f.Name()
-	return !f.IsDir() && !strings.HasPrefix(name, ".") && strings.HasSuffix(name, ".go")
-}
-
 func report(err error) {
 	scanner.PrintError(os.Stderr, err)
+}
+
+func isHclFile(f os.FileInfo) bool {
+	// ignore non-hcl files
+	name := f.Name()
+	return !f.IsDir() && !strings.HasPrefix(name, ".") && strings.HasSuffix(name, ".hcl")
 }
 
 func walkDir(path string) {
@@ -86,7 +89,7 @@ func walkDir(path string) {
 }
 
 func visitFile(path string, f os.FileInfo, err error) error {
-	if err == nil && isGoFile(f) {
+	if err == nil && isHclFile(f) {
 		err = processFile(path, nil, os.Stdout, false)
 	}
 	if err != nil {
@@ -97,5 +100,25 @@ func visitFile(path string, f os.FileInfo, err error) error {
 
 // If in == nil, the source is the contents of the file with the given filename.
 func processFile(filename string, in io.Reader, out io.Writer, stdin bool) error {
+	if in == nil {
+		f, err := os.Open(filename)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		in = f
+	}
+
+	src, err := ioutil.ReadAll(in)
+	if err != nil {
+		return err
+	}
+
+	obj, err := hcl.Parse(string(src))
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("obj = %+v\n", obj)
 	return errors.New("not imlemented yet")
 }
