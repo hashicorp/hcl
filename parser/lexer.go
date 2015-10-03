@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"io"
-	"text/scanner"
 	"unicode"
 )
 
@@ -15,31 +14,16 @@ const eof = rune(0)
 type Lexer struct {
 	src *bufio.Reader // input
 	ch  rune          // current character
-	sc  *scanner.Scanner
-
-	// Start position of most recently scanned token; set by Scan.
-	// Calling Init or Next invalidates the position (Line == 0).
-	// The Filename field is always left untouched by the Scanner.
-	// If an error is reported (via Error) and Position is invalid,
-	// the scanner is not inside a token. Call Pos to obtain an error
-	// position in that case.
-	Position
 }
 
 // NewLexer returns a new instance of Lexer.
 func NewLexer(src io.Reader) *Lexer {
-	sc := &scanner.Scanner{}
-	sc.Init(src)
-	sc.Mode = 0
-	sc.Whitespace = 1<<'\t' | 1<<'\n' | 1<<'\r' | 1<<' '
-
 	return &Lexer{
 		src: bufio.NewReader(src),
-		sc:  sc,
 	}
 }
 
-// next reads the next rune from the bufferred reader.  Returns the rune(0) if
+// next reads the next rune from the bufferred reader. Returns the rune(0) if
 // an error occurs (or io.EOF is returned).
 func (l *Lexer) next() rune {
 	var err error
@@ -47,21 +31,12 @@ func (l *Lexer) next() rune {
 	if err != nil {
 		return eof
 	}
+
 	return l.ch
 }
 
 // unread places the previously read rune back on the reader.
-func (l *Lexer) unread() {
-	_ = l.src.UnreadRune()
-}
-
-func (l *Lexer) peek() rune {
-	prev := l.ch
-	peekCh := l.next()
-	l.unread()
-	l.ch = prev
-	return peekCh
-}
+func (l *Lexer) unread() { _ = l.src.UnreadRune() }
 
 // Scan scans the next token and returns the token and it's literal string.
 func (l *Lexer) Scan() (tok Token, lit string) {
@@ -93,7 +68,6 @@ func (l *Lexer) scanIdentifier() (Token, string) {
 	buf.WriteRune(l.ch)
 
 	return 0, ""
-
 }
 
 // Pos returns the position of the character immediately after the character or
