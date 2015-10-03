@@ -2,7 +2,9 @@ package parser
 
 import (
 	"bufio"
+	"bytes"
 	"io"
+	"text/scanner"
 	"unicode"
 )
 
@@ -11,7 +13,9 @@ const eof = rune(0)
 
 // Lexer defines a lexical scanner
 type Lexer struct {
-	r *bufio.Reader
+	src *bufio.Reader // input
+	ch  rune          // current character
+	sc  *scanner.Scanner
 
 	// Start position of most recently scanned token; set by Scan.
 	// Calling Init or Next invalidates the position (Line == 0).
@@ -23,38 +27,73 @@ type Lexer struct {
 }
 
 // NewLexer returns a new instance of Lexer.
-func NewLexer(r io.Reader) *Lexer {
+func NewLexer(src io.Reader) *Lexer {
+	sc := &scanner.Scanner{}
+	sc.Init(src)
+	sc.Mode = 0
+	sc.Whitespace = 1<<'\t' | 1<<'\n' | 1<<'\r' | 1<<' '
+
 	return &Lexer{
-		r: bufio.NewReader(r),
+		src: bufio.NewReader(src),
+		sc:  sc,
 	}
 }
 
 // next reads the next rune from the bufferred reader.  Returns the rune(0) if
 // an error occurs (or io.EOF is returned).
 func (l *Lexer) next() rune {
-	ch, _, err := l.r.ReadRune()
+	var err error
+	l.ch, _, err = l.src.ReadRune()
 	if err != nil {
 		return eof
 	}
-	return ch
+	return l.ch
 }
 
 // unread places the previously read rune back on the reader.
-func (l *Lexer) unread() { _ = l.r.UnreadRune() }
+func (l *Lexer) unread() {
+	_ = l.src.UnreadRune()
+}
+
+func (l *Lexer) peek() rune {
+	prev := l.ch
+	peekCh := l.next()
+	l.unread()
+	l.ch = prev
+	return peekCh
+}
 
 // Scan scans the next token and returns the token and it's literal string.
 func (l *Lexer) Scan() (tok Token, lit string) {
 	ch := l.next()
 
-	if isWhitespace(ch) {
+	// skip white space
+	for isWhitespace(ch) {
 		ch = l.next()
+	}
+
+	// identifier
+	if isLetter(ch) {
+		return l.scanIdentifier()
+	}
+
+	switch ch {
+	case eof:
+		return EOF, ""
 	}
 
 	return 0, ""
 }
 
-func (l *Lexer) skipWhitespace() {
-	l.next()
+func (l *Lexer) scanIdentifier() (Token, string) {
+	// Create a buffer and read the current character into it.
+	var buf bytes.Buffer
+
+	// write current character before we move to the next
+	buf.WriteRune(l.ch)
+
+	return 0, ""
+
 }
 
 // Pos returns the position of the character immediately after the character or
@@ -71,11 +110,6 @@ func isSpace(r rune) bool {
 // isEndOfLine reports whether r is an end-of-line character.
 func isEndOfLine(r rune) bool {
 	return r == '\r' || r == '\n'
-}
-
-// isAlphaNumeric reports whether r is an alphabetic, digit, or underscore.
-func isAlphaNumeric(r rune) bool {
-	return r == '_' || unicode.IsLetter(r) || unicode.IsDigit(r)
 }
 
 func isLetter(ch rune) bool {
