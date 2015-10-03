@@ -72,10 +72,12 @@ func (l *Lexer) scanIdentifier() (Token, string) {
 	// Create a buffer and read the current character into it.
 	var buf bytes.Buffer
 
-	// write current character before we move to the next
-	buf.WriteRune(l.ch)
+	for isLetter(l.ch) || isDigit(l.ch) {
+		buf.WriteRune(l.ch)
+		l.next()
+	}
 
-	return 0, ""
+	return IDENT, buf.String()
 }
 
 // Pos returns the position of the character immediately after the character or
