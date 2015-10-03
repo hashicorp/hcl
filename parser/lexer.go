@@ -117,7 +117,6 @@ func (s *Scanner) Scan() (tok Token, lit string) {
 	}
 
 	s.tokEnd = s.currPos.Offset
-
 	return tok, s.TokenLiteral()
 }
 
@@ -169,19 +168,9 @@ func (s *Scanner) TokenLiteral() string {
 }
 
 // Pos returns the position of the character immediately after the character or
-// token returned by the last call to Next or Scan.
+// token returned by the last call to Scan.
 func (s *Scanner) Pos() Position {
-	return Position{}
-}
-
-// isSpace reports whether r is a space character.
-func isSpace(r rune) bool {
-	return r == ' ' || r == '\t'
-}
-
-// isEndOfLine reports whether r is an end-of-line character.
-func isEndOfLine(r rune) bool {
-	return r == '\r' || r == '\n'
+	return s.currPos
 }
 
 func isLetter(ch rune) bool {
