@@ -37,7 +37,10 @@ func TestIdent(t *testing.T) {
 		fmt.Fprintf(buf, " \t%s\n", ident.text)
 	}
 
-	l := NewLexer(buf)
+	l, err := NewLexer(buf)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	for _, ident := range identList {
 		tok, lit := l.Scan()

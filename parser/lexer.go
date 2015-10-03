@@ -1,9 +1,9 @@
 package parser
 
 import (
-	"bufio"
 	"bytes"
 	"io"
+	"io/ioutil"
 	"unicode"
 )
 
@@ -12,38 +12,54 @@ const eof = rune(0)
 
 // Lexer defines a lexical scanner
 type Scanner struct {
-	src *bufio.Reader // input
-	ch  rune          // current character
+	src      *bytes.Buffer
+	srcBytes []byte
+
+	ch          rune // current character
+	lastCharLen int  // length of last character in bytes
+	pos         Position
+
+	// Token text buffer
+	tokBuf bytes.Buffer
+	tokPos int // token text tail position (srcBuf index); valid if >= 0
+	tokEnd int // token text tail end (srcBuf index)
 }
 
-// NewLexer returns a new instance of Lexer.
-func NewLexer(src io.Reader) *Scanner {
-	return &Scanner{
-		src: bufio.NewReader(src),
+// NewLexer returns a new instance of Lexer. Even though src is an io.Reader,
+// we fully consume the content.
+func NewLexer(src io.Reader) (*Scanner, error) {
+	buf, err := ioutil.ReadAll(src)
+	if err != nil {
+		return nil, err
 	}
+
+	b := bytes.NewBuffer(buf)
+	return &Scanner{
+		src:      b,
+		srcBytes: b.Bytes(),
+	}, nil
 }
 
 // next reads the next rune from the bufferred reader. Returns the rune(0) if
 // an error occurs (or io.EOF is returned).
 func (s *Scanner) next() rune {
 	var err error
-	s.ch, _, err = s.src.ReadRune()
+	var size int
+	s.ch, size, err = s.src.ReadRune()
 	if err != nil {
 		return eof
 	}
 
+	s.lastCharLen = size
+	s.pos.Offset += size
+	s.pos.Column += size
+
+	if s.ch == '\n' {
+		s.pos.Line++
+		s.pos.Column = 0
+	}
+
 	return s.ch
-}
-
-// unread places the previously read rune back on the reader.
-func (s *Scanner) unread() { _ = s.src.UnreadRune() }
-
-func (s *Scanner) peek() rune {
-	prev := s.ch
-	peekCh := s.next()
-	s.unread()
-	s.ch = prev
-	return peekCh
 }
 
 // Scan scans the next token and returns the token and it's literal string.
@@ -55,29 +71,49 @@ func (s *Scanner) Scan() (tok Token, lit string) {
 		ch = s.next()
 	}
 
+	// start the token position
+	s.tokBuf.Reset()
+	s.tokPos = s.pos.Offset - s.lastCharLen
+
 	// identifier
 	if isLetter(ch) {
-		return s.scanIdentifier()
+		s.scanIdentifier()
+		tok = IDENT
+	}
+
+	if isDigit(ch) {
+		// scan for number
 	}
 
 	switch ch {
 	case eof:
-		return EOF, ""
+		tok = EOF
 	}
 
-	return 0, ""
+	s.tokEnd = s.pos.Offset - s.lastCharLen
+
+	return tok, s.TokenLiteral()
 }
 
-func (s *Scanner) scanIdentifier() (Token, string) {
-	// Create a buffer and read the current character into it.
-	var buf bytes.Buffer
-
+func (s *Scanner) scanIdentifier() {
 	for isLetter(s.ch) || isDigit(s.ch) {
-		buf.WriteRune(s.ch)
 		s.next()
 	}
+}
 
-	return IDENT, buf.String()
+// TokenLiteral returns the literal string corresponding to the most recently
+// scanned token.
+func (s *Scanner) TokenLiteral() string {
+	if s.tokPos < 0 {
+		// no token text
+		return ""
+	}
+
+	// part of the token text was saved in tokBuf: save the rest in
+	// tokBuf as well and return its content
+	s.tokBuf.Write(s.srcBytes[s.tokPos:s.tokEnd])
+	s.tokPos = s.tokEnd // ensure idempotency of TokenText() call
+	return s.tokBuf.String()
 }
 
 // Pos returns the position of the character immediately after the character or
