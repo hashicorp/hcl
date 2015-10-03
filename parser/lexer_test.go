@@ -31,12 +31,12 @@ func TestBool(t *testing.T) {
 	}
 
 	for _, ident := range tokenList {
-		tok, lit := l.Scan()
+		tok := l.Scan()
 		if tok != ident.tok {
 			t.Errorf("tok = %s want %s for %s\n", tok, ident.tok, ident.text)
 		}
 
-		if lit != ident.text {
+		if l.TokenText() != ident.text {
 			t.Errorf("text = %s want %s", lit, ident.text)
 		}
 
@@ -75,12 +75,12 @@ func TestIdent(t *testing.T) {
 	}
 
 	for _, ident := range tokenList {
-		tok, lit := l.Scan()
+		tok := l.Scan()
 		if tok != ident.tok {
 			t.Errorf("tok = %s want %s for %s\n", tok, ident.tok, ident.text)
 		}
 
-		if lit != ident.text {
+		if l.TokenText() != ident.text {
 			t.Errorf("text = %s want %s", lit, ident.text)
 		}
 
@@ -123,12 +123,12 @@ func TestString(t *testing.T) {
 	}
 
 	for _, ident := range tokenList {
-		tok, lit := l.Scan()
+		tok := l.Scan()
 		if tok != ident.tok {
 			t.Errorf("tok = %s want %s for %s\n", tok, ident.tok, ident.text)
 		}
 
-		if lit != ident.text {
+		if l.TokenText() != ident.text {
 			t.Errorf("text = %s want %s", lit, ident.text)
 		}
 

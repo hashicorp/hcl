@@ -82,8 +82,8 @@ func (s *Scanner) peek() rune {
 	return peek
 }
 
-// Scan scans the next token and returns the token and it's literal string.
-func (s *Scanner) Scan() (tok Token, lit string) {
+// Scan scans the next token and returns the token.
+func (s *Scanner) Scan() (tok Token) {
 	ch := s.next()
 
 	// skip white space
@@ -97,7 +97,7 @@ func (s *Scanner) Scan() (tok Token, lit string) {
 
 	if isLetter(ch) {
 		tok = IDENT
-		lit = s.scanIdentifier()
+		lit := s.scanIdentifier()
 		if lit == "true" || lit == "false" {
 			tok = BOOL
 		}
@@ -117,7 +117,7 @@ func (s *Scanner) Scan() (tok Token, lit string) {
 	}
 
 	s.tokEnd = s.currPos.Offset
-	return tok, s.TokenLiteral()
+	return tok
 }
 
 func (s *Scanner) scanString() {
@@ -152,9 +152,9 @@ func (s *Scanner) scanIdentifier() string {
 	return string(s.srcBytes[offs:s.currPos.Offset])
 }
 
-// TokenLiteral returns the literal string corresponding to the most recently
+// TokenText returns the literal string corresponding to the most recently
 // scanned token.
-func (s *Scanner) TokenLiteral() string {
+func (s *Scanner) TokenText() string {
 	if s.tokPos < 0 {
 		// no token text
 		return ""
