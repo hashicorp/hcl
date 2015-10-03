@@ -38,6 +38,14 @@ func (l *Lexer) next() rune {
 // unread places the previously read rune back on the reader.
 func (l *Lexer) unread() { _ = l.src.UnreadRune() }
 
+func (l *Lexer) peek() rune {
+	prev := l.ch
+	peekCh := l.next()
+	l.unread()
+	l.ch = prev
+	return peekCh
+}
+
 // Scan scans the next token and returns the token and it's literal string.
 func (l *Lexer) Scan() (tok Token, lit string) {
 	ch := l.next()
