@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 	"io/ioutil"
+	"log"
 	"unicode"
 )
 
@@ -77,8 +78,8 @@ func (s *Scanner) Scan() (tok Token, lit string) {
 
 	// identifier
 	if isLetter(ch) {
-		s.scanIdentifier()
 		tok = IDENT
+		s.scanIdentifier()
 	}
 
 	if isDigit(ch) {
@@ -88,11 +89,35 @@ func (s *Scanner) Scan() (tok Token, lit string) {
 	switch ch {
 	case eof:
 		tok = EOF
+	case '"':
+		tok = STRING
+		s.scanString()
+		s.next() // move forward so we finalize the string
 	}
 
 	s.tokEnd = s.pos.Offset - s.lastCharLen
 
 	return tok, s.TokenLiteral()
+}
+
+func (s *Scanner) scanString() {
+	// '"' opening already consumed
+	ch := s.next() // read character after quote
+	for ch != '"' {
+		if ch == '\n' || ch < 0 {
+			log.Println("[ERROR] literal not terminated")
+			return
+		}
+
+		if ch == '\\' {
+			// scanEscape
+			return
+		} else {
+			ch = s.next()
+		}
+	}
+
+	return
 }
 
 func (s *Scanner) scanIdentifier() {
