@@ -16,14 +16,15 @@ type Scanner struct {
 	src      *bytes.Buffer
 	srcBytes []byte
 
-	ch          rune // current character
-	lastCharLen int  // length of last character in bytes
-	pos         Position
+	// ch          rune // current character
+	lastCharLen int // length of last character in bytes
 
-	// Token text buffer
-	tokBuf bytes.Buffer
-	tokPos int // token text tail position (srcBuf index); valid if >= 0
-	tokEnd int // token text tail end (srcBuf index)
+	currPos Position // current position
+	prevPos Position // previous position
+
+	tokBuf bytes.Buffer // token text buffer
+	tokPos int          // token text tail position (srcBuf index); valid if >= 0
+	tokEnd int          // token text tail end (srcBuf index)
 }
 
 // NewLexer returns a new instance of Lexer. Even though src is an io.Reader,
@@ -44,23 +45,41 @@ func NewLexer(src io.Reader) (*Scanner, error) {
 // next reads the next rune from the bufferred reader. Returns the rune(0) if
 // an error occurs (or io.EOF is returned).
 func (s *Scanner) next() rune {
-	var err error
-	var size int
-	s.ch, size, err = s.src.ReadRune()
+	ch, size, err := s.src.ReadRune()
 	if err != nil {
 		return eof
 	}
 
-	s.lastCharLen = size
-	s.pos.Offset += size
-	s.pos.Column += size
+	// remember last position
+	s.prevPos = s.currPos
 
-	if s.ch == '\n' {
-		s.pos.Line++
-		s.pos.Column = 0
+	s.lastCharLen = size
+	s.currPos.Offset += size
+	s.currPos.Column += size
+
+	if ch == '\n' {
+		s.currPos.Line++
+		s.currPos.Column = 0
 	}
 
-	return s.ch
+	return ch
+}
+
+func (s *Scanner) unread() {
+	if err := s.src.UnreadRune(); err != nil {
+		panic(err) // this is user fault, we should catch it
+	}
+	s.currPos = s.prevPos // put back last position
+}
+
+func (s *Scanner) peek() rune {
+	peek, _, err := s.src.ReadRune()
+	if err != nil {
+		return eof
+	}
+
+	s.src.UnreadRune()
+	return peek
 }
 
 // Scan scans the next token and returns the token and it's literal string.
@@ -74,16 +93,19 @@ func (s *Scanner) Scan() (tok Token, lit string) {
 
 	// start the token position
 	s.tokBuf.Reset()
-	s.tokPos = s.pos.Offset - s.lastCharLen
+	s.tokPos = s.currPos.Offset - s.lastCharLen
 
-	// identifier
 	if isLetter(ch) {
 		tok = IDENT
-		s.scanIdentifier()
+		lit = s.scanIdentifier()
+		if lit == "true" || lit == "false" {
+			tok = BOOL
+		}
 	}
 
 	if isDigit(ch) {
-		// scan for number
+		// scanDigits()
+		// TODO(arslan)
 	}
 
 	switch ch {
@@ -92,10 +114,9 @@ func (s *Scanner) Scan() (tok Token, lit string) {
 	case '"':
 		tok = STRING
 		s.scanString()
-		s.next() // move forward so we finalize the string
 	}
 
-	s.tokEnd = s.pos.Offset - s.lastCharLen
+	s.tokEnd = s.currPos.Offset
 
 	return tok, s.TokenLiteral()
 }
@@ -120,10 +141,16 @@ func (s *Scanner) scanString() {
 	return
 }
 
-func (s *Scanner) scanIdentifier() {
-	for isLetter(s.ch) || isDigit(s.ch) {
-		s.next()
+func (s *Scanner) scanIdentifier() string {
+	offs := s.currPos.Offset - s.lastCharLen
+	ch := s.next()
+	for isLetter(ch) || isDigit(ch) {
+		ch = s.next()
 	}
+	s.unread() // we got identifier, put back latest char
+
+	// return string(s.srcBytes[offs:(s.currPos.Offset - s.lastCharLen)])
+	return string(s.srcBytes[offs:s.currPos.Offset])
 }
 
 // TokenLiteral returns the literal string corresponding to the most recently

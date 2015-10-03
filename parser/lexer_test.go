@@ -13,8 +13,38 @@ type token struct {
 	text string
 }
 
+func TestBool(t *testing.T) {
+	var tokenList = []token{
+		{BOOL, "true"},
+		{BOOL, "false"},
+	}
+
+	// create artifical source code
+	buf := new(bytes.Buffer)
+	for _, ident := range tokenList {
+		fmt.Fprintf(buf, " \t%s\n", ident.text)
+	}
+
+	l, err := NewLexer(buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, ident := range tokenList {
+		tok, lit := l.Scan()
+		if tok != ident.tok {
+			t.Errorf("tok = %s want %s for %s\n", tok, ident.tok, ident.text)
+		}
+
+		if lit != ident.text {
+			t.Errorf("text = %s want %s", lit, ident.text)
+		}
+
+	}
+}
+
 func TestIdent(t *testing.T) {
-	var identList = []token{
+	var tokenList = []token{
 		{IDENT, "a"},
 		{IDENT, "a0"},
 		{IDENT, "foobar"},
@@ -35,7 +65,7 @@ func TestIdent(t *testing.T) {
 
 	// create artifical source code
 	buf := new(bytes.Buffer)
-	for _, ident := range identList {
+	for _, ident := range tokenList {
 		fmt.Fprintf(buf, " \t%s\n", ident.text)
 	}
 
@@ -44,7 +74,7 @@ func TestIdent(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	for _, ident := range identList {
+	for _, ident := range tokenList {
 		tok, lit := l.Scan()
 		if tok != ident.tok {
 			t.Errorf("tok = %s want %s for %s\n", tok, ident.tok, ident.text)
@@ -58,7 +88,7 @@ func TestIdent(t *testing.T) {
 }
 
 func TestString(t *testing.T) {
-	var identList = []token{
+	var tokenList = []token{
 		{STRING, `" "`},
 		{STRING, `"a"`},
 		{STRING, `"本"`},
@@ -83,7 +113,7 @@ func TestString(t *testing.T) {
 
 	// create artifical source code
 	buf := new(bytes.Buffer)
-	for _, ident := range identList {
+	for _, ident := range tokenList {
 		fmt.Fprintf(buf, " \t%s\n", ident.text)
 	}
 
@@ -92,7 +122,7 @@ func TestString(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	for _, ident := range identList {
+	for _, ident := range tokenList {
 		tok, lit := l.Scan()
 		if tok != ident.tok {
 			t.Errorf("tok = %s want %s for %s\n", tok, ident.tok, ident.text)
