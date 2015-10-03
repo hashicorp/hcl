@@ -11,53 +11,53 @@ import (
 const eof = rune(0)
 
 // Lexer defines a lexical scanner
-type Lexer struct {
+type Scanner struct {
 	src *bufio.Reader // input
 	ch  rune          // current character
 }
 
 // NewLexer returns a new instance of Lexer.
-func NewLexer(src io.Reader) *Lexer {
-	return &Lexer{
+func NewLexer(src io.Reader) *Scanner {
+	return &Scanner{
 		src: bufio.NewReader(src),
 	}
 }
 
 // next reads the next rune from the bufferred reader. Returns the rune(0) if
 // an error occurs (or io.EOF is returned).
-func (l *Lexer) next() rune {
+func (s *Scanner) next() rune {
 	var err error
-	l.ch, _, err = l.src.ReadRune()
+	s.ch, _, err = s.src.ReadRune()
 	if err != nil {
 		return eof
 	}
 
-	return l.ch
+	return s.ch
 }
 
 // unread places the previously read rune back on the reader.
-func (l *Lexer) unread() { _ = l.src.UnreadRune() }
+func (s *Scanner) unread() { _ = s.src.UnreadRune() }
 
-func (l *Lexer) peek() rune {
-	prev := l.ch
-	peekCh := l.next()
-	l.unread()
-	l.ch = prev
+func (s *Scanner) peek() rune {
+	prev := s.ch
+	peekCh := s.next()
+	s.unread()
+	s.ch = prev
 	return peekCh
 }
 
 // Scan scans the next token and returns the token and it's literal string.
-func (l *Lexer) Scan() (tok Token, lit string) {
-	ch := l.next()
+func (s *Scanner) Scan() (tok Token, lit string) {
+	ch := s.next()
 
 	// skip white space
 	for isWhitespace(ch) {
-		ch = l.next()
+		ch = s.next()
 	}
 
 	// identifier
 	if isLetter(ch) {
-		return l.scanIdentifier()
+		return s.scanIdentifier()
 	}
 
 	switch ch {
@@ -68,13 +68,13 @@ func (l *Lexer) Scan() (tok Token, lit string) {
 	return 0, ""
 }
 
-func (l *Lexer) scanIdentifier() (Token, string) {
+func (s *Scanner) scanIdentifier() (Token, string) {
 	// Create a buffer and read the current character into it.
 	var buf bytes.Buffer
 
-	for isLetter(l.ch) || isDigit(l.ch) {
-		buf.WriteRune(l.ch)
-		l.next()
+	for isLetter(s.ch) || isDigit(s.ch) {
+		buf.WriteRune(s.ch)
+		s.next()
 	}
 
 	return IDENT, buf.String()
@@ -82,7 +82,7 @@ func (l *Lexer) scanIdentifier() (Token, string) {
 
 // Pos returns the position of the character immediately after the character or
 // token returned by the last call to Next or Scan.
-func (l *Lexer) Pos() Position {
+func (s *Scanner) Pos() Position {
 	return Position{}
 }
 
