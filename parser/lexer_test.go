@@ -37,7 +37,7 @@ func TestBool(t *testing.T) {
 		}
 
 		if l.TokenText() != ident.text {
-			t.Errorf("text = %s want %s", lit, ident.text)
+			t.Errorf("text = %s want %s", l.TokenText(), ident.text)
 		}
 
 	}
@@ -81,7 +81,7 @@ func TestIdent(t *testing.T) {
 		}
 
 		if l.TokenText() != ident.text {
-			t.Errorf("text = %s want %s", lit, ident.text)
+			t.Errorf("text = %s want %s", l.TokenText(), ident.text)
 		}
 
 	}
@@ -129,7 +129,7 @@ func TestString(t *testing.T) {
 		}
 
 		if l.TokenText() != ident.text {
-			t.Errorf("text = %s want %s", lit, ident.text)
+			t.Errorf("text = %s want %s", l.TokenText(), ident.text)
 		}
 
 	}
