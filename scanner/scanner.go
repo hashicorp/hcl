@@ -104,25 +104,25 @@ func (s *Scanner) Scan() (tok token.Token) {
 	s.tokBuf.Reset()
 	s.tokPos = s.currPos.Offset - s.lastCharLen
 
-	if isLetter(ch) {
+	switch {
+	case isLetter(ch):
 		tok = token.IDENT
 		lit := s.scanIdentifier()
 		if lit == "true" || lit == "false" {
 			tok = token.BOOL
 		}
-	}
 
-	if isDigit(ch) {
+	case isDigit(ch):
 		s.scanNumber()
 		// TODO(arslan)
-	}
-
-	switch ch {
-	case eof:
-		tok = token.EOF
-	case '"':
-		tok = token.STRING
-		s.scanString()
+	default:
+		switch ch {
+		case eof:
+			tok = token.EOF
+		case '"':
+			tok = token.STRING
+			s.scanString()
+		}
 	}
 
 	s.tokEnd = s.currPos.Offset

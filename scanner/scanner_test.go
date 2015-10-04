@@ -98,3 +98,61 @@ func TestString(t *testing.T) {
 
 	testTokenList(t, tokenList)
 }
+
+func TestNumber(t *testing.T) {
+	t.SkipNow()
+	var tokenList = []tokenPair{
+		{token.NUMBER, "0"},
+		{token.NUMBER, "1"},
+		{token.NUMBER, "9"},
+		{token.NUMBER, "42"},
+		{token.NUMBER, "1234567890"},
+		{token.NUMBER, "00"},
+		{token.NUMBER, "01"},
+		{token.NUMBER, "07"},
+		{token.NUMBER, "042"},
+		{token.NUMBER, "01234567"},
+		{token.NUMBER, "0x0"},
+		{token.NUMBER, "0x1"},
+		{token.NUMBER, "0xf"},
+		{token.NUMBER, "0x42"},
+		{token.NUMBER, "0x123456789abcDEF"},
+		{token.NUMBER, "0x" + f100},
+		{token.NUMBER, "0X0"},
+		{token.NUMBER, "0X1"},
+		{token.NUMBER, "0XF"},
+		{token.NUMBER, "0X42"},
+		{token.NUMBER, "0X123456789abcDEF"},
+		{token.NUMBER, "0X" + f100},
+		{token.FLOAT, "0."},
+		{token.FLOAT, "1."},
+		{token.FLOAT, "42."},
+		{token.FLOAT, "01234567890."},
+		{token.FLOAT, ".0"},
+		{token.FLOAT, ".1"},
+		{token.FLOAT, ".42"},
+		{token.FLOAT, ".0123456789"},
+		{token.FLOAT, "0.0"},
+		{token.FLOAT, "1.0"},
+		{token.FLOAT, "42.0"},
+		{token.FLOAT, "01234567890.0"},
+		{token.FLOAT, "0e0"},
+		{token.FLOAT, "1e0"},
+		{token.FLOAT, "42e0"},
+		{token.FLOAT, "01234567890e0"},
+		{token.FLOAT, "0E0"},
+		{token.FLOAT, "1E0"},
+		{token.FLOAT, "42E0"},
+		{token.FLOAT, "01234567890E0"},
+		{token.FLOAT, "0e+10"},
+		{token.FLOAT, "1e-10"},
+		{token.FLOAT, "42e+10"},
+		{token.FLOAT, "01234567890e-10"},
+		{token.FLOAT, "0E+10"},
+		{token.FLOAT, "1E-10"},
+		{token.FLOAT, "42E+10"},
+		{token.FLOAT, "01234567890E-10"},
+	}
+
+	testTokenList(t, tokenList)
+}
