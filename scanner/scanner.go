@@ -2,9 +2,10 @@ package scanner
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
+	"os"
 	"unicode"
 
 	"github.com/fatih/hcl/token"
@@ -26,6 +27,13 @@ type Scanner struct {
 	tokBuf bytes.Buffer // token text buffer
 	tokPos int          // token text tail position (srcBuf index); valid if >= 0
 	tokEnd int          // token text tail end (srcBuf index)
+
+	// Error is called for each error encountered. If no Error
+	// function is set, the error is reported to os.Stderr.
+	Error func(pos Position, msg string)
+
+	// ErrorCount is incremented by one for each error encountered.
+	ErrorCount int
 }
 
 // NewScanner returns a new instance of Lexer. Even though src is an io.Reader,
@@ -122,25 +130,70 @@ func (s *Scanner) Scan() (tok token.Token) {
 }
 
 func (s *Scanner) scanString() {
-	// '"' opening already consumed
-	ch := s.next() // read character after quote
-	for ch != '"' {
-		if ch == '\n' || ch < 0 {
-			log.Println("[ERROR] literal not terminated")
+	for {
+		// '"' opening already consumed
+		// read character after quote
+		ch := s.next()
+
+		if ch == '\n' || ch < 0 || ch == eof {
+			s.err("literal not terminated")
 			return
 		}
 
+		if ch == '"' {
+			break
+		}
+
 		if ch == '\\' {
-			// scanEscape
-			return
-		} else {
-			ch = s.next()
+			s.scanEscape()
 		}
 	}
 
 	return
 }
 
+// scanEscape scans an escape sequence
+func (s *Scanner) scanEscape() rune {
+	// http://en.cppreference.com/w/cpp/language/escape
+	ch := s.next() // read character after '/'
+	switch ch {
+	case 'a', 'b', 'f', 'n', 'r', 't', 'v', '\\', '"':
+		// nothing to do
+	case '0', '1', '2', '3', '4', '5', '6', '7':
+		// octal notation
+		ch = s.scanDigits(ch, 8, 3)
+	case 'x':
+		// hexademical notation
+		ch = s.scanDigits(s.next(), 16, 2)
+	case 'u':
+		// universal character name
+		ch = s.scanDigits(s.next(), 16, 4)
+	case 'U':
+		// universal character name
+		ch = s.scanDigits(s.next(), 16, 8)
+	default:
+		s.err("illegal char escape")
+	}
+	return ch
+}
+
+// scanDigits scans a rune with the given base for n times. For example an
+// octan notation \184 would yield in scanDigits(ch, 8, 3)
+func (s *Scanner) scanDigits(ch rune, base, n int) rune {
+	for n > 0 && digitVal(ch) < base {
+		ch = s.next()
+		n--
+	}
+	if n > 0 {
+		s.err("illegal char escape")
+	}
+
+	// we scanned all digits, put the last non digit char back
+	s.unread()
+	return ch
+}
+
+// scanIdentifier scans an identifier and returns the literal string
 func (s *Scanner) scanIdentifier() string {
 	offs := s.currPos.Offset - s.lastCharLen
 	ch := s.next()
@@ -174,6 +227,16 @@ func (s *Scanner) Pos() Position {
 	return s.currPos
 }
 
+func (s *Scanner) err(msg string) {
+	s.ErrorCount++
+	if s.Error != nil {
+		s.Error(s.currPos, msg)
+		return
+	}
+
+	fmt.Fprintf(os.Stderr, "%s: %s\n", s.currPos, msg)
+}
+
 func isLetter(ch rune) bool {
 	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_' || ch >= 0x80 && unicode.IsLetter(ch)
 }
@@ -185,4 +248,16 @@ func isDigit(ch rune) bool {
 // isWhitespace returns true if the rune is a space, tab, newline or carriage return
 func isWhitespace(ch rune) bool {
 	return ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r'
+}
+
+func digitVal(ch rune) int {
+	switch {
+	case '0' <= ch && ch <= '9':
+		return int(ch - '0')
+	case 'a' <= ch && ch <= 'f':
+		return int(ch - 'a' + 10)
+	case 'A' <= ch && ch <= 'F':
+		return int(ch - 'A' + 10)
+	}
+	return 16 // larger than any legal digit val
 }
