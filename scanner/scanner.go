@@ -132,8 +132,13 @@ func (s *Scanner) Scan() (tok token.Token) {
 func (s *Scanner) scanNumber(ch rune) token.Token {
 	if ch == '0' {
 		// check hexadecimal or float
-		// ch = s.next()
-		// return token.ILLEGAL
+		ch = s.next()
+		if ch == 'x' || ch == 'X' {
+			ch = s.next()
+			s.scanHexadecimal(ch)
+			return token.NUMBER
+		}
+
 	}
 
 	s.scanMantissa(ch)
@@ -144,6 +149,23 @@ func (s *Scanner) scanMantissa(ch rune) {
 	for isDecimal(ch) {
 		ch = s.next()
 	}
+	s.unread()
+}
+
+func (s *Scanner) scanHexadecimal(ch rune) {
+	found := false
+
+	// after "0x" or "0X"
+	for isHexadecimal(ch) {
+		ch = s.next()
+		found = true
+	}
+
+	if !found {
+		// only scanned "0x" or "0X"
+		s.err("illegal hexadecimal number")
+	}
+
 	s.unread()
 }
 
@@ -266,6 +288,10 @@ func isDigit(ch rune) bool {
 
 func isDecimal(ch rune) bool {
 	return '0' <= ch && ch <= '9'
+}
+
+func isHexadecimal(ch rune) bool {
+	return '0' <= ch && ch <= '9' || 'a' <= ch && ch <= 'f' || 'A' <= ch && ch <= 'F'
 }
 
 // isWhitespace returns true if the rune is a space, tab, newline or carriage return
