@@ -112,9 +112,8 @@ func (s *Scanner) Scan() (tok token.Token) {
 			tok = token.BOOL
 		}
 
-	case isDigit(ch):
-		s.scanNumber()
-		// TODO(arslan)
+	case isDecimal(ch):
+		tok = s.scanNumber(ch)
 	default:
 		switch ch {
 		case eof:
@@ -129,7 +128,23 @@ func (s *Scanner) Scan() (tok token.Token) {
 	return tok
 }
 
-func (s *Scanner) scanNumber() {
+// scanNumber scans a HCL number definition starting with the given rune
+func (s *Scanner) scanNumber(ch rune) token.Token {
+	if ch == '0' {
+		// check hexadecimal or float
+		// ch = s.next()
+		// return token.ILLEGAL
+	}
+
+	s.scanMantissa(ch)
+	return token.NUMBER
+}
+
+func (s *Scanner) scanMantissa(ch rune) {
+	for isDecimal(ch) {
+		ch = s.next()
+	}
+	s.unread()
 }
 
 // scanString scans a quoted string
@@ -247,6 +262,10 @@ func isLetter(ch rune) bool {
 
 func isDigit(ch rune) bool {
 	return '0' <= ch && ch <= '9' || ch >= 0x80 && unicode.IsDigit(ch)
+}
+
+func isDecimal(ch rune) bool {
+	return '0' <= ch && ch <= '9'
 }
 
 // isWhitespace returns true if the rune is a space, tab, newline or carriage return
