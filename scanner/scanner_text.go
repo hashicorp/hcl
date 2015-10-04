@@ -1,4 +1,4 @@
-package parser
+package scanner
 
 import (
 	"bytes"
@@ -15,8 +15,8 @@ type token struct {
 
 func TestBool(t *testing.T) {
 	var tokenList = []token{
-		{BOOL, "true"},
-		{BOOL, "false"},
+		{token.BOOL, "true"},
+		{token.BOOL, "false"},
 	}
 
 	// create artifical source code
