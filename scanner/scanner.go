@@ -113,7 +113,7 @@ func (s *Scanner) Scan() (tok token.Token) {
 	}
 
 	if isDigit(ch) {
-		// scanDigits()
+		s.scanNumber()
 		// TODO(arslan)
 	}
 
@@ -129,6 +129,10 @@ func (s *Scanner) Scan() (tok token.Token) {
 	return tok
 }
 
+func (s *Scanner) scanNumber() {
+}
+
+// scanString scans a quoted string
 func (s *Scanner) scanString() {
 	for {
 		// '"' opening already consumed

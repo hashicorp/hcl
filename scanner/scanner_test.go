@@ -15,34 +15,38 @@ type tokenPair struct {
 	text string
 }
 
-func TestBool(t *testing.T) {
-	var tokenList = []tokenPair{
-		{token.BOOL, "true"},
-		{token.BOOL, "false"},
-	}
-
+func testTokenList(t *testing.T, tokenList []tokenPair) {
 	// create artifical source code
 	buf := new(bytes.Buffer)
 	for _, ident := range tokenList {
 		fmt.Fprintf(buf, " \t%s\n", ident.text)
 	}
 
-	l, err := NewScanner(buf)
+	s, err := NewScanner(buf)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	for _, ident := range tokenList {
-		tok := l.Scan()
+		tok := s.Scan()
 		if tok != ident.tok {
 			t.Errorf("tok = %s want %s for %s\n", tok, ident.tok, ident.text)
 		}
 
-		if l.TokenText() != ident.text {
-			t.Errorf("text = %s want %s", l.TokenText(), ident.text)
+		if s.TokenText() != ident.text {
+			t.Errorf("text = %s want %s", s.TokenText(), ident.text)
 		}
 
 	}
+}
+
+func TestBool(t *testing.T) {
+	var tokenList = []tokenPair{
+		{token.BOOL, "true"},
+		{token.BOOL, "false"},
+	}
+
+	testTokenList(t, tokenList)
 }
 
 func TestIdent(t *testing.T) {
@@ -65,28 +69,7 @@ func TestIdent(t *testing.T) {
 		{token.IDENT, "bar９８７６"},
 	}
 
-	// create artifical source code
-	buf := new(bytes.Buffer)
-	for _, ident := range tokenList {
-		fmt.Fprintf(buf, " \t%s\n", ident.text)
-	}
-
-	l, err := NewScanner(buf)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	for _, ident := range tokenList {
-		tok := l.Scan()
-		if tok != ident.tok {
-			t.Errorf("tok = %s want %s for %s\n", tok, ident.tok, ident.text)
-		}
-
-		if l.TokenText() != ident.text {
-			t.Errorf("text = %s want %s", l.TokenText(), ident.text)
-		}
-
-	}
+	testTokenList(t, tokenList)
 }
 
 func TestString(t *testing.T) {
@@ -113,26 +96,5 @@ func TestString(t *testing.T) {
 		{token.STRING, `"` + f100 + `"`},
 	}
 
-	// create artifical source code
-	buf := new(bytes.Buffer)
-	for _, ident := range tokenList {
-		fmt.Fprintf(buf, " \t%s\n", ident.text)
-	}
-
-	l, err := NewScanner(buf)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	for _, ident := range tokenList {
-		tok := l.Scan()
-		if tok != ident.tok {
-			t.Errorf("tok = %s want %s for %s\n", tok, ident.tok, ident.text)
-		}
-
-		if l.TokenText() != ident.text {
-			t.Errorf("text = %s want %s", l.TokenText(), ident.text)
-		}
-
-	}
+	testTokenList(t, tokenList)
 }
