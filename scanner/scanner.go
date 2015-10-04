@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"log"
 	"unicode"
+
+	"github.com/fatih/hcl/token"
 )
 
 // eof represents a marker rune for the end of the reader.
@@ -83,7 +85,7 @@ func (s *Scanner) peek() rune {
 }
 
 // Scan scans the next token and returns the token.
-func (s *Scanner) Scan() (tok Token) {
+func (s *Scanner) Scan() (tok token.Token) {
 	ch := s.next()
 
 	// skip white space
@@ -96,10 +98,10 @@ func (s *Scanner) Scan() (tok Token) {
 	s.tokPos = s.currPos.Offset - s.lastCharLen
 
 	if isLetter(ch) {
-		tok = IDENT
+		tok = token.IDENT
 		lit := s.scanIdentifier()
 		if lit == "true" || lit == "false" {
-			tok = BOOL
+			tok = token.BOOL
 		}
 	}
 
@@ -110,9 +112,9 @@ func (s *Scanner) Scan() (tok Token) {
 
 	switch ch {
 	case eof:
-		tok = EOF
+		tok = token.EOF
 	case '"':
-		tok = STRING
+		tok = token.STRING
 		s.scanString()
 	}
 

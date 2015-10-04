@@ -4,17 +4,19 @@ import (
 	"bytes"
 	"fmt"
 	"testing"
+
+	"github.com/fatih/hcl/token"
 )
 
 var f100 = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
 
-type token struct {
-	tok  Token
+type tokenPair struct {
+	tok  token.Token
 	text string
 }
 
 func TestBool(t *testing.T) {
-	var tokenList = []token{
+	var tokenList = []tokenPair{
 		{token.BOOL, "true"},
 		{token.BOOL, "false"},
 	}
@@ -44,23 +46,23 @@ func TestBool(t *testing.T) {
 }
 
 func TestIdent(t *testing.T) {
-	var tokenList = []token{
-		{IDENT, "a"},
-		{IDENT, "a0"},
-		{IDENT, "foobar"},
-		{IDENT, "abc123"},
-		{IDENT, "LGTM"},
-		{IDENT, "_"},
-		{IDENT, "_abc123"},
-		{IDENT, "abc123_"},
-		{IDENT, "_abc_123_"},
-		{IDENT, "_äöü"},
-		{IDENT, "_本"},
-		{IDENT, "äöü"},
-		{IDENT, "本"},
-		{IDENT, "a۰۱۸"},
-		{IDENT, "foo६४"},
-		{IDENT, "bar９８７６"},
+	var tokenList = []tokenPair{
+		{token.IDENT, "a"},
+		{token.IDENT, "a0"},
+		{token.IDENT, "foobar"},
+		{token.IDENT, "abc123"},
+		{token.IDENT, "LGTM"},
+		{token.IDENT, "_"},
+		{token.IDENT, "_abc123"},
+		{token.IDENT, "abc123_"},
+		{token.IDENT, "_abc_123_"},
+		{token.IDENT, "_äöü"},
+		{token.IDENT, "_本"},
+		{token.IDENT, "äöü"},
+		{token.IDENT, "本"},
+		{token.IDENT, "a۰۱۸"},
+		{token.IDENT, "foo६४"},
+		{token.IDENT, "bar９８７６"},
 	}
 
 	// create artifical source code
@@ -88,10 +90,10 @@ func TestIdent(t *testing.T) {
 }
 
 func TestString(t *testing.T) {
-	var tokenList = []token{
-		{STRING, `" "`},
-		{STRING, `"a"`},
-		{STRING, `"本"`},
+	var tokenList = []tokenPair{
+		{token.STRING, `" "`},
+		{token.STRING, `"a"`},
+		{token.STRING, `"本"`},
 		// {STRING, `"\a"`},
 		// {STRING, `"\b"`},
 		// {STRING, `"\f"`},
