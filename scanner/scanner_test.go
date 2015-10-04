@@ -27,7 +27,7 @@ func TestBool(t *testing.T) {
 		fmt.Fprintf(buf, " \t%s\n", ident.text)
 	}
 
-	l, err := NewLexer(buf)
+	l, err := NewScanner(buf)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -71,7 +71,7 @@ func TestIdent(t *testing.T) {
 		fmt.Fprintf(buf, " \t%s\n", ident.text)
 	}
 
-	l, err := NewLexer(buf)
+	l, err := NewScanner(buf)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -119,7 +119,7 @@ func TestString(t *testing.T) {
 		fmt.Fprintf(buf, " \t%s\n", ident.text)
 	}
 
-	l, err := NewLexer(buf)
+	l, err := NewScanner(buf)
 	if err != nil {
 		t.Fatal(err)
 	}

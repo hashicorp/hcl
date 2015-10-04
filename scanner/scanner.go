@@ -13,12 +13,11 @@ import (
 // eof represents a marker rune for the end of the reader.
 const eof = rune(0)
 
-// Lexer defines a lexical scanner
+// Scanner defines a lexical scanner
 type Scanner struct {
 	src      *bytes.Buffer
 	srcBytes []byte
 
-	// ch          rune // current character
 	lastCharLen int // length of last character in bytes
 
 	currPos Position // current position
@@ -29,9 +28,9 @@ type Scanner struct {
 	tokEnd int          // token text tail end (srcBuf index)
 }
 
-// NewLexer returns a new instance of Lexer. Even though src is an io.Reader,
+// NewScanner returns a new instance of Lexer. Even though src is an io.Reader,
 // we fully consume the content.
-func NewLexer(src io.Reader) (*Scanner, error) {
+func NewScanner(src io.Reader) (*Scanner, error) {
 	buf, err := ioutil.ReadAll(src)
 	if err != nil {
 		return nil, err
