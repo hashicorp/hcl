@@ -81,13 +81,15 @@ func (s *Scanner) next() rune {
 	s.lastCharLen = size
 
 	s.srcPos.Offset += size
-	s.srcPos.Column += size
+	s.srcPos.Column++
 	if ch == '\n' {
 		s.srcPos.Line++
 		s.srcPos.Column = 0
 		s.lastLineLen = s.srcPos.Column
 	}
 
+	// debug
+	// fmt.Printf("ch: %q, off:column: %d:%d\n", ch, s.srcPos.Offset, s.srcPos.Column)
 	return ch
 }
 
@@ -110,7 +112,7 @@ func (s *Scanner) peek() rune {
 
 // Scan scans the next token and returns the token.
 func (s *Scanner) Scan() (tok token.Token) {
-	ch := s.peek()
+	ch := s.next()
 
 	// skip white space
 	for isWhitespace(ch) {
@@ -121,9 +123,9 @@ func (s *Scanner) Scan() (tok token.Token) {
 	s.tokBuf.Reset()
 	s.tokStart = s.srcPos.Offset - s.lastCharLen
 
-	// token position, initial next() is moving the offset by one, though we
-	// are interested with the starting point
-	s.tokPos.Offset = s.srcPos.Offset - 1
+	// token position, initial next() is moving the offset by one(size of rune
+	// actually), though we are interested with the starting point
+	s.tokPos.Offset = s.srcPos.Offset - s.lastCharLen
 
 	if s.srcPos.Column > 0 {
 		// common case: last character was not a '\n'
