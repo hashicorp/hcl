@@ -31,9 +31,6 @@ const (
 	ASSIGN // =
 	ADD    // +
 	SUB    // -
-
-	EPLUS  // e
-	EMINUS // e-
 	operator_end
 )
 
@@ -60,9 +57,6 @@ var tokens = [...]string{
 	ASSIGN: "=",
 	ADD:    "+",
 	SUB:    "-",
-
-	EPLUS:  "e",
-	EMINUS: "e-",
 }
 
 // String returns the string corresponding to the token tok.

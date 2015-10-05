@@ -111,7 +111,6 @@ func (s *Scanner) Scan() (tok token.Token) {
 		if lit == "true" || lit == "false" {
 			tok = token.BOOL
 		}
-
 	case isDecimal(ch):
 		tok = s.scanNumber(ch)
 	default:
@@ -131,14 +130,48 @@ func (s *Scanner) Scan() (tok token.Token) {
 // scanNumber scans a HCL number definition starting with the given rune
 func (s *Scanner) scanNumber(ch rune) token.Token {
 	if ch == '0' {
-		// check hexadecimal or float
+		// check for hexadecimal, octal or float
 		ch = s.next()
 		if ch == 'x' || ch == 'X' {
+			// hexadecimal
 			ch = s.next()
-			s.scanHexadecimal(ch)
+			found := false
+			for isHexadecimal(ch) {
+				ch = s.next()
+				found = true
+			}
+			s.unread()
+
+			if !found {
+				// only scanned "0x" or "0X"
+				s.err("illegal hexadecimal number")
+				// return token.ILLEGAL
+			}
+
 			return token.NUMBER
 		}
 
+		// now it's either something like: 0421(octal) or 0.1231(float)
+		illegalOctal := false
+		for isOctal(ch) {
+			ch = s.next()
+			if ch == '8' || ch == '9' {
+				illegalOctal = true
+			}
+		}
+		s.unread()
+
+		if ch == '.' || ch == 'e' || ch == 'E' {
+			// TODO: scan float
+			return token.FLOAT
+		}
+
+		// illegal octal
+		if illegalOctal {
+			s.err("illegal octal number")
+		}
+
+		return token.NUMBER
 	}
 
 	s.scanMantissa(ch)
@@ -149,23 +182,6 @@ func (s *Scanner) scanMantissa(ch rune) {
 	for isDecimal(ch) {
 		ch = s.next()
 	}
-	s.unread()
-}
-
-func (s *Scanner) scanHexadecimal(ch rune) {
-	found := false
-
-	// after "0x" or "0X"
-	for isHexadecimal(ch) {
-		ch = s.next()
-		found = true
-	}
-
-	if !found {
-		// only scanned "0x" or "0X"
-		s.err("illegal hexadecimal number")
-	}
-
 	s.unread()
 }
 
@@ -284,6 +300,10 @@ func isLetter(ch rune) bool {
 
 func isDigit(ch rune) bool {
 	return '0' <= ch && ch <= '9' || ch >= 0x80 && unicode.IsDigit(ch)
+}
+
+func isOctal(ch rune) bool {
+	return '0' <= ch && ch <= '7'
 }
 
 func isDecimal(ch rune) bool {

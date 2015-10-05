@@ -19,7 +19,7 @@ func testTokenList(t *testing.T, tokenList []tokenPair) {
 	// create artifical source code
 	buf := new(bytes.Buffer)
 	for _, ident := range tokenList {
-		fmt.Fprintf(buf, " \t%s\n", ident.text)
+		fmt.Fprintf(buf, "%s\n", ident.text)
 	}
 
 	s, err := NewScanner(buf)
