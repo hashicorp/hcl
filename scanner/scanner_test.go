@@ -15,84 +15,6 @@ type tokenPair struct {
 	text string
 }
 
-func testTokenList(t *testing.T, tokenList []tokenPair) {
-	// create artifical source code
-	buf := new(bytes.Buffer)
-	for _, ident := range tokenList {
-		fmt.Fprintf(buf, "%s\n", ident.text)
-	}
-
-	s, err := NewScanner(buf)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	for _, ident := range tokenList {
-		tok := s.Scan()
-		if tok != ident.tok {
-			t.Errorf("tok = %q want %q for %q\n", tok, ident.tok, ident.text)
-		}
-
-		if s.TokenText() != ident.text {
-			t.Errorf("text = %q want %q", s.TokenText(), ident.text)
-		}
-
-	}
-}
-
-func TestPosition(t *testing.T) {
-	// t.SkipNow()
-	// create artifical source code
-	buf := new(bytes.Buffer)
-
-	for _, listName := range orderedTokenLists {
-		for _, ident := range tokenLists[listName] {
-			fmt.Fprintf(buf, "\t\t\t\t%s\n", ident.text)
-		}
-	}
-
-	s, err := NewScanner(buf)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	pos := Position{"", 4, 1, 5}
-	for _, listName := range orderedTokenLists {
-		s.Scan()
-
-		for _, k := range tokenLists[listName] {
-			curPos := s.Pos()
-			// fmt.Printf("[%q] s = %+v:%+v\n", k.text, curPos.Offset, curPos.Column)
-			if curPos.Offset != pos.Offset {
-				t.Fatalf("offset = %d, want %d for %q", curPos.Offset, pos.Offset, k.text)
-			}
-			if curPos.Line != pos.Line {
-				t.Fatalf("line = %d, want %d for %q", curPos.Line, pos.Line, k.text)
-			}
-			if curPos.Column != pos.Column {
-				t.Fatalf("column = %d, want %d for %q", curPos.Column, pos.Column, k.text)
-			}
-			pos.Offset += 4 + len(k.text) + 1     // 4 tabs + token bytes + newline
-			pos.Line += countNewlines(k.text) + 1 // each token is on a new line
-			s.Scan()
-		}
-	}
-	// make sure there were no token-internal errors reported by scanner
-	if s.ErrorCount != 0 {
-		t.Errorf("%d errors", s.ErrorCount)
-	}
-}
-
-var orderedTokenLists = []string{
-	// "comment",
-	// "operator",
-	// "bool",
-	// "ident",
-	// "string",
-	"number",
-	// "float",
-}
-
 var tokenLists = map[string][]tokenPair{
 	"comment": []tokenPair{
 		{token.COMMENT, "//"},
@@ -242,6 +164,59 @@ var tokenLists = map[string][]tokenPair{
 	},
 }
 
+var orderedTokenLists = []string{
+	"comment",
+	"operator",
+	"bool",
+	"ident",
+	"string",
+	"number",
+	"float",
+}
+
+func TestPosition(t *testing.T) {
+	// t.SkipNow()
+	// create artifical source code
+	buf := new(bytes.Buffer)
+
+	for _, listName := range orderedTokenLists {
+		for _, ident := range tokenLists[listName] {
+			fmt.Fprintf(buf, "\t\t\t\t%s\n", ident.text)
+		}
+	}
+
+	s, err := NewScanner(buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	pos := Position{"", 4, 1, 5}
+	s.Scan()
+	for _, listName := range orderedTokenLists {
+
+		for _, k := range tokenLists[listName] {
+			curPos := s.Pos()
+			// fmt.Printf("[%q] s = %+v:%+v\n", k.text, curPos.Offset, curPos.Column)
+			if curPos.Offset != pos.Offset {
+				t.Fatalf("offset = %d, want %d for %q", curPos.Offset, pos.Offset, k.text)
+			}
+			if curPos.Line != pos.Line {
+				t.Fatalf("line = %d, want %d for %q", curPos.Line, pos.Line, k.text)
+			}
+			if curPos.Column != pos.Column {
+				t.Fatalf("column = %d, want %d for %q", curPos.Column, pos.Column, k.text)
+			}
+			pos.Offset += 4 + len(k.text) + 1     // 4 tabs + token bytes + newline
+			pos.Line += countNewlines(k.text) + 1 // each token is on a new line
+			s.Scan()
+		}
+	}
+	// make sure there were no token-internal errors reported by scanner
+	if s.ErrorCount != 0 {
+		t.Errorf("%d errors", s.ErrorCount)
+	}
+}
+
 func TestComment(t *testing.T) {
 	testTokenList(t, tokenLists["comment"])
 }
@@ -268,6 +243,31 @@ func TestNumber(t *testing.T) {
 
 func TestFloat(t *testing.T) {
 	testTokenList(t, tokenLists["float"])
+}
+
+func testTokenList(t *testing.T, tokenList []tokenPair) {
+	// create artifical source code
+	buf := new(bytes.Buffer)
+	for _, ident := range tokenList {
+		fmt.Fprintf(buf, "%s\n", ident.text)
+	}
+
+	s, err := NewScanner(buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, ident := range tokenList {
+		tok := s.Scan()
+		if tok != ident.tok {
+			t.Errorf("tok = %q want %q for %q\n", tok, ident.tok, ident.text)
+		}
+
+		if s.TokenText() != ident.text {
+			t.Errorf("text = %q want %q", s.TokenText(), ident.text)
+		}
+
+	}
 }
 
 func countNewlines(s string) int {
