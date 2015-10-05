@@ -212,11 +212,8 @@ func (s *Scanner) scanMantissa(ch rune) rune {
 
 func (s *Scanner) scanFraction(ch rune) rune {
 	if ch == '.' {
-		ch = s.next()
-		msCh := s.scanMantissa(ch)
-		if msCh == ch {
-			s.unread()
-		}
+		ch = s.peek() // we peek just to see if we can move forward
+		ch = s.scanMantissa(ch)
 	}
 	return ch
 }
