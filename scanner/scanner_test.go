@@ -165,6 +165,13 @@ func TestNumber(t *testing.T) {
 		{token.NUMBER, "0X42"},
 		{token.NUMBER, "0X123456789abcDEF"},
 		{token.NUMBER, "0X" + f100},
+	}
+
+	testTokenList(t, tokenList)
+}
+
+func TestFloat(t *testing.T) {
+	var tokenList = []tokenPair{
 		{token.FLOAT, "0."},
 		{token.FLOAT, "1."},
 		{token.FLOAT, "42."},
