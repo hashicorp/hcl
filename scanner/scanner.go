@@ -143,9 +143,7 @@ func (s *Scanner) scanNumber(ch rune) token.Token {
 			s.unread()
 
 			if !found {
-				// only scanned "0x" or "0X"
 				s.err("illegal hexadecimal number")
-				// return token.ILLEGAL
 			}
 
 			return token.NUMBER
@@ -153,20 +151,24 @@ func (s *Scanner) scanNumber(ch rune) token.Token {
 
 		// now it's either something like: 0421(octal) or 0.1231(float)
 		illegalOctal := false
-		for isOctal(ch) {
+		for isDecimal(ch) {
 			ch = s.next()
 			if ch == '8' || ch == '9' {
+				// this is just a possibility. For example 0159 is illegal, but
+				// 159.23 is valid. So we mark a possible illegal octal. If the
+				// next character is not a period, we'll print the error
 				illegalOctal = true
+
 			}
 		}
 		s.unread()
 
 		if ch == '.' || ch == 'e' || ch == 'E' {
-			// TODO: scan float
+			ch = s.scanFraction(ch)
+			ch = s.scanExponent(ch)
 			return token.FLOAT
 		}
 
-		// illegal octal
 		if illegalOctal {
 			s.err("illegal octal number")
 		}
@@ -174,15 +176,47 @@ func (s *Scanner) scanNumber(ch rune) token.Token {
 		return token.NUMBER
 	}
 
-	s.scanMantissa(ch)
+	ch = s.scanMantissa(ch)
+	if ch == '.' || ch == 'e' || ch == 'E' {
+		ch = s.scanFraction(ch)
+		ch = s.scanExponent(ch)
+		return token.FLOAT
+	}
 	return token.NUMBER
 }
 
-func (s *Scanner) scanMantissa(ch rune) {
+func (s *Scanner) scanFraction(ch rune) rune {
+	if ch == '.' {
+		ch = s.next()
+		ch = s.scanMantissa(ch)
+	}
+	return ch
+}
+
+func (s *Scanner) scanExponent(ch rune) rune {
+	if ch == 'e' || ch == 'E' {
+		ch = s.next()
+		if ch == '-' || ch == '+' {
+			ch = s.next()
+		}
+		ch = s.scanMantissa(ch)
+	}
+	return ch
+}
+
+// scanMantissa scans the mantissa begining from the rune. It returns the next
+// non decimal rune. It's used to determine wheter it's a fraction or exponent.
+func (s *Scanner) scanMantissa(ch rune) rune {
+	scanned := false
 	for isDecimal(ch) {
 		ch = s.next()
+		scanned = true
 	}
-	s.unread()
+
+	if scanned {
+		s.unread()
+	}
+	return ch
 }
 
 // scanString scans a quoted string
