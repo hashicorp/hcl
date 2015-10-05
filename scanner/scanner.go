@@ -246,17 +246,14 @@ func (s *Scanner) scanNumber(ch rune) token.Token {
 			}
 
 		}
-		s.unread()
 
 		// literals of form 01e10 are treates as Numbers in HCL, which differs from Go.
 		if ch == 'e' || ch == 'E' {
-			ch = s.next() // seek forward
 			ch = s.scanExponent(ch)
 			return token.NUMBER
 		}
 
 		if ch == '.' {
-			ch = s.next() // seek forward
 			ch = s.scanFraction(ch)
 
 			if ch == 'e' || ch == 'E' {
@@ -270,6 +267,7 @@ func (s *Scanner) scanNumber(ch rune) token.Token {
 			s.err("illegal octal number")
 		}
 
+		s.unread()
 		return token.NUMBER
 	}
 
