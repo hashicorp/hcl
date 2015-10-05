@@ -30,14 +30,39 @@ func testTokenList(t *testing.T, tokenList []tokenPair) {
 	for _, ident := range tokenList {
 		tok := s.Scan()
 		if tok != ident.tok {
-			t.Errorf("tok = %s want %s for %s\n", tok, ident.tok, ident.text)
+			t.Errorf("tok = %q want %q for %q\n", tok, ident.tok, ident.text)
 		}
 
 		if s.TokenText() != ident.text {
-			t.Errorf("text = %s want %s", s.TokenText(), ident.text)
+			t.Errorf("text = %q want %q", s.TokenText(), ident.text)
 		}
 
 	}
+}
+
+func TestComment(t *testing.T) {
+	var tokenList = []tokenPair{
+		// {token.COMMENT, "//"},
+		// {token.COMMENT, "////"},
+		// {token.COMMENT, "// comment"},
+		// {token.COMMENT, "// /* comment */"},
+		// {token.COMMENT, "// // comment //"},
+		{token.COMMENT, "#"},
+		{token.COMMENT, "##"},
+		{token.COMMENT, "# comment"},
+		{token.COMMENT, "# /* comment */"},
+		{token.COMMENT, "# # comment #"},
+		{token.COMMENT, "#" + f100},
+		// {token.COMMENT, "/**/"},
+		// {token.COMMENT, "/***/"},
+		// {token.COMMENT, "/* comment */"},
+		// {token.COMMENT, "/* // comment */"},
+		// {token.COMMENT, "/* /* comment */"},
+		// {token.COMMENT, "/*\n comment\n*/"},
+		// {token.COMMENT, "/*" + f100 + "*/"},
+	}
+
+	testTokenList(t, tokenList)
 }
 
 func TestOperator(t *testing.T) {

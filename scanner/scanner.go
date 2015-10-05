@@ -120,6 +120,9 @@ func (s *Scanner) Scan() (tok token.Token) {
 		case '"':
 			tok = token.STRING
 			s.scanString()
+		case '#':
+			tok = token.COMMENT
+			s.scanComment(ch)
 		case '.':
 			ch = s.peek()
 			if isDecimal(ch) {
@@ -150,6 +153,17 @@ func (s *Scanner) Scan() (tok token.Token) {
 
 	s.tokEnd = s.currPos.Offset
 	return tok
+}
+
+func (s *Scanner) scanComment(ch rune) {
+	if ch == '#' {
+		// line comment
+		ch = s.next()
+		for ch != '\n' && ch >= 0 {
+			ch = s.next()
+		}
+		s.unread()
+	}
 }
 
 // scanNumber scans a HCL number definition starting with the given rune
