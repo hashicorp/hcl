@@ -3,6 +3,7 @@ package scanner
 import (
 	"bytes"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/fatih/hcl/token"
@@ -175,7 +176,6 @@ var orderedTokenLists = []string{
 }
 
 func TestPosition(t *testing.T) {
-	// t.SkipNow()
 	// create artifical source code
 	buf := new(bytes.Buffer)
 
@@ -243,6 +243,65 @@ func TestNumber(t *testing.T) {
 
 func TestFloat(t *testing.T) {
 	testTokenList(t, tokenLists["float"])
+}
+
+func TestError(t *testing.T) {
+	testError(t, "\x80", "1:1", "illegal UTF-8 encoding", token.EOF)
+	testError(t, "\xff", "1:1", "illegal UTF-8 encoding", token.EOF)
+
+	testError(t, "ab\x80", "1:3", "illegal UTF-8 encoding", token.IDENT)
+	testError(t, "abc\xff", "1:4", "illegal UTF-8 encoding", token.IDENT)
+
+	testError(t, `"ab`+"\x80", "1:4", "illegal UTF-8 encoding", token.STRING)
+	testError(t, `"abc`+"\xff", "1:5", "illegal UTF-8 encoding", token.STRING)
+
+	testError(t, "`ab"+"\x80", "1:4", "illegal UTF-8 encoding", token.STRING)
+	testError(t, "`abc"+"\xff", "1:5", "illegal UTF-8 encoding", token.STRING)
+
+	testError(t, `01238`, "1:6", "illegal octal number", token.NUMBER)
+	testError(t, `01238123`, "1:9", "illegal octal number", token.NUMBER)
+	testError(t, `0x`, "1:3", "illegal hexadecimal number", token.NUMBER)
+	testError(t, `0xg`, "1:3", "illegal hexadecimal number", token.NUMBER)
+	testError(t, `'aa'`, "1:4", "illegal char literal", token.STRING)
+
+	testError(t, `'`, "1:2", "literal not terminated", token.STRING)
+	testError(t, `'`+"\n", "1:2", "literal not terminated", token.STRING)
+	testError(t, `"abc`, "1:5", "literal not terminated", token.STRING)
+	testError(t, `"abc`+"\n", "1:5", "literal not terminated", token.STRING)
+	testError(t, "`abc\n", "2:1", "literal not terminated", token.STRING)
+	testError(t, `/*/`, "1:4", "comment not terminated", token.EOF)
+}
+
+func testError(t *testing.T, src, pos, msg string, tok token.Token) {
+	s, err := NewScanner(strings.NewReader(src))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	errorCalled := false
+	s.Error = func(p Position, m string) {
+		if !errorCalled {
+			if pos != p.String() {
+				t.Errorf("pos = %q, want %q for %q", p, pos, src)
+			}
+
+			if m != msg {
+				t.Errorf("msg = %q, want %q for %q", m, msg, src)
+			}
+			errorCalled = true
+		}
+	}
+
+	tk := s.Scan()
+	if tk != tok {
+		t.Errorf("tok = %s, want %s for %q", tk, tok, src)
+	}
+	if !errorCalled {
+		t.Errorf("error handler not called for %q", src)
+	}
+	if s.ErrorCount == 0 {
+		t.Errorf("count = %d, want > 0 for %q", s.ErrorCount, src)
+	}
 }
 
 func testTokenList(t *testing.T, tokenList []tokenPair) {

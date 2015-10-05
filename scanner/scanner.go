@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/fatih/hcl/token"
 )
@@ -73,6 +74,13 @@ func NewScanner(src io.Reader) (*Scanner, error) {
 func (s *Scanner) next() rune {
 	ch, size, err := s.src.ReadRune()
 	if err != nil {
+		return eof
+	}
+
+	if ch == utf8.RuneError && size == 1 {
+		s.srcPos.Column++
+		s.srcPos.Offset += size
+		s.err("illegal UTF-8 encoding")
 		return eof
 	}
 
@@ -430,6 +438,8 @@ func (s *Scanner) Pos() (pos Position) {
 	return s.tokPos
 }
 
+// err prints the error of any scanning to s.Error function. If the function is
+// not defined, by default it prints them to os.Stderr
 func (s *Scanner) err(msg string) {
 	s.ErrorCount++
 	if s.Error != nil {
@@ -440,22 +450,27 @@ func (s *Scanner) err(msg string) {
 	fmt.Fprintf(os.Stderr, "%s: %s\n", s.srcPos, msg)
 }
 
+// isHexadecimal returns true if the given rune is a letter
 func isLetter(ch rune) bool {
 	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_' || ch >= 0x80 && unicode.IsLetter(ch)
 }
 
+// isHexadecimal returns true if the given rune is a decimal digit
 func isDigit(ch rune) bool {
 	return '0' <= ch && ch <= '9' || ch >= 0x80 && unicode.IsDigit(ch)
 }
 
+// isHexadecimal returns true if the given rune is an octan number
 func isOctal(ch rune) bool {
 	return '0' <= ch && ch <= '7'
 }
 
+// isHexadecimal returns true if the given rune is a decimal number
 func isDecimal(ch rune) bool {
 	return '0' <= ch && ch <= '9'
 }
 
+// isHexadecimal returns true if the given rune is an hexadecimal number
 func isHexadecimal(ch rune) bool {
 	return '0' <= ch && ch <= '9' || 'a' <= ch && ch <= 'f' || 'A' <= ch && ch <= 'F'
 }
@@ -465,6 +480,7 @@ func isWhitespace(ch rune) bool {
 	return ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r'
 }
 
+// digitVal returns the integer value of a given octal,decimal or hexadecimal rune
 func digitVal(ch rune) int {
 	switch {
 	case '0' <= ch && ch <= '9':
