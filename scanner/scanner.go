@@ -62,6 +62,9 @@ func NewScanner(src io.Reader) (*Scanner, error) {
 		srcBuf: b.Bytes(),
 	}
 
+	// srcPosition always starts with 1
+	s.srcPos.Line = 1
+
 	return s, nil
 }
 
@@ -78,7 +81,6 @@ func (s *Scanner) next() rune {
 	s.lastCharLen = size
 
 	s.srcPos.Offset += size
-
 	s.srcPos.Column += size
 	if ch == '\n' {
 		s.srcPos.Line++
@@ -119,8 +121,10 @@ func (s *Scanner) Scan() (tok token.Token) {
 	s.tokBuf.Reset()
 	s.tokStart = s.srcPos.Offset - s.lastCharLen
 
-	// token position
-	s.tokPos.Offset = s.srcPos.Offset
+	// token position, initial next() is moving the offset by one, though we
+	// are interested with the starting point
+	s.tokPos.Offset = s.srcPos.Offset - 1
+
 	if s.srcPos.Column > 0 {
 		// common case: last character was not a '\n'
 		s.tokPos.Line = s.srcPos.Line
@@ -271,16 +275,15 @@ func (s *Scanner) scanNumber(ch rune) token.Token {
 		return token.NUMBER
 	}
 
-	ch = s.scanMantissa(ch)
+	s.scanMantissa(ch)
+	ch = s.next() // seek forward
 	// literals of form 1e10 are treates as Numbers in HCL, which differs from Go.
 	if ch == 'e' || ch == 'E' {
-		ch = s.next()
 		ch = s.scanExponent(ch)
 		return token.NUMBER
 	}
 
 	if ch == '.' {
-		ch = s.next() // seek forward
 		ch = s.scanFraction(ch)
 		if ch == 'e' || ch == 'E' {
 			ch = s.next()
@@ -288,6 +291,8 @@ func (s *Scanner) scanNumber(ch rune) token.Token {
 		}
 		return token.FLOAT
 	}
+
+	s.unread()
 	return token.NUMBER
 }
 
