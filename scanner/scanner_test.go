@@ -40,6 +40,22 @@ func testTokenList(t *testing.T, tokenList []tokenPair) {
 	}
 }
 
+func TestOperator(t *testing.T) {
+	var tokenList = []tokenPair{
+		{token.LBRACK, "["},
+		{token.LBRACE, "{"},
+		{token.COMMA, ","},
+		{token.PERIOD, "."},
+		{token.RBRACK, "]"},
+		{token.RBRACE, "}"},
+		{token.ASSIGN, "="},
+		{token.ADD, "+"},
+		{token.SUB, "-"},
+	}
+
+	testTokenList(t, tokenList)
+}
+
 func TestBool(t *testing.T) {
 	var tokenList = []tokenPair{
 		{token.BOOL, "true"},

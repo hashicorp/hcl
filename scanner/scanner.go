@@ -121,12 +121,30 @@ func (s *Scanner) Scan() (tok token.Token) {
 			tok = token.STRING
 			s.scanString()
 		case '.':
-			ch = s.next()
+			ch = s.peek()
 			if isDecimal(ch) {
 				tok = token.FLOAT
 				ch = s.scanMantissa(ch)
 				ch = s.scanExponent(ch)
+			} else {
+				tok = token.PERIOD
 			}
+		case '[':
+			tok = token.LBRACK
+		case ']':
+			tok = token.RBRACK
+		case '{':
+			tok = token.LBRACE
+		case '}':
+			tok = token.RBRACE
+		case ',':
+			tok = token.COMMA
+		case '=':
+			tok = token.ASSIGN
+		case '+':
+			tok = token.ADD
+		case '-':
+			tok = token.SUB
 		}
 	}
 
