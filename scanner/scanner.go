@@ -46,7 +46,7 @@ type Scanner struct {
 	// If an error is reported (via Error) and Position is invalid,
 	// the scanner is not inside a token. Call Pos to obtain an error
 	// position in that case.
-	tokPos Position
+	Position
 }
 
 // NewScanner returns a new instance of Lexer. Even though src is an io.Reader,
@@ -65,7 +65,6 @@ func NewScanner(src io.Reader) (*Scanner, error) {
 
 	// srcPosition always starts with 1
 	s.srcPos.Line = 1
-
 	return s, nil
 }
 
@@ -74,30 +73,36 @@ func NewScanner(src io.Reader) (*Scanner, error) {
 func (s *Scanner) next() rune {
 	ch, size, err := s.src.ReadRune()
 	if err != nil {
+		// advance for error reporting
+		s.srcPos.Column++
+		s.srcPos.Offset += size
+		s.lastCharLen = size
 		return eof
 	}
 
 	if ch == utf8.RuneError && size == 1 {
 		s.srcPos.Column++
 		s.srcPos.Offset += size
+		s.lastCharLen = size
 		s.err("illegal UTF-8 encoding")
-		return eof
+		return ch
 	}
 
 	// remember last position
 	s.prevPos = s.srcPos
-	s.lastCharLen = size
 
-	s.srcPos.Offset += size
 	s.srcPos.Column++
+	s.lastCharLen = size
+	s.srcPos.Offset += size
+
 	if ch == '\n' {
 		s.srcPos.Line++
-		s.srcPos.Column = 0
 		s.lastLineLen = s.srcPos.Column
+		s.srcPos.Column = 0
 	}
 
 	// debug
-	// fmt.Printf("ch: %q, off:column: %d:%d\n", ch, s.srcPos.Offset, s.srcPos.Column)
+	// fmt.Printf("ch: %q, offset:column: %d:%d\n", ch, s.srcPos.Offset, s.srcPos.Column)
 	return ch
 }
 
@@ -133,18 +138,17 @@ func (s *Scanner) Scan() (tok token.Token) {
 
 	// token position, initial next() is moving the offset by one(size of rune
 	// actually), though we are interested with the starting point
-	s.tokPos.Offset = s.srcPos.Offset - s.lastCharLen
-
+	s.Position.Offset = s.srcPos.Offset - s.lastCharLen
 	if s.srcPos.Column > 0 {
 		// common case: last character was not a '\n'
-		s.tokPos.Line = s.srcPos.Line
-		s.tokPos.Column = s.srcPos.Column
+		s.Position.Line = s.srcPos.Line
+		s.Position.Column = s.srcPos.Column
 	} else {
 		// last character was a '\n'
 		// (we cannot be at the beginning of the source
 		// since we have called next() at least once)
-		s.tokPos.Line = s.srcPos.Line - 1
-		s.tokPos.Column = s.lastLineLen
+		s.Position.Line = s.srcPos.Line - 1
+		s.Position.Column = s.lastLineLen
 	}
 
 	switch {
@@ -190,6 +194,8 @@ func (s *Scanner) Scan() (tok token.Token) {
 			tok = token.ADD
 		case '-':
 			tok = token.SUB
+		default:
+			s.err("illegal char")
 		}
 	}
 
@@ -198,30 +204,35 @@ func (s *Scanner) Scan() (tok token.Token) {
 }
 
 func (s *Scanner) scanComment(ch rune) {
-	// look for /* - style comments
-	if ch == '/' && s.peek() == '*' {
-		for {
-			if ch < 0 {
-				s.err("comment not terminated")
-				break
-			}
-
-			ch0 := ch
-			ch = s.next()
-			if ch0 == '*' && ch == '/' {
-				break
-			}
-		}
-	}
-
 	// single line comments
-	if ch == '#' || ch == '/' {
+	if ch == '#' || (ch == '/' && s.peek() != '*') {
 		ch = s.next()
 		for ch != '\n' && ch >= 0 {
 			ch = s.next()
 		}
 		s.unread()
 		return
+	}
+
+	// be sure we get the character after /* This allows us to find comment's
+	// that are not erminated
+	if ch == '/' {
+		s.next()
+		ch = s.next() // read character after "/*"
+	}
+
+	// look for /* - style comments
+	for {
+		if ch < 0 || ch == eof {
+			s.err("comment not terminated")
+			break
+		}
+
+		ch0 := ch
+		ch = s.next()
+		if ch0 == '*' && ch == '/' {
+			break
+		}
 	}
 }
 
@@ -238,10 +249,13 @@ func (s *Scanner) scanNumber(ch rune) token.Token {
 				ch = s.next()
 				found = true
 			}
-			s.unread()
 
 			if !found {
 				s.err("illegal hexadecimal number")
+			}
+
+			if ch != eof {
+				s.unread()
 			}
 
 			return token.NUMBER
@@ -256,9 +270,7 @@ func (s *Scanner) scanNumber(ch rune) token.Token {
 				// 0159.23 is valid. So we mark a possible illegal octal. If
 				// the next character is not a period, we'll print the error.
 				illegalOctal = true
-
 			}
-
 		}
 
 		// literals of form 01e10 are treates as Numbers in HCL, which differs from Go.
@@ -281,7 +293,9 @@ func (s *Scanner) scanNumber(ch rune) token.Token {
 			s.err("illegal octal number")
 		}
 
-		s.unread()
+		if ch != eof {
+			s.unread()
+		}
 		return token.NUMBER
 	}
 
@@ -435,19 +449,38 @@ func (s *Scanner) TokenText() string {
 // Pos returns the position of the character immediately after the character or
 // token returned by the last call to Scan.
 func (s *Scanner) Pos() (pos Position) {
-	return s.tokPos
+	pos.Offset = s.srcPos.Offset - s.lastCharLen
+	switch {
+	case s.srcPos.Column > 0:
+		// common case: last character was not a '\n'
+		pos.Line = s.srcPos.Line
+		pos.Column = s.srcPos.Column
+	case s.lastLineLen > 0:
+		// last character was a '\n'
+		// (we cannot be at the beginning of the source
+		// since we have called next() at least once)
+		pos.Line = s.srcPos.Line - 1
+		pos.Column = s.lastLineLen
+	default:
+		// at the beginning of the source
+		pos.Line = 1
+		pos.Column = 1
+	}
+	return
 }
 
 // err prints the error of any scanning to s.Error function. If the function is
 // not defined, by default it prints them to os.Stderr
 func (s *Scanner) err(msg string) {
 	s.ErrorCount++
+	pos := s.Pos()
+
 	if s.Error != nil {
-		s.Error(s.srcPos, msg)
+		s.Error(pos, msg)
 		return
 	}
 
-	fmt.Fprintf(os.Stderr, "%s: %s\n", s.srcPos, msg)
+	fmt.Fprintf(os.Stderr, "%s: %s\n", pos, msg)
 }
 
 // isHexadecimal returns true if the given rune is a letter

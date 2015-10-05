@@ -195,8 +195,9 @@ func TestPosition(t *testing.T) {
 	for _, listName := range orderedTokenLists {
 
 		for _, k := range tokenLists[listName] {
-			curPos := s.Pos()
+			curPos := s.Position
 			// fmt.Printf("[%q] s = %+v:%+v\n", k.text, curPos.Offset, curPos.Column)
+
 			if curPos.Offset != pos.Offset {
 				t.Fatalf("offset = %d, want %d for %q", curPos.Offset, pos.Offset, k.text)
 			}
@@ -246,8 +247,8 @@ func TestFloat(t *testing.T) {
 }
 
 func TestError(t *testing.T) {
-	testError(t, "\x80", "1:1", "illegal UTF-8 encoding", token.EOF)
-	testError(t, "\xff", "1:1", "illegal UTF-8 encoding", token.EOF)
+	testError(t, "\x80", "1:1", "illegal UTF-8 encoding", token.ILLEGAL)
+	testError(t, "\xff", "1:1", "illegal UTF-8 encoding", token.ILLEGAL)
 
 	testError(t, "ab\x80", "1:3", "illegal UTF-8 encoding", token.IDENT)
 	testError(t, "abc\xff", "1:4", "illegal UTF-8 encoding", token.IDENT)
@@ -255,21 +256,16 @@ func TestError(t *testing.T) {
 	testError(t, `"ab`+"\x80", "1:4", "illegal UTF-8 encoding", token.STRING)
 	testError(t, `"abc`+"\xff", "1:5", "illegal UTF-8 encoding", token.STRING)
 
-	testError(t, "`ab"+"\x80", "1:4", "illegal UTF-8 encoding", token.STRING)
-	testError(t, "`abc"+"\xff", "1:5", "illegal UTF-8 encoding", token.STRING)
-
 	testError(t, `01238`, "1:6", "illegal octal number", token.NUMBER)
 	testError(t, `01238123`, "1:9", "illegal octal number", token.NUMBER)
 	testError(t, `0x`, "1:3", "illegal hexadecimal number", token.NUMBER)
 	testError(t, `0xg`, "1:3", "illegal hexadecimal number", token.NUMBER)
-	testError(t, `'aa'`, "1:4", "illegal char literal", token.STRING)
+	testError(t, `'aa'`, "1:1", "illegal char", token.ILLEGAL)
 
-	testError(t, `'`, "1:2", "literal not terminated", token.STRING)
-	testError(t, `'`+"\n", "1:2", "literal not terminated", token.STRING)
+	testError(t, `"`, "1:2", "literal not terminated", token.STRING)
 	testError(t, `"abc`, "1:5", "literal not terminated", token.STRING)
 	testError(t, `"abc`+"\n", "1:5", "literal not terminated", token.STRING)
-	testError(t, "`abc\n", "2:1", "literal not terminated", token.STRING)
-	testError(t, `/*/`, "1:4", "comment not terminated", token.EOF)
+	testError(t, `/*/`, "1:4", "comment not terminated", token.COMMENT)
 }
 
 func testError(t *testing.T, src, pos, msg string, tok token.Token) {
