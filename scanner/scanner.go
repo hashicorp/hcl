@@ -16,17 +16,21 @@ const eof = rune(0)
 
 // Scanner defines a lexical scanner
 type Scanner struct {
-	src      *bytes.Buffer
-	srcBytes []byte
+	src *bytes.Buffer
 
-	lastCharLen int // length of last character in bytes
+	// Source Buffer
+	srcBuf []byte
 
-	currPos Position // current position
+	// Source Position
+	srcPos  Position // current position
 	prevPos Position // previous position
 
-	tokBuf bytes.Buffer // token text buffer
-	tokPos int          // token text tail position (srcBuf index); valid if >= 0
-	tokEnd int          // token text tail end (srcBuf index)
+	lastCharLen int // length of last character in bytes
+	lastLineLen int // length of last line in characters (for correct column reporting)
+
+	tokBuf   bytes.Buffer // token text buffer
+	tokStart int          // token text start position
+	tokEnd   int          // token text end  position
 
 	// Error is called for each error encountered. If no Error
 	// function is set, the error is reported to os.Stderr.
@@ -34,6 +38,14 @@ type Scanner struct {
 
 	// ErrorCount is incremented by one for each error encountered.
 	ErrorCount int
+
+	// Start position of most recently scanned token; set by Scan.
+	// Calling Init or Next invalidates the position (Line == 0).
+	// The Filename field is always left untouched by the Scanner.
+	// If an error is reported (via Error) and Position is invalid,
+	// the scanner is not inside a token. Call Pos to obtain an error
+	// position in that case.
+	tokPos Position
 }
 
 // NewScanner returns a new instance of Lexer. Even though src is an io.Reader,
@@ -45,10 +57,12 @@ func NewScanner(src io.Reader) (*Scanner, error) {
 	}
 
 	b := bytes.NewBuffer(buf)
-	return &Scanner{
-		src:      b,
-		srcBytes: b.Bytes(),
-	}, nil
+	s := &Scanner{
+		src:    b,
+		srcBuf: b.Bytes(),
+	}
+
+	return s, nil
 }
 
 // next reads the next rune from the bufferred reader. Returns the rune(0) if
@@ -60,15 +74,16 @@ func (s *Scanner) next() rune {
 	}
 
 	// remember last position
-	s.prevPos = s.currPos
-
+	s.prevPos = s.srcPos
 	s.lastCharLen = size
-	s.currPos.Offset += size
-	s.currPos.Column += size
 
+	s.srcPos.Offset += size
+
+	s.srcPos.Column += size
 	if ch == '\n' {
-		s.currPos.Line++
-		s.currPos.Column = 0
+		s.srcPos.Line++
+		s.srcPos.Column = 0
+		s.lastLineLen = s.srcPos.Column
 	}
 
 	return ch
@@ -78,7 +93,7 @@ func (s *Scanner) unread() {
 	if err := s.src.UnreadRune(); err != nil {
 		panic(err) // this is user fault, we should catch it
 	}
-	s.currPos = s.prevPos // put back last position
+	s.srcPos = s.prevPos // put back last position
 }
 
 func (s *Scanner) peek() rune {
@@ -93,16 +108,30 @@ func (s *Scanner) peek() rune {
 
 // Scan scans the next token and returns the token.
 func (s *Scanner) Scan() (tok token.Token) {
-	ch := s.next()
+	ch := s.peek()
 
 	// skip white space
 	for isWhitespace(ch) {
 		ch = s.next()
 	}
 
-	// start the token position
+	// token text markings
 	s.tokBuf.Reset()
-	s.tokPos = s.currPos.Offset - s.lastCharLen
+	s.tokStart = s.srcPos.Offset - s.lastCharLen
+
+	// token position
+	s.tokPos.Offset = s.srcPos.Offset
+	if s.srcPos.Column > 0 {
+		// common case: last character was not a '\n'
+		s.tokPos.Line = s.srcPos.Line
+		s.tokPos.Column = s.srcPos.Column
+	} else {
+		// last character was a '\n'
+		// (we cannot be at the beginning of the source
+		// since we have called next() at least once)
+		s.tokPos.Line = s.srcPos.Line - 1
+		s.tokPos.Column = s.lastLineLen
+	}
 
 	switch {
 	case isLetter(ch):
@@ -150,7 +179,7 @@ func (s *Scanner) Scan() (tok token.Token) {
 		}
 	}
 
-	s.tokEnd = s.currPos.Offset
+	s.tokEnd = s.srcPos.Offset
 	return tok
 }
 
@@ -219,10 +248,21 @@ func (s *Scanner) scanNumber(ch rune) token.Token {
 		}
 		s.unread()
 
-		if ch == '.' || ch == 'e' || ch == 'E' {
-			ch = s.next()
-			ch = s.scanFraction(ch)
+		// literals of form 01e10 are treates as Numbers in HCL, which differs from Go.
+		if ch == 'e' || ch == 'E' {
+			ch = s.next() // seek forward
 			ch = s.scanExponent(ch)
+			return token.NUMBER
+		}
+
+		if ch == '.' {
+			ch = s.next() // seek forward
+			ch = s.scanFraction(ch)
+
+			if ch == 'e' || ch == 'E' {
+				ch = s.next()
+				ch = s.scanExponent(ch)
+			}
 			return token.FLOAT
 		}
 
@@ -234,10 +274,20 @@ func (s *Scanner) scanNumber(ch rune) token.Token {
 	}
 
 	ch = s.scanMantissa(ch)
-	if ch == '.' || ch == 'e' || ch == 'E' {
+	// literals of form 1e10 are treates as Numbers in HCL, which differs from Go.
+	if ch == 'e' || ch == 'E' {
+		ch = s.next()
+		ch = s.scanExponent(ch)
+		return token.NUMBER
+	}
+
+	if ch == '.' {
 		ch = s.next() // seek forward
 		ch = s.scanFraction(ch)
-		ch = s.scanExponent(ch)
+		if ch == 'e' || ch == 'E' {
+			ch = s.next()
+			ch = s.scanExponent(ch)
+		}
 		return token.FLOAT
 	}
 	return token.NUMBER
@@ -344,46 +394,45 @@ func (s *Scanner) scanDigits(ch rune, base, n int) rune {
 
 // scanIdentifier scans an identifier and returns the literal string
 func (s *Scanner) scanIdentifier() string {
-	offs := s.currPos.Offset - s.lastCharLen
+	offs := s.srcPos.Offset - s.lastCharLen
 	ch := s.next()
 	for isLetter(ch) || isDigit(ch) {
 		ch = s.next()
 	}
 	s.unread() // we got identifier, put back latest char
 
-	// return string(s.srcBytes[offs:(s.currPos.Offset - s.lastCharLen)])
-	return string(s.srcBytes[offs:s.currPos.Offset])
+	return string(s.srcBuf[offs:s.srcPos.Offset])
 }
 
 // TokenText returns the literal string corresponding to the most recently
 // scanned token.
 func (s *Scanner) TokenText() string {
-	if s.tokPos < 0 {
+	if s.tokStart < 0 {
 		// no token text
 		return ""
 	}
 
 	// part of the token text was saved in tokBuf: save the rest in
 	// tokBuf as well and return its content
-	s.tokBuf.Write(s.srcBytes[s.tokPos:s.tokEnd])
-	s.tokPos = s.tokEnd // ensure idempotency of TokenText() call
+	s.tokBuf.Write(s.srcBuf[s.tokStart:s.tokEnd])
+	s.tokStart = s.tokEnd // ensure idempotency of TokenText() call
 	return s.tokBuf.String()
 }
 
 // Pos returns the position of the character immediately after the character or
 // token returned by the last call to Scan.
-func (s *Scanner) Pos() Position {
-	return s.currPos
+func (s *Scanner) Pos() (pos Position) {
+	return s.tokPos
 }
 
 func (s *Scanner) err(msg string) {
 	s.ErrorCount++
 	if s.Error != nil {
-		s.Error(s.currPos, msg)
+		s.Error(s.srcPos, msg)
 		return
 	}
 
-	fmt.Fprintf(os.Stderr, "%s: %s\n", s.currPos, msg)
+	fmt.Fprintf(os.Stderr, "%s: %s\n", s.srcPos, msg)
 }
 
 func isLetter(ch rune) bool {
