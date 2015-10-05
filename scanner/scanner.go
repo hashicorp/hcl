@@ -120,6 +120,13 @@ func (s *Scanner) Scan() (tok token.Token) {
 		case '"':
 			tok = token.STRING
 			s.scanString()
+		case '.':
+			ch = s.next()
+			if isDecimal(ch) {
+				tok = token.FLOAT
+				ch = s.scanMantissa(ch)
+				ch = s.scanExponent(ch)
+			}
 		}
 	}
 
@@ -177,6 +184,7 @@ func (s *Scanner) scanNumber(ch rune) token.Token {
 	}
 
 	ch = s.scanMantissa(ch)
+	fmt.Printf("ch = %q\n", ch)
 	if ch == '.' || ch == 'e' || ch == 'E' {
 		ch = s.scanFraction(ch)
 		ch = s.scanExponent(ch)
