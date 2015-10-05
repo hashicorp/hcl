@@ -42,11 +42,12 @@ func testTokenList(t *testing.T, tokenList []tokenPair) {
 
 func TestComment(t *testing.T) {
 	var tokenList = []tokenPair{
-		// {token.COMMENT, "//"},
-		// {token.COMMENT, "////"},
-		// {token.COMMENT, "// comment"},
-		// {token.COMMENT, "// /* comment */"},
-		// {token.COMMENT, "// // comment //"},
+		{token.COMMENT, "//"},
+		{token.COMMENT, "////"},
+		{token.COMMENT, "// comment"},
+		{token.COMMENT, "// /* comment */"},
+		{token.COMMENT, "// // comment //"},
+		{token.COMMENT, "//" + f100},
 		{token.COMMENT, "#"},
 		{token.COMMENT, "##"},
 		{token.COMMENT, "# comment"},

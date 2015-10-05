@@ -120,7 +120,7 @@ func (s *Scanner) Scan() (tok token.Token) {
 		case '"':
 			tok = token.STRING
 			s.scanString()
-		case '#':
+		case '#', '/':
 			tok = token.COMMENT
 			s.scanComment(ch)
 		case '.':
@@ -156,7 +156,7 @@ func (s *Scanner) Scan() (tok token.Token) {
 }
 
 func (s *Scanner) scanComment(ch rune) {
-	if ch == '#' {
+	if ch == '#' || ch == '/' {
 		// line comment
 		ch = s.next()
 		for ch != '\n' && ch >= 0 {
