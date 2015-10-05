@@ -54,13 +54,13 @@ func TestComment(t *testing.T) {
 		{token.COMMENT, "# /* comment */"},
 		{token.COMMENT, "# # comment #"},
 		{token.COMMENT, "#" + f100},
-		// {token.COMMENT, "/**/"},
-		// {token.COMMENT, "/***/"},
-		// {token.COMMENT, "/* comment */"},
-		// {token.COMMENT, "/* // comment */"},
-		// {token.COMMENT, "/* /* comment */"},
-		// {token.COMMENT, "/*\n comment\n*/"},
-		// {token.COMMENT, "/*" + f100 + "*/"},
+		{token.COMMENT, "/**/"},
+		{token.COMMENT, "/***/"},
+		{token.COMMENT, "/* comment */"},
+		{token.COMMENT, "/* // comment */"},
+		{token.COMMENT, "/* /* comment */"},
+		{token.COMMENT, "/*\n comment\n*/"},
+		{token.COMMENT, "/*" + f100 + "*/"},
 	}
 
 	testTokenList(t, tokenList)

@@ -124,13 +124,12 @@ func (s *Scanner) Scan() (tok token.Token) {
 			tok = token.COMMENT
 			s.scanComment(ch)
 		case '.':
+			tok = token.PERIOD
 			ch = s.peek()
 			if isDecimal(ch) {
 				tok = token.FLOAT
 				ch = s.scanMantissa(ch)
 				ch = s.scanExponent(ch)
-			} else {
-				tok = token.PERIOD
 			}
 		case '[':
 			tok = token.LBRACK
@@ -156,13 +155,30 @@ func (s *Scanner) Scan() (tok token.Token) {
 }
 
 func (s *Scanner) scanComment(ch rune) {
+	// look for /* - style comments
+	if ch == '/' && s.peek() == '*' {
+		for {
+			if ch < 0 {
+				s.err("comment not terminated")
+				break
+			}
+
+			ch0 := ch
+			ch = s.next()
+			if ch0 == '*' && ch == '/' {
+				break
+			}
+		}
+	}
+
+	// single line comments
 	if ch == '#' || ch == '/' {
-		// line comment
 		ch = s.next()
 		for ch != '\n' && ch >= 0 {
 			ch = s.next()
 		}
 		s.unread()
+		return
 	}
 }
 
