@@ -162,15 +162,17 @@ func (s *Scanner) scanNumber(ch rune) token.Token {
 			ch = s.next()
 			if ch == '8' || ch == '9' {
 				// this is just a possibility. For example 0159 is illegal, but
-				// 159.23 is valid. So we mark a possible illegal octal. If the
-				// next character is not a period, we'll print the error
+				// 0159.23 is valid. So we mark a possible illegal octal. If
+				// the next character is not a period, we'll print the error.
 				illegalOctal = true
 
 			}
+
 		}
 		s.unread()
 
 		if ch == '.' || ch == 'e' || ch == 'E' {
+			ch = s.next()
 			ch = s.scanFraction(ch)
 			ch = s.scanExponent(ch)
 			return token.FLOAT
@@ -184,32 +186,13 @@ func (s *Scanner) scanNumber(ch rune) token.Token {
 	}
 
 	ch = s.scanMantissa(ch)
-	fmt.Printf("ch = %q\n", ch)
 	if ch == '.' || ch == 'e' || ch == 'E' {
+		ch = s.next() // seek forward
 		ch = s.scanFraction(ch)
 		ch = s.scanExponent(ch)
 		return token.FLOAT
 	}
 	return token.NUMBER
-}
-
-func (s *Scanner) scanFraction(ch rune) rune {
-	if ch == '.' {
-		ch = s.next()
-		ch = s.scanMantissa(ch)
-	}
-	return ch
-}
-
-func (s *Scanner) scanExponent(ch rune) rune {
-	if ch == 'e' || ch == 'E' {
-		ch = s.next()
-		if ch == '-' || ch == '+' {
-			ch = s.next()
-		}
-		ch = s.scanMantissa(ch)
-	}
-	return ch
 }
 
 // scanMantissa scans the mantissa begining from the rune. It returns the next
@@ -223,6 +206,28 @@ func (s *Scanner) scanMantissa(ch rune) rune {
 
 	if scanned {
 		s.unread()
+	}
+	return ch
+}
+
+func (s *Scanner) scanFraction(ch rune) rune {
+	if ch == '.' {
+		ch = s.next()
+		msCh := s.scanMantissa(ch)
+		if msCh == ch {
+			s.unread()
+		}
+	}
+	return ch
+}
+
+func (s *Scanner) scanExponent(ch rune) rune {
+	if ch == 'e' || ch == 'E' {
+		ch = s.next()
+		if ch == '-' || ch == '+' {
+			ch = s.next()
+		}
+		ch = s.scanMantissa(ch)
 	}
 	return ch
 }
