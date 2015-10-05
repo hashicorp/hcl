@@ -40,8 +40,8 @@ func testTokenList(t *testing.T, tokenList []tokenPair) {
 	}
 }
 
-func TestComment(t *testing.T) {
-	var tokenList = []tokenPair{
+var tokenLists = map[string][]tokenPair{
+	"comment": []tokenPair{
 		{token.COMMENT, "//"},
 		{token.COMMENT, "////"},
 		{token.COMMENT, "// comment"},
@@ -61,13 +61,8 @@ func TestComment(t *testing.T) {
 		{token.COMMENT, "/* /* comment */"},
 		{token.COMMENT, "/*\n comment\n*/"},
 		{token.COMMENT, "/*" + f100 + "*/"},
-	}
-
-	testTokenList(t, tokenList)
-}
-
-func TestOperator(t *testing.T) {
-	var tokenList = []tokenPair{
+	},
+	"operator": []tokenPair{
 		{token.LBRACK, "["},
 		{token.LBRACE, "{"},
 		{token.COMMA, ","},
@@ -77,22 +72,13 @@ func TestOperator(t *testing.T) {
 		{token.ASSIGN, "="},
 		{token.ADD, "+"},
 		{token.SUB, "-"},
-	}
-
-	testTokenList(t, tokenList)
-}
-
-func TestBool(t *testing.T) {
-	var tokenList = []tokenPair{
+	},
+	"bool": []tokenPair{
 		{token.BOOL, "true"},
 		{token.BOOL, "false"},
-	}
+	},
 
-	testTokenList(t, tokenList)
-}
-
-func TestIdent(t *testing.T) {
-	var tokenList = []tokenPair{
+	"ident": []tokenPair{
 		{token.IDENT, "a"},
 		{token.IDENT, "a0"},
 		{token.IDENT, "foobar"},
@@ -109,13 +95,8 @@ func TestIdent(t *testing.T) {
 		{token.IDENT, "a۰۱۸"},
 		{token.IDENT, "foo६४"},
 		{token.IDENT, "bar９８７６"},
-	}
-
-	testTokenList(t, tokenList)
-}
-
-func TestString(t *testing.T) {
-	var tokenList = []tokenPair{
+	},
+	"string": []tokenPair{
 		{token.STRING, `" "`},
 		{token.STRING, `"a"`},
 		{token.STRING, `"本"`},
@@ -136,13 +117,8 @@ func TestString(t *testing.T) {
 		{token.STRING, `"\U00000000"`},
 		{token.STRING, `"\U0000ffAB"`},
 		{token.STRING, `"` + f100 + `"`},
-	}
-
-	testTokenList(t, tokenList)
-}
-
-func TestNumber(t *testing.T) {
-	var tokenList = []tokenPair{
+	},
+	"number": []tokenPair{
 		{token.NUMBER, "0"},
 		{token.NUMBER, "1"},
 		{token.NUMBER, "9"},
@@ -165,13 +141,8 @@ func TestNumber(t *testing.T) {
 		{token.NUMBER, "0X42"},
 		{token.NUMBER, "0X123456789abcDEF"},
 		{token.NUMBER, "0X" + f100},
-	}
-
-	testTokenList(t, tokenList)
-}
-
-func TestFloat(t *testing.T) {
-	var tokenList = []tokenPair{
+	},
+	"float": []tokenPair{
 		{token.FLOAT, "0."},
 		{token.FLOAT, "1."},
 		{token.FLOAT, "42."},
@@ -200,7 +171,33 @@ func TestFloat(t *testing.T) {
 		{token.FLOAT, "1E-10"},
 		{token.FLOAT, "42E+10"},
 		{token.FLOAT, "01234567890E-10"},
-	}
+	},
+}
 
-	testTokenList(t, tokenList)
+func TestComment(t *testing.T) {
+	testTokenList(t, tokenLists["comment"])
+}
+
+func TestOperator(t *testing.T) {
+	testTokenList(t, tokenLists["operator"])
+}
+
+func TestBool(t *testing.T) {
+	testTokenList(t, tokenLists["bool"])
+}
+
+func TestIdent(t *testing.T) {
+	testTokenList(t, tokenLists["ident"])
+}
+
+func TestString(t *testing.T) {
+	testTokenList(t, tokenLists["string"])
+}
+
+func TestNumber(t *testing.T) {
+	testTokenList(t, tokenLists["number"])
+}
+
+func TestFloat(t *testing.T) {
+	testTokenList(t, tokenLists["float"])
 }
