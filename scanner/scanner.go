@@ -1,10 +1,10 @@
+// Package scanner implements a scanner for HCL (HashiCorp Configuration
+// Language) source text.
 package scanner
 
 import (
 	"bytes"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"os"
 	"unicode"
 	"unicode/utf8"
@@ -40,37 +40,30 @@ type Scanner struct {
 	// ErrorCount is incremented by one for each error encountered.
 	ErrorCount int
 
-	// Start position of most recently scanned token; set by Scan.
-	// Calling Init or Next invalidates the position (Line == 0).
-	// The Filename field is always left untouched by the Scanner.
-	// If an error is reported (via Error) and Position is invalid,
-	// the scanner is not inside a token. Call Pos to obtain an error
-	// position in that case.
+	// tokPos is the start position of most recently scanned token; set by
+	// Scan. The Filename field is always left untouched by the Scanner.  If
+	// an error is reported (via Error) and Position is invalid, the scanner is
+	// not inside a token.
 	tokPos Position
 }
 
-// NewScanner returns a new instance of Lexer. Even though src is an io.Reader,
-// we fully consume the content.
-func NewScanner(src io.Reader) (*Scanner, error) {
-	buf, err := ioutil.ReadAll(src)
-	if err != nil {
-		return nil, err
-	}
-
-	b := bytes.NewBuffer(buf)
+// NewScanner returns a new instance of Scanner.
+func NewScanner(src []byte) *Scanner {
+	b := bytes.NewBuffer(src)
 	s := &Scanner{
 		src:    b,
-		srcBuf: b.Bytes(),
+		srcBuf: src, // immutable src
 	}
 
 	// srcPosition always starts with 1
 	s.srcPos.Line = 1
-	return s, nil
+	return s
 }
 
 // next reads the next rune from the bufferred reader. Returns the rune(0) if
 // an error occurs (or io.EOF is returned).
 func (s *Scanner) next() rune {
+
 	ch, size, err := s.src.ReadRune()
 	if err != nil {
 		// advance for error reporting
@@ -106,6 +99,7 @@ func (s *Scanner) next() rune {
 	return ch
 }
 
+// unread
 func (s *Scanner) unread() {
 	if err := s.src.UnreadRune(); err != nil {
 		panic(err) // this is user fault, we should catch it
@@ -113,6 +107,7 @@ func (s *Scanner) unread() {
 	s.srcPos = s.prevPos // put back last position
 }
 
+// peek returns the next rune without advancing the reader.
 func (s *Scanner) peek() rune {
 	peek, _, err := s.src.ReadRune()
 	if err != nil {
@@ -201,6 +196,26 @@ func (s *Scanner) Scan() (tok token.Token) {
 
 	s.tokEnd = s.srcPos.Offset
 	return tok
+}
+
+// TokenText returns the literal string corresponding to the most recently
+// scanned token.
+func (s *Scanner) TokenText() string {
+	if s.tokStart < 0 {
+		// no token text
+		return ""
+	}
+
+	// part of the token text was saved in tokBuf: save the rest in
+	// tokBuf as well and return its content
+	s.tokBuf.Write(s.srcBuf[s.tokStart:s.tokEnd])
+	s.tokStart = s.tokEnd // ensure idempotency of TokenText() call
+	return s.tokBuf.String()
+}
+
+// Pos returns the successful position of the most recently scanned token.
+func (s *Scanner) Pos() (pos Position) {
+	return s.tokPos
 }
 
 func (s *Scanner) scanComment(ch rune) {
@@ -335,6 +350,7 @@ func (s *Scanner) scanMantissa(ch rune) rune {
 	return ch
 }
 
+// scanFraction scans the fraction after the '.' rune
 func (s *Scanner) scanFraction(ch rune) rune {
 	if ch == '.' {
 		ch = s.peek() // we peek just to see if we can move forward
@@ -343,6 +359,8 @@ func (s *Scanner) scanFraction(ch rune) rune {
 	return ch
 }
 
+// scanExponent scans the remaining parts of an exponent after the 'e' or 'E'
+// rune.
 func (s *Scanner) scanExponent(ch rune) rune {
 	if ch == 'e' || ch == 'E' {
 		ch = s.next()
@@ -429,26 +447,6 @@ func (s *Scanner) scanIdentifier() string {
 	s.unread() // we got identifier, put back latest char
 
 	return string(s.srcBuf[offs:s.srcPos.Offset])
-}
-
-// TokenText returns the literal string corresponding to the most recently
-// scanned token.
-func (s *Scanner) TokenText() string {
-	if s.tokStart < 0 {
-		// no token text
-		return ""
-	}
-
-	// part of the token text was saved in tokBuf: save the rest in
-	// tokBuf as well and return its content
-	s.tokBuf.Write(s.srcBuf[s.tokStart:s.tokEnd])
-	s.tokStart = s.tokEnd // ensure idempotency of TokenText() call
-	return s.tokBuf.String()
-}
-
-// Pos returns the successful position of the most recently scanned token.
-func (s *Scanner) Pos() (pos Position) {
-	return s.tokPos
 }
 
 // recentPosition returns the position of the character immediately after the

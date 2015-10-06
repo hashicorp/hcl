@@ -3,7 +3,6 @@ package scanner
 import (
 	"bytes"
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/fatih/hcl/token"
@@ -185,10 +184,7 @@ func TestPosition(t *testing.T) {
 		}
 	}
 
-	s, err := NewScanner(buf)
-	if err != nil {
-		t.Fatal(err)
-	}
+	s := NewScanner(buf.Bytes())
 
 	pos := Position{"", 4, 1, 5}
 	s.Scan()
@@ -246,6 +242,52 @@ func TestFloat(t *testing.T) {
 	testTokenList(t, tokenLists["float"])
 }
 
+func TestComplexHCL(t *testing.T) {
+	// 	complexHCL = `// This comes from Terraform, as a test
+	// variable "foo" {
+	//     default = "bar"
+	//     description = "bar"
+	// }
+	//
+	// provider "aws" {
+	//   access_key = "foo"
+	//   secret_key = "bar"
+	// }
+	//
+	// provider "do" {
+	//   api_key = "${var.foo}"
+	// }
+	//
+	// resource "aws_security_group" "firewall" {
+	//     count = 5
+	// }
+	//
+	// resource aws_instance "web" {
+	//     ami = "${var.foo}"
+	//     security_groups = [
+	//         "foo",
+	//         "${aws_security_group.firewall.foo}"
+	//     ]
+	//
+	//     network_interface {
+	//         device_index = 0
+	//         description = "Main network interface"
+	//     }
+	// }
+	//
+	// resource "aws_instance" "db" {
+	//     security_groups = "${aws_security_group.firewall.*.id}"
+	//     VPC = "foo"
+	//
+	//     depends_on = ["aws_instance.web"]
+	// }
+	//
+	// output "web_ip" {
+	//     value = "${aws_instance.web.private_ip}"
+	// }`
+
+}
+
 func TestError(t *testing.T) {
 	testError(t, "\x80", "1:1", "illegal UTF-8 encoding", token.ILLEGAL)
 	testError(t, "\xff", "1:1", "illegal UTF-8 encoding", token.ILLEGAL)
@@ -269,10 +311,7 @@ func TestError(t *testing.T) {
 }
 
 func testError(t *testing.T, src, pos, msg string, tok token.Token) {
-	s, err := NewScanner(strings.NewReader(src))
-	if err != nil {
-		t.Fatal(err)
-	}
+	s := NewScanner([]byte(src))
 
 	errorCalled := false
 	s.Error = func(p Position, m string) {
@@ -307,11 +346,7 @@ func testTokenList(t *testing.T, tokenList []tokenPair) {
 		fmt.Fprintf(buf, "%s\n", ident.text)
 	}
 
-	s, err := NewScanner(buf)
-	if err != nil {
-		t.Fatal(err)
-	}
-
+	s := NewScanner(buf.Bytes())
 	for _, ident := range tokenList {
 		tok := s.Scan()
 		if tok != ident.tok {
