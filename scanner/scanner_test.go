@@ -195,7 +195,7 @@ func TestPosition(t *testing.T) {
 	for _, listName := range orderedTokenLists {
 
 		for _, k := range tokenLists[listName] {
-			curPos := s.Position
+			curPos := s.tokPos
 			// fmt.Printf("[%q] s = %+v:%+v\n", k.text, curPos.Offset, curPos.Column)
 
 			if curPos.Offset != pos.Offset {

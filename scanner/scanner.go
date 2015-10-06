@@ -46,7 +46,7 @@ type Scanner struct {
 	// If an error is reported (via Error) and Position is invalid,
 	// the scanner is not inside a token. Call Pos to obtain an error
 	// position in that case.
-	Position
+	tokPos Position
 }
 
 // NewScanner returns a new instance of Lexer. Even though src is an io.Reader,
@@ -138,17 +138,17 @@ func (s *Scanner) Scan() (tok token.Token) {
 
 	// token position, initial next() is moving the offset by one(size of rune
 	// actually), though we are interested with the starting point
-	s.Position.Offset = s.srcPos.Offset - s.lastCharLen
+	s.tokPos.Offset = s.srcPos.Offset - s.lastCharLen
 	if s.srcPos.Column > 0 {
 		// common case: last character was not a '\n'
-		s.Position.Line = s.srcPos.Line
-		s.Position.Column = s.srcPos.Column
+		s.tokPos.Line = s.srcPos.Line
+		s.tokPos.Column = s.srcPos.Column
 	} else {
 		// last character was a '\n'
 		// (we cannot be at the beginning of the source
 		// since we have called next() at least once)
-		s.Position.Line = s.srcPos.Line - 1
-		s.Position.Column = s.lastLineLen
+		s.tokPos.Line = s.srcPos.Line - 1
+		s.tokPos.Column = s.lastLineLen
 	}
 
 	switch {
@@ -446,9 +446,14 @@ func (s *Scanner) TokenText() string {
 	return s.tokBuf.String()
 }
 
-// Pos returns the position of the character immediately after the character or
-// token returned by the last call to Scan.
+// Pos returns the successful position of the most recently scanned token.
 func (s *Scanner) Pos() (pos Position) {
+	return s.tokPos
+}
+
+// recentPosition returns the position of the character immediately after the
+// character or token returned by the last call to Scan.
+func (s *Scanner) recentPosition() (pos Position) {
 	pos.Offset = s.srcPos.Offset - s.lastCharLen
 	switch {
 	case s.srcPos.Column > 0:
@@ -473,7 +478,7 @@ func (s *Scanner) Pos() (pos Position) {
 // not defined, by default it prints them to os.Stderr
 func (s *Scanner) err(msg string) {
 	s.ErrorCount++
-	pos := s.Pos()
+	pos := s.recentPosition()
 
 	if s.Error != nil {
 		s.Error(pos, msg)
