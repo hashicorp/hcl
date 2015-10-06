@@ -46,17 +46,17 @@ var tokens = [...]string{
 	BOOL:   "BOOL",
 	STRING: "STRING",
 
-	LBRACK: "[",
-	LBRACE: "{",
-	COMMA:  ",",
-	PERIOD: ".",
+	LBRACK: "LBRACK",
+	LBRACE: "LBRACE",
+	COMMA:  "COMMA",
+	PERIOD: "PERIOD",
 
-	RBRACK: "]",
-	RBRACE: "}",
+	RBRACK: "RBRACK",
+	RBRACE: "RBRACE",
 
-	ASSIGN: "=",
-	ADD:    "+",
-	SUB:    "-",
+	ASSIGN: "ASSIGN",
+	ADD:    "ADD",
+	SUB:    "SUB",
 }
 
 // String returns the string corresponding to the token tok.

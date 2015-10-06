@@ -242,49 +242,106 @@ func TestFloat(t *testing.T) {
 	testTokenList(t, tokenLists["float"])
 }
 
-func TestComplexHCL(t *testing.T) {
-	// 	complexHCL = `// This comes from Terraform, as a test
-	// variable "foo" {
-	//     default = "bar"
-	//     description = "bar"
-	// }
-	//
-	// provider "aws" {
-	//   access_key = "foo"
-	//   secret_key = "bar"
-	// }
-	//
-	// provider "do" {
-	//   api_key = "${var.foo}"
-	// }
-	//
-	// resource "aws_security_group" "firewall" {
-	//     count = 5
-	// }
-	//
-	// resource aws_instance "web" {
-	//     ami = "${var.foo}"
-	//     security_groups = [
-	//         "foo",
-	//         "${aws_security_group.firewall.foo}"
-	//     ]
-	//
-	//     network_interface {
-	//         device_index = 0
-	//         description = "Main network interface"
-	//     }
-	// }
-	//
-	// resource "aws_instance" "db" {
-	//     security_groups = "${aws_security_group.firewall.*.id}"
-	//     VPC = "foo"
-	//
-	//     depends_on = ["aws_instance.web"]
-	// }
-	//
-	// output "web_ip" {
-	//     value = "${aws_instance.web.private_ip}"
-	// }`
+func TestRealExample(t *testing.T) {
+	complexHCL := `// This comes from Terraform, as a test
+	variable "foo" {
+	    default = "bar"
+	    description = "bar"
+	}
+
+	provider "aws" {
+	  access_key = "foo"
+	  secret_key = "bar"
+	}
+
+	resource "aws_security_group" "firewall" {
+	    count = 5
+	}
+
+	resource aws_instance "web" {
+	    ami = "${var.foo}"
+	    security_groups = [
+	        "foo",
+	        "${aws_security_group.firewall.foo}"
+	    ]
+
+	    network_interface {
+	        device_index = 0
+	        description = "Main network interface"
+	    }
+	}`
+
+	literals := []struct {
+		token   token.Token
+		literal string
+	}{
+		{token.COMMENT, `// This comes from Terraform, as a test`},
+		{token.IDENT, `variable`},
+		{token.STRING, `"foo"`},
+		{token.LBRACE, `{`},
+		{token.IDENT, `default`},
+		{token.ASSIGN, `=`},
+		{token.STRING, `"bar"`},
+		{token.IDENT, `description`},
+		{token.ASSIGN, `=`},
+		{token.STRING, `"bar"`},
+		{token.RBRACE, `}`},
+		{token.IDENT, `provider`},
+		{token.STRING, `"aws"`},
+		{token.LBRACE, `{`},
+		{token.IDENT, `access_key`},
+		{token.ASSIGN, `=`},
+		{token.STRING, `"foo"`},
+		{token.IDENT, `secret_key`},
+		{token.ASSIGN, `=`},
+		{token.STRING, `"bar"`},
+		{token.RBRACE, `}`},
+		{token.IDENT, `resource`},
+		{token.STRING, `"aws_security_group"`},
+		{token.STRING, `"firewall"`},
+		{token.LBRACE, `{`},
+		{token.IDENT, `count`},
+		{token.ASSIGN, `=`},
+		{token.NUMBER, `5`},
+		{token.RBRACE, `}`},
+		{token.IDENT, `resource`},
+		{token.IDENT, `aws_instance`},
+		{token.STRING, `"web"`},
+		{token.LBRACE, `{`},
+		{token.IDENT, `ami`},
+		{token.ASSIGN, `=`},
+		{token.STRING, `"${var.foo}"`},
+		{token.IDENT, `security_groups`},
+		{token.ASSIGN, `=`},
+		{token.LBRACK, `[`},
+		{token.STRING, `"foo"`},
+		{token.COMMA, `,`},
+		{token.STRING, `"${aws_security_group.firewall.foo}"`},
+		{token.RBRACK, `]`},
+		{token.IDENT, `network_interface`},
+		{token.LBRACE, `{`},
+		{token.IDENT, `device_index`},
+		{token.ASSIGN, `=`},
+		{token.NUMBER, `0`},
+		{token.IDENT, `description`},
+		{token.ASSIGN, `=`},
+		{token.STRING, `"Main network interface"`},
+		{token.RBRACE, `}`},
+		{token.RBRACE, `}`},
+		{token.EOF, ``},
+	}
+
+	s := NewScanner([]byte(complexHCL))
+	for _, l := range literals {
+		tok := s.Scan()
+		if l.token != tok {
+			t.Errorf("got: %s want %s for %s\n", tok, l.token, s.TokenText())
+		}
+
+		if l.literal != s.TokenText() {
+			t.Errorf("got: %s want %s\n", s.TokenText(), l.literal)
+		}
+	}
 
 }
 
