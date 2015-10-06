@@ -17,14 +17,12 @@ const eof = rune(0)
 
 // Scanner defines a lexical scanner
 type Scanner struct {
-	src *bytes.Buffer
-
-	// Source Buffer
-	srcBuf []byte
+	buf *bytes.Buffer // Source buffer for advancing and scanning
+	src []byte        // Source buffer for immutable access
 
 	// Source Position
 	srcPos  Position // current position
-	prevPos Position // previous position
+	prevPos Position // previous position, used for peek() method
 
 	lastCharLen int // length of last character in bytes
 	lastLineLen int // length of last line in characters (for correct column reporting)
@@ -49,10 +47,13 @@ type Scanner struct {
 
 // NewScanner returns a new instance of Scanner.
 func NewScanner(src []byte) *Scanner {
+	// even though we accept a src, we read from a io.Reader compatible type
+	// (*bytes.Buffer). So in the future we might easily change it to streaming
+	// read.
 	b := bytes.NewBuffer(src)
 	s := &Scanner{
-		src:    b,
-		srcBuf: src, // immutable src
+		buf: b,
+		src: src,
 	}
 
 	// srcPosition always starts with 1
@@ -63,8 +64,7 @@ func NewScanner(src []byte) *Scanner {
 // next reads the next rune from the bufferred reader. Returns the rune(0) if
 // an error occurs (or io.EOF is returned).
 func (s *Scanner) next() rune {
-
-	ch, size, err := s.src.ReadRune()
+	ch, size, err := s.buf.ReadRune()
 	if err != nil {
 		// advance for error reporting
 		s.srcPos.Column++
@@ -101,7 +101,7 @@ func (s *Scanner) next() rune {
 
 // unread
 func (s *Scanner) unread() {
-	if err := s.src.UnreadRune(); err != nil {
+	if err := s.buf.UnreadRune(); err != nil {
 		panic(err) // this is user fault, we should catch it
 	}
 	s.srcPos = s.prevPos // put back last position
@@ -109,12 +109,12 @@ func (s *Scanner) unread() {
 
 // peek returns the next rune without advancing the reader.
 func (s *Scanner) peek() rune {
-	peek, _, err := s.src.ReadRune()
+	peek, _, err := s.buf.ReadRune()
 	if err != nil {
 		return eof
 	}
 
-	s.src.UnreadRune()
+	s.buf.UnreadRune()
 	return peek
 }
 
@@ -208,7 +208,7 @@ func (s *Scanner) TokenText() string {
 
 	// part of the token text was saved in tokBuf: save the rest in
 	// tokBuf as well and return its content
-	s.tokBuf.Write(s.srcBuf[s.tokStart:s.tokEnd])
+	s.tokBuf.Write(s.src[s.tokStart:s.tokEnd])
 	s.tokStart = s.tokEnd // ensure idempotency of TokenText() call
 	return s.tokBuf.String()
 }
@@ -446,7 +446,7 @@ func (s *Scanner) scanIdentifier() string {
 	}
 	s.unread() // we got identifier, put back latest char
 
-	return string(s.srcBuf[offs:s.srcPos.Offset])
+	return string(s.src[offs:s.srcPos.Offset])
 }
 
 // recentPosition returns the position of the character immediately after the
