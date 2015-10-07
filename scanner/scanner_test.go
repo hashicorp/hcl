@@ -408,8 +408,8 @@ func testTokenList(t *testing.T, tokenList []tokenPair) {
 			t.Errorf("tok = %q want %q for %q\n", tok, ident.tok, ident.text)
 		}
 
-		if s.TokenText() != ident.text {
-			t.Errorf("text = %q want %q", s.TokenText(), ident.text)
+		if tok.String() != ident.text {
+			t.Errorf("text = %q want %q", tok.String(), ident.text)
 		}
 
 	}

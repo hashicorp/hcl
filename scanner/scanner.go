@@ -25,9 +25,8 @@ type Scanner struct {
 	lastCharLen int // length of last character in bytes
 	lastLineLen int // length of last line in characters (for correct column reporting)
 
-	tokBuf   bytes.Buffer // token text buffer
-	tokStart int          // token text start position
-	tokEnd   int          // token text end  position
+	tokStart int // token text start position
+	tokEnd   int // token text end  position
 
 	// Error is called for each error encountered. If no Error
 	// function is set, the error is reported to os.Stderr.
@@ -135,7 +134,6 @@ func (s *Scanner) Scan() Token {
 	var tok TokenType
 
 	// token text markings
-	s.tokBuf.Reset()
 	s.tokStart = s.srcPos.Offset - s.lastCharLen
 
 	// token position, initial next() is moving the offset by one(size of rune
@@ -201,33 +199,21 @@ func (s *Scanner) Scan() Token {
 		}
 	}
 
+	// finish token ending
 	s.tokEnd = s.srcPos.Offset
+
+	// create token literal
+	var tokenText string
+	if s.tokStart >= 0 {
+		tokenText = string(s.src[s.tokStart:s.tokEnd])
+	}
+	s.tokStart = s.tokEnd // ensure idempotency of tokenText() call
 
 	return Token{
 		token: tok,
 		pos:   s.tokPos,
-		text:  s.TokenText(),
+		text:  tokenText,
 	}
-}
-
-// TokenText returns the literal string corresponding to the most recently
-// scanned token.
-func (s *Scanner) TokenText() string {
-	if s.tokStart < 0 {
-		// no token text
-		return ""
-	}
-
-	// part of the token text was saved in tokBuf: save the rest in
-	// tokBuf as well and return its content
-	s.tokBuf.Write(s.src[s.tokStart:s.tokEnd])
-	s.tokStart = s.tokEnd // ensure idempotency of TokenText() call
-	return s.tokBuf.String()
-}
-
-// Pos returns the successful position of the most recently scanned token.
-func (s *Scanner) Pos() (pos Position) {
-	return s.tokPos
 }
 
 func (s *Scanner) scanComment(ch rune) {
