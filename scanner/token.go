@@ -100,9 +100,9 @@ func (t Token) Pos() Position {
 	return t.pos
 }
 
-// Text retusn the token's literal text. Note that this is only
+// String returns the token's literal text. Note that this is only
 // applicable for certain token types, such as token.IDENT,
 // token.STRING, etc..
-func (t Token) Text() string {
+func (t Token) String() string {
 	return t.text
 }
