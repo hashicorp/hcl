@@ -8,8 +8,6 @@ import (
 	"os"
 	"unicode"
 	"unicode/utf8"
-
-	"github.com/fatih/hcl/token"
 )
 
 // eof represents a marker rune for the end of the reader.
@@ -126,7 +124,7 @@ func (s *Scanner) peek() rune {
 }
 
 // Scan scans the next token and returns the token.
-func (s *Scanner) Scan() token.Token {
+func (s *Scanner) Scan() Token {
 	ch := s.next()
 
 	// skip white space
@@ -134,7 +132,7 @@ func (s *Scanner) Scan() token.Token {
 		ch = s.next()
 	}
 
-	var tok token.Token
+	var tok TokenType
 
 	// token text markings
 	s.tokBuf.Reset()
@@ -157,54 +155,59 @@ func (s *Scanner) Scan() token.Token {
 
 	switch {
 	case isLetter(ch):
-		tok = token.IDENT
+		tok = IDENT
 		lit := s.scanIdentifier()
 		if lit == "true" || lit == "false" {
-			tok = token.BOOL
+			tok = BOOL
 		}
 	case isDecimal(ch):
 		tok = s.scanNumber(ch)
 	default:
 		switch ch {
 		case eof:
-			tok = token.EOF
+			tok = EOF
 		case '"':
-			tok = token.STRING
+			tok = STRING
 			s.scanString()
 		case '#', '/':
-			tok = token.COMMENT
+			tok = COMMENT
 			s.scanComment(ch)
 		case '.':
-			tok = token.PERIOD
+			tok = PERIOD
 			ch = s.peek()
 			if isDecimal(ch) {
-				tok = token.FLOAT
+				tok = FLOAT
 				ch = s.scanMantissa(ch)
 				ch = s.scanExponent(ch)
 			}
 		case '[':
-			tok = token.LBRACK
+			tok = LBRACK
 		case ']':
-			tok = token.RBRACK
+			tok = RBRACK
 		case '{':
-			tok = token.LBRACE
+			tok = LBRACE
 		case '}':
-			tok = token.RBRACE
+			tok = RBRACE
 		case ',':
-			tok = token.COMMA
+			tok = COMMA
 		case '=':
-			tok = token.ASSIGN
+			tok = ASSIGN
 		case '+':
-			tok = token.ADD
+			tok = ADD
 		case '-':
-			tok = token.SUB
+			tok = SUB
 		default:
 			s.err("illegal char")
 		}
 	}
 
 	s.tokEnd = s.srcPos.Offset
-	return tok
+
+	return Token{
+		token: tok,
+		pos:   s.tokPos,
+		text:  s.TokenText(),
+	}
 }
 
 // TokenText returns the literal string corresponding to the most recently
@@ -261,7 +264,7 @@ func (s *Scanner) scanComment(ch rune) {
 }
 
 // scanNumber scans a HCL number definition starting with the given rune
-func (s *Scanner) scanNumber(ch rune) token.Token {
+func (s *Scanner) scanNumber(ch rune) TokenType {
 	if ch == '0' {
 		// check for hexadecimal, octal or float
 		ch = s.next()
@@ -282,7 +285,7 @@ func (s *Scanner) scanNumber(ch rune) token.Token {
 				s.unread()
 			}
 
-			return token.NUMBER
+			return NUMBER
 		}
 
 		// now it's either something like: 0421(octal) or 0.1231(float)
@@ -300,7 +303,7 @@ func (s *Scanner) scanNumber(ch rune) token.Token {
 		// literals of form 01e10 are treates as Numbers in HCL, which differs from Go.
 		if ch == 'e' || ch == 'E' {
 			ch = s.scanExponent(ch)
-			return token.NUMBER
+			return NUMBER
 		}
 
 		if ch == '.' {
@@ -310,7 +313,7 @@ func (s *Scanner) scanNumber(ch rune) token.Token {
 				ch = s.next()
 				ch = s.scanExponent(ch)
 			}
-			return token.FLOAT
+			return FLOAT
 		}
 
 		if illegalOctal {
@@ -320,7 +323,7 @@ func (s *Scanner) scanNumber(ch rune) token.Token {
 		if ch != eof {
 			s.unread()
 		}
-		return token.NUMBER
+		return NUMBER
 	}
 
 	s.scanMantissa(ch)
@@ -328,7 +331,7 @@ func (s *Scanner) scanNumber(ch rune) token.Token {
 	// literals of form 1e10 are treates as Numbers in HCL, which differs from Go.
 	if ch == 'e' || ch == 'E' {
 		ch = s.scanExponent(ch)
-		return token.NUMBER
+		return NUMBER
 	}
 
 	if ch == '.' {
@@ -337,11 +340,11 @@ func (s *Scanner) scanNumber(ch rune) token.Token {
 			ch = s.next()
 			ch = s.scanExponent(ch)
 		}
-		return token.FLOAT
+		return FLOAT
 	}
 
 	s.unread()
-	return token.NUMBER
+	return NUMBER
 }
 
 // scanMantissa scans the mantissa begining from the rune. It returns the next
