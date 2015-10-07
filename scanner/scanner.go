@@ -45,7 +45,14 @@ type Scanner struct {
 	tokPos Position
 }
 
-// NewScanner returns a new instance of Scanner.
+// NewScannerstring creates and initializes a new instance of Scanner using
+// string src as its source content.
+func NewScannerString(src string) *Scanner {
+	return NewScanner([]byte(src))
+}
+
+// NewScanner creates and initializes a new instance of Scanner using src as
+// its source content.
 func NewScanner(src []byte) *Scanner {
 	// even though we accept a src, we read from a io.Reader compatible type
 	// (*bytes.Buffer). So in the future we might easily change it to streaming
@@ -99,7 +106,7 @@ func (s *Scanner) next() rune {
 	return ch
 }
 
-// unread
+// unread unreads the previous read Rune and updates the source position
 func (s *Scanner) unread() {
 	if err := s.buf.UnreadRune(); err != nil {
 		panic(err) // this is user fault, we should catch it
@@ -119,13 +126,15 @@ func (s *Scanner) peek() rune {
 }
 
 // Scan scans the next token and returns the token.
-func (s *Scanner) Scan() (tok token.Token) {
+func (s *Scanner) Scan() token.Token {
 	ch := s.next()
 
 	// skip white space
 	for isWhitespace(ch) {
 		ch = s.next()
 	}
+
+	var tok token.Token
 
 	// token text markings
 	s.tokBuf.Reset()
