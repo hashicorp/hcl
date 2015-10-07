@@ -2,10 +2,10 @@ package scanner
 
 import "fmt"
 
-// Position describes an arbitrary source position
+// Pos describes an arbitrary source position
 // including the file, line, and column location.
 // A Position is valid if the line number is > 0.
-type Position struct {
+type Pos struct {
 	Filename string // filename, if any
 	Offset   int    // offset, starting at 0
 	Line     int    // line number, starting at 1
@@ -13,7 +13,7 @@ type Position struct {
 }
 
 // IsValid returns true if the position is valid.
-func (p *Position) IsValid() bool { return p.Line > 0 }
+func (p *Pos) IsValid() bool { return p.Line > 0 }
 
 // String returns a string in one of several forms:
 //
@@ -21,7 +21,7 @@ func (p *Position) IsValid() bool { return p.Line > 0 }
 //	line:column         valid position without file name
 //	file                invalid position with file name
 //	-                   invalid position without file name
-func (p Position) String() string {
+func (p Pos) String() string {
 	s := p.Filename
 	if p.IsValid() {
 		if s != "" {

@@ -184,7 +184,7 @@ func TestPosition(t *testing.T) {
 
 	s := NewScanner(buf.Bytes())
 
-	pos := Position{"", 4, 1, 5}
+	pos := Pos{"", 4, 1, 5}
 	s.Scan()
 	for _, listName := range orderedTokenLists {
 
@@ -369,7 +369,7 @@ func testError(t *testing.T, src, pos, msg string, tok TokenType) {
 	s := NewScanner([]byte(src))
 
 	errorCalled := false
-	s.Error = func(p Position, m string) {
+	s.Error = func(p Pos, m string) {
 		if !errorCalled {
 			if pos != p.String() {
 				t.Errorf("pos = %q, want %q for %q", p, pos, src)

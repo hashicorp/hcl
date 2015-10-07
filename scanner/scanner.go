@@ -19,8 +19,8 @@ type Scanner struct {
 	src []byte        // Source buffer for immutable access
 
 	// Source Position
-	srcPos  Position // current position
-	prevPos Position // previous position, used for peek() method
+	srcPos  Pos // current position
+	prevPos Pos // previous position, used for peek() method
 
 	lastCharLen int // length of last character in bytes
 	lastLineLen int // length of last line in characters (for correct column reporting)
@@ -30,7 +30,7 @@ type Scanner struct {
 
 	// Error is called for each error encountered. If no Error
 	// function is set, the error is reported to os.Stderr.
-	Error func(pos Position, msg string)
+	Error func(pos Pos, msg string)
 
 	// ErrorCount is incremented by one for each error encountered.
 	ErrorCount int
@@ -39,7 +39,7 @@ type Scanner struct {
 	// Scan. The Filename field is always left untouched by the Scanner.  If
 	// an error is reported (via Error) and Position is invalid, the scanner is
 	// not inside a token.
-	tokPos Position
+	tokPos Pos
 }
 
 // NewScannerstring creates and initializes a new instance of Scanner using
@@ -449,7 +449,7 @@ func (s *Scanner) scanIdentifier() string {
 
 // recentPosition returns the position of the character immediately after the
 // character or token returned by the last call to Scan.
-func (s *Scanner) recentPosition() (pos Position) {
+func (s *Scanner) recentPosition() (pos Pos) {
 	pos.Offset = s.srcPos.Offset - s.lastCharLen
 	switch {
 	case s.srcPos.Column > 0:

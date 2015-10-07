@@ -5,7 +5,7 @@ import "strconv"
 // Token defines a single HCL token which can be obtained via the Scanner
 type Token struct {
 	token TokenType
-	pos   Position
+	pos   Pos
 	text  string
 }
 
@@ -92,7 +92,7 @@ func (t Token) Type() TokenType {
 }
 
 // Pos returns the token's position
-func (t Token) Pos() Position {
+func (t Token) Pos() Pos {
 	return t.pos
 }
 
