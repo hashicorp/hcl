@@ -494,11 +494,6 @@ func isDigit(ch rune) bool {
 	return '0' <= ch && ch <= '9' || ch >= 0x80 && unicode.IsDigit(ch)
 }
 
-// isHexadecimal returns true if the given rune is an octan number
-func isOctal(ch rune) bool {
-	return '0' <= ch && ch <= '7'
-}
-
 // isHexadecimal returns true if the given rune is a decimal number
 func isDecimal(ch rune) bool {
 	return '0' <= ch && ch <= '9'
