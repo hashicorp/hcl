@@ -18,7 +18,7 @@ const (
 type Node interface {
 	String() string
 	Type() NodeType
-	Start() scanner.Pos
+	Pos() scanner.Pos
 	End() scanner.Pos
 }
 
