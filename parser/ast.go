@@ -14,32 +14,54 @@ const (
 	Object
 )
 
-// Node is an element in the abstract syntax  tree.
+// Node is an element in the abstract syntax tree.
 type Node interface {
 	node()
 	String() string
 	Pos() scanner.Pos
 }
 
+func (Source) node()          {}
 func (IdentStatement) node()  {}
 func (BlockStatement) node()  {}
 func (AssignStatement) node() {}
 func (ListStatement) node()   {}
 func (ObjectStatement) node() {}
 
+// Source represents a single HCL source file
+type Source struct {
+	nodes []Node
+}
+
+func (s Source) add(node Node) {
+	s.nodes = append(s.nodes, node)
+}
+
+func (s Source) String() string {
+	buf := ""
+	for _, n := range s.nodes {
+		buf += n.String()
+	}
+
+	return buf
+}
+
+func (s Source) Pos() scanner.Pos {
+	// always returns the uninitiliazed position
+	return scanner.Pos{}
+}
+
 // IdentStatement represents an identifier.
 type IdentStatement struct {
-	pos   scanner.Pos // position of the literal
 	token scanner.Token
-	value string
 }
 
 func (i IdentStatement) String() string {
-	return i.value
+	return i.token.String()
 }
 
 func (i IdentStatement) Pos() scanner.Pos {
-	return i.pos
+	return i.token.Pos()
 }
 
 type BlockStatement struct {
