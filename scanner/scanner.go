@@ -204,9 +204,9 @@ func (s *Scanner) Scan() Token {
 	s.tokStart = s.tokEnd // ensure idempotency of tokenText() call
 
 	return Token{
-		token: tok,
-		pos:   s.tokPos,
-		text:  tokenText,
+		Type: tok,
+		Pos:  s.tokPos,
+		Text: tokenText,
 	}
 }
 

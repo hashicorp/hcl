@@ -1,6 +1,10 @@
 package parser
 
-import "github.com/fatih/hcl/scanner"
+import (
+	"fmt"
+
+	"github.com/fatih/hcl/scanner"
+)
 
 type Parser struct {
 	sc *scanner.Scanner
@@ -8,10 +12,12 @@ type Parser struct {
 	tok     scanner.Token // last read token
 	prevTok scanner.Token // previous read token
 
-	n int // buffer size (max = 1)
+	enableTrace bool
+	indent      int
+	n           int // buffer size (max = 1)
 }
 
-func NewParser(src []byte) *Parser {
+func New(src []byte) *Parser {
 	return &Parser{
 		sc: scanner.New(src),
 	}
@@ -19,28 +25,37 @@ func NewParser(src []byte) *Parser {
 
 // Parse returns the fully parsed source and returns the abstract syntax tree.
 func (p *Parser) Parse() Node {
-	tok := p.scan()
+	defer un(trace(p, "ParseSource"))
+	node := &Source{}
 
-	node := Source{}
+	for {
+		// break if we hit the end
+		if p.tok.Type == scanner.EOF {
+			break
+		}
 
-	switch tok.Type() {
-	case scanner.IDENT:
-		n := p.parseStatement()
-		node.add(n)
-	case scanner.EOF:
+		if n := p.parseStatement(); n != nil {
+			node.add(n)
+		}
 	}
 
 	return node
 }
 
 func (p *Parser) parseStatement() Node {
+	defer un(trace(p, "ParseStatement"))
+
 	tok := p.scan()
 
-	if tok.Type().IsLiteral() {
+	if tok.Type.IsLiteral() {
+		// found an object
+		if p.prevTok.Type.IsLiteral() {
+			return p.parseObject()
+		}
 		return p.parseIdent()
 	}
 
-	switch tok.Type() {
+	switch tok.Type {
 	case scanner.LBRACE:
 		return p.parseObject()
 	case scanner.LBRACK:
@@ -48,11 +63,25 @@ func (p *Parser) parseStatement() Node {
 	case scanner.ASSIGN:
 		return p.parseAssignment()
 	}
+
 	return nil
 }
 
+func (p *Parser) parseAssignment() Node {
+	defer un(trace(p, "ParseAssignment"))
+	return &AssignStatement{
+		lhs: &IdentStatement{
+			token: p.prevTok,
+		},
+		assign: p.tok.Pos,
+		rhs:    p.parseStatement(),
+	}
+}
+
 func (p *Parser) parseIdent() Node {
-	return IdentStatement{
+	defer un(trace(p, "ParseIdent"))
+
+	return &IdentStatement{
 		token: p.tok,
 	}
 }
@@ -63,16 +92,6 @@ func (p *Parser) parseObject() Node {
 
 func (p *Parser) parseList() Node {
 	return nil
-}
-
-func (p *Parser) parseAssignment() Node {
-	return AssignStatement{
-		lhs: IdentStatement{
-			token: p.prevTok,
-		},
-		assign: p.tok.Pos(),
-		rhs:    p.parseStatement(),
-	}
 }
 
 // scan returns the next token from the underlying scanner.
@@ -95,3 +114,37 @@ func (p *Parser) scan() scanner.Token {
 
 // unscan pushes the previously read token back onto the buffer.
 func (p *Parser) unscan() { p.n = 1 }
+
+// ----------------------------------------------------------------------------
+// Parsing support
+
+func (p *Parser) printTrace(a ...interface{}) {
+	if !p.enableTrace {
+		return
+	}
+
+	const dots = ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . "
+	const n = len(dots)
+	fmt.Printf("%5d:%3d: ", p.tok.Pos.Line, p.tok.Pos.Column)
+
+	i := 2 * p.indent
+	for i > n {
+		fmt.Print(dots)
+		i -= n
+	}
+	// i <= n
+	fmt.Print(dots[0:i])
+	fmt.Println(a...)
+}
+
+func trace(p *Parser, msg string) *Parser {
+	p.printTrace(msg, "(")
+	p.indent++
+	return p
+}
+
+// Usage pattern: defer un(trace(p, "..."))
+func un(p *Parser) {
+	p.indent--
+	p.printTrace(")")
+}

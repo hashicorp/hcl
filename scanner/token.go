@@ -4,9 +4,9 @@ import "strconv"
 
 // Token defines a single HCL token which can be obtained via the Scanner
 type Token struct {
-	token TokenType
-	pos   Pos
-	text  string
+	Type TokenType
+	Pos  Pos
+	Text string
 }
 
 // TokenType is the set of lexical tokens of the HCL (HashiCorp Configuration Language)
@@ -86,19 +86,9 @@ func (t TokenType) IsLiteral() bool { return literal_beg < t && t < literal_end 
 // delimiters; it returns false otherwise.
 func (t TokenType) IsOperator() bool { return operator_beg < t && t < operator_end }
 
-// Type returns the token's type
-func (t Token) Type() TokenType {
-	return t.token
-}
-
-// Pos returns the token's position
-func (t Token) Pos() Pos {
-	return t.pos
-}
-
 // String returns the token's literal text. Note that this is only
 // applicable for certain token types, such as token.IDENT,
 // token.STRING, etc..
 func (t Token) String() string {
-	return t.text
+	return t.Text
 }

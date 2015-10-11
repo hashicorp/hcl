@@ -270,8 +270,8 @@ func TestRealExample(t *testing.T) {
 	}`
 
 	literals := []struct {
-		token   TokenType
-		literal string
+		tokenType TokenType
+		literal   string
 	}{
 		{COMMENT, `// This comes from Terraform, as a test`},
 		{IDENT, `variable`},
@@ -332,8 +332,8 @@ func TestRealExample(t *testing.T) {
 	s := New([]byte(complexHCL))
 	for _, l := range literals {
 		tok := s.Scan()
-		if l.token != tok.Type() {
-			t.Errorf("got: %s want %s for %s\n", tok, l.token, tok.String())
+		if l.tokenType != tok.Type {
+			t.Errorf("got: %s want %s for %s\n", tok, l.tokenType, tok.String())
 		}
 
 		if l.literal != tok.String() {
@@ -383,7 +383,7 @@ func testError(t *testing.T, src, pos, msg string, tok TokenType) {
 	}
 
 	tk := s.Scan()
-	if tk.Type() != tok {
+	if tk.Type != tok {
 		t.Errorf("tok = %s, want %s for %q", tk, tok, src)
 	}
 	if !errorCalled {
@@ -404,7 +404,7 @@ func testTokenList(t *testing.T, tokenList []tokenPair) {
 	s := New(buf.Bytes())
 	for _, ident := range tokenList {
 		tok := s.Scan()
-		if tok.Type() != ident.tok {
+		if tok.Type != ident.tok {
 			t.Errorf("tok = %q want %q for %q\n", tok, ident.tok, ident.text)
 		}
 

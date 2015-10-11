@@ -33,11 +33,11 @@ type Source struct {
 	nodes []Node
 }
 
-func (s Source) add(node Node) {
+func (s *Source) add(node Node) {
 	s.nodes = append(s.nodes, node)
 }
 
-func (s Source) String() string {
+func (s *Source) String() string {
 	buf := ""
 	for _, n := range s.nodes {
 		buf += n.String()
@@ -46,7 +46,7 @@ func (s Source) String() string {
 	return buf
 }
 
-func (s Source) Pos() scanner.Pos {
+func (s *Source) Pos() scanner.Pos {
 	// always returns the uninitiliazed position
 	return scanner.Pos{}
 }
@@ -56,12 +56,12 @@ type IdentStatement struct {
 	token scanner.Token
 }
 
-func (i IdentStatement) String() string {
+func (i *IdentStatement) String() string {
 	return i.token.String()
 }
 
-func (i IdentStatement) Pos() scanner.Pos {
-	return i.token.Pos()
+func (i *IdentStatement) Pos() scanner.Pos {
+	return i.token.Pos
 }
 
 type BlockStatement struct {
@@ -70,7 +70,7 @@ type BlockStatement struct {
 	list   []Node      // the nodes in lexical order
 }
 
-func (b BlockStatement) String() string {
+func (b *BlockStatement) String() string {
 	s := "{\n"
 	for _, n := range b.list {
 		s += n.String() + "\n"
@@ -80,7 +80,7 @@ func (b BlockStatement) String() string {
 	return s
 }
 
-func (b BlockStatement) Pos() scanner.Pos {
+func (b *BlockStatement) Pos() scanner.Pos {
 	return b.lbrace
 }
 
@@ -91,11 +91,11 @@ type AssignStatement struct {
 	assign scanner.Pos // position of "="
 }
 
-func (a AssignStatement) String() string {
+func (a *AssignStatement) String() string {
 	return a.lhs.String() + " = " + a.rhs.String()
 }
 
-func (a AssignStatement) Pos() scanner.Pos {
+func (a *AssignStatement) Pos() scanner.Pos {
 	return a.lhs.Pos()
 }
 
@@ -106,7 +106,7 @@ type ListStatement struct {
 	list   []Node      // the elements in lexical order
 }
 
-func (l ListStatement) String() string {
+func (l *ListStatement) String() string {
 	s := "[\n"
 	for _, n := range l.list {
 		s += n.String() + ",\n"
@@ -116,7 +116,7 @@ func (l ListStatement) String() string {
 	return s
 }
 
-func (l ListStatement) Pos() scanner.Pos {
+func (l *ListStatement) Pos() scanner.Pos {
 	return l.lbrack
 }
 
@@ -126,7 +126,7 @@ type ObjectStatement struct {
 	BlockStatement
 }
 
-func (o ObjectStatement) String() string {
+func (o *ObjectStatement) String() string {
 	s := ""
 
 	for i, n := range o.Idents {
@@ -140,6 +140,6 @@ func (o ObjectStatement) String() string {
 	return s
 }
 
-func (o ObjectStatement) Pos() scanner.Pos {
+func (o *ObjectStatement) Pos() scanner.Pos {
 	return o.Idents[0].Pos()
 }
