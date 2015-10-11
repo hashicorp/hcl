@@ -48,7 +48,7 @@ func (s *Source) String() string {
 
 func (s *Source) Pos() scanner.Pos {
 	// always returns the uninitiliazed position
-	return scanner.Pos{}
+	return s.nodes[0].Pos()
 }
 
 // IdentStatement represents an identifier.

@@ -29,13 +29,13 @@ func (p *Parser) Parse() Node {
 	node := &Source{}
 
 	for {
+		if n := p.parseStatement(); n != nil {
+			node.add(n)
+		}
+
 		// break if we hit the end
 		if p.tok.Type == scanner.EOF {
 			break
-		}
-
-		if n := p.parseStatement(); n != nil {
-			node.add(n)
 		}
 	}
 
@@ -48,20 +48,16 @@ func (p *Parser) parseStatement() Node {
 	tok := p.scan()
 
 	if tok.Type.IsLiteral() {
-		// found an object
 		if p.prevTok.Type.IsLiteral() {
 			return p.parseObject()
 		}
-		return p.parseIdent()
-	}
 
-	switch tok.Type {
-	case scanner.LBRACE:
-		return p.parseObject()
-	case scanner.LBRACK:
-		return p.parseList()
-	case scanner.ASSIGN:
-		return p.parseAssignment()
+		if tok := p.scan(); tok.Type == scanner.ASSIGN {
+			return p.parseAssignment()
+		}
+
+		p.unscan()
+		return p.parseIdent()
 	}
 
 	return nil
@@ -113,7 +109,10 @@ func (p *Parser) scan() scanner.Token {
 }
 
 // unscan pushes the previously read token back onto the buffer.
-func (p *Parser) unscan() { p.n = 1 }
+func (p *Parser) unscan() {
+	p.n = 1
+	p.tok = p.prevTok
+}
 
 // ----------------------------------------------------------------------------
 // Parsing support
