@@ -182,7 +182,7 @@ func TestPosition(t *testing.T) {
 		}
 	}
 
-	s := NewScanner(buf.Bytes())
+	s := New(buf.Bytes())
 
 	pos := Pos{"", 4, 1, 5}
 	s.Scan()
@@ -329,7 +329,7 @@ func TestRealExample(t *testing.T) {
 		{EOF, ``},
 	}
 
-	s := NewScanner([]byte(complexHCL))
+	s := New([]byte(complexHCL))
 	for _, l := range literals {
 		tok := s.Scan()
 		if l.token != tok.Type() {
@@ -366,7 +366,7 @@ func TestError(t *testing.T) {
 }
 
 func testError(t *testing.T, src, pos, msg string, tok TokenType) {
-	s := NewScanner([]byte(src))
+	s := New([]byte(src))
 
 	errorCalled := false
 	s.Error = func(p Pos, m string) {
@@ -401,7 +401,7 @@ func testTokenList(t *testing.T, tokenList []tokenPair) {
 		fmt.Fprintf(buf, "%s\n", ident.text)
 	}
 
-	s := NewScanner(buf.Bytes())
+	s := New(buf.Bytes())
 	for _, ident := range tokenList {
 		tok := s.Scan()
 		if tok.Type() != ident.tok {

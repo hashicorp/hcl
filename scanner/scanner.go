@@ -42,15 +42,9 @@ type Scanner struct {
 	tokPos Pos
 }
 
-// NewScannerstring creates and initializes a new instance of Scanner using
-// string src as its source content.
-func NewScannerString(src string) *Scanner {
-	return NewScanner([]byte(src))
-}
-
-// NewScanner creates and initializes a new instance of Scanner using src as
+// New creates and initializes a new instance of Scanner using src as
 // its source content.
-func NewScanner(src []byte) *Scanner {
+func New(src []byte) *Scanner {
 	// even though we accept a src, we read from a io.Reader compatible type
 	// (*bytes.Buffer). So in the future we might easily change it to streaming
 	// read.
