@@ -22,7 +22,7 @@ type Node interface {
 }
 
 func (Source) node()          {}
-func (IdentStatement) node()  {}
+func (Ident) node()           {}
 func (BlockStatement) node()  {}
 func (AssignStatement) node() {}
 func (ListStatement) node()   {}
@@ -52,15 +52,15 @@ func (s *Source) Pos() scanner.Pos {
 }
 
 // IdentStatement represents an identifier.
-type IdentStatement struct {
+type Ident struct {
 	token scanner.Token
 }
 
-func (i *IdentStatement) String() string {
+func (i *Ident) String() string {
 	return i.token.String()
 }
 
-func (i *IdentStatement) Pos() scanner.Pos {
+func (i *Ident) Pos() scanner.Pos {
 	return i.token.Pos
 }
 

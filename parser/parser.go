@@ -70,7 +70,7 @@ func (p *Parser) parseStatement() Node {
 func (p *Parser) parseAssignment() Node {
 	defer un(trace(p, "ParseAssignment"))
 	return &AssignStatement{
-		lhs: &IdentStatement{
+		lhs: &Ident{
 			token: p.prevTok,
 		},
 		assign: p.tok.Pos,
@@ -81,7 +81,7 @@ func (p *Parser) parseAssignment() Node {
 func (p *Parser) parseIdent() Node {
 	defer un(trace(p, "ParseIdent"))
 
-	return &IdentStatement{
+	return &Ident{
 		token: p.tok,
 	}
 }
