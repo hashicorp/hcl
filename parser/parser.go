@@ -24,7 +24,7 @@ func New(src []byte) *Parser {
 }
 
 // Parse returns the fully parsed source and returns the abstract syntax tree.
-func (p *Parser) Parse() Node {
+func (p *Parser) Parse() (Node, error) {
 	defer un(trace(p, "ParseSource"))
 	node := &Source{}
 
@@ -39,7 +39,7 @@ func (p *Parser) Parse() Node {
 		}
 	}
 
-	return node
+	return node, nil
 }
 
 func (p *Parser) parseStatement() Node {

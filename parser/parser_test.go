@@ -6,7 +6,10 @@ func TestAssignStatment(t *testing.T) {
 	src := `ami = "${var.foo}"`
 	p := New([]byte(src))
 	p.enableTrace = true
-	n := p.Parse()
+	n, err := p.Parse()
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	if n.String() != src {
 		t.Errorf("AssignStatement is not parsed correctly\n\twant: '%s'\n\tgot : '%s'", src, n.String())
