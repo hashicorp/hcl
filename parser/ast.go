@@ -2,18 +2,6 @@ package parser
 
 import "github.com/fatih/hcl/scanner"
 
-type NodeType int
-
-const (
-	Unknown NodeType = 0
-	Number
-	Float
-	Bool
-	String
-	List
-	Object
-)
-
 // Node is an element in the abstract syntax tree.
 type Node interface {
 	node()
@@ -109,15 +97,18 @@ func (o *ObjectStatement) Pos() scanner.Pos {
 // LiteralType represents a literal of basic type. Valid types are:
 // scanner.NUMBER, scanner.FLOAT, scanner.BOOL and scanner.STRING
 type LiteralType struct {
-	token scanner.Token
+	*Ident
 }
 
-func (l *LiteralType) String() string {
-	return l.token.Text
-}
-
-func (l *LiteralType) Pos() scanner.Pos {
-	return l.token.Pos
+// isValid() returns true if the underlying identifier satisfies one of the
+// valid types.
+func (l *LiteralType) isValid() bool {
+	switch l.token.Type {
+	case scanner.NUMBER, scanner.FLOAT, scanner.BOOL, scanner.STRING:
+		return true
+	default:
+		return false
+	}
 }
 
 // ListStatement represents a HCL List type

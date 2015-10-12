@@ -55,7 +55,7 @@ func (p *Parser) parseNode() (Node, error) {
 
 	if tok.Type.IsLiteral() {
 		if p.prevTok.Type.IsLiteral() {
-			return p.parseObjectType()
+			return p.parseObjectStatement()
 		}
 
 		tok := p.scan()
@@ -70,6 +70,7 @@ func (p *Parser) parseNode() (Node, error) {
 	return nil, errors.New("not yet implemented")
 }
 
+// parseAssignment parses an assignment and returns a AssignStatement AST
 func (p *Parser) parseAssignment() (*AssignStatement, error) {
 	defer un(trace(p, "ParseAssignment"))
 	a := &AssignStatement{
@@ -88,6 +89,7 @@ func (p *Parser) parseAssignment() (*AssignStatement, error) {
 	return a, nil
 }
 
+// parseIdent parses a generic identifier and returns a Ident AST
 func (p *Parser) parseIdent() (*Ident, error) {
 	defer un(trace(p, "ParseIdent"))
 
@@ -100,12 +102,37 @@ func (p *Parser) parseIdent() (*Ident, error) {
 	}, nil
 }
 
-func (p *Parser) parseObjectType() (*ObjectStatement, error) {
+// parseLiteralType parses a literal type and returns a LiteralType AST
+func (p *Parser) parseLiteralType() (*LiteralType, error) {
+	i, err := p.parseIdent()
+	if err != nil {
+		return nil, err
+	}
+
+	l := &LiteralType{}
+	l.Ident = i
+
+	if !l.isValid() {
+		return nil, fmt.Errorf("Identifier is not a LiteralType: %s", l.token)
+	}
+
+	return l, nil
+}
+
+// parseObjectStatement parses an object statement returns an ObjectStatement
+// AST. ObjectsStatements represents both normal and nested objects statement
+func (p *Parser) parseObjectStatement() (*ObjectStatement, error) {
 	return nil, errors.New("ObjectStatement is not implemented yet")
 }
 
+// parseObjectType parses an object type and returns a ObjectType AST
+func (p *Parser) parseObjectType() (*ObjectType, error) {
+	return nil, errors.New("ObjectType is not implemented yet")
+}
+
+// parseListType parses a list type and returns a ListType AST
 func (p *Parser) parseListType() (*ListType, error) {
-	return nil, errors.New("ListStatement is not implemented yet")
+	return nil, errors.New("ListType is not implemented yet")
 }
 
 // scan returns the next token from the underlying scanner.
