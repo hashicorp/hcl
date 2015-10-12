@@ -1,6 +1,9 @@
 package scanner
 
-import "strconv"
+import (
+	"fmt"
+	"strconv"
+)
 
 // Token defines a single HCL token which can be obtained via the Scanner
 type Token struct {
@@ -90,5 +93,5 @@ func (t TokenType) IsOperator() bool { return operator_beg < t && t < operator_e
 // applicable for certain token types, such as token.IDENT,
 // token.STRING, etc..
 func (t Token) String() string {
-	return t.Text
+	return fmt.Sprintf("%s %s %s", t.Pos.String(), t.Type.String(), t.Text)
 }

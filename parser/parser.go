@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/fatih/hcl/scanner"
@@ -29,9 +30,12 @@ func (p *Parser) Parse() (Node, error) {
 	node := &Source{}
 
 	for {
-		if n := p.parseStatement(); n != nil {
-			node.add(n)
+		n, err := p.parseNode()
+		if err != nil {
+			return nil, err
 		}
+
+		node.add(n)
 
 		// break if we hit the end
 		if p.tok.Type == scanner.EOF {
@@ -42,17 +46,20 @@ func (p *Parser) Parse() (Node, error) {
 	return node, nil
 }
 
-func (p *Parser) parseStatement() Node {
-	defer un(trace(p, "ParseStatement"))
+func (p *Parser) parseNode() (Node, error) {
+	defer un(trace(p, "ParseNode"))
 
 	tok := p.scan()
 
+	fmt.Println(tok) // debug
+
 	if tok.Type.IsLiteral() {
 		if p.prevTok.Type.IsLiteral() {
-			return p.parseObject()
+			return p.parseObjectType()
 		}
 
-		if tok := p.scan(); tok.Type == scanner.ASSIGN {
+		tok := p.scan()
+		if tok.Type == scanner.ASSIGN {
 			return p.parseAssignment()
 		}
 
@@ -60,34 +67,45 @@ func (p *Parser) parseStatement() Node {
 		return p.parseIdent()
 	}
 
-	return nil
+	return nil, errors.New("not yet implemented")
 }
 
-func (p *Parser) parseAssignment() Node {
+func (p *Parser) parseAssignment() (*AssignStatement, error) {
 	defer un(trace(p, "ParseAssignment"))
-	return &AssignStatement{
+	a := &AssignStatement{
 		lhs: &Ident{
 			token: p.prevTok,
 		},
 		assign: p.tok.Pos,
-		rhs:    p.parseStatement(),
 	}
+
+	n, err := p.parseNode()
+	if err != nil {
+		return nil, err
+	}
+
+	a.rhs = n
+	return a, nil
 }
 
-func (p *Parser) parseIdent() Node {
+func (p *Parser) parseIdent() (*Ident, error) {
 	defer un(trace(p, "ParseIdent"))
+
+	if !p.tok.Type.IsLiteral() {
+		return nil, errors.New("can't parse non literal token")
+	}
 
 	return &Ident{
 		token: p.tok,
-	}
+	}, nil
 }
 
-func (p *Parser) parseObject() Node {
-	return nil
+func (p *Parser) parseObjectType() (*ObjectStatement, error) {
+	return nil, errors.New("ObjectStatement is not implemented yet")
 }
 
-func (p *Parser) parseList() Node {
-	return nil
+func (p *Parser) parseListType() (*ListType, error) {
+	return nil, errors.New("ListStatement is not implemented yet")
 }
 
 // scan returns the next token from the underlying scanner.

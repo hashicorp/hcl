@@ -2,7 +2,7 @@ package parser
 
 import "testing"
 
-func TestAssignStatment(t *testing.T) {
+func TestAssignStatement(t *testing.T) {
 	src := `ami = "${var.foo}"`
 	p := New([]byte(src))
 	p.enableTrace = true

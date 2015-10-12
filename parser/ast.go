@@ -21,12 +21,15 @@ type Node interface {
 	Pos() scanner.Pos
 }
 
-func (Source) node()          {}
-func (Ident) node()           {}
-func (BlockStatement) node()  {}
+func (Source) node() {}
+func (Ident) node()  {}
+
 func (AssignStatement) node() {}
-func (ListStatement) node()   {}
 func (ObjectStatement) node() {}
+
+func (LiteralType) node() {}
+func (ObjectType) node()  {}
+func (ListType) node()    {}
 
 // Source represents a single HCL source file
 type Source struct {
@@ -57,31 +60,11 @@ type Ident struct {
 }
 
 func (i *Ident) String() string {
-	return i.token.String()
+	return i.token.Text
 }
 
 func (i *Ident) Pos() scanner.Pos {
 	return i.token.Pos
-}
-
-type BlockStatement struct {
-	lbrace scanner.Pos // position of "{"
-	rbrace scanner.Pos // position of "}"
-	list   []Node      // the nodes in lexical order
-}
-
-func (b *BlockStatement) String() string {
-	s := "{\n"
-	for _, n := range b.list {
-		s += n.String() + "\n"
-	}
-
-	s += "}"
-	return s
-}
-
-func (b *BlockStatement) Pos() scanner.Pos {
-	return b.lbrace
 }
 
 // AssignStatement represents an assignment
@@ -99,31 +82,10 @@ func (a *AssignStatement) Pos() scanner.Pos {
 	return a.lhs.Pos()
 }
 
-// ListStatement represents a list
-type ListStatement struct {
-	lbrack scanner.Pos // position of "["
-	rbrack scanner.Pos // position of "]"
-	list   []Node      // the elements in lexical order
-}
-
-func (l *ListStatement) String() string {
-	s := "[\n"
-	for _, n := range l.list {
-		s += n.String() + ",\n"
-	}
-
-	s += "]"
-	return s
-}
-
-func (l *ListStatement) Pos() scanner.Pos {
-	return l.lbrack
-}
-
-// ObjectStatment represents an object
+// ObjectStatment represents an object statement
 type ObjectStatement struct {
 	Idents []Node // the idents in elements in lexical order
-	BlockStatement
+	ObjectType
 }
 
 func (o *ObjectStatement) String() string {
@@ -136,10 +98,66 @@ func (o *ObjectStatement) String() string {
 		}
 	}
 
-	s += o.BlockStatement.String()
+	s += o.ObjectType.String()
 	return s
 }
 
 func (o *ObjectStatement) Pos() scanner.Pos {
 	return o.Idents[0].Pos()
+}
+
+// LiteralType represents a literal of basic type. Valid types are:
+// scanner.NUMBER, scanner.FLOAT, scanner.BOOL and scanner.STRING
+type LiteralType struct {
+	token scanner.Token
+}
+
+func (l *LiteralType) String() string {
+	return l.token.Text
+}
+
+func (l *LiteralType) Pos() scanner.Pos {
+	return l.token.Pos
+}
+
+// ListStatement represents a HCL List type
+type ListType struct {
+	lbrack scanner.Pos // position of "["
+	rbrack scanner.Pos // position of "]"
+	list   []Node      // the elements in lexical order
+}
+
+func (l *ListType) String() string {
+	s := "[\n"
+	for _, n := range l.list {
+		s += n.String() + ",\n"
+	}
+
+	s += "]"
+	return s
+}
+
+func (l *ListType) Pos() scanner.Pos {
+	return l.lbrack
+}
+
+// ObjectType represents a HCL Object Type
+type ObjectType struct {
+	lbrace scanner.Pos // position of "{"
+	rbrace scanner.Pos // position of "}"
+	list   []Node      // the nodes in lexical order
+}
+
+func (b *ObjectType) String() string {
+	s := "{\n"
+	for _, n := range b.list {
+		s += n.String() + "\n"
+	}
+
+	s += "}"
+	return s
+}
+
+func (b *ObjectType) Pos() scanner.Pos {
+	return b.lbrace
 }
