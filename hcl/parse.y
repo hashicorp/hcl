@@ -191,6 +191,13 @@ listitem:
 			Value: $1,
 		}
 	}
+|	BOOL
+	{
+		$$ = &Object{
+			Type:  ValueTypeBool,
+			Value: $1,
+		}
+	}
 |	NULL
 	{
 		$$ = &Object{

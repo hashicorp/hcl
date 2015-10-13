@@ -1,1 +1,1 @@
-foo = [1, 2, "foo"]
+foo = [1, 2, "foo", true]

@@ -36,7 +36,7 @@ func TestLex(t *testing.T) {
 			"list.hcl",
 			[]int{
 				IDENTIFIER, EQUAL, LEFTBRACKET,
-				NUMBER, COMMA, NUMBER, COMMA, STRING,
+				NUMBER, COMMA, NUMBER, COMMA, STRING, COMMA, BOOL,
 				RIGHTBRACKET, lexEOF,
 			},
 		},

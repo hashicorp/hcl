@@ -66,7 +66,7 @@ const hclEofCode = 1
 const hclErrCode = 2
 const hclMaxDepth = 200
 
-//line parse.y:274
+//line parse.y:281
 
 //line yacctab:1
 var hclExca = [...]int{
@@ -81,66 +81,66 @@ var hclExca = [...]int{
 	-2, 19,
 }
 
-const hclNprod = 38
+const hclNprod = 39
 const hclPrivate = 57344
 
 var hclTokenNames []string
 var hclStates []string
 
-const hclLast = 67
+const hclLast = 69
 
 var hclAct = [...]int{
 
-	36, 3, 22, 23, 9, 17, 27, 26, 2, 30,
-	31, 32, 19, 25, 13, 46, 24, 6, 5, 10,
-	7, 18, 28, 42, 45, 27, 26, 12, 40, 41,
-	9, 38, 25, 33, 27, 26, 47, 27, 26, 6,
-	39, 25, 7, 38, 25, 29, 14, 48, 35, 15,
-	6, 13, 39, 7, 11, 37, 44, 43, 1, 4,
-	8, 34, 21, 0, 0, 20, 16,
+	36, 3, 22, 30, 9, 17, 27, 26, 31, 32,
+	45, 23, 19, 25, 13, 10, 24, 39, 27, 26,
+	6, 18, 47, 7, 38, 25, 43, 33, 41, 48,
+	9, 46, 44, 40, 39, 27, 26, 42, 5, 1,
+	14, 38, 25, 15, 2, 13, 35, 12, 49, 6,
+	40, 4, 7, 27, 26, 29, 11, 37, 28, 6,
+	25, 8, 7, 34, 21, 0, 0, 20, 16,
 }
 var hclPact = [...]int{
 
-	42, -1000, 42, -1000, 10, -1000, -1000, -1000, 38, -1000,
-	1, -1000, -1000, 31, -1000, -1000, -1000, -1000, -1000, -1000,
-	-1000, -1000, -8, -8, 32, 29, -1000, -1000, 9, -1000,
-	-1000, 51, 50, -1000, 8, -1000, -1000, -1000, -1000, -1000,
-	-1000, -1000, -1000, -1000, -1000, -1000, 20, -1000, -1000,
+	51, -1000, 51, -1000, 6, -1000, -1000, -1000, 32, -1000,
+	1, -1000, -1000, 41, -1000, -1000, -1000, -1000, -1000, -1000,
+	-1000, -1000, -10, -10, 30, 48, -1000, -1000, 12, -1000,
+	-1000, 26, 4, -1000, 15, -1000, -1000, -1000, -1000, -1000,
+	-1000, -1000, -1000, -1000, -1000, -1000, -1000, 13, -1000, -1000,
 }
 var hclPgo = [...]int{
 
-	0, 3, 2, 62, 61, 8, 18, 55, 54, 1,
-	0, 60, 9, 59, 58,
+	0, 11, 2, 64, 63, 44, 38, 57, 56, 1,
+	0, 61, 3, 51, 39,
 }
 var hclR1 = [...]int{
 
 	0, 14, 14, 5, 5, 8, 8, 13, 13, 9,
 	9, 9, 9, 9, 9, 9, 6, 6, 11, 11,
-	3, 3, 3, 4, 4, 10, 10, 10, 7, 7,
-	7, 7, 2, 2, 1, 1, 12, 12,
+	3, 3, 3, 4, 4, 10, 10, 10, 10, 7,
+	7, 7, 7, 2, 2, 1, 1, 12, 12,
 }
 var hclR2 = [...]int{
 
 	0, 0, 1, 1, 2, 3, 2, 1, 1, 3,
 	3, 3, 3, 3, 3, 1, 2, 2, 1, 1,
 	3, 4, 2, 1, 3, 1, 1, 1, 1, 1,
-	2, 2, 2, 1, 2, 1, 2, 2,
+	1, 2, 2, 2, 1, 2, 1, 2, 2,
 }
 var hclChk = [...]int{
 
 	-1000, -14, -5, -9, -13, -6, 8, 11, -11, -9,
 	9, -8, -6, 13, 8, 11, -7, 4, 20, 11,
 	-8, -3, -2, -1, 15, 12, 6, 5, -5, 14,
-	-12, 18, 19, -12, -4, 16, -10, -7, 11, 20,
-	-2, -1, 14, 6, 6, 16, 7, 16, -10,
+	-12, 18, 19, -12, -4, 16, -10, -7, 11, 4,
+	20, -2, -1, 14, 6, 6, 16, 7, 16, -10,
 }
 var hclDef = [...]int{
 
 	1, -2, 2, 3, 0, 15, -2, -2, 0, 4,
 	0, 16, 17, 0, 18, 19, 9, 10, 11, 12,
-	13, 14, 28, 29, 0, 0, 33, 35, 0, 6,
-	30, 0, 0, 31, 0, 22, 23, 25, 26, 27,
-	32, 34, 5, 36, 37, 20, 0, 21, 24,
+	13, 14, 29, 30, 0, 0, 34, 36, 0, 6,
+	31, 0, 0, 32, 0, 22, 23, 25, 26, 27,
+	28, 33, 35, 5, 37, 38, 20, 0, 21, 24,
 }
 var hclTok1 = [...]int{
 
@@ -689,16 +689,16 @@ hcldefault:
 		//line parse.y:195
 		{
 			hclVAL.obj = &Object{
-				Type: ValueTypeNil,
+				Type:  ValueTypeBool,
+				Value: hclDollar[1].b,
 			}
 		}
 	case 28:
 		hclDollar = hclS[hclpt-1 : hclpt+1]
-		//line parse.y:204
+		//line parse.y:202
 		{
 			hclVAL.obj = &Object{
-				Type:  ValueTypeInt,
-				Value: hclDollar[1].num,
+				Type: ValueTypeNil,
 			}
 		}
 	case 29:
@@ -706,13 +706,22 @@ hcldefault:
 		//line parse.y:211
 		{
 			hclVAL.obj = &Object{
+				Type:  ValueTypeInt,
+				Value: hclDollar[1].num,
+			}
+		}
+	case 30:
+		hclDollar = hclS[hclpt-1 : hclpt+1]
+		//line parse.y:218
+		{
+			hclVAL.obj = &Object{
 				Type:  ValueTypeFloat,
 				Value: hclDollar[1].f,
 			}
 		}
-	case 30:
+	case 31:
 		hclDollar = hclS[hclpt-2 : hclpt+1]
-		//line parse.y:218
+		//line parse.y:225
 		{
 			fs := fmt.Sprintf("%d%s", hclDollar[1].num, hclDollar[2].str)
 			f, err := strconv.ParseFloat(fs, 64)
@@ -725,9 +734,9 @@ hcldefault:
 				Value: f,
 			}
 		}
-	case 31:
+	case 32:
 		hclDollar = hclS[hclpt-2 : hclpt+1]
-		//line parse.y:231
+		//line parse.y:238
 		{
 			fs := fmt.Sprintf("%f%s", hclDollar[1].f, hclDollar[2].str)
 			f, err := strconv.ParseFloat(fs, 64)
@@ -740,39 +749,39 @@ hcldefault:
 				Value: f,
 			}
 		}
-	case 32:
+	case 33:
 		hclDollar = hclS[hclpt-2 : hclpt+1]
-		//line parse.y:246
+		//line parse.y:253
 		{
 			hclVAL.num = hclDollar[2].num * -1
 		}
-	case 33:
+	case 34:
 		hclDollar = hclS[hclpt-1 : hclpt+1]
-		//line parse.y:250
+		//line parse.y:257
 		{
 			hclVAL.num = hclDollar[1].num
 		}
-	case 34:
+	case 35:
 		hclDollar = hclS[hclpt-2 : hclpt+1]
-		//line parse.y:256
+		//line parse.y:263
 		{
 			hclVAL.f = hclDollar[2].f * -1
 		}
-	case 35:
+	case 36:
 		hclDollar = hclS[hclpt-1 : hclpt+1]
-		//line parse.y:260
+		//line parse.y:267
 		{
 			hclVAL.f = hclDollar[1].f
 		}
-	case 36:
+	case 37:
 		hclDollar = hclS[hclpt-2 : hclpt+1]
-		//line parse.y:266
+		//line parse.y:273
 		{
 			hclVAL.str = "e" + strconv.FormatInt(int64(hclDollar[2].num), 10)
 		}
-	case 37:
+	case 38:
 		hclDollar = hclS[hclpt-2 : hclpt+1]
-		//line parse.y:270
+		//line parse.y:277
 		{
 			hclVAL.str = "e-" + strconv.FormatInt(int64(hclDollar[2].num), 10)
 		}
