@@ -63,6 +63,10 @@ func TestParse(t *testing.T) {
 			"array_comment.hcl",
 			false,
 		},
+		{
+			"null.hcl",
+			false,
+		},
 	}
 
 	for _, tc := range cases {
