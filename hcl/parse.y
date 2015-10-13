@@ -32,6 +32,7 @@ import (
 %token  <str> COMMA IDENTIFIER EQUAL NEWLINE STRING MINUS
 %token  <str> LEFTBRACE RIGHTBRACE LEFTBRACKET RIGHTBRACKET PERIOD
 %token  <str> EPLUS EMINUS
+%token  <str> NULL
 
 %%
 
@@ -94,6 +95,13 @@ objectitem:
 			Key:   $1,
 			Type:  ValueTypeBool,
 			Value: $3,
+		}
+	}
+|	objectkey EQUAL NULL
+	{
+		$$ = &Object{
+			Key:   $1,
+			Type:  ValueTypeNil,
 		}
 	}
 |	objectkey EQUAL STRING
@@ -183,6 +191,13 @@ listitem:
 			Value: $1,
 		}
 	}
+|	NULL
+	{
+		$$ = &Object{
+			Type:  ValueTypeNil,
+		}
+	}
+
 
 number:
 	int

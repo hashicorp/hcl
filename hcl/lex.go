@@ -203,6 +203,8 @@ func (x *hclLex) lexId(yylval *hclSymType) int {
 	case "false":
 		yylval.b = false
 		return BOOL
+	case "null":
+		return NULL
 	}
 
 	return IDENTIFIER

@@ -72,6 +72,15 @@ func TestLex(t *testing.T) {
 				RIGHTBRACKET, lexEOF,
 			},
 		},
+		{
+			"null.hcl",
+			[]int{
+				IDENTIFIER, EQUAL, NULL,
+				IDENTIFIER, EQUAL, LEFTBRACKET, NUMBER, COMMA, NULL, COMMA, NUMBER, RIGHTBRACKET,
+				IDENTIFIER, LEFTBRACE, IDENTIFIER, EQUAL, NULL, RIGHTBRACE,
+				lexEOF,
+			},
+		},
 	}
 
 	for _, tc := range cases {

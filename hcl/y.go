@@ -36,6 +36,7 @@ const RIGHTBRACKET = 57358
 const PERIOD = 57359
 const EPLUS = 57360
 const EMINUS = 57361
+const NULL = 57362
 
 var hclToknames = [...]string{
 	"$end",
@@ -57,6 +58,7 @@ var hclToknames = [...]string{
 	"PERIOD",
 	"EPLUS",
 	"EMINUS",
+	"NULL",
 }
 var hclStatenames = [...]string{}
 
@@ -64,7 +66,7 @@ const hclEofCode = 1
 const hclErrCode = 2
 const hclMaxDepth = 200
 
-//line parse.y:259
+//line parse.y:274
 
 //line yacctab:1
 var hclExca = [...]int{
@@ -73,72 +75,72 @@ var hclExca = [...]int{
 	-2, 0,
 	-1, 6,
 	9, 7,
-	-2, 17,
+	-2, 18,
 	-1, 7,
 	9, 8,
-	-2, 18,
+	-2, 19,
 }
 
-const hclNprod = 36
+const hclNprod = 38
 const hclPrivate = 57344
 
 var hclTokenNames []string
 var hclStates []string
 
-const hclLast = 64
+const hclLast = 67
 
 var hclAct = [...]int{
 
-	35, 3, 21, 22, 9, 30, 31, 29, 17, 26,
-	25, 11, 44, 26, 25, 18, 24, 13, 10, 23,
-	24, 43, 19, 2, 42, 26, 25, 38, 39, 9,
-	32, 37, 24, 26, 25, 6, 45, 27, 7, 37,
-	24, 40, 36, 6, 34, 46, 7, 14, 6, 28,
-	15, 7, 13, 16, 5, 41, 1, 4, 8, 33,
-	20, 0, 0, 12,
+	36, 3, 22, 23, 9, 17, 27, 26, 2, 30,
+	31, 32, 19, 25, 13, 46, 24, 6, 5, 10,
+	7, 18, 28, 42, 45, 27, 26, 12, 40, 41,
+	9, 38, 25, 33, 27, 26, 47, 27, 26, 6,
+	39, 25, 7, 38, 25, 29, 14, 48, 35, 15,
+	6, 13, 39, 7, 11, 37, 44, 43, 1, 4,
+	8, 34, 21, 0, 0, 20, 16,
 }
 var hclPact = [...]int{
 
-	40, -1000, 40, -1000, 9, -1000, -1000, -1000, 39, -1000,
-	4, -1000, -1000, 35, -1000, -1000, -1000, -1000, -1000, -1000,
-	-1000, -13, -13, 28, 8, -1000, -1000, 27, -1000, -1000,
-	49, 18, -1000, 5, -1000, -1000, -1000, -1000, -1000, -1000,
-	-1000, -1000, -1000, -1000, 20, -1000, -1000,
+	42, -1000, 42, -1000, 10, -1000, -1000, -1000, 38, -1000,
+	1, -1000, -1000, 31, -1000, -1000, -1000, -1000, -1000, -1000,
+	-1000, -1000, -8, -8, 32, 29, -1000, -1000, 9, -1000,
+	-1000, 51, 50, -1000, 8, -1000, -1000, -1000, -1000, -1000,
+	-1000, -1000, -1000, -1000, -1000, -1000, 20, -1000, -1000,
 }
 var hclPgo = [...]int{
 
-	0, 3, 2, 60, 59, 23, 54, 42, 11, 1,
-	0, 58, 7, 57, 56,
+	0, 3, 2, 62, 61, 8, 18, 55, 54, 1,
+	0, 60, 9, 59, 58,
 }
 var hclR1 = [...]int{
 
 	0, 14, 14, 5, 5, 8, 8, 13, 13, 9,
-	9, 9, 9, 9, 9, 6, 6, 11, 11, 3,
-	3, 3, 4, 4, 10, 10, 7, 7, 7, 7,
-	2, 2, 1, 1, 12, 12,
+	9, 9, 9, 9, 9, 9, 6, 6, 11, 11,
+	3, 3, 3, 4, 4, 10, 10, 10, 7, 7,
+	7, 7, 2, 2, 1, 1, 12, 12,
 }
 var hclR2 = [...]int{
 
 	0, 0, 1, 1, 2, 3, 2, 1, 1, 3,
-	3, 3, 3, 3, 1, 2, 2, 1, 1, 3,
-	4, 2, 1, 3, 1, 1, 1, 1, 2, 2,
-	2, 1, 2, 1, 2, 2,
+	3, 3, 3, 3, 3, 1, 2, 2, 1, 1,
+	3, 4, 2, 1, 3, 1, 1, 1, 1, 1,
+	2, 2, 2, 1, 2, 1, 2, 2,
 }
 var hclChk = [...]int{
 
 	-1000, -14, -5, -9, -13, -6, 8, 11, -11, -9,
-	9, -8, -6, 13, 8, 11, -7, 4, 11, -8,
-	-3, -2, -1, 15, 12, 6, 5, -5, 14, -12,
-	18, 19, -12, -4, 16, -10, -7, 11, -2, -1,
-	14, 6, 6, 16, 7, 16, -10,
+	9, -8, -6, 13, 8, 11, -7, 4, 20, 11,
+	-8, -3, -2, -1, 15, 12, 6, 5, -5, 14,
+	-12, 18, 19, -12, -4, 16, -10, -7, 11, 20,
+	-2, -1, 14, 6, 6, 16, 7, 16, -10,
 }
 var hclDef = [...]int{
 
-	1, -2, 2, 3, 0, 14, -2, -2, 0, 4,
-	0, 15, 16, 0, 17, 18, 9, 10, 11, 12,
-	13, 26, 27, 0, 0, 31, 33, 0, 6, 28,
-	0, 0, 29, 0, 21, 22, 24, 25, 30, 32,
-	5, 34, 35, 19, 0, 20, 23,
+	1, -2, 2, 3, 0, 15, -2, -2, 0, 4,
+	0, 16, 17, 0, 18, 19, 9, 10, 11, 12,
+	13, 14, 28, 29, 0, 0, 33, 35, 0, 6,
+	30, 0, 0, 31, 0, 22, 23, 25, 26, 27,
+	32, 34, 5, 36, 37, 20, 0, 21, 24,
 }
 var hclTok1 = [...]int{
 
@@ -147,7 +149,7 @@ var hclTok1 = [...]int{
 var hclTok2 = [...]int{
 
 	2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
-	12, 13, 14, 15, 16, 17, 18, 19,
+	12, 13, 14, 15, 16, 17, 18, 19, 20,
 }
 var hclTok3 = [...]int{
 	0,
@@ -495,13 +497,13 @@ hcldefault:
 
 	case 1:
 		hclDollar = hclS[hclpt-0 : hclpt+1]
-		//line parse.y:39
+		//line parse.y:40
 		{
 			hclResult = &Object{Type: ValueTypeObject}
 		}
 	case 2:
 		hclDollar = hclS[hclpt-1 : hclpt+1]
-		//line parse.y:43
+		//line parse.y:44
 		{
 			hclResult = &Object{
 				Type:  ValueTypeObject,
@@ -510,19 +512,19 @@ hcldefault:
 		}
 	case 3:
 		hclDollar = hclS[hclpt-1 : hclpt+1]
-		//line parse.y:52
+		//line parse.y:53
 		{
 			hclVAL.objlist = []*Object{hclDollar[1].obj}
 		}
 	case 4:
 		hclDollar = hclS[hclpt-2 : hclpt+1]
-		//line parse.y:56
+		//line parse.y:57
 		{
 			hclVAL.objlist = append(hclDollar[1].objlist, hclDollar[2].obj)
 		}
 	case 5:
 		hclDollar = hclS[hclpt-3 : hclpt+1]
-		//line parse.y:62
+		//line parse.y:63
 		{
 			hclVAL.obj = &Object{
 				Type:  ValueTypeObject,
@@ -531,7 +533,7 @@ hcldefault:
 		}
 	case 6:
 		hclDollar = hclS[hclpt-2 : hclpt+1]
-		//line parse.y:69
+		//line parse.y:70
 		{
 			hclVAL.obj = &Object{
 				Type: ValueTypeObject,
@@ -539,26 +541,26 @@ hcldefault:
 		}
 	case 7:
 		hclDollar = hclS[hclpt-1 : hclpt+1]
-		//line parse.y:77
+		//line parse.y:78
 		{
 			hclVAL.str = hclDollar[1].str
 		}
 	case 8:
 		hclDollar = hclS[hclpt-1 : hclpt+1]
-		//line parse.y:81
+		//line parse.y:82
 		{
 			hclVAL.str = hclDollar[1].str
 		}
 	case 9:
 		hclDollar = hclS[hclpt-3 : hclpt+1]
-		//line parse.y:87
+		//line parse.y:88
 		{
 			hclVAL.obj = hclDollar[3].obj
 			hclVAL.obj.Key = hclDollar[1].str
 		}
 	case 10:
 		hclDollar = hclS[hclpt-3 : hclpt+1]
-		//line parse.y:92
+		//line parse.y:93
 		{
 			hclVAL.obj = &Object{
 				Key:   hclDollar[1].str,
@@ -568,7 +570,16 @@ hcldefault:
 		}
 	case 11:
 		hclDollar = hclS[hclpt-3 : hclpt+1]
-		//line parse.y:100
+		//line parse.y:101
+		{
+			hclVAL.obj = &Object{
+				Key:  hclDollar[1].str,
+				Type: ValueTypeNil,
+			}
+		}
+	case 12:
+		hclDollar = hclS[hclpt-3 : hclpt+1]
+		//line parse.y:108
 		{
 			hclVAL.obj = &Object{
 				Key:   hclDollar[1].str,
@@ -576,16 +587,16 @@ hcldefault:
 				Value: hclDollar[3].str,
 			}
 		}
-	case 12:
+	case 13:
 		hclDollar = hclS[hclpt-3 : hclpt+1]
-		//line parse.y:108
+		//line parse.y:116
 		{
 			hclDollar[3].obj.Key = hclDollar[1].str
 			hclVAL.obj = hclDollar[3].obj
 		}
-	case 13:
+	case 14:
 		hclDollar = hclS[hclpt-3 : hclpt+1]
-		//line parse.y:113
+		//line parse.y:121
 		{
 			hclVAL.obj = &Object{
 				Key:   hclDollar[1].str,
@@ -593,22 +604,22 @@ hcldefault:
 				Value: hclDollar[3].objlist,
 			}
 		}
-	case 14:
+	case 15:
 		hclDollar = hclS[hclpt-1 : hclpt+1]
-		//line parse.y:121
+		//line parse.y:129
 		{
 			hclVAL.obj = hclDollar[1].obj
 		}
-	case 15:
+	case 16:
 		hclDollar = hclS[hclpt-2 : hclpt+1]
-		//line parse.y:127
+		//line parse.y:135
 		{
 			hclDollar[2].obj.Key = hclDollar[1].str
 			hclVAL.obj = hclDollar[2].obj
 		}
-	case 16:
+	case 17:
 		hclDollar = hclS[hclpt-2 : hclpt+1]
-		//line parse.y:132
+		//line parse.y:140
 		{
 			hclVAL.obj = &Object{
 				Key:   hclDollar[1].str,
@@ -616,84 +627,92 @@ hcldefault:
 				Value: []*Object{hclDollar[2].obj},
 			}
 		}
-	case 17:
-		hclDollar = hclS[hclpt-1 : hclpt+1]
-		//line parse.y:142
-		{
-			hclVAL.str = hclDollar[1].str
-		}
 	case 18:
 		hclDollar = hclS[hclpt-1 : hclpt+1]
-		//line parse.y:146
+		//line parse.y:150
 		{
 			hclVAL.str = hclDollar[1].str
 		}
 	case 19:
-		hclDollar = hclS[hclpt-3 : hclpt+1]
-		//line parse.y:152
+		hclDollar = hclS[hclpt-1 : hclpt+1]
+		//line parse.y:154
 		{
-			hclVAL.objlist = hclDollar[2].objlist
+			hclVAL.str = hclDollar[1].str
 		}
 	case 20:
-		hclDollar = hclS[hclpt-4 : hclpt+1]
-		//line parse.y:156
+		hclDollar = hclS[hclpt-3 : hclpt+1]
+		//line parse.y:160
 		{
 			hclVAL.objlist = hclDollar[2].objlist
 		}
 	case 21:
+		hclDollar = hclS[hclpt-4 : hclpt+1]
+		//line parse.y:164
+		{
+			hclVAL.objlist = hclDollar[2].objlist
+		}
+	case 22:
 		hclDollar = hclS[hclpt-2 : hclpt+1]
-		//line parse.y:160
+		//line parse.y:168
 		{
 			hclVAL.objlist = nil
 		}
-	case 22:
+	case 23:
 		hclDollar = hclS[hclpt-1 : hclpt+1]
-		//line parse.y:166
+		//line parse.y:174
 		{
 			hclVAL.objlist = []*Object{hclDollar[1].obj}
 		}
-	case 23:
+	case 24:
 		hclDollar = hclS[hclpt-3 : hclpt+1]
-		//line parse.y:170
+		//line parse.y:178
 		{
 			hclVAL.objlist = append(hclDollar[1].objlist, hclDollar[3].obj)
 		}
-	case 24:
+	case 25:
 		hclDollar = hclS[hclpt-1 : hclpt+1]
-		//line parse.y:176
+		//line parse.y:184
 		{
 			hclVAL.obj = hclDollar[1].obj
 		}
-	case 25:
+	case 26:
 		hclDollar = hclS[hclpt-1 : hclpt+1]
-		//line parse.y:180
+		//line parse.y:188
 		{
 			hclVAL.obj = &Object{
 				Type:  ValueTypeString,
 				Value: hclDollar[1].str,
 			}
 		}
-	case 26:
+	case 27:
 		hclDollar = hclS[hclpt-1 : hclpt+1]
-		//line parse.y:189
+		//line parse.y:195
+		{
+			hclVAL.obj = &Object{
+				Type: ValueTypeNil,
+			}
+		}
+	case 28:
+		hclDollar = hclS[hclpt-1 : hclpt+1]
+		//line parse.y:204
 		{
 			hclVAL.obj = &Object{
 				Type:  ValueTypeInt,
 				Value: hclDollar[1].num,
 			}
 		}
-	case 27:
+	case 29:
 		hclDollar = hclS[hclpt-1 : hclpt+1]
-		//line parse.y:196
+		//line parse.y:211
 		{
 			hclVAL.obj = &Object{
 				Type:  ValueTypeFloat,
 				Value: hclDollar[1].f,
 			}
 		}
-	case 28:
+	case 30:
 		hclDollar = hclS[hclpt-2 : hclpt+1]
-		//line parse.y:203
+		//line parse.y:218
 		{
 			fs := fmt.Sprintf("%d%s", hclDollar[1].num, hclDollar[2].str)
 			f, err := strconv.ParseFloat(fs, 64)
@@ -706,9 +725,9 @@ hcldefault:
 				Value: f,
 			}
 		}
-	case 29:
+	case 31:
 		hclDollar = hclS[hclpt-2 : hclpt+1]
-		//line parse.y:216
+		//line parse.y:231
 		{
 			fs := fmt.Sprintf("%f%s", hclDollar[1].f, hclDollar[2].str)
 			f, err := strconv.ParseFloat(fs, 64)
@@ -721,39 +740,39 @@ hcldefault:
 				Value: f,
 			}
 		}
-	case 30:
+	case 32:
 		hclDollar = hclS[hclpt-2 : hclpt+1]
-		//line parse.y:231
+		//line parse.y:246
 		{
 			hclVAL.num = hclDollar[2].num * -1
 		}
-	case 31:
+	case 33:
 		hclDollar = hclS[hclpt-1 : hclpt+1]
-		//line parse.y:235
+		//line parse.y:250
 		{
 			hclVAL.num = hclDollar[1].num
 		}
-	case 32:
+	case 34:
 		hclDollar = hclS[hclpt-2 : hclpt+1]
-		//line parse.y:241
+		//line parse.y:256
 		{
 			hclVAL.f = hclDollar[2].f * -1
 		}
-	case 33:
+	case 35:
 		hclDollar = hclS[hclpt-1 : hclpt+1]
-		//line parse.y:245
+		//line parse.y:260
 		{
 			hclVAL.f = hclDollar[1].f
 		}
-	case 34:
+	case 36:
 		hclDollar = hclS[hclpt-2 : hclpt+1]
-		//line parse.y:251
+		//line parse.y:266
 		{
 			hclVAL.str = "e" + strconv.FormatInt(int64(hclDollar[2].num), 10)
 		}
-	case 35:
+	case 37:
 		hclDollar = hclS[hclpt-2 : hclpt+1]
-		//line parse.y:255
+		//line parse.y:270
 		{
 			hclVAL.str = "e-" + strconv.FormatInt(int64(hclDollar[2].num), 10)
 		}
