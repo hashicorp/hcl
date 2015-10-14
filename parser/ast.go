@@ -5,7 +5,6 @@ import "github.com/fatih/hcl/scanner"
 // Node is an element in the abstract syntax tree.
 type Node interface {
 	node()
-	String() string
 	Pos() scanner.Pos
 }
 
@@ -28,15 +27,6 @@ func (s *Source) add(node Node) {
 	s.nodes = append(s.nodes, node)
 }
 
-func (s *Source) String() string {
-	buf := ""
-	for _, n := range s.nodes {
-		buf += n.String()
-	}
-
-	return buf
-}
-
 func (s *Source) Pos() scanner.Pos {
 	// always returns the uninitiliazed position
 	return s.nodes[0].Pos()
@@ -45,10 +35,6 @@ func (s *Source) Pos() scanner.Pos {
 // IdentStatement represents an identifier.
 type Ident struct {
 	token scanner.Token
-}
-
-func (i *Ident) String() string {
-	return i.token.Text
 }
 
 func (i *Ident) Pos() scanner.Pos {
@@ -62,10 +48,6 @@ type AssignStatement struct {
 	assign scanner.Pos // position of "="
 }
 
-func (a *AssignStatement) String() string {
-	return a.lhs.String() + " = " + a.rhs.String()
-}
-
 func (a *AssignStatement) Pos() scanner.Pos {
 	return a.lhs.Pos()
 }
@@ -76,20 +58,6 @@ type ObjectStatement struct {
 	ObjectType
 }
 
-func (o *ObjectStatement) String() string {
-	s := ""
-
-	for i, n := range o.Idents {
-		s += n.String()
-		if i != len(o.Idents) {
-			s += " "
-		}
-	}
-
-	s += o.ObjectType.String()
-	return s
-}
-
 func (o *ObjectStatement) Pos() scanner.Pos {
 	return o.Idents[0].Pos()
 }
@@ -97,7 +65,7 @@ func (o *ObjectStatement) Pos() scanner.Pos {
 // LiteralType represents a literal of basic type. Valid types are:
 // scanner.NUMBER, scanner.FLOAT, scanner.BOOL and scanner.STRING
 type LiteralType struct {
-	*Ident
+	token scanner.Token
 }
 
 // isValid() returns true if the underlying identifier satisfies one of the
@@ -111,21 +79,15 @@ func (l *LiteralType) isValid() bool {
 	}
 }
 
+func (l *LiteralType) Pos() scanner.Pos {
+	return l.token.Pos
+}
+
 // ListStatement represents a HCL List type
 type ListType struct {
 	lbrack scanner.Pos // position of "["
 	rbrack scanner.Pos // position of "]"
 	list   []Node      // the elements in lexical order
-}
-
-func (l *ListType) String() string {
-	s := "[\n"
-	for _, n := range l.list {
-		s += n.String() + ",\n"
-	}
-
-	s += "]"
-	return s
 }
 
 func (l *ListType) Pos() scanner.Pos {
@@ -137,16 +99,6 @@ type ObjectType struct {
 	lbrace scanner.Pos // position of "{"
 	rbrace scanner.Pos // position of "}"
 	list   []Node      // the nodes in lexical order
-}
-
-func (b *ObjectType) String() string {
-	s := "{\n"
-	for _, n := range b.list {
-		s += n.String() + "\n"
-	}
-
-	s += "}"
-	return s
 }
 
 func (b *ObjectType) Pos() scanner.Pos {

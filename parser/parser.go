@@ -24,6 +24,8 @@ func New(src []byte) *Parser {
 	}
 }
 
+var errEofToken = errors.New("EOF token found")
+
 // Parse returns the fully parsed source and returns the abstract syntax tree.
 func (p *Parser) Parse() (Node, error) {
 	defer un(trace(p, "ParseSource"))
@@ -31,16 +33,15 @@ func (p *Parser) Parse() (Node, error) {
 
 	for {
 		n, err := p.parseNode()
+		if err == errEofToken {
+			break // we are finished
+		}
 		if err != nil {
 			return nil, err
 		}
 
+		// we successfully parsed a node, add it to the final source node
 		node.add(n)
-
-		// break if we hit the end
-		if p.tok.Type == scanner.EOF {
-			break
-		}
 	}
 
 	return node, nil
@@ -50,24 +51,33 @@ func (p *Parser) parseNode() (Node, error) {
 	defer un(trace(p, "ParseNode"))
 
 	tok := p.scan()
-
 	fmt.Println(tok) // debug
 
-	if tok.Type.IsLiteral() {
-		if p.prevTok.Type.IsLiteral() {
+	switch tok.Type {
+	case scanner.ASSIGN:
+		return p.parseAssignment()
+	case scanner.LBRACK:
+		// return p.parseListType()
+	case scanner.LBRACE:
+		// return p.parseObjectTpe()
+	case scanner.COMMENT:
+		// implement comment
+	case scanner.EOF:
+		return nil, errEofToken
+	}
+
+	if tok.Type.IsIdentifier() {
+		if p.prevTok.Type.IsIdentifier() {
 			return p.parseObjectStatement()
 		}
 
-		tok := p.scan()
-		if tok.Type == scanner.ASSIGN {
-			return p.parseAssignment()
+		if tok.Type.IsLiteral() {
+			return p.parseLiteralType()
 		}
-
-		p.unscan()
 		return p.parseIdent()
 	}
 
-	return nil, errors.New("not yet implemented")
+	return nil, fmt.Errorf("not yet implemented: %s", tok.Type)
 }
 
 // parseAssignment parses an assignment and returns a AssignStatement AST
@@ -93,10 +103,6 @@ func (p *Parser) parseAssignment() (*AssignStatement, error) {
 func (p *Parser) parseIdent() (*Ident, error) {
 	defer un(trace(p, "ParseIdent"))
 
-	if !p.tok.Type.IsLiteral() {
-		return nil, errors.New("can't parse non literal token")
-	}
-
 	return &Ident{
 		token: p.tok,
 	}, nil
@@ -104,24 +110,18 @@ func (p *Parser) parseIdent() (*Ident, error) {
 
 // parseLiteralType parses a literal type and returns a LiteralType AST
 func (p *Parser) parseLiteralType() (*LiteralType, error) {
-	i, err := p.parseIdent()
-	if err != nil {
-		return nil, err
-	}
+	defer un(trace(p, "ParseLiteral"))
 
-	l := &LiteralType{}
-	l.Ident = i
-
-	if !l.isValid() {
-		return nil, fmt.Errorf("Identifier is not a LiteralType: %s", l.token)
-	}
-
-	return l, nil
+	return &LiteralType{
+		token: p.tok,
+	}, nil
 }
 
 // parseObjectStatement parses an object statement returns an ObjectStatement
 // AST. ObjectsStatements represents both normal and nested objects statement
 func (p *Parser) parseObjectStatement() (*ObjectStatement, error) {
+	defer un(trace(p, "ParseObjectStatement"))
+
 	return nil, errors.New("ObjectStatement is not implemented yet")
 }
 

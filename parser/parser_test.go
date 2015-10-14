@@ -11,12 +11,7 @@ func TestAssignStatement(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if n.String() != src {
-		t.Errorf("AssignStatement is not parsed correctly\n\twant: '%s'\n\tgot : '%s'", src, n.String())
-	}
-
 	if n.Pos().Line != 1 {
 		t.Errorf("AssignStatement position is wrong\n\twant: '%d'\n\tgot : '%d'", 1, n.Pos().Line)
 	}
-
 }

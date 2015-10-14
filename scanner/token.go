@@ -21,13 +21,15 @@ const (
 	EOF
 	COMMENT
 
+	identifier_beg
+	IDENT // literals
 	literal_beg
-	IDENT  // literals
 	NUMBER // 12345
 	FLOAT  // 123.45
 	BOOL   // true,false
 	STRING // "abc"
 	literal_end
+	identifier_end
 
 	operator_beg
 	LBRACK // [
@@ -81,8 +83,12 @@ func (t TokenType) String() string {
 	return s
 }
 
-// IsLiteral returns true for tokens corresponding to identifiers and basic
+// IsIdentifier returns true for tokens corresponding to identifiers and basic
 // type literals; it returns false otherwise.
+func (t TokenType) IsIdentifier() bool { return identifier_beg < t && t < identifier_end }
+
+// IsLiteral returns true for tokens corresponding to basic type literals; it
+// returns false otherwise.
 func (t TokenType) IsLiteral() bool { return literal_beg < t && t < literal_end }
 
 // IsOperator returns true for tokens corresponding to operators and
