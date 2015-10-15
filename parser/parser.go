@@ -29,10 +29,10 @@ var errEofToken = errors.New("EOF token found")
 // Parse returns the fully parsed source and returns the abstract syntax tree.
 func (p *Parser) Parse() (Node, error) {
 	defer un(trace(p, "ParseSource"))
-	node := &Source{}
+	node := &ObjectList{}
 
 	for {
-		n, err := p.parseNode()
+		n, err := p.parseObjectItem()
 		if err == errEofToken {
 			break // we are finished
 		}
@@ -47,15 +47,15 @@ func (p *Parser) Parse() (Node, error) {
 	return node, nil
 }
 
-func (p *Parser) parseNode() (Node, error) {
-	defer un(trace(p, "ParseNode"))
+func (p *Parser) parseObjectItem() (*ObjectItem, error) {
+	defer un(trace(p, "ParseObjectItem"))
 
 	tok := p.scan()
 	fmt.Println(tok) // debug
 
 	switch tok.Type {
 	case scanner.ASSIGN:
-		return p.parseAssignment()
+		// return p.parseAssignment()
 	case scanner.LBRACK:
 		// return p.parseListType()
 	case scanner.LBRACE:
@@ -66,37 +66,7 @@ func (p *Parser) parseNode() (Node, error) {
 		return nil, errEofToken
 	}
 
-	if tok.Type.IsIdentifier() {
-		if p.prevTok.Type.IsIdentifier() {
-			return p.parseObjectStatement()
-		}
-
-		if tok.Type.IsLiteral() {
-			return p.parseLiteralType()
-		}
-		return p.parseIdent()
-	}
-
 	return nil, fmt.Errorf("not yet implemented: %s", tok.Type)
-}
-
-// parseAssignment parses an assignment and returns a AssignStatement AST
-func (p *Parser) parseAssignment() (*AssignStatement, error) {
-	defer un(trace(p, "ParseAssignment"))
-	a := &AssignStatement{
-		lhs: &Ident{
-			token: p.prevTok,
-		},
-		assign: p.tok.Pos,
-	}
-
-	n, err := p.parseNode()
-	if err != nil {
-		return nil, err
-	}
-
-	a.rhs = n
-	return a, nil
 }
 
 // parseIdent parses a generic identifier and returns a Ident AST
@@ -115,14 +85,6 @@ func (p *Parser) parseLiteralType() (*LiteralType, error) {
 	return &LiteralType{
 		token: p.tok,
 	}, nil
-}
-
-// parseObjectStatement parses an object statement returns an ObjectStatement
-// AST. ObjectsStatements represents both normal and nested objects statement
-func (p *Parser) parseObjectStatement() (*ObjectStatement, error) {
-	defer un(trace(p, "ParseObjectStatement"))
-
-	return nil, errors.New("ObjectStatement is not implemented yet")
 }
 
 // parseObjectType parses an object type and returns a ObjectType AST

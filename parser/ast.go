@@ -8,28 +8,48 @@ type Node interface {
 	Pos() scanner.Pos
 }
 
-func (Source) node() {}
-func (Ident) node()  {}
-
-func (AssignStatement) node() {}
-func (ObjectStatement) node() {}
-
-func (LiteralType) node() {}
+func (ObjectList) node()  {}
+func (ObjectItem) node()  {}
 func (ObjectType) node()  {}
+func (LiteralType) node() {}
 func (ListType) node()    {}
+func (Ident) node()       {}
 
-// Source represents a single HCL source file
-type Source struct {
-	nodes []Node
+// ObjectList represents a list of ObjectItems. An HCL file itself is an
+// ObjectList.
+type ObjectList struct {
+	items []*ObjectItem
 }
 
-func (s *Source) add(node Node) {
-	s.nodes = append(s.nodes, node)
+func (o *ObjectList) add(item *ObjectItem) {
+	o.items = append(o.items, item)
 }
 
-func (s *Source) Pos() scanner.Pos {
+func (o *ObjectList) Pos() scanner.Pos {
 	// always returns the uninitiliazed position
-	return s.nodes[0].Pos()
+	return o.items[0].Pos()
+}
+
+// ObjectItem represents a HCL Object Item. An item is represented with a key
+// (or keys). It can be an assignment or an object (both normal and nested)
+type ObjectItem struct {
+	// key is either an Identifier or a String. The slice is only one lenght
+	// long, however if it's a nested object it'll can be larger than one. In
+	// that case "assign" is invalid as there is no assignments for a nested
+	// object.
+	key []Ident
+
+	// assign contains the position of "=", if any
+	assign scanner.Pos
+
+	// val is the item itself. It can be an object,list, number, bool or a
+	// string. If key lenght is larger than one, val can be only of type
+	// Object.
+	val Node
+}
+
+func (o *ObjectItem) Pos() scanner.Pos {
+	return o.key[0].Pos()
 }
 
 // IdentStatement represents an identifier.
@@ -39,27 +59,6 @@ type Ident struct {
 
 func (i *Ident) Pos() scanner.Pos {
 	return i.token.Pos
-}
-
-// AssignStatement represents an assignment
-type AssignStatement struct {
-	lhs    Node        // left hand side of the assignment
-	rhs    Node        // right hand side of the assignment
-	assign scanner.Pos // position of "="
-}
-
-func (a *AssignStatement) Pos() scanner.Pos {
-	return a.lhs.Pos()
-}
-
-// ObjectStatment represents an object statement
-type ObjectStatement struct {
-	Idents []Node // the idents in elements in lexical order
-	ObjectType
-}
-
-func (o *ObjectStatement) Pos() scanner.Pos {
-	return o.Idents[0].Pos()
 }
 
 // LiteralType represents a literal of basic type. Valid types are:
