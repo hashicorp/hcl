@@ -34,7 +34,7 @@ func (o *ObjectList) Pos() scanner.Pos {
 // ObjectItem represents a HCL Object Item. An item is represented with a key
 // (or keys). It can be an assignment or an object (both normal and nested)
 type ObjectItem struct {
-	// keys is only one lenght long if it's of type assignment. If it's a
+	// keys is only one length long if it's of type assignment. If it's a
 	// nested object it can be larger than one. In that case "assign" is
 	// invalid as there is no assignments for a nested object.
 	keys []*ObjectKey
@@ -43,7 +43,7 @@ type ObjectItem struct {
 	assign scanner.Pos
 
 	// val is the item itself. It can be an object,list, number, bool or a
-	// string. If key lenght is larger than one, val can be only of type
+	// string. If key length is larger than one, val can be only of type
 	// Object.
 	val Node
 }
@@ -61,7 +61,9 @@ func (o *ObjectKey) Pos() scanner.Pos {
 	return o.token.Pos
 }
 
-func (o *ObjectKey) IsValid() bool {
+// isValid() returns true if the underlying identifier satisfies one of the
+// valid types (IDENT or STRING)
+func (o *ObjectKey) isValid() bool {
 	switch o.token.Type {
 	case scanner.IDENT, scanner.STRING:
 		return true

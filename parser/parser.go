@@ -51,6 +51,18 @@ func (p *Parser) Parse() (Node, error) {
 func (p *Parser) parseObjectItem() (*ObjectItem, error) {
 	defer un(trace(p, "ParseObjectItem"))
 
+	keys, err := p.parseObjectKey()
+	if err != nil {
+		return nil, err
+	}
+
+	switch len(keys) {
+	case 1:
+		// assignment or object
+	default:
+		// nested object
+	}
+
 	tok := p.scan()
 	fmt.Println(tok) // debug
 
@@ -68,6 +80,47 @@ func (p *Parser) parseObjectItem() (*ObjectItem, error) {
 	}
 
 	return nil, fmt.Errorf("not yet implemented: %s", tok.Type)
+}
+
+// parseObjectKey parses an object key and returns a ObjectKey AST
+func (p *Parser) parseObjectKey() ([]*ObjectKey, error) {
+	tok := p.scan()
+	switch tok.Type {
+	case scanner.IDENT, scanner.STRING:
+		// add first found token
+		keys := []*ObjectKey{&ObjectKey{tok}}
+		nestedObj := false
+
+		// now we have three casses
+		// 1. assignment: KEY = NODE
+		// 2. object: KEY { }
+		// 2. nested object: KEY KEY2 ... KEYN {}
+		for {
+			tok := p.scan()
+			switch tok.Type {
+			case scanner.ASSIGN:
+				// assignment or object, but not nested objects
+				if nestedObj {
+					return nil, fmt.Errorf("nested object expected: LBRACE got: %s", tok.Type)
+				}
+
+				return keys, nil
+			case scanner.LBRACE:
+				// object
+				return keys, nil
+			case scanner.IDENT, scanner.STRING:
+				// nested object
+				nestedObj = true
+				keys = append(keys, &ObjectKey{
+					token: tok,
+				})
+			default:
+				return nil, fmt.Errorf("expected: IDENT | STRING | ASSIGN | LBRACE got: %s", tok.Type)
+			}
+		}
+	default:
+		return nil, fmt.Errorf("expected: IDENT | STRING got: %s", tok.Type)
+	}
 }
 
 // parseLiteralType parses a literal type and returns a LiteralType AST

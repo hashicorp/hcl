@@ -2,28 +2,69 @@ package parser
 
 import (
 	"fmt"
+	"path/filepath"
+	"reflect"
+	"runtime"
 	"testing"
+
+	"github.com/fatih/hcl/scanner"
 )
 
-func TestAssignStatement(t *testing.T) {
-	src := `ami = "${var.foo}"`
-	p := New([]byte(src))
-	p.enableTrace = true
-	n, err := p.Parse()
-	if err != nil {
-		t.Fatal(err)
+func TestObjectKey(t *testing.T) {
+	keys := []struct {
+		exp []scanner.TokenType
+		src string
+	}{
+		{[]scanner.TokenType{scanner.IDENT}, `foo {}`},
+		{[]scanner.TokenType{scanner.IDENT}, `foo = {}`},
+		{[]scanner.TokenType{scanner.IDENT}, `foo = "${var.bar}`},
+		{[]scanner.TokenType{scanner.STRING}, `"foo" {}`},
+		{[]scanner.TokenType{scanner.STRING}, `"foo" = {}`},
+		{[]scanner.TokenType{scanner.STRING}, `"foo" = "${var.bar}`},
+		{[]scanner.TokenType{scanner.IDENT, scanner.IDENT}, `foo bar {}`},
+		{[]scanner.TokenType{scanner.IDENT, scanner.STRING}, `foo "bar" {}`},
+		{[]scanner.TokenType{scanner.STRING, scanner.IDENT}, `"foo" bar {}`},
+		{[]scanner.TokenType{scanner.IDENT, scanner.IDENT, scanner.IDENT}, `foo bar baz {}`},
 	}
 
-	if n.Pos().Line != 1 {
-		t.Errorf("AssignStatement position is wrong\n\twant: '%d'\n\tgot : '%d'", 1, n.Pos().Line)
+	for _, k := range keys {
+		p := New([]byte(k.src))
+		keys, err := p.parseObjectKey()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		tokens := []scanner.TokenType{}
+		for _, o := range keys {
+			tokens = append(tokens, o.token.Type)
+		}
+
+		equals(t, k.exp, tokens)
 	}
 
-	n1, ok := n.(*ObjectList)
-	if !ok {
-		t.Fatal("First Node should be of type Source")
+	errKeys := []struct {
+		src string
+	}{
+		{`foo 12 {}`},
+		{`foo bar = {}`},
+		{`foo []`},
+		{`12 {}`},
 	}
 
-	for _, ns := range n1.nodes {
-		fmt.Printf("ns = %+v\n", ns)
+	for _, k := range errKeys {
+		p := New([]byte(k.src))
+		_, err := p.parseObjectKey()
+		if err == nil {
+			t.Errorf("case '%s' should give an error", k.src)
+		}
+	}
+}
+
+// equals fails the test if exp is not equal to act.
+func equals(tb testing.TB, exp, act interface{}) {
+	if !reflect.DeepEqual(exp, act) {
+		_, file, line, _ := runtime.Caller(1)
+		fmt.Printf("\033[31m%s:%d:\n\n\texp: %#v\n\n\tgot: %#v\033[39m\n\n", filepath.Base(file), line, exp, act)
+		tb.FailNow()
 	}
 }
