@@ -8,12 +8,13 @@ type Node interface {
 	Pos() scanner.Pos
 }
 
-func (ObjectList) node()  {}
-func (ObjectItem) node()  {}
+func (ObjectList) node() {}
+func (ObjectItem) node() {}
+func (ObjectKey) node()  {}
+
 func (ObjectType) node()  {}
 func (LiteralType) node() {}
 func (ListType) node()    {}
-func (Ident) node()       {}
 
 // ObjectList represents a list of ObjectItems. An HCL file itself is an
 // ObjectList.
@@ -33,11 +34,10 @@ func (o *ObjectList) Pos() scanner.Pos {
 // ObjectItem represents a HCL Object Item. An item is represented with a key
 // (or keys). It can be an assignment or an object (both normal and nested)
 type ObjectItem struct {
-	// key is either an Identifier or a String. The slice is only one lenght
-	// long, however if it's a nested object it'll can be larger than one. In
-	// that case "assign" is invalid as there is no assignments for a nested
-	// object.
-	key []Ident
+	// keys is only one lenght long if it's of type assignment. If it's a
+	// nested object it can be larger than one. In that case "assign" is
+	// invalid as there is no assignments for a nested object.
+	keys []*ObjectKey
 
 	// assign contains the position of "=", if any
 	assign scanner.Pos
@@ -49,16 +49,25 @@ type ObjectItem struct {
 }
 
 func (o *ObjectItem) Pos() scanner.Pos {
-	return o.key[0].Pos()
+	return o.keys[0].Pos()
 }
 
-// IdentStatement represents an identifier.
-type Ident struct {
+// ObjectKeys are either an identifier or of type string.
+type ObjectKey struct {
 	token scanner.Token
 }
 
-func (i *Ident) Pos() scanner.Pos {
-	return i.token.Pos
+func (o *ObjectKey) Pos() scanner.Pos {
+	return o.token.Pos
+}
+
+func (o *ObjectKey) IsValid() bool {
+	switch o.token.Type {
+	case scanner.IDENT, scanner.STRING:
+		return true
+	default:
+		return false
+	}
 }
 
 // LiteralType represents a literal of basic type. Valid types are:

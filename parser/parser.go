@@ -47,6 +47,7 @@ func (p *Parser) Parse() (Node, error) {
 	return node, nil
 }
 
+// parseObjectItem parses a single object item
 func (p *Parser) parseObjectItem() (*ObjectItem, error) {
 	defer un(trace(p, "ParseObjectItem"))
 
@@ -67,15 +68,6 @@ func (p *Parser) parseObjectItem() (*ObjectItem, error) {
 	}
 
 	return nil, fmt.Errorf("not yet implemented: %s", tok.Type)
-}
-
-// parseIdent parses a generic identifier and returns a Ident AST
-func (p *Parser) parseIdent() (*Ident, error) {
-	defer un(trace(p, "ParseIdent"))
-
-	return &Ident{
-		token: p.tok,
-	}, nil
 }
 
 // parseLiteralType parses a literal type and returns a LiteralType AST
