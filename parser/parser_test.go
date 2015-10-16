@@ -12,7 +12,11 @@ import (
 )
 
 func TestParseType(t *testing.T) {
-	src := `foo = ["fatih", "arslan", 1224]`
+	src := `foo = {
+		fatih = "true"
+		arslan = "deneme"
+}`
+
 	p := New([]byte(src))
 	p.enableTrace = true
 

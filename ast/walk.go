@@ -27,7 +27,7 @@ func Walk(node Node, fn func(Node) bool) {
 			Walk(l, fn)
 		}
 	case *ObjectType:
-		for _, l := range n.List {
+		for _, l := range n.List.Items {
 			Walk(l, fn)
 		}
 	}

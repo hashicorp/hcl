@@ -88,11 +88,11 @@ func (l *ListType) Add(node Node) {
 
 // ObjectType represents a HCL Object Type
 type ObjectType struct {
-	Lbrace token.Pos // position of "{"
-	Rbrace token.Pos // position of "}"
-	List   []Node    // the nodes in lexical order
+	Lbrace token.Pos   // position of "{"
+	Rbrace token.Pos   // position of "}"
+	List   *ObjectList // the nodes in lexical order
 }
 
-func (b *ObjectType) Pos() token.Pos {
-	return b.Lbrace
+func (o *ObjectType) Pos() token.Pos {
+	return o.Lbrace
 }

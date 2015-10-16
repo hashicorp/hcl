@@ -30,6 +30,10 @@ var errEofToken = errors.New("EOF token found")
 
 // Parse returns the fully parsed source and returns the abstract syntax tree.
 func (p *Parser) Parse() (ast.Node, error) {
+	return p.parseObjectList()
+}
+
+func (p *Parser) parseObjectList() (*ast.ObjectList, error) {
 	defer un(trace(p, "ParseObjectList"))
 	node := &ast.ObjectList{}
 
@@ -75,11 +79,11 @@ func (p *Parser) parseObjectItem() (*ast.ObjectItem, error) {
 	case token.LBRACE:
 		if len(keys) > 1 {
 			// nested object
-			fmt.Println("nested object")
+			panic("nested object is not implemented")
 		}
 
 		// object
-		fmt.Println("object")
+		panic("normal object is not implemented")
 	}
 
 	return nil, fmt.Errorf("not yet implemented: %s", p.tok.Type)
@@ -154,10 +158,33 @@ func (p *Parser) parseObjectKey() ([]*ast.ObjectKey, error) {
 	}
 }
 
+// parseObjectType parses an object type and returns a ObjectType AST
+func (p *Parser) parseObjectType() (*ast.ObjectType, error) {
+	defer un(trace(p, "ParseObjectType"))
+
+	// we assume that the currently scanned token is a LBRACE
+	o := &ast.ObjectType{
+		Lbrace: p.tok.Pos,
+	}
+
+	l, err := p.parseObjectList()
+
+	// if we hit RBRACE, we are good to go (means we parsed all Items), if it's
+	// not a RBRACE, it's an syntax error and we just return it.
+	if err != nil && p.tok.Type != token.RBRACE {
+		return nil, err
+	}
+
+	o.List = l
+	o.Rbrace = p.tok.Pos // advanced via parseObjectList
+	return o, nil
+}
+
 // parseListType parses a list type and returns a ListType AST
 func (p *Parser) parseListType() (*ast.ListType, error) {
 	defer un(trace(p, "ParseListType"))
 
+	// we assume that the currently scanned token is a LBRACK
 	l := &ast.ListType{
 		Lbrack: p.tok.Pos,
 	}
@@ -177,7 +204,9 @@ func (p *Parser) parseListType() (*ast.ListType, error) {
 		case token.BOOL:
 			// TODO(arslan) should we support? not supported by HCL yet
 		case token.LBRACK:
-			// TODO(arslan) should we support nested lists?
+			// TODO(arslan) should we support nested lists? Even though it's
+			// written in README of HCL, it's not a parse of the grammar
+			// (defined in parse.y)
 		case token.RBRACK:
 			// finished
 			l.Rbrack = p.tok.Pos
@@ -196,13 +225,6 @@ func (p *Parser) parseLiteralType() (*ast.LiteralType, error) {
 	return &ast.LiteralType{
 		Token: p.tok,
 	}, nil
-}
-
-// parseObjectType parses an object type and returns a ObjectType AST
-func (p *Parser) parseObjectType() (*ast.ObjectType, error) {
-	defer un(trace(p, "ParseObjectYpe"))
-
-	return nil, errors.New("ObjectType is not implemented yet")
 }
 
 // scan returns the next token from the underlying scanner.
