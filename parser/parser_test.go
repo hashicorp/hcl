@@ -10,6 +10,24 @@ import (
 	"github.com/fatih/hcl/scanner"
 )
 
+func TestParseType(t *testing.T) {
+	src := `foo = true`
+	p := New([]byte(src))
+	p.enableTrace = true
+
+	n, err := p.Parse()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	fmt.Printf("n = %+v\n", n)
+
+	Walk(n, func(node Node) bool {
+		fmt.Printf("node = %+v\n", node)
+		return true
+	})
+}
+
 func TestObjectKey(t *testing.T) {
 	keys := []struct {
 		exp []scanner.TokenType

@@ -9,8 +9,8 @@ type Node interface {
 }
 
 func (ObjectList) node() {}
-func (ObjectItem) node() {}
 func (ObjectKey) node()  {}
+func (ObjectItem) node() {}
 
 func (ObjectType) node()  {}
 func (LiteralType) node() {}

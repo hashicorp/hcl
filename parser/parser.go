@@ -28,7 +28,7 @@ var errEofToken = errors.New("EOF token found")
 
 // Parse returns the fully parsed source and returns the abstract syntax tree.
 func (p *Parser) Parse() (Node, error) {
-	defer un(trace(p, "ParseSource"))
+	defer un(trace(p, "ParseObjectList"))
 	node := &ObjectList{}
 
 	for {
@@ -80,39 +80,37 @@ func (p *Parser) parseObjectItem() (*ObjectItem, error) {
 		fmt.Println("object")
 	}
 
-	switch len(keys) {
-	case 1:
-		// assignment or object
-	default:
-		// nested object
-	}
+	return nil, fmt.Errorf("not yet implemented: %s", p.tok.Type)
+}
 
+// parseType parses any type of Type, such as number, bool, string, object or
+// list.
+func (p *Parser) parseType() (Node, error) {
+	defer un(trace(p, "ParseType"))
 	tok := p.scan()
-	fmt.Println(tok) // debug
 
 	switch tok.Type {
-	case scanner.LBRACK:
-		// return p.parseListType()
+	case scanner.NUMBER, scanner.FLOAT, scanner.BOOL, scanner.STRING:
+		return p.parseLiteralType()
 	case scanner.LBRACE:
-		// return p.parseObjectTpe()
+		return p.parseObjectType()
+	case scanner.LBRACK:
+		return p.parseListType()
 	case scanner.COMMENT:
 		// implement comment
 	case scanner.EOF:
 		return nil, errEofToken
 	}
 
-	return nil, fmt.Errorf("not yet implemented: %s", tok.Type)
-}
-
-// parseType parses any type of Type, such as number, bool, string, object or
-// list.
-func (p *Parser) parseType() (Node, error) {
 	return nil, errors.New("ParseType is not implemented yet")
 }
 
 // parseObjectKey parses an object key and returns a ObjectKey AST
 func (p *Parser) parseObjectKey() ([]*ObjectKey, error) {
 	tok := p.scan()
+	if tok.Type == scanner.EOF {
+		return nil, errEofToken
+	}
 
 	keys := make([]*ObjectKey, 0)
 
@@ -165,11 +163,15 @@ func (p *Parser) parseLiteralType() (*LiteralType, error) {
 
 // parseObjectType parses an object type and returns a ObjectType AST
 func (p *Parser) parseObjectType() (*ObjectType, error) {
+	defer un(trace(p, "ParseObjectYpe"))
+
 	return nil, errors.New("ObjectType is not implemented yet")
 }
 
 // parseListType parses a list type and returns a ListType AST
 func (p *Parser) parseListType() (*ListType, error) {
+	defer un(trace(p, "ParseListType"))
+
 	return nil, errors.New("ListType is not implemented yet")
 }
 

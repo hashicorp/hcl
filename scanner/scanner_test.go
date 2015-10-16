@@ -336,7 +336,7 @@ func TestRealExample(t *testing.T) {
 			t.Errorf("got: %s want %s for %s\n", tok, l.tokenType, tok.String())
 		}
 
-		if l.literal != tok.String() {
+		if l.literal != tok.Text {
 			t.Errorf("got: %s want %s\n", tok, l.literal)
 		}
 	}
@@ -408,7 +408,7 @@ func testTokenList(t *testing.T, tokenList []tokenPair) {
 			t.Errorf("tok = %q want %q for %q\n", tok, ident.tok, ident.text)
 		}
 
-		if tok.String() != ident.text {
+		if tok.Text != ident.text {
 			t.Errorf("text = %q want %q", tok.String(), ident.text)
 		}
 
