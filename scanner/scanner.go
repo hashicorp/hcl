@@ -127,7 +127,7 @@ func (s *Scanner) Scan() token.Token {
 		ch = s.next()
 	}
 
-	var tok token.TokenType
+	var tok token.Type
 
 	// token text markings
 	s.tokStart = s.srcPos.Offset - s.lastCharLen
@@ -246,7 +246,7 @@ func (s *Scanner) scanComment(ch rune) {
 }
 
 // scanNumber scans a HCL number definition starting with the given rune
-func (s *Scanner) scanNumber(ch rune) token.TokenType {
+func (s *Scanner) scanNumber(ch rune) token.Type {
 	if ch == '0' {
 		// check for hexadecimal, octal or float
 		ch = s.next()

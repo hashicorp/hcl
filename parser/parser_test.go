@@ -31,21 +31,21 @@ func TestParseType(t *testing.T) {
 
 func TestObjectKey(t *testing.T) {
 	keys := []struct {
-		exp []token.TokenType
+		exp []token.Type
 		src string
 	}{
-		{[]token.TokenType{token.IDENT}, `foo {}`},
-		{[]token.TokenType{token.IDENT}, `foo = {}`},
-		{[]token.TokenType{token.IDENT}, `foo = bar`},
-		{[]token.TokenType{token.IDENT}, `foo = 123`},
-		{[]token.TokenType{token.IDENT}, `foo = "${var.bar}`},
-		{[]token.TokenType{token.STRING}, `"foo" {}`},
-		{[]token.TokenType{token.STRING}, `"foo" = {}`},
-		{[]token.TokenType{token.STRING}, `"foo" = "${var.bar}`},
-		{[]token.TokenType{token.IDENT, token.IDENT}, `foo bar {}`},
-		{[]token.TokenType{token.IDENT, token.STRING}, `foo "bar" {}`},
-		{[]token.TokenType{token.STRING, token.IDENT}, `"foo" bar {}`},
-		{[]token.TokenType{token.IDENT, token.IDENT, token.IDENT}, `foo bar baz {}`},
+		{[]token.Type{token.IDENT}, `foo {}`},
+		{[]token.Type{token.IDENT}, `foo = {}`},
+		{[]token.Type{token.IDENT}, `foo = bar`},
+		{[]token.Type{token.IDENT}, `foo = 123`},
+		{[]token.Type{token.IDENT}, `foo = "${var.bar}`},
+		{[]token.Type{token.STRING}, `"foo" {}`},
+		{[]token.Type{token.STRING}, `"foo" = {}`},
+		{[]token.Type{token.STRING}, `"foo" = "${var.bar}`},
+		{[]token.Type{token.IDENT, token.IDENT}, `foo bar {}`},
+		{[]token.Type{token.IDENT, token.STRING}, `foo "bar" {}`},
+		{[]token.Type{token.STRING, token.IDENT}, `"foo" bar {}`},
+		{[]token.Type{token.IDENT, token.IDENT, token.IDENT}, `foo bar baz {}`},
 	}
 
 	for _, k := range keys {
@@ -55,7 +55,7 @@ func TestObjectKey(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		tokens := []token.TokenType{}
+		tokens := []token.Type{}
 		for _, o := range keys {
 			tokens = append(tokens, o.Token.Type)
 		}

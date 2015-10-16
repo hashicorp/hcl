@@ -11,7 +11,7 @@ import (
 var f100 = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
 
 type tokenPair struct {
-	tok  token.TokenType
+	tok  token.Type
 	text string
 }
 
@@ -272,7 +272,7 @@ func TestRealExample(t *testing.T) {
 	}`
 
 	literals := []struct {
-		tokenType token.TokenType
+		tokenType token.Type
 		literal   string
 	}{
 		{token.COMMENT, `// This comes from Terraform, as a test`},
@@ -367,7 +367,7 @@ func TestError(t *testing.T) {
 	testError(t, `/*/`, "1:4", "comment not terminated", token.COMMENT)
 }
 
-func testError(t *testing.T, src, pos, msg string, tok token.TokenType) {
+func testError(t *testing.T, src, pos, msg string, tok token.Type) {
 	s := New([]byte(src))
 
 	errorCalled := false

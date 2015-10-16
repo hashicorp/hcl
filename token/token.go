@@ -7,17 +7,17 @@ import (
 
 // Token defines a single HCL token which can be obtained via the Scanner
 type Token struct {
-	Type TokenType
+	Type Type
 	Pos  Pos
 	Text string
 }
 
-// TokenType is the set of lexical tokens of the HCL (HashiCorp Configuration Language)
-type TokenType int
+// Type is the set of lexical tokens of the HCL (HashiCorp Configuration Language)
+type Type int
 
 const (
 	// Special tokens
-	ILLEGAL TokenType = iota
+	ILLEGAL Type = iota
 	EOF
 	COMMENT
 
@@ -72,9 +72,9 @@ var tokens = [...]string{
 }
 
 // String returns the string corresponding to the token tok.
-func (t TokenType) String() string {
+func (t Type) String() string {
 	s := ""
-	if 0 <= t && t < TokenType(len(tokens)) {
+	if 0 <= t && t < Type(len(tokens)) {
 		s = tokens[t]
 	}
 	if s == "" {
@@ -85,15 +85,15 @@ func (t TokenType) String() string {
 
 // IsIdentifier returns true for tokens corresponding to identifiers and basic
 // type literals; it returns false otherwise.
-func (t TokenType) IsIdentifier() bool { return identifier_beg < t && t < identifier_end }
+func (t Type) IsIdentifier() bool { return identifier_beg < t && t < identifier_end }
 
 // IsLiteral returns true for tokens corresponding to basic type literals; it
 // returns false otherwise.
-func (t TokenType) IsLiteral() bool { return literal_beg < t && t < literal_end }
+func (t Type) IsLiteral() bool { return literal_beg < t && t < literal_end }
 
 // IsOperator returns true for tokens corresponding to operators and
 // delimiters; it returns false otherwise.
-func (t TokenType) IsOperator() bool { return operator_beg < t && t < operator_end }
+func (t Type) IsOperator() bool { return operator_beg < t && t < operator_end }
 
 // String returns the token's literal text. Note that this is only
 // applicable for certain token types, such as token.IDENT,

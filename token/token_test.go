@@ -2,9 +2,9 @@ package token
 
 import "testing"
 
-func TestTokenTypeString(t *testing.T) {
+func TestTypeString(t *testing.T) {
 	var tokens = []struct {
-		tt  TokenType
+		tt  Type
 		str string
 	}{
 		{ILLEGAL, "ILLEGAL"},
