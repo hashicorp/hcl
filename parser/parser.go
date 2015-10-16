@@ -43,12 +43,10 @@ func (p *Parser) parseObjectList() (*ast.ObjectList, error) {
 			break // we are finished
 		}
 
+		// we don't return a nil, because might want to use already collected
+		// items.
 		if err != nil {
-			if p.tok.Type != token.RBRACE {
-				return nil, err
-			} else {
-				break
-			}
+			return node, err
 		}
 
 		// we successfully parsed a node, add it to the final source node
