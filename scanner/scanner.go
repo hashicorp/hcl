@@ -414,7 +414,7 @@ func (s *Scanner) scanEscape() rune {
 }
 
 // scanDigits scans a rune with the given base for n times. For example an
-// octan notation \184 would yield in scanDigits(ch, 8, 3)
+// octal notation \184 would yield in scanDigits(ch, 8, 3)
 func (s *Scanner) scanDigits(ch rune, base, n int) rune {
 	for n > 0 && digitVal(ch) < base {
 		ch = s.next()
@@ -436,7 +436,10 @@ func (s *Scanner) scanIdentifier() string {
 	for isLetter(ch) || isDigit(ch) {
 		ch = s.next()
 	}
-	s.unread() // we got identifier, put back latest char
+
+	if ch != eof {
+		s.unread() // we got identifier, put back latest char
+	}
 
 	return string(s.src[offs:s.srcPos.Offset])
 }
