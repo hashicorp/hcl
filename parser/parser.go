@@ -42,8 +42,13 @@ func (p *Parser) parseObjectList() (*ast.ObjectList, error) {
 		if err == errEofToken {
 			break // we are finished
 		}
+
 		if err != nil {
-			return nil, err
+			if p.tok.Type != token.RBRACE {
+				return nil, err
+			} else {
+				break
+			}
 		}
 
 		// we successfully parsed a node, add it to the final source node
@@ -62,9 +67,9 @@ func (p *Parser) parseObjectItem() (*ast.ObjectItem, error) {
 		return nil, err
 	}
 
-	// either an assignment or object
 	switch p.tok.Type {
 	case token.ASSIGN:
+		// assignments
 		o := &ast.ObjectItem{
 			Keys:   keys,
 			Assign: p.tok.Pos,
@@ -74,16 +79,18 @@ func (p *Parser) parseObjectItem() (*ast.ObjectItem, error) {
 		if err != nil {
 			return nil, err
 		}
-
 		return o, nil
 	case token.LBRACE:
-		if len(keys) > 1 {
-			// nested object
-			panic("nested object is not implemented")
+		// object or nested objects
+		o := &ast.ObjectItem{
+			Keys: keys,
 		}
 
-		// object
-		panic("normal object is not implemented")
+		o.Val, err = p.parseObjectType()
+		if err != nil {
+			return nil, err
+		}
+		return o, nil
 	}
 
 	return nil, fmt.Errorf("not yet implemented: %s", p.tok.Type)

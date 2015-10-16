@@ -12,9 +12,8 @@ import (
 )
 
 func TestParseType(t *testing.T) {
-	src := `foo = {
+	src := `foo {
 		fatih = "true"
-		arslan = "deneme"
 }`
 
 	p := New([]byte(src))
@@ -28,12 +27,12 @@ func TestParseType(t *testing.T) {
 	ast.Walk(node, func(n ast.Node) bool {
 		if list, ok := n.(*ast.ObjectList); ok {
 			for _, l := range list.Items {
+				fmt.Printf("l = %+v\n", l)
 				for _, k := range l.Keys {
 					fmt.Printf("key = %+v\n", k)
 				}
 				fmt.Printf("val = %+v\n", l.Val)
 			}
-			return false
 		}
 		return true
 	})
