@@ -4,161 +4,163 @@ import (
 	"bytes"
 	"fmt"
 	"testing"
+
+	"github.com/fatih/hcl/token"
 )
 
 var f100 = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
 
 type tokenPair struct {
-	tok  TokenType
+	tok  token.TokenType
 	text string
 }
 
 var tokenLists = map[string][]tokenPair{
 	"comment": []tokenPair{
-		{COMMENT, "//"},
-		{COMMENT, "////"},
-		{COMMENT, "// comment"},
-		{COMMENT, "// /* comment */"},
-		{COMMENT, "// // comment //"},
-		{COMMENT, "//" + f100},
-		{COMMENT, "#"},
-		{COMMENT, "##"},
-		{COMMENT, "# comment"},
-		{COMMENT, "# /* comment */"},
-		{COMMENT, "# # comment #"},
-		{COMMENT, "#" + f100},
-		{COMMENT, "/**/"},
-		{COMMENT, "/***/"},
-		{COMMENT, "/* comment */"},
-		{COMMENT, "/* // comment */"},
-		{COMMENT, "/* /* comment */"},
-		{COMMENT, "/*\n comment\n*/"},
-		{COMMENT, "/*" + f100 + "*/"},
+		{token.COMMENT, "//"},
+		{token.COMMENT, "////"},
+		{token.COMMENT, "// comment"},
+		{token.COMMENT, "// /* comment */"},
+		{token.COMMENT, "// // comment //"},
+		{token.COMMENT, "//" + f100},
+		{token.COMMENT, "#"},
+		{token.COMMENT, "##"},
+		{token.COMMENT, "# comment"},
+		{token.COMMENT, "# /* comment */"},
+		{token.COMMENT, "# # comment #"},
+		{token.COMMENT, "#" + f100},
+		{token.COMMENT, "/**/"},
+		{token.COMMENT, "/***/"},
+		{token.COMMENT, "/* comment */"},
+		{token.COMMENT, "/* // comment */"},
+		{token.COMMENT, "/* /* comment */"},
+		{token.COMMENT, "/*\n comment\n*/"},
+		{token.COMMENT, "/*" + f100 + "*/"},
 	},
 	"operator": []tokenPair{
-		{LBRACK, "["},
-		{LBRACE, "{"},
-		{COMMA, ","},
-		{PERIOD, "."},
-		{RBRACK, "]"},
-		{RBRACE, "}"},
-		{ASSIGN, "="},
-		{ADD, "+"},
-		{SUB, "-"},
+		{token.LBRACK, "["},
+		{token.LBRACE, "{"},
+		{token.COMMA, ","},
+		{token.PERIOD, "."},
+		{token.RBRACK, "]"},
+		{token.RBRACE, "}"},
+		{token.ASSIGN, "="},
+		{token.ADD, "+"},
+		{token.SUB, "-"},
 	},
 	"bool": []tokenPair{
-		{BOOL, "true"},
-		{BOOL, "false"},
+		{token.BOOL, "true"},
+		{token.BOOL, "false"},
 	},
-	"ident": []tokenPair{
-		{IDENT, "a"},
-		{IDENT, "a0"},
-		{IDENT, "foobar"},
-		{IDENT, "abc123"},
-		{IDENT, "LGTM"},
-		{IDENT, "_"},
-		{IDENT, "_abc123"},
-		{IDENT, "abc123_"},
-		{IDENT, "_abc_123_"},
-		{IDENT, "_äöü"},
-		{IDENT, "_本"},
-		{IDENT, "äöü"},
-		{IDENT, "本"},
-		{IDENT, "a۰۱۸"},
-		{IDENT, "foo६४"},
-		{IDENT, "bar９８７６"},
+	"identoken.t": []tokenPair{
+		{token.IDENT, "a"},
+		{token.IDENT, "a0"},
+		{token.IDENT, "foobar"},
+		{token.IDENT, "abc123"},
+		{token.IDENT, "LGTM"},
+		{token.IDENT, "_"},
+		{token.IDENT, "_abc123"},
+		{token.IDENT, "abc123_"},
+		{token.IDENT, "_abc_123_"},
+		{token.IDENT, "_äöü"},
+		{token.IDENT, "_本"},
+		{token.IDENT, "äöü"},
+		{token.IDENT, "本"},
+		{token.IDENT, "a۰۱۸"},
+		{token.IDENT, "foo६४"},
+		{token.IDENT, "bar９８７６"},
 	},
-	"string": []tokenPair{
-		{STRING, `" "`},
-		{STRING, `"a"`},
-		{STRING, `"本"`},
-		{STRING, `"\a"`},
-		{STRING, `"\b"`},
-		{STRING, `"\f"`},
-		{STRING, `"\n"`},
-		{STRING, `"\r"`},
-		{STRING, `"\t"`},
-		{STRING, `"\v"`},
-		{STRING, `"\""`},
-		{STRING, `"\000"`},
-		{STRING, `"\777"`},
-		{STRING, `"\x00"`},
-		{STRING, `"\xff"`},
-		{STRING, `"\u0000"`},
-		{STRING, `"\ufA16"`},
-		{STRING, `"\U00000000"`},
-		{STRING, `"\U0000ffAB"`},
-		{STRING, `"` + f100 + `"`},
+	"stritoken.ng": []tokenPair{
+		{token.STRING, `" "`},
+		{token.STRING, `"a"`},
+		{token.STRING, `"本"`},
+		{token.STRING, `"\a"`},
+		{token.STRING, `"\b"`},
+		{token.STRING, `"\f"`},
+		{token.STRING, `"\n"`},
+		{token.STRING, `"\r"`},
+		{token.STRING, `"\t"`},
+		{token.STRING, `"\v"`},
+		{token.STRING, `"\""`},
+		{token.STRING, `"\000"`},
+		{token.STRING, `"\777"`},
+		{token.STRING, `"\x00"`},
+		{token.STRING, `"\xff"`},
+		{token.STRING, `"\u0000"`},
+		{token.STRING, `"\ufA16"`},
+		{token.STRING, `"\U00000000"`},
+		{token.STRING, `"\U0000ffAB"`},
+		{token.STRING, `"` + f100 + `"`},
 	},
-	"number": []tokenPair{
-		{NUMBER, "0"},
-		{NUMBER, "1"},
-		{NUMBER, "9"},
-		{NUMBER, "42"},
-		{NUMBER, "1234567890"},
-		{NUMBER, "00"},
-		{NUMBER, "01"},
-		{NUMBER, "07"},
-		{NUMBER, "042"},
-		{NUMBER, "01234567"},
-		{NUMBER, "0x0"},
-		{NUMBER, "0x1"},
-		{NUMBER, "0xf"},
-		{NUMBER, "0x42"},
-		{NUMBER, "0x123456789abcDEF"},
-		{NUMBER, "0x" + f100},
-		{NUMBER, "0X0"},
-		{NUMBER, "0X1"},
-		{NUMBER, "0XF"},
-		{NUMBER, "0X42"},
-		{NUMBER, "0X123456789abcDEF"},
-		{NUMBER, "0X" + f100},
-		{NUMBER, "0e0"},
-		{NUMBER, "1e0"},
-		{NUMBER, "42e0"},
-		{NUMBER, "01234567890e0"},
-		{NUMBER, "0E0"},
-		{NUMBER, "1E0"},
-		{NUMBER, "42E0"},
-		{NUMBER, "01234567890E0"},
-		{NUMBER, "0e+10"},
-		{NUMBER, "1e-10"},
-		{NUMBER, "42e+10"},
-		{NUMBER, "01234567890e-10"},
-		{NUMBER, "0E+10"},
-		{NUMBER, "1E-10"},
-		{NUMBER, "42E+10"},
-		{NUMBER, "01234567890E-10"},
+	"numbtoken.er": []tokenPair{
+		{token.NUMBER, "0"},
+		{token.NUMBER, "1"},
+		{token.NUMBER, "9"},
+		{token.NUMBER, "42"},
+		{token.NUMBER, "1234567890"},
+		{token.NUMBER, "00"},
+		{token.NUMBER, "01"},
+		{token.NUMBER, "07"},
+		{token.NUMBER, "042"},
+		{token.NUMBER, "01234567"},
+		{token.NUMBER, "0x0"},
+		{token.NUMBER, "0x1"},
+		{token.NUMBER, "0xf"},
+		{token.NUMBER, "0x42"},
+		{token.NUMBER, "0x123456789abcDEF"},
+		{token.NUMBER, "0x" + f100},
+		{token.NUMBER, "0X0"},
+		{token.NUMBER, "0X1"},
+		{token.NUMBER, "0XF"},
+		{token.NUMBER, "0X42"},
+		{token.NUMBER, "0X123456789abcDEF"},
+		{token.NUMBER, "0X" + f100},
+		{token.NUMBER, "0e0"},
+		{token.NUMBER, "1e0"},
+		{token.NUMBER, "42e0"},
+		{token.NUMBER, "01234567890e0"},
+		{token.NUMBER, "0E0"},
+		{token.NUMBER, "1E0"},
+		{token.NUMBER, "42E0"},
+		{token.NUMBER, "01234567890E0"},
+		{token.NUMBER, "0e+10"},
+		{token.NUMBER, "1e-10"},
+		{token.NUMBER, "42e+10"},
+		{token.NUMBER, "01234567890e-10"},
+		{token.NUMBER, "0E+10"},
+		{token.NUMBER, "1E-10"},
+		{token.NUMBER, "42E+10"},
+		{token.NUMBER, "01234567890E-10"},
 	},
-	"float": []tokenPair{
-		{FLOAT, "0."},
-		{FLOAT, "1."},
-		{FLOAT, "42."},
-		{FLOAT, "01234567890."},
-		{FLOAT, ".0"},
-		{FLOAT, ".1"},
-		{FLOAT, ".42"},
-		{FLOAT, ".0123456789"},
-		{FLOAT, "0.0"},
-		{FLOAT, "1.0"},
-		{FLOAT, "42.0"},
-		{FLOAT, "01234567890.0"},
-		{FLOAT, "01.8e0"},
-		{FLOAT, "1.4e0"},
-		{FLOAT, "42.2e0"},
-		{FLOAT, "01234567890.12e0"},
-		{FLOAT, "0.E0"},
-		{FLOAT, "1.12E0"},
-		{FLOAT, "42.123E0"},
-		{FLOAT, "01234567890.213E0"},
-		{FLOAT, "0.2e+10"},
-		{FLOAT, "1.2e-10"},
-		{FLOAT, "42.54e+10"},
-		{FLOAT, "01234567890.98e-10"},
-		{FLOAT, "0.1E+10"},
-		{FLOAT, "1.1E-10"},
-		{FLOAT, "42.1E+10"},
-		{FLOAT, "01234567890.1E-10"},
+	"floatoken.t": []tokenPair{
+		{token.FLOAT, "0."},
+		{token.FLOAT, "1."},
+		{token.FLOAT, "42."},
+		{token.FLOAT, "01234567890."},
+		{token.FLOAT, ".0"},
+		{token.FLOAT, ".1"},
+		{token.FLOAT, ".42"},
+		{token.FLOAT, ".0123456789"},
+		{token.FLOAT, "0.0"},
+		{token.FLOAT, "1.0"},
+		{token.FLOAT, "42.0"},
+		{token.FLOAT, "01234567890.0"},
+		{token.FLOAT, "01.8e0"},
+		{token.FLOAT, "1.4e0"},
+		{token.FLOAT, "42.2e0"},
+		{token.FLOAT, "01234567890.12e0"},
+		{token.FLOAT, "0.E0"},
+		{token.FLOAT, "1.12E0"},
+		{token.FLOAT, "42.123E0"},
+		{token.FLOAT, "01234567890.213E0"},
+		{token.FLOAT, "0.2e+10"},
+		{token.FLOAT, "1.2e-10"},
+		{token.FLOAT, "42.54e+10"},
+		{token.FLOAT, "01234567890.98e-10"},
+		{token.FLOAT, "0.1E+10"},
+		{token.FLOAT, "1.1E-10"},
+		{token.FLOAT, "42.1E+10"},
+		{token.FLOAT, "01234567890.1E-10"},
 	},
 }
 
@@ -184,7 +186,7 @@ func TestPosition(t *testing.T) {
 
 	s := New(buf.Bytes())
 
-	pos := Pos{"", 4, 1, 5}
+	pos := token.Pos{"", 4, 1, 5}
 	s.Scan()
 	for _, listName := range orderedTokenLists {
 
@@ -270,63 +272,63 @@ func TestRealExample(t *testing.T) {
 	}`
 
 	literals := []struct {
-		tokenType TokenType
+		tokenType token.TokenType
 		literal   string
 	}{
-		{COMMENT, `// This comes from Terraform, as a test`},
-		{IDENT, `variable`},
-		{STRING, `"foo"`},
-		{LBRACE, `{`},
-		{IDENT, `default`},
-		{ASSIGN, `=`},
-		{STRING, `"bar"`},
-		{IDENT, `description`},
-		{ASSIGN, `=`},
-		{STRING, `"bar"`},
-		{RBRACE, `}`},
-		{IDENT, `provider`},
-		{STRING, `"aws"`},
-		{LBRACE, `{`},
-		{IDENT, `access_key`},
-		{ASSIGN, `=`},
-		{STRING, `"foo"`},
-		{IDENT, `secret_key`},
-		{ASSIGN, `=`},
-		{STRING, `"bar"`},
-		{RBRACE, `}`},
-		{IDENT, `resource`},
-		{STRING, `"aws_security_group"`},
-		{STRING, `"firewall"`},
-		{LBRACE, `{`},
-		{IDENT, `count`},
-		{ASSIGN, `=`},
-		{NUMBER, `5`},
-		{RBRACE, `}`},
-		{IDENT, `resource`},
-		{IDENT, `aws_instance`},
-		{STRING, `"web"`},
-		{LBRACE, `{`},
-		{IDENT, `ami`},
-		{ASSIGN, `=`},
-		{STRING, `"${var.foo}"`},
-		{IDENT, `security_groups`},
-		{ASSIGN, `=`},
-		{LBRACK, `[`},
-		{STRING, `"foo"`},
-		{COMMA, `,`},
-		{STRING, `"${aws_security_group.firewall.foo}"`},
-		{RBRACK, `]`},
-		{IDENT, `network_interface`},
-		{LBRACE, `{`},
-		{IDENT, `device_index`},
-		{ASSIGN, `=`},
-		{NUMBER, `0`},
-		{IDENT, `description`},
-		{ASSIGN, `=`},
-		{STRING, `"Main network interface"`},
-		{RBRACE, `}`},
-		{RBRACE, `}`},
-		{EOF, ``},
+		{token.COMMENT, `// This comes from Terraform, as a test`},
+		{token.IDENT, `variable`},
+		{token.STRING, `"foo"`},
+		{token.LBRACE, `{`},
+		{token.IDENT, `default`},
+		{token.ASSIGN, `=`},
+		{token.STRING, `"bar"`},
+		{token.IDENT, `description`},
+		{token.ASSIGN, `=`},
+		{token.STRING, `"bar"`},
+		{token.RBRACE, `}`},
+		{token.IDENT, `provider`},
+		{token.STRING, `"aws"`},
+		{token.LBRACE, `{`},
+		{token.IDENT, `access_key`},
+		{token.ASSIGN, `=`},
+		{token.STRING, `"foo"`},
+		{token.IDENT, `secret_key`},
+		{token.ASSIGN, `=`},
+		{token.STRING, `"bar"`},
+		{token.RBRACE, `}`},
+		{token.IDENT, `resource`},
+		{token.STRING, `"aws_security_group"`},
+		{token.STRING, `"firewall"`},
+		{token.LBRACE, `{`},
+		{token.IDENT, `count`},
+		{token.ASSIGN, `=`},
+		{token.NUMBER, `5`},
+		{token.RBRACE, `}`},
+		{token.IDENT, `resource`},
+		{token.IDENT, `aws_instance`},
+		{token.STRING, `"web"`},
+		{token.LBRACE, `{`},
+		{token.IDENT, `ami`},
+		{token.ASSIGN, `=`},
+		{token.STRING, `"${var.foo}"`},
+		{token.IDENT, `security_groups`},
+		{token.ASSIGN, `=`},
+		{token.LBRACK, `[`},
+		{token.STRING, `"foo"`},
+		{token.COMMA, `,`},
+		{token.STRING, `"${aws_security_group.firewall.foo}"`},
+		{token.RBRACK, `]`},
+		{token.IDENT, `network_interface`},
+		{token.LBRACE, `{`},
+		{token.IDENT, `device_index`},
+		{token.ASSIGN, `=`},
+		{token.NUMBER, `0`},
+		{token.IDENT, `description`},
+		{token.ASSIGN, `=`},
+		{token.STRING, `"Main network interface"`},
+		{token.RBRACE, `}`},
+		{token.RBRACE, `}`},
+		{token.EOF, ``},
 	}
 
 	s := New([]byte(complexHCL))
@@ -344,32 +346,32 @@ func TestRealExample(t *testing.T) {
 }
 
 func TestError(t *testing.T) {
-	testError(t, "\x80", "1:1", "illegal UTF-8 encoding", ILLEGAL)
-	testError(t, "\xff", "1:1", "illegal UTF-8 encoding", ILLEGAL)
+	testError(t, "\x80", "1:1", "illegal UTF-8 encoding", token.ILLEGAL)
+	testError(t, "\xff", "1:1", "illegal UTF-8 encoding", token.ILLEGAL)
 
-	testError(t, "ab\x80", "1:3", "illegal UTF-8 encoding", IDENT)
-	testError(t, "abc\xff", "1:4", "illegal UTF-8 encoding", IDENT)
+	testError(t, "ab\x80", "1:3", "illegal UTF-8 encoding", token.IDENT)
+	testError(t, "abc\xff", "1:4", "illegal UTF-8 encoding", token.IDENT)
 
-	testError(t, `"ab`+"\x80", "1:4", "illegal UTF-8 encoding", STRING)
-	testError(t, `"abc`+"\xff", "1:5", "illegal UTF-8 encoding", STRING)
+	testError(t, `"ab`+"\x80", "1:4", "illegal UTF-8 encoding", token.STRING)
+	testError(t, `"abc`+"\xff", "1:5", "illegal UTF-8 encoding", token.STRING)
 
-	testError(t, `01238`, "1:6", "illegal octal number", NUMBER)
-	testError(t, `01238123`, "1:9", "illegal octal number", NUMBER)
-	testError(t, `0x`, "1:3", "illegal hexadecimal number", NUMBER)
-	testError(t, `0xg`, "1:3", "illegal hexadecimal number", NUMBER)
-	testError(t, `'aa'`, "1:1", "illegal char", ILLEGAL)
+	testError(t, `01238`, "1:6", "illegal octal number", token.NUMBER)
+	testError(t, `01238123`, "1:9", "illegal octal number", token.NUMBER)
+	testError(t, `0x`, "1:3", "illegal hexadecimal number", token.NUMBER)
+	testError(t, `0xg`, "1:3", "illegal hexadecimal number", token.NUMBER)
+	testError(t, `'aa'`, "1:1", "illegal char", token.ILLEGAL)
 
-	testError(t, `"`, "1:2", "literal not terminated", STRING)
-	testError(t, `"abc`, "1:5", "literal not terminated", STRING)
-	testError(t, `"abc`+"\n", "1:5", "literal not terminated", STRING)
-	testError(t, `/*/`, "1:4", "comment not terminated", COMMENT)
+	testError(t, `"`, "1:2", "literal not terminated", token.STRING)
+	testError(t, `"abc`, "1:5", "literal not terminated", token.STRING)
+	testError(t, `"abc`+"\n", "1:5", "literal not terminated", token.STRING)
+	testError(t, `/*/`, "1:4", "comment not terminated", token.COMMENT)
 }
 
-func testError(t *testing.T, src, pos, msg string, tok TokenType) {
+func testError(t *testing.T, src, pos, msg string, tok token.TokenType) {
 	s := New([]byte(src))
 
 	errorCalled := false
-	s.Error = func(p Pos, m string) {
+	s.Error = func(p token.Pos, m string) {
 		if !errorCalled {
 			if pos != p.String() {
 				t.Errorf("pos = %q, want %q for %q", p, pos, src)

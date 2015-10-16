@@ -7,7 +7,8 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/fatih/hcl/scanner"
+	"github.com/fatih/hcl/ast"
+	"github.com/fatih/hcl/token"
 )
 
 func TestParseType(t *testing.T) {
@@ -22,7 +23,7 @@ func TestParseType(t *testing.T) {
 
 	fmt.Printf("n = %+v\n", n)
 
-	Walk(n, func(node Node) bool {
+	ast.Walk(n, func(node ast.Node) bool {
 		fmt.Printf("node = %+v\n", node)
 		return true
 	})
@@ -30,21 +31,21 @@ func TestParseType(t *testing.T) {
 
 func TestObjectKey(t *testing.T) {
 	keys := []struct {
-		exp []scanner.TokenType
+		exp []token.TokenType
 		src string
 	}{
-		{[]scanner.TokenType{scanner.IDENT}, `foo {}`},
-		{[]scanner.TokenType{scanner.IDENT}, `foo = {}`},
-		{[]scanner.TokenType{scanner.IDENT}, `foo = bar`},
-		{[]scanner.TokenType{scanner.IDENT}, `foo = 123`},
-		{[]scanner.TokenType{scanner.IDENT}, `foo = "${var.bar}`},
-		{[]scanner.TokenType{scanner.STRING}, `"foo" {}`},
-		{[]scanner.TokenType{scanner.STRING}, `"foo" = {}`},
-		{[]scanner.TokenType{scanner.STRING}, `"foo" = "${var.bar}`},
-		{[]scanner.TokenType{scanner.IDENT, scanner.IDENT}, `foo bar {}`},
-		{[]scanner.TokenType{scanner.IDENT, scanner.STRING}, `foo "bar" {}`},
-		{[]scanner.TokenType{scanner.STRING, scanner.IDENT}, `"foo" bar {}`},
-		{[]scanner.TokenType{scanner.IDENT, scanner.IDENT, scanner.IDENT}, `foo bar baz {}`},
+		{[]token.TokenType{token.IDENT}, `foo {}`},
+		{[]token.TokenType{token.IDENT}, `foo = {}`},
+		{[]token.TokenType{token.IDENT}, `foo = bar`},
+		{[]token.TokenType{token.IDENT}, `foo = 123`},
+		{[]token.TokenType{token.IDENT}, `foo = "${var.bar}`},
+		{[]token.TokenType{token.STRING}, `"foo" {}`},
+		{[]token.TokenType{token.STRING}, `"foo" = {}`},
+		{[]token.TokenType{token.STRING}, `"foo" = "${var.bar}`},
+		{[]token.TokenType{token.IDENT, token.IDENT}, `foo bar {}`},
+		{[]token.TokenType{token.IDENT, token.STRING}, `foo "bar" {}`},
+		{[]token.TokenType{token.STRING, token.IDENT}, `"foo" bar {}`},
+		{[]token.TokenType{token.IDENT, token.IDENT, token.IDENT}, `foo bar baz {}`},
 	}
 
 	for _, k := range keys {
@@ -54,9 +55,9 @@ func TestObjectKey(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		tokens := []scanner.TokenType{}
+		tokens := []token.TokenType{}
 		for _, o := range keys {
-			tokens = append(tokens, o.token.Type)
+			tokens = append(tokens, o.Token.Type)
 		}
 
 		equals(t, k.exp, tokens)
