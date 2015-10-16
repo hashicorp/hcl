@@ -56,6 +56,17 @@ func (p *Parser) parseObjectItem() (*ObjectItem, error) {
 		return nil, err
 	}
 
+	// either an assignment or object
+	switch p.tok.Type {
+	case scanner.ASSIGN:
+	case scanner.LBRACE:
+		if len(keys) > 1 {
+			// nested object
+		}
+
+		// object or nested object
+	}
+
 	switch len(keys) {
 	case 1:
 		// assignment or object
@@ -85,41 +96,43 @@ func (p *Parser) parseObjectItem() (*ObjectItem, error) {
 // parseObjectKey parses an object key and returns a ObjectKey AST
 func (p *Parser) parseObjectKey() ([]*ObjectKey, error) {
 	tok := p.scan()
+
+	keys := make([]*ObjectKey, 0)
+
 	switch tok.Type {
 	case scanner.IDENT, scanner.STRING:
 		// add first found token
-		keys := []*ObjectKey{&ObjectKey{tok}}
-		nestedObj := false
-
-		// now we have three casses
-		// 1. assignment: KEY = NODE
-		// 2. object: KEY { }
-		// 2. nested object: KEY KEY2 ... KEYN {}
-		for {
-			tok := p.scan()
-			switch tok.Type {
-			case scanner.ASSIGN:
-				// assignment or object, but not nested objects
-				if nestedObj {
-					return nil, fmt.Errorf("nested object expected: LBRACE got: %s", tok.Type)
-				}
-
-				return keys, nil
-			case scanner.LBRACE:
-				// object
-				return keys, nil
-			case scanner.IDENT, scanner.STRING:
-				// nested object
-				nestedObj = true
-				keys = append(keys, &ObjectKey{
-					token: tok,
-				})
-			default:
-				return nil, fmt.Errorf("expected: IDENT | STRING | ASSIGN | LBRACE got: %s", tok.Type)
-			}
-		}
+		keys = append(keys, &ObjectKey{token: tok})
 	default:
 		return nil, fmt.Errorf("expected: IDENT | STRING got: %s", tok.Type)
+	}
+
+	nestedObj := false
+
+	// we have three casses
+	// 1. assignment: KEY = NODE
+	// 2. object: KEY { }
+	// 2. nested object: KEY KEY2 ... KEYN {}
+	for {
+		tok := p.scan()
+		switch tok.Type {
+		case scanner.ASSIGN:
+			// assignment or object, but not nested objects
+			if nestedObj {
+				return nil, fmt.Errorf("nested object expected: LBRACE got: %s", tok.Type)
+			}
+
+			return keys, nil
+		case scanner.LBRACE:
+			// object
+			return keys, nil
+		case scanner.IDENT, scanner.STRING:
+			// nested object
+			nestedObj = true
+			keys = append(keys, &ObjectKey{token: tok})
+		default:
+			return nil, fmt.Errorf("expected: IDENT | STRING | ASSIGN | LBRACE got: %s", tok.Type)
+		}
 	}
 }
 

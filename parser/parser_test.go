@@ -17,6 +17,8 @@ func TestObjectKey(t *testing.T) {
 	}{
 		{[]scanner.TokenType{scanner.IDENT}, `foo {}`},
 		{[]scanner.TokenType{scanner.IDENT}, `foo = {}`},
+		{[]scanner.TokenType{scanner.IDENT}, `foo = bar`},
+		{[]scanner.TokenType{scanner.IDENT}, `foo = 123`},
 		{[]scanner.TokenType{scanner.IDENT}, `foo = "${var.bar}`},
 		{[]scanner.TokenType{scanner.STRING}, `"foo" {}`},
 		{[]scanner.TokenType{scanner.STRING}, `"foo" = {}`},
