@@ -12,19 +12,25 @@ import (
 )
 
 func TestParseType(t *testing.T) {
-	src := `foo = true`
+	src := `foo = ["fatih", "arslan", 1224]`
 	p := New([]byte(src))
 	p.enableTrace = true
 
-	n, err := p.Parse()
+	node, err := p.Parse()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	fmt.Printf("n = %+v\n", n)
-
-	ast.Walk(n, func(node ast.Node) bool {
-		fmt.Printf("node = %+v\n", node)
+	ast.Walk(node, func(n ast.Node) bool {
+		if list, ok := n.(*ast.ObjectList); ok {
+			for _, l := range list.Items {
+				for _, k := range l.Keys {
+					fmt.Printf("key = %+v\n", k)
+				}
+				fmt.Printf("val = %+v\n", l.Val)
+			}
+			return false
+		}
 		return true
 	})
 }

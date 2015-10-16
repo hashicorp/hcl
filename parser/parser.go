@@ -154,6 +154,41 @@ func (p *Parser) parseObjectKey() ([]*ast.ObjectKey, error) {
 	}
 }
 
+// parseListType parses a list type and returns a ListType AST
+func (p *Parser) parseListType() (*ast.ListType, error) {
+	defer un(trace(p, "ParseListType"))
+
+	l := &ast.ListType{
+		Lbrack: p.tok.Pos,
+	}
+
+	for {
+		tok := p.scan()
+		switch tok.Type {
+		case token.NUMBER, token.FLOAT, token.STRING:
+			node, err := p.parseLiteralType()
+			if err != nil {
+				return nil, err
+			}
+			l.Add(node)
+		case token.COMMA:
+			// get next list item or we are at the end
+			continue
+		case token.BOOL:
+			// TODO(arslan) should we support? not supported by HCL yet
+		case token.LBRACK:
+			// TODO(arslan) should we support nested lists?
+		case token.RBRACK:
+			// finished
+			l.Rbrack = p.tok.Pos
+			return l, nil
+		default:
+			return nil, fmt.Errorf("unexpected token while parsing list: %s", tok.Type)
+		}
+
+	}
+}
+
 // parseLiteralType parses a literal type and returns a LiteralType AST
 func (p *Parser) parseLiteralType() (*ast.LiteralType, error) {
 	defer un(trace(p, "ParseLiteral"))
@@ -168,13 +203,6 @@ func (p *Parser) parseObjectType() (*ast.ObjectType, error) {
 	defer un(trace(p, "ParseObjectYpe"))
 
 	return nil, errors.New("ObjectType is not implemented yet")
-}
-
-// parseListType parses a list type and returns a ListType AST
-func (p *Parser) parseListType() (*ast.ListType, error) {
-	defer un(trace(p, "ParseListType"))
-
-	return nil, errors.New("ListType is not implemented yet")
 }
 
 // scan returns the next token from the underlying scanner.

@@ -82,6 +82,10 @@ func (l *ListType) Pos() token.Pos {
 	return l.Lbrack
 }
 
+func (l *ListType) Add(node Node) {
+	l.List = append(l.List, node)
+}
+
 // ObjectType represents a HCL Object Type
 type ObjectType struct {
 	Lbrace token.Pos // position of "{"
