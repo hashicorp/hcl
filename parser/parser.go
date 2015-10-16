@@ -59,12 +59,25 @@ func (p *Parser) parseObjectItem() (*ObjectItem, error) {
 	// either an assignment or object
 	switch p.tok.Type {
 	case scanner.ASSIGN:
+		o := &ObjectItem{
+			keys:   keys,
+			assign: p.tok.Pos,
+		}
+
+		o.val, err = p.parseType()
+		if err != nil {
+			return nil, err
+		}
+
+		return o, nil
 	case scanner.LBRACE:
 		if len(keys) > 1 {
 			// nested object
+			fmt.Println("nested object")
 		}
 
-		// object or nested object
+		// object
+		fmt.Println("object")
 	}
 
 	switch len(keys) {
@@ -78,8 +91,6 @@ func (p *Parser) parseObjectItem() (*ObjectItem, error) {
 	fmt.Println(tok) // debug
 
 	switch tok.Type {
-	case scanner.ASSIGN:
-		// return p.parseAssignment()
 	case scanner.LBRACK:
 		// return p.parseListType()
 	case scanner.LBRACE:
@@ -91,6 +102,12 @@ func (p *Parser) parseObjectItem() (*ObjectItem, error) {
 	}
 
 	return nil, fmt.Errorf("not yet implemented: %s", tok.Type)
+}
+
+// parseType parses any type of Type, such as number, bool, string, object or
+// list.
+func (p *Parser) parseType() (Node, error) {
+	return nil, errors.New("ParseType is not implemented yet")
 }
 
 // parseObjectKey parses an object key and returns a ObjectKey AST
@@ -117,7 +134,8 @@ func (p *Parser) parseObjectKey() ([]*ObjectKey, error) {
 		tok := p.scan()
 		switch tok.Type {
 		case scanner.ASSIGN:
-			// assignment or object, but not nested objects
+			// assignment or object only, but not nested objects. this is not
+			// allowed: `foo bar = {}`
 			if nestedObj {
 				return nil, fmt.Errorf("nested object expected: LBRACE got: %s", tok.Type)
 			}
