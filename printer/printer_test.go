@@ -1,4 +1,4 @@
-package hclprinter
+package printer
 
 import (
 	"os"
