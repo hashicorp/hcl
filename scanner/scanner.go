@@ -325,7 +325,9 @@ func (s *Scanner) scanNumber(ch rune) token.Type {
 		return token.FLOAT
 	}
 
-	s.unread()
+	if ch != eof {
+		s.unread()
+	}
 	return token.NUMBER
 }
 
@@ -338,7 +340,7 @@ func (s *Scanner) scanMantissa(ch rune) rune {
 		scanned = true
 	}
 
-	if scanned {
+	if scanned && ch != eof {
 		s.unread()
 	}
 	return ch

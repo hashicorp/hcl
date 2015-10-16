@@ -11,32 +11,111 @@ import (
 	"github.com/fatih/hcl/token"
 )
 
-func TestParseType(t *testing.T) {
-	src := `foo {
-		fatih = "true"
-}`
-
-	p := New([]byte(src))
-	p.enableTrace = true
-
-	node, err := p.Parse()
-	if err != nil {
-		t.Fatal(err)
+func TestType(t *testing.T) {
+	var literals = []struct {
+		typ token.Type
+		src string
+	}{
+		{token.STRING, `foo = "foo"`},
+		{token.NUMBER, `foo = 123`},
+		{token.FLOAT, `foo = 123.12`},
+		{token.BOOL, `foo = true`},
 	}
 
-	ast.Walk(node, func(n ast.Node) bool {
-		if list, ok := n.(*ast.ObjectList); ok {
-			for _, l := range list.Items {
-				fmt.Printf("l = %+v\n", l)
-				for _, k := range l.Keys {
-					fmt.Printf("key = %+v\n", k)
-				}
-				fmt.Printf("val = %+v\n", l.Val)
+	for _, l := range literals {
+		p := New([]byte(l.src))
+		item, err := p.parseObjectItem()
+		if err != nil {
+			t.Error(err)
+		}
+
+		lit, ok := item.Val.(*ast.LiteralType)
+		if !ok {
+			t.Errorf("node should be of type LiteralType, got: %+v", item.Val)
+		}
+
+		if lit.Token.Type != l.typ {
+			t.Errorf("want: %s, got: %s", l.typ, lit.Token.Type)
+		}
+	}
+}
+
+func TestListType(t *testing.T) {
+	var literals = []struct {
+		src    string
+		tokens []token.Type
+	}{
+		{
+			`foo = ["123", 123]`,
+			[]token.Type{token.STRING, token.NUMBER},
+		},
+		{
+			`foo = [123, "123",]`,
+			[]token.Type{token.NUMBER, token.STRING},
+		},
+		{
+			`foo = []`,
+			[]token.Type{},
+		},
+		{
+			`foo = ["123", 123]`,
+			[]token.Type{token.STRING, token.NUMBER},
+		},
+	}
+
+	for _, l := range literals {
+		p := New([]byte(l.src))
+		item, err := p.parseObjectItem()
+		if err != nil {
+			t.Error(err)
+		}
+
+		list, ok := item.Val.(*ast.ListType)
+		if !ok {
+			t.Errorf("node should be of type LiteralType, got: %+v", item.Val)
+		}
+
+		var tokens []token.Type
+		for _, li := range list.List {
+			if tp, ok := li.(*ast.LiteralType); ok {
+				tokens = append(tokens, tp.Token.Type)
 			}
 		}
-		return true
-	})
+
+		equals(t, l.tokens, tokens)
+
+	}
 }
+
+func TestObjectType(t *testing.T) {
+}
+
+// func TestParseType(t *testing.T) {
+// 	src := `foo {
+// 		fatih = "true"
+// }`
+//
+// 	p := New([]byte(src))
+// 	p.enableTrace = true
+//
+// 	node, err := p.Parse()
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+//
+// 	ast.Walk(node, func(n ast.Node) bool {
+// 		if list, ok := n.(*ast.ObjectList); ok {
+// 			for _, l := range list.Items {
+// 				fmt.Printf("l = %+v\n", l)
+// 				for _, k := range l.Keys {
+// 					fmt.Printf("key = %+v\n", k)
+// 				}
+// 				fmt.Printf("val = %+v\n", l.Val)
+// 			}
+// 		}
+// 		return true
+// 	})
+// }
 
 func TestObjectKey(t *testing.T) {
 	keys := []struct {
