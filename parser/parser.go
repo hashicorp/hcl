@@ -12,8 +12,7 @@ import (
 type Parser struct {
 	sc *scanner.Scanner
 
-	tok     token.Token // last read token
-	prevTok token.Token // previous read token
+	tok token.Token // last read token
 
 	enableTrace bool
 	indent      int
@@ -90,6 +89,7 @@ func (p *Parser) next() (ast.Node, error) {
 
 	switch tok.Type {
 	case token.IDENT, token.STRING:
+		p.unscan()
 		return p.parseObjectItem()
 	case token.COMMENT:
 		return &ast.Comment{
@@ -141,16 +141,9 @@ func (p *Parser) parseObjectItem() (*ast.ObjectItem, error) {
 
 // parseObjectKey parses an object key and returns a ObjectKey AST
 func (p *Parser) parseObjectKey() ([]*ast.ObjectKey, error) {
-	firstKey := false
-	nestedObj := false
+	keyCount := 0
 	keys := make([]*ast.ObjectKey, 0)
 
-	// we have three casses
-	// 1. assignment: KEY = NODE
-	// 2. object: KEY { }
-	// 3. nested object: KEY KEY2 ... KEYN {}
-	// Invalid cases:
-	// 1. foo bar = {}
 	for {
 		tok := p.scan()
 		switch tok.Type {
@@ -159,8 +152,12 @@ func (p *Parser) parseObjectKey() ([]*ast.ObjectKey, error) {
 		case token.ASSIGN:
 			// assignment or object only, but not nested objects. this is not
 			// allowed: `foo bar = {}`
-			if nestedObj {
+			if keyCount > 1 {
 				return nil, fmt.Errorf("nested object expected: LBRACE got: %s", p.tok.Type)
+			}
+
+			if keyCount == 0 {
+				return nil, errors.New("no keys found!!!")
 			}
 
 			return keys, nil
@@ -168,17 +165,10 @@ func (p *Parser) parseObjectKey() ([]*ast.ObjectKey, error) {
 			// object
 			return keys, nil
 		case token.IDENT, token.STRING:
-			// nested object
-			if !firstKey {
-				firstKey = true
-			} else {
-				nestedObj = true
-			}
-
+			keyCount++
 			keys = append(keys, &ast.ObjectKey{Token: p.tok})
 		case token.ILLEGAL:
 			fmt.Println("illegal")
-			// break // scan next
 		default:
 			return nil, fmt.Errorf("expected: IDENT | STRING | ASSIGN | LBRACE got: %s", p.tok.Type)
 		}
@@ -285,9 +275,6 @@ func (p *Parser) scan() token.Token {
 		return p.tok
 	}
 
-	// store previous token
-	p.prevTok = p.tok
-
 	// Otherwise read the next token from the scanner and Save it to the buffer
 	// in case we unscan later.
 	p.tok = p.sc.Scan()
@@ -297,7 +284,6 @@ func (p *Parser) scan() token.Token {
 // unscan pushes the previously read token back onto the buffer.
 func (p *Parser) unscan() {
 	p.n = 1
-	p.tok = p.prevTok
 }
 
 // ----------------------------------------------------------------------------
