@@ -31,7 +31,7 @@ func TestType(t *testing.T) {
 
 		lit, ok := item.Val.(*ast.LiteralType)
 		if !ok {
-			t.Errorf("node should be of type LiteralType, got: %+v", item.Val)
+			t.Errorf("node should be of type LiteralType, got: %T", item.Val)
 		}
 
 		if lit.Token.Type != l.typ {
@@ -72,7 +72,7 @@ func TestListType(t *testing.T) {
 
 		list, ok := item.Val.(*ast.ListType)
 		if !ok {
-			t.Errorf("node should be of type LiteralType, got: %+v", item.Val)
+			t.Errorf("node should be of type LiteralType, got: %T", item.Val)
 		}
 
 		tokens := []token.Type{}
@@ -83,39 +83,83 @@ func TestListType(t *testing.T) {
 		}
 
 		equals(t, l.tokens, tokens)
-
 	}
 }
 
 func TestObjectType(t *testing.T) {
-}
+	var literals = []struct {
+		src      string
+		nodeType []ast.Node
+		itemLen  int
+	}{
+		{
+			`foo = {}`,
+			nil,
+			0,
+		},
+		{
+			`foo = {
+				bar = "fatih"
+			 }`,
+			[]ast.Node{&ast.LiteralType{}},
+			1,
+		},
+		{
+			`foo = {
+				bar = "fatih"
+				baz = ["arslan"]
+			 }`,
+			[]ast.Node{
+				&ast.LiteralType{},
+				&ast.ListType{},
+			},
+			2,
+		},
+		{
+			`foo = {
+				bar {}
+			 }`,
+			[]ast.Node{
+				&ast.ObjectType{},
+			},
+			1,
+		},
+		{
+			`foo {
+				bar {}
+				foo = true
+			 }`,
+			[]ast.Node{
+				&ast.ObjectType{},
+				&ast.LiteralType{},
+			},
+			2,
+		},
+	}
 
-// func TestParseType(t *testing.T) {
-// 	src := `foo {
-// 		fatih = "true"
-// }`
-//
-// 	p := New([]byte(src))
-// 	p.enableTrace = true
-//
-// 	node, err := p.Parse()
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-//
-// 	ast.Walk(node, func(n ast.Node) bool {
-// 		if list, ok := n.(*ast.ObjectList); ok {
-// 			for _, l := range list.Items {
-// 				fmt.Printf("l = %+v\n", l)
-// 				for _, k := range l.Keys {
-// 					fmt.Printf("key = %+v\n", k)
-// 				}
-// 				fmt.Printf("val = %+v\n", l.Val)
-// 			}
-// 		}
-// 		return true
-// 	})
-// }
+	for _, l := range literals {
+		p := New([]byte(l.src))
+		item, err := p.parseObjectItem()
+		if err != nil {
+			t.Error(err)
+		}
+
+		// we know that the ObjectKey name is foo for all cases, what matters
+		// is the object
+		obj, ok := item.Val.(*ast.ObjectType)
+		if !ok {
+			t.Errorf("node should be of type LiteralType, got: %T", item.Val)
+		}
+
+		// check if the total length of items are correct
+		equals(t, l.itemLen, len(obj.List.Items))
+
+		// check if the types are correct
+		for i, item := range obj.List.Items {
+			equals(t, reflect.TypeOf(l.nodeType[i]), reflect.TypeOf(item.Val))
+		}
+	}
+}
 
 func TestObjectKey(t *testing.T) {
 	keys := []struct {
