@@ -30,7 +30,30 @@ var errEofToken = errors.New("EOF token found")
 
 // Parse returns the fully parsed source and returns the abstract syntax tree.
 func (p *Parser) Parse() (ast.Node, error) {
-	return p.parseObjectList()
+	return p.parseNodeList()
+}
+
+func (p *Parser) parseNodeList() (*ast.NodeList, error) {
+	defer un(trace(p, "ParseObjectList"))
+	node := &ast.NodeList{}
+
+	for {
+		n, err := p.next()
+		if err == errEofToken {
+			break // we are finished
+		}
+
+		// we don't return a nil, because might want to use already collected
+		// items.
+		if err != nil {
+			return node, err
+		}
+
+		// we successfully parsed a node, add it to the final source node
+		node.Add(n)
+	}
+
+	return node, nil
 }
 
 func (p *Parser) parseObjectList() (*ast.ObjectList, error) {
@@ -54,6 +77,28 @@ func (p *Parser) parseObjectList() (*ast.ObjectList, error) {
 	}
 
 	return node, nil
+}
+
+// next returns the next node
+func (p *Parser) next() (ast.Node, error) {
+	defer un(trace(p, "ParseNode"))
+
+	tok := p.scan()
+	if tok.Type == token.EOF {
+		return nil, errEofToken
+	}
+
+	switch tok.Type {
+	case token.IDENT, token.STRING:
+		return p.parseObjectItem()
+	case token.COMMENT:
+		return &ast.Comment{
+			Start: tok.Pos,
+			Text:  tok.Text,
+		}, nil
+	default:
+		return nil, fmt.Errorf("expected: IDENT | STRING got: %+v", tok.Type)
+	}
 }
 
 // parseObjectItem parses a single object item
@@ -94,6 +139,52 @@ func (p *Parser) parseObjectItem() (*ast.ObjectItem, error) {
 	return nil, fmt.Errorf("not yet implemented: %s", p.tok.Type)
 }
 
+// parseObjectKey parses an object key and returns a ObjectKey AST
+func (p *Parser) parseObjectKey() ([]*ast.ObjectKey, error) {
+	firstKey := false
+	nestedObj := false
+	keys := make([]*ast.ObjectKey, 0)
+
+	// we have three casses
+	// 1. assignment: KEY = NODE
+	// 2. object: KEY { }
+	// 3. nested object: KEY KEY2 ... KEYN {}
+	// Invalid cases:
+	// 1. foo bar = {}
+	for {
+		tok := p.scan()
+		switch tok.Type {
+		case token.EOF:
+			return nil, errEofToken
+		case token.ASSIGN:
+			// assignment or object only, but not nested objects. this is not
+			// allowed: `foo bar = {}`
+			if nestedObj {
+				return nil, fmt.Errorf("nested object expected: LBRACE got: %s", p.tok.Type)
+			}
+
+			return keys, nil
+		case token.LBRACE:
+			// object
+			return keys, nil
+		case token.IDENT, token.STRING:
+			// nested object
+			if !firstKey {
+				firstKey = true
+			} else {
+				nestedObj = true
+			}
+
+			keys = append(keys, &ast.ObjectKey{Token: p.tok})
+		case token.ILLEGAL:
+			fmt.Println("illegal")
+			// break // scan next
+		default:
+			return nil, fmt.Errorf("expected: IDENT | STRING | ASSIGN | LBRACE got: %s", p.tok.Type)
+		}
+	}
+}
+
 // parseType parses any type of Type, such as number, bool, string, object or
 // list.
 func (p *Parser) parseType() (ast.Node, error) {
@@ -113,54 +204,7 @@ func (p *Parser) parseType() (ast.Node, error) {
 		return nil, errEofToken
 	}
 
-	return nil, errors.New("ParseType is not implemented yet")
-}
-
-// parseObjectKey parses an object key and returns a ObjectKey AST
-func (p *Parser) parseObjectKey() ([]*ast.ObjectKey, error) {
-	tok := p.scan()
-	if tok.Type == token.EOF {
-		return nil, errEofToken
-	}
-
-	keys := make([]*ast.ObjectKey, 0)
-
-	switch tok.Type {
-	case token.IDENT, token.STRING:
-		// add first found token
-		keys = append(keys, &ast.ObjectKey{Token: tok})
-	default:
-		return nil, fmt.Errorf("expected: IDENT | STRING got: %s", tok.Type)
-	}
-
-	nestedObj := false
-
-	// we have three casses
-	// 1. assignment: KEY = NODE
-	// 2. object: KEY { }
-	// 2. nested object: KEY KEY2 ... KEYN {}
-	for {
-		tok := p.scan()
-		switch tok.Type {
-		case token.ASSIGN:
-			// assignment or object only, but not nested objects. this is not
-			// allowed: `foo bar = {}`
-			if nestedObj {
-				return nil, fmt.Errorf("nested object expected: LBRACE got: %s", tok.Type)
-			}
-
-			return keys, nil
-		case token.LBRACE:
-			// object
-			return keys, nil
-		case token.IDENT, token.STRING:
-			// nested object
-			nestedObj = true
-			keys = append(keys, &ast.ObjectKey{Token: tok})
-		default:
-			return nil, fmt.Errorf("expected: IDENT | STRING | ASSIGN | LBRACE got: %s", tok.Type)
-		}
-	}
+	return nil, fmt.Errorf("Unknown token: %+v", tok)
 }
 
 // parseObjectType parses an object type and returns a ObjectType AST

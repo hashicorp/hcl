@@ -8,13 +8,31 @@ type Node interface {
 	Pos() token.Pos
 }
 
+func (NodeList) node() {}
+
 func (ObjectList) node() {}
 func (ObjectKey) node()  {}
 func (ObjectItem) node() {}
 
+func (Comment) node()     {}
 func (ObjectType) node()  {}
 func (LiteralType) node() {}
 func (ListType) node()    {}
+
+// ObjectList represents a list of ObjectItems. An HCL file itself is an
+// ObjectList.
+type NodeList struct {
+	Nodes []Node
+}
+
+func (n *NodeList) Add(node Node) {
+	n.Nodes = append(n.Nodes, node)
+}
+
+func (n *NodeList) Pos() token.Pos {
+	// always returns the uninitiliazed position
+	return n.Nodes[0].Pos()
+}
 
 // ObjectList represents a list of ObjectItems. An HCL file itself is an
 // ObjectList.
@@ -95,4 +113,14 @@ type ObjectType struct {
 
 func (o *ObjectType) Pos() token.Pos {
 	return o.Lbrace
+}
+
+// Comment node represents a single //, # style or /*- style commment
+type Comment struct {
+	Start token.Pos // position of / or #
+	Text  string
+}
+
+func (c *Comment) Pos() token.Pos {
+	return c.Start
 }

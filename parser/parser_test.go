@@ -140,6 +140,7 @@ func TestObjectType(t *testing.T) {
 
 	for _, l := range literals {
 		p := New([]byte(l.src))
+		// p.enableTrace = true
 		item, err := p.parseObjectItem()
 		if err != nil {
 			t.Error(err)
@@ -283,6 +284,7 @@ func TestParse(t *testing.T) {
 		}
 
 		p := New(d)
+		// p.enableTrace = true
 		_, err = p.Parse()
 		if (err != nil) != tc.Err {
 			t.Fatalf("Input: %s\n\nError: %s", tc.Name, err)
