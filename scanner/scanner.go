@@ -189,7 +189,12 @@ func (s *Scanner) Scan() token.Token {
 		case '+':
 			tok = token.ADD
 		case '-':
-			tok = token.SUB
+			if isDecimal(s.peek()) {
+				ch := s.next()
+				tok = s.scanNumber(ch)
+			} else {
+				tok = token.SUB
+			}
 		default:
 			s.err("illegal char")
 		}
