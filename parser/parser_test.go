@@ -75,7 +75,7 @@ func TestListType(t *testing.T) {
 			t.Errorf("node should be of type LiteralType, got: %+v", item.Val)
 		}
 
-		var tokens []token.Type
+		tokens := []token.Type{}
 		for _, li := range list.List {
 			if tp, ok := li.(*ast.LiteralType); ok {
 				tokens = append(tokens, tp.Token.Type)
