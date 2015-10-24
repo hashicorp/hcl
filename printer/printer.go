@@ -1,7 +1,6 @@
 package printer
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"text/tabwriter"
@@ -10,20 +9,14 @@ import (
 )
 
 type printer struct {
+	out  []byte // raw printer result
 	cfg  Config
 	node ast.Node
 }
 
 func (p *printer) output() []byte {
-	var buf bytes.Buffer
 	fmt.Println("STARTING OUTPUT")
-
-	ast.Walk(p.node, func(n ast.Node) bool {
-		fmt.Printf("n = %+v\n", n)
-		return true
-	})
-
-	return buf.Bytes()
+	return p.printNode(p.node)
 }
 
 // A Mode value is a set of flags (or 0). They control printing.
@@ -38,7 +31,7 @@ const (
 // A Config node controls the output of Fprint.
 type Config struct {
 	Mode     Mode // default: 0
-	Tabwidth int  // default: 8
+	Tabwidth int  // default: 4
 	Indent   int  // default: 0 (all code is indented at least by this much)
 }
 
@@ -94,5 +87,5 @@ func (c *Config) Fprint(output io.Writer, node ast.Node) error {
 // Fprint "pretty-prints" an HCL node to output
 // It calls Config.Fprint with default settings.
 func Fprint(output io.Writer, node ast.Node) error {
-	return (&Config{Tabwidth: 8}).Fprint(output, node)
+	return (&Config{Tabwidth: 4}).Fprint(output, node)
 }

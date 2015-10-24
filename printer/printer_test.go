@@ -7,6 +7,12 @@ import (
 	"github.com/fatih/hcl/parser"
 )
 
+var listHCL = `foo = ["fatih", "arslan"]`
+var listHCL2 = `foo = [
+		"fatih", 
+		"arslan",
+]`
+
 var complexHcl = `// This comes from Terraform, as a test
 variable "foo" {
     default = "bar"
@@ -52,7 +58,8 @@ output "web_ip" {
 `
 
 func TestPrint(t *testing.T) {
-	node, err := parser.Parse([]byte(complexHcl))
+	// node, err := parser.Parse([]byte(complexHcl))
+	node, err := parser.Parse([]byte(listHCL2))
 	if err != nil {
 		t.Fatal(err)
 	}
