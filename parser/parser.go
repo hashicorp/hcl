@@ -12,7 +12,8 @@ import (
 type Parser struct {
 	sc *scanner.Scanner
 
-	tok token.Token // last read token
+	tok      token.Token // last read token
+	comments []*ast.Comment
 
 	enableTrace bool
 	indent      int
@@ -48,11 +49,12 @@ func (p *Parser) parseObjectList() (*ast.ObjectList, error) {
 			return node, err
 		}
 
-		if item, ok := n.(*ast.ObjectItem); ok {
-			// we successfully parsed a node, add it to the final source node
-			node.Add(item)
+		switch t := n.(type) {
+		case *ast.ObjectItem:
+			node.Add(t)
+		case *ast.Comment:
+			p.comments = append(p.comments, t)
 		}
-
 	}
 
 	return node, nil
