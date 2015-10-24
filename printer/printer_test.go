@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/hashicorp/hcl/hcl"
+	"github.com/fatih/hcl/parser"
 )
 
 var complexHcl = `// This comes from Terraform, as a test
@@ -52,12 +52,12 @@ output "web_ip" {
 `
 
 func TestPrint(t *testing.T) {
-	obj, err := hcl.Parse(complexHcl)
+	node, err := parser.Parse([]byte(complexHcl))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if err := Fprint(os.Stdout, obj); err != nil {
+	if err := Fprint(os.Stdout, node); err != nil {
 		t.Error(err)
 	}
 }

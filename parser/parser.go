@@ -20,10 +20,16 @@ type Parser struct {
 	n           int // buffer size (max = 1)
 }
 
-func New(src []byte) *Parser {
+func newParser(src []byte) *Parser {
 	return &Parser{
 		sc: scanner.New(src),
 	}
+}
+
+// Parse returns the fully parsed source and returns the abstract syntax tree.
+func Parse(src []byte) (ast.Node, error) {
+	p := newParser(src)
+	return p.Parse()
 }
 
 var errEofToken = errors.New("EOF token found")
@@ -78,7 +84,7 @@ func (p *Parser) next() (ast.Node, error) {
 			Text:  tok.Text,
 		}, nil
 	default:
-		return nil, fmt.Errorf("expected: IDENT | STRING got: %+v", tok.Type)
+		return nil, fmt.Errorf("expected: IDENT | STRING | COMMENT got: %+v", tok.Type)
 	}
 }
 

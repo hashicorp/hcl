@@ -25,7 +25,7 @@ func TestType(t *testing.T) {
 	}
 
 	for _, l := range literals {
-		p := New([]byte(l.src))
+		p := newParser([]byte(l.src))
 		item, err := p.parseObjectItem()
 		if err != nil {
 			t.Error(err)
@@ -66,7 +66,7 @@ func TestListType(t *testing.T) {
 	}
 
 	for _, l := range literals {
-		p := New([]byte(l.src))
+		p := newParser([]byte(l.src))
 		item, err := p.parseObjectItem()
 		if err != nil {
 			t.Error(err)
@@ -140,7 +140,7 @@ func TestObjectType(t *testing.T) {
 	}
 
 	for _, l := range literals {
-		p := New([]byte(l.src))
+		p := newParser([]byte(l.src))
 		// p.enableTrace = true
 		item, err := p.parseObjectItem()
 		if err != nil {
@@ -184,7 +184,7 @@ func TestObjectKey(t *testing.T) {
 	}
 
 	for _, k := range keys {
-		p := New([]byte(k.src))
+		p := newParser([]byte(k.src))
 		keys, err := p.parseObjectKey()
 		if err != nil {
 			t.Fatal(err)
@@ -208,7 +208,7 @@ func TestObjectKey(t *testing.T) {
 	}
 
 	for _, k := range errKeys {
-		p := New([]byte(k.src))
+		p := newParser([]byte(k.src))
 		_, err := p.parseObjectKey()
 		if err == nil {
 			t.Errorf("case '%s' should give an error", k.src)
@@ -284,9 +284,7 @@ func TestParse(t *testing.T) {
 			t.Fatalf("err: %s", err)
 		}
 
-		p := New(d)
-		// p.enableTrace = true
-		_, err = p.Parse()
+		_, err = Parse(d)
 		if (err != nil) != tc.Err {
 			t.Fatalf("Input: %s\n\nError: %s", tc.Name, err)
 		}

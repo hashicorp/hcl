@@ -6,17 +6,23 @@ import (
 	"io"
 	"text/tabwriter"
 
-	"github.com/hashicorp/hcl/hcl"
+	"github.com/fatih/hcl/ast"
 )
 
 type printer struct {
-	cfg Config
-	obj *hcl.Object
+	cfg  Config
+	node ast.Node
 }
 
 func (p *printer) output() []byte {
 	var buf bytes.Buffer
 	fmt.Println("STARTING OUTPUT")
+
+	ast.Walk(p.node, func(n ast.Node) bool {
+		fmt.Printf("n = %+v\n", n)
+		return true
+	})
+
 	return buf.Bytes()
 }
 
@@ -36,10 +42,10 @@ type Config struct {
 	Indent   int  // default: 0 (all code is indented at least by this much)
 }
 
-func (c *Config) fprint(output io.Writer, obj *hcl.Object) error {
+func (c *Config) fprint(output io.Writer, node ast.Node) error {
 	p := &printer{
-		cfg: *c,
-		obj: obj,
+		cfg:  *c,
+		node: node,
 	}
 
 	// TODO(arslan): implement this
@@ -81,12 +87,12 @@ func (c *Config) fprint(output io.Writer, obj *hcl.Object) error {
 	return err
 }
 
-func (c *Config) Fprint(output io.Writer, obj *hcl.Object) error {
-	return c.fprint(output, obj)
+func (c *Config) Fprint(output io.Writer, node ast.Node) error {
+	return c.fprint(output, node)
 }
 
-// Fprint "pretty-prints" an HCL object to output
+// Fprint "pretty-prints" an HCL node to output
 // It calls Config.Fprint with default settings.
-func Fprint(output io.Writer, obj *hcl.Object) error {
-	return (&Config{Tabwidth: 8}).Fprint(output, obj)
+func Fprint(output io.Writer, node ast.Node) error {
+	return (&Config{Tabwidth: 8}).Fprint(output, node)
 }
