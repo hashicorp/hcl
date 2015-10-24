@@ -29,12 +29,12 @@ var errEofToken = errors.New("EOF token found")
 
 // Parse returns the fully parsed source and returns the abstract syntax tree.
 func (p *Parser) Parse() (ast.Node, error) {
-	return p.parseNodeList()
+	return p.parseObjectList()
 }
 
-func (p *Parser) parseNodeList() (*ast.NodeList, error) {
+func (p *Parser) parseObjectList() (*ast.ObjectList, error) {
 	defer un(trace(p, "ParseObjectList"))
-	node := &ast.NodeList{}
+	node := &ast.ObjectList{}
 
 	for {
 		n, err := p.next()
@@ -48,31 +48,11 @@ func (p *Parser) parseNodeList() (*ast.NodeList, error) {
 			return node, err
 		}
 
-		// we successfully parsed a node, add it to the final source node
-		node.Add(n)
-	}
-
-	return node, nil
-}
-
-func (p *Parser) parseObjectList() (*ast.ObjectList, error) {
-	defer un(trace(p, "ParseObjectList"))
-	node := &ast.ObjectList{}
-
-	for {
-		n, err := p.parseObjectItem()
-		if err == errEofToken {
-			break // we are finished
+		if item, ok := n.(*ast.ObjectItem); ok {
+			// we successfully parsed a node, add it to the final source node
+			node.Add(item)
 		}
 
-		// we don't return a nil, because might want to use already collected
-		// items.
-		if err != nil {
-			return node, err
-		}
-
-		// we successfully parsed a node, add it to the final source node
-		node.Add(n)
 	}
 
 	return node, nil
@@ -83,11 +63,10 @@ func (p *Parser) next() (ast.Node, error) {
 	defer un(trace(p, "ParseNode"))
 
 	tok := p.scan()
-	if tok.Type == token.EOF {
-		return nil, errEofToken
-	}
 
 	switch tok.Type {
+	case token.EOF:
+		return nil, errEofToken
 	case token.IDENT, token.STRING:
 		p.unscan()
 		return p.parseObjectItem()
@@ -239,6 +218,9 @@ func (p *Parser) parseListType() (*ast.ListType, error) {
 			l.Add(node)
 		case token.COMMA:
 			// get next list item or we are at the end
+			continue
+		case token.COMMENT:
+			// TODO(arslan): parse comment
 			continue
 		case token.BOOL:
 			// TODO(arslan) should we support? not supported by HCL yet
