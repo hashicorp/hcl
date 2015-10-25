@@ -3,8 +3,15 @@ package printer
 import (
 	"bytes"
 	"fmt"
+	"io"
 
 	"github.com/fatih/hcl/ast"
+)
+
+const (
+	blank   = byte(' ')
+	newline = byte('\n')
+	tab     = byte('\t')
 )
 
 func (p *printer) printNode(n ast.Node) []byte {
@@ -12,21 +19,22 @@ func (p *printer) printNode(n ast.Node) []byte {
 
 	switch t := n.(type) {
 	case *ast.ObjectList:
-		fmt.Println("printing objectList", t)
-		for _, item := range t.Items {
+		for i, item := range t.Items {
 			buf.Write(p.printObjectItem(item))
+			if i != len(t.Items)-1 {
+				buf.WriteByte(newline)
+			}
 		}
 	case *ast.ObjectKey:
-		fmt.Println("printing objectKey", t)
+		buf.WriteString(t.Token.Text)
 	case *ast.ObjectItem:
-		fmt.Println("printing objectItem", t)
 		buf.Write(p.printObjectItem(t))
 	case *ast.LiteralType:
-		buf.Write(p.printLiteral(t))
+		buf.WriteString(t.Token.Text)
 	case *ast.ListType:
 		buf.Write(p.printList(t))
 	case *ast.ObjectType:
-		fmt.Println("printing ObjectType", t)
+		buf.Write(p.printObjectType(t))
 	default:
 		fmt.Printf(" unknown type: %T\n", n)
 	}
@@ -39,14 +47,12 @@ func (p *printer) printObjectItem(o *ast.ObjectItem) []byte {
 
 	for i, k := range o.Keys {
 		buf.WriteString(k.Token.Text)
-		if i != len(o.Keys)-1 || len(o.Keys) == 1 {
-			buf.WriteString(" ")
-		}
+		buf.WriteByte(blank)
 
 		// reach end of key
 		if i == len(o.Keys)-1 {
 			buf.WriteString("=")
-			buf.WriteString(" ")
+			buf.WriteByte(blank)
 		}
 	}
 
@@ -58,6 +64,26 @@ func (p *printer) printLiteral(l *ast.LiteralType) []byte {
 	return []byte(l.Token.Text)
 }
 
+func (p *printer) printObjectType(o *ast.ObjectType) []byte {
+	var buf bytes.Buffer
+	buf.WriteString("{")
+	buf.WriteByte(newline)
+
+	for _, item := range o.List.Items {
+		// buf.WriteByte(tab)
+		// buf.Write(p.printObjectItem(item))
+
+		a := p.printObjectItem(item)
+		a = indent(a)
+		buf.Write(a)
+
+		buf.WriteByte(newline)
+	}
+
+	buf.WriteString("}")
+	return buf.Bytes()
+}
+
 func (p *printer) printList(l *ast.ListType) []byte {
 	var buf bytes.Buffer
 	buf.WriteString("[")
@@ -65,20 +91,44 @@ func (p *printer) printList(l *ast.ListType) []byte {
 	for i, item := range l.List {
 		if item.Pos().Line != l.Lbrack.Line {
 			// not same line
-			buf.WriteString("\n")
+			buf.WriteByte(newline)
 		}
 
+		buf.WriteByte(tab)
 		buf.Write(p.printNode(item))
 
 		if i != len(l.List)-1 {
 			buf.WriteString(",")
-			buf.WriteString(" ")
+			buf.WriteByte(blank)
 		} else if item.Pos().Line != l.Lbrack.Line {
 			buf.WriteString(",")
-			buf.WriteString("\n")
+			buf.WriteByte(newline)
 		}
 	}
 
 	buf.WriteString("]")
 	return buf.Bytes()
+}
+
+func writeBlank(buf io.ByteWriter, indent int) {
+	for i := 0; i < indent; i++ {
+		buf.WriteByte(blank)
+	}
+}
+
+func indent(buf []byte) []byte {
+	splitted := bytes.Split(buf, []byte{newline})
+	newBuf := make([]byte, len(splitted))
+	for i, s := range splitted {
+		s = append(s, 0)
+		copy(s[1:], s[0:])
+		s[0] = tab
+		newBuf = append(newBuf, s...)
+
+		if i != len(splitted)-1 {
+			newBuf = append(newBuf, newline)
+		}
+	}
+
+	return newBuf
 }

@@ -1,7 +1,6 @@
 package printer
 
 import (
-	"fmt"
 	"io"
 	"text/tabwriter"
 
@@ -15,24 +14,12 @@ type printer struct {
 }
 
 func (p *printer) output() []byte {
-	fmt.Println("STARTING OUTPUT")
 	return p.printNode(p.node)
 }
 
-// A Mode value is a set of flags (or 0). They control printing.
-type Mode uint
-
-const (
-	RawFormat Mode = 1 << iota // do not use a tabwriter; if set, UseSpaces is ignored
-	TabIndent                  // use tabs for indentation independent of UseSpaces
-	UseSpaces                  // use spaces instead of tabs for alignment
-)
-
 // A Config node controls the output of Fprint.
 type Config struct {
-	Mode     Mode // default: 0
-	Tabwidth int  // default: 4
-	Indent   int  // default: 0 (all code is indented at least by this much)
+	SpaceWidth int // if set, it will use spaces instead of tabs for alignment
 }
 
 func (c *Config) fprint(output io.Writer, node ast.Node) error {
@@ -41,32 +28,6 @@ func (c *Config) fprint(output io.Writer, node ast.Node) error {
 		node: node,
 	}
 
-	// TODO(arslan): implement this
-	// redirect output through a trimmer to eliminate trailing whitespace
-	// (Input to a tabwriter must be untrimmed since trailing tabs provide
-	// formatting information. The tabwriter could provide trimming
-	// functionality but no tabwriter is used when RawFormat is set.)
-	// output = &trimmer{output: output}
-
-	// redirect output through a tabwriter if necessary
-	if c.Mode&RawFormat == 0 {
-		minwidth := c.Tabwidth
-
-		padchar := byte('\t')
-		if c.Mode&UseSpaces != 0 {
-			padchar = ' '
-		}
-
-		twmode := tabwriter.DiscardEmptyColumns
-		if c.Mode&TabIndent != 0 {
-			minwidth = 0
-			twmode |= tabwriter.TabIndent
-		}
-
-		output = tabwriter.NewWriter(output, minwidth, c.Tabwidth, 1, padchar, twmode)
-	}
-
-	// write printer result via tabwriter/trimmer to output
 	if _, err := output.Write(p.output()); err != nil {
 		return err
 	}
@@ -87,5 +48,5 @@ func (c *Config) Fprint(output io.Writer, node ast.Node) error {
 // Fprint "pretty-prints" an HCL node to output
 // It calls Config.Fprint with default settings.
 func Fprint(output io.Writer, node ast.Node) error {
-	return (&Config{Tabwidth: 4}).Fprint(output, node)
+	return (&Config{}).Fprint(output, node)
 }

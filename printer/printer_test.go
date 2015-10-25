@@ -1,6 +1,7 @@
 package printer
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -9,7 +10,7 @@ import (
 
 var listHCL = `foo = ["fatih", "arslan"]`
 var listHCL2 = `foo = [
-		"fatih", 
+		"fatih",
 		"arslan",
 ]`
 
@@ -58,8 +59,8 @@ output "web_ip" {
 `
 
 func TestPrint(t *testing.T) {
-	// node, err := parser.Parse([]byte(complexHcl))
-	node, err := parser.Parse([]byte(listHCL2))
+	node, err := parser.Parse([]byte(complexHcl))
+	// node, err := parser.Parse([]byte(listHCL2))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -67,4 +68,6 @@ func TestPrint(t *testing.T) {
 	if err := Fprint(os.Stdout, node); err != nil {
 		t.Error(err)
 	}
+
+	fmt.Println("")
 }
