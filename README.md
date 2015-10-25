@@ -23,16 +23,17 @@ following packages:
 ## Why did you create it?
 
 The whole parser familiy was created because I wanted a proper `hclfmt`
-command, which like `gofmt` formats a HCL file. I didn't want to use
-[HCL](https://github.com/hashicorp/hcl) in the first place, because the lexer
-and parser is generated and it doesn't expose any kind of flexibility. 
+command, which like `gofmt` formats a HCL file. I didn't want to use the
+package [github/hashicorp/hcl](https://github.com/hashicorp/hcl) in the first
+place, because the lexer and parser is generated and it doesn't expose any kind
+of flexibility. 
 
 Another reason was that I wanted to learn and experience how to implement a
 proper lexer and parser in Go. It was really fun and I think it was worht it.
 
 ## License
 
-The MIT License (MIT) - see
-[`LICENSE.md`](https://github.com/fatih/hcl/blob/master/LICENSE.md) for more
+The BSD 3-Clause License - see
+[`LICENSE`](https://github.com/fatih/hcl/blob/master/LICENSE.md) for more
 details
 
