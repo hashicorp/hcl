@@ -70,13 +70,7 @@ func (p *printer) printObjectType(o *ast.ObjectType) []byte {
 	buf.WriteByte(newline)
 
 	for _, item := range o.List.Items {
-		// buf.WriteByte(tab)
-		// buf.Write(p.printObjectItem(item))
-
-		a := p.printObjectItem(item)
-		a = indent(a)
-		buf.Write(a)
-
+		buf.Write(indent(p.printObjectItem(item)))
 		buf.WriteByte(newline)
 	}
 
