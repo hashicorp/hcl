@@ -1,4 +1,4 @@
-# HCL [![GoDoc](http://img.shields.io/badge/go-documentation-blue.svg?style=flat-square)](http://godoc.org/github.com/fatih/hcl) [![Build Status](http://img.shields.io/travis/fatih/hcl.svg?style=flat-square)](https://travis-ci.org/fatih/hcl)
+# hcl [![GoDoc](http://img.shields.io/badge/go-documentation-blue.svg?style=flat-square)](http://godoc.org/github.com/fatih/hcl) [![Build Status](http://img.shields.io/travis/fatih/hcl.svg?style=flat-square)](https://travis-ci.org/fatih/hcl)
 
 HCL is a lexer and parser family written in Go for
 [HCL](https://github.com/hashicorp/hcl) (Hashicorp Configuration Language). It
@@ -35,6 +35,6 @@ proper lexer and parser in Go. It was really fun and I think it was worht it.
 ## License
 
 The BSD 3-Clause License - see
-[`LICENSE`](https://github.com/fatih/hcl/blob/master/LICENSE.md) for more
+[`LICENSE`](https://github.com/fatih/hcl/blob/master/LICENSE) for more
 details
 
