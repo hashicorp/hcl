@@ -12,7 +12,14 @@ import (
 	"runtime/pprof"
 	"strings"
 
-	"github.com/hashicorp/hcl"
+	"github.com/fatih/hcl/printer"
+)
+
+var (
+	write = flag.Bool("w", false, "write result to (source) file instead of stdout")
+
+	// debugging
+	cpuprofile = flag.String("cpuprofile", "", "write cpu profile to this file")
 )
 
 func main() {
@@ -23,12 +30,6 @@ func main() {
 }
 
 func realMain() error {
-	var (
-		write = flag.Bool("w", false, "write result to (source) file instead of stdout")
-
-		// debugging
-		cpuprofile = flag.String("cpuprofile", "", "write cpu profile to this file")
-	)
 
 	flag.Usage = usage
 	flag.Parse()
@@ -114,11 +115,18 @@ func processFile(filename string, in io.Reader, out io.Writer, stdin bool) error
 		return err
 	}
 
-	obj, err := hcl.Parse(string(src))
+	res, err := printer.Format(src)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("obj = %+v\n", obj)
-	return errors.New("not imlemented yet")
+	if *write {
+		err = ioutil.WriteFile(filename, res, 0644)
+		if err != nil {
+			return err
+		}
+	}
+
+	_, err = out.Write(res)
+	return err
 }

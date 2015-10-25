@@ -2,11 +2,15 @@
 package printer
 
 import (
+	"bytes"
 	"io"
 	"text/tabwriter"
 
 	"github.com/fatih/hcl/ast"
+	"github.com/fatih/hcl/parser"
 )
+
+var DefaultConfig = Config{}
 
 type printer struct {
 	cfg Config
@@ -38,5 +42,20 @@ func (c *Config) Fprint(output io.Writer, node ast.Node) error {
 // Fprint "pretty-prints" an HCL node to output
 // It calls Config.Fprint with default settings.
 func Fprint(output io.Writer, node ast.Node) error {
-	return (&Config{}).Fprint(output, node)
+	return DefaultConfig.Fprint(output, node)
+}
+
+// Format formats src HCL and returns the result.
+func Format(src []byte) ([]byte, error) {
+	node, err := parser.Parse(src)
+	if err != nil {
+		return nil, err
+	}
+
+	var buf bytes.Buffer
+	if err := DefaultConfig.Fprint(&buf, node); err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
 }
