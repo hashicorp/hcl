@@ -26,6 +26,7 @@ type entry struct {
 var data = []entry{
 	{"complexhcl.input", "complexhcl.golden"},
 	{"list.input", "list.golden"},
+	{"comment.input", "comment.golden"},
 }
 
 func TestFiles(t *testing.T) {
@@ -114,12 +115,6 @@ func format(src []byte) ([]byte, error) {
 	}
 
 	var buf bytes.Buffer
-
-	// test with Spaces
-	// cfg := &Config{SpacesWidth: 4}
-	// if err := cfg.Fprint(&buf, node); err != nil {
-	// 	return nil, fmt.Errorf("print: %s", err)
-	// }
 
 	cfg := &Config{}
 	if err := cfg.Fprint(&buf, node); err != nil {

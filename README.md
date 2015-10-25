@@ -4,33 +4,33 @@ HCL is a lexer and parser family written in Go for
 [HCL](https://github.com/hashicorp/hcl) (Hashicorp Configuration Language). It
 has several components, similar to Go's own parser family. It provides a set of
 packages to write tools and customize files written in HCL. For example both
-[`hclfmt`](https://github.com/fatih/hclfmt) and `hcl2json` is written based on
-these tools. 
+[`hclfmt`](https://github.com/fatih/hclfmt) and `hcl2json` (coming soon) is
+written based on these tools. 
 
 ## API
 
 If you are already familiar with Go's own parser family it's really easy to
-dive. It basically resembles the same logic. Howser there several differences
-and the implemntation is completely different. Right now it contains the
+dive. It basically resembles the same logic. However there are several differences
+and the implementation is completely different. Right now it contains the
 following packages:
 
-* `token`: defines constants reresenting the lexical tokens for a scanned HCL file.
+* `token`: defines constants representing the lexical tokens for a scanned HCL file.
 * `scanner`: scanner is a lexical scanner. It scans a given HCL file and
   returns a stream of tokens.
-* `ast`: declares the types used to repesent the syntax tree for parsed HCL files.
+* `ast`: declares the types used to represent the syntax tree for parsed HCL files.
 * `parser`:  parses a given HCL file and creates a AST representation
-* `printer`: prints any given ast node and formats
+* `printer`: prints any given AST node and formats
 
-## Why did you create it?
+## Why 
 
-The whole parser familiy was created because I wanted a proper `hclfmt`
-command, which like `gofmt` formats a HCL file. I didn't want to use the
-package [github/hashicorp/hcl](https://github.com/hashicorp/hcl) in the first
-place, because the lexer and parser is generated and it doesn't expose any kind
-of flexibility. 
+The whole parser family was created because I wanted a `hclfmt` command, which
+like `gofmt` would format a HCL file. I didn't want to use the package
+[github/hashicorp/hcl](https://github.com/hashicorp/hcl) in the first place,
+because the lexer and parser is generated and it doesn't expose any kind of
+flexibility.
 
 Another reason was that I wanted to learn and experience how to implement a
-proper lexer and parser in Go. It was really fun and I think it was worht it.
+proper lexer and parser in Go. It was really fun and I think it was worth it.
 
 ## License
 

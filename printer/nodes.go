@@ -13,7 +13,7 @@ const (
 	tab     = byte('\t')
 )
 
-// node
+// output prints creates a printable HCL output and returns it.
 func (p *printer) output(n ast.Node) []byte {
 	var buf bytes.Buffer
 
