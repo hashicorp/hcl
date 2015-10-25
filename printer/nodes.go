@@ -111,18 +111,14 @@ func writeBlank(buf io.ByteWriter, indent int) {
 }
 
 func indent(buf []byte) []byte {
-	splitted := bytes.Split(buf, []byte{newline})
-	newBuf := make([]byte, len(splitted))
-	for i, s := range splitted {
-		s = append(s, 0)
-		copy(s[1:], s[0:])
-		s[0] = tab
-		newBuf = append(newBuf, s...)
-
-		if i != len(splitted)-1 {
-			newBuf = append(newBuf, newline)
+	var res []byte
+	bol := true
+	for _, c := range buf {
+		if bol && c != '\n' {
+			res = append(res, []byte{tab}...)
 		}
+		res = append(res, c)
+		bol = c == '\n'
 	}
-
-	return newBuf
+	return res
 }
