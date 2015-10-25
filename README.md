@@ -4,7 +4,8 @@ HCL is a lexer and parser family written in Go for
 [HCL](https://github.com/hashicorp/hcl) (Hashicorp Configuration Language). It
 has several components, similar to Go's own parser family. It provides a set of
 packages to write tools and customize files written in HCL. For example both
-`hclfmt` and `hcl2json` is written based on these tools. 
+[`hclfmt`](https://github.com/fatih/hclfmt) and `hcl2json` is written based on
+these tools. 
 
 ## API
 
