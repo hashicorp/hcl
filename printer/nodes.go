@@ -22,7 +22,7 @@ func (p *printer) printNode(n ast.Node) []byte {
 		for i, item := range t.Items {
 			buf.Write(p.printObjectItem(item))
 			if i != len(t.Items)-1 {
-				buf.WriteByte(newline)
+				buf.Write([]byte{newline, newline})
 			}
 		}
 	case *ast.ObjectKey:
