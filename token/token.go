@@ -1,3 +1,5 @@
+// Package token defines constants representing the lexical tokens for HCL
+// (HashiCorp Configuration Language)
 package token
 
 import (

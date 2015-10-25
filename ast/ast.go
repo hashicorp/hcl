@@ -1,3 +1,5 @@
+// Package ast declares the types used to represent syntax trees for HCL
+// (HashiCorp Configuration Language)
 package ast
 
 import "github.com/fatih/hcl/token"

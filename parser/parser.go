@@ -1,3 +1,5 @@
+// Package parser implements a parser for HCL (HashiCorp Configuration
+// Language)
 package parser
 
 import (

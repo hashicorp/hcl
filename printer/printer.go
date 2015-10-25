@@ -1,3 +1,4 @@
+// Package printer implements printing of AST nodes to HCL format.
 package printer
 
 import (
