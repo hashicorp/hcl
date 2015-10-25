@@ -85,11 +85,13 @@ func (p *printer) list(l *ast.ListType) []byte {
 
 	for i, item := range l.List {
 		if item.Pos().Line != l.Lbrack.Line {
-			// not same line
+			// multiline list, add newline before we add each item
 			buf.WriteByte(newline)
+			// also indent each line
+			buf.Write(p.indent(p.output(item)))
+		} else {
+			buf.Write(p.output(item))
 		}
-
-		buf.Write(p.indent(p.output(item)))
 
 		if i != len(l.List)-1 {
 			buf.WriteString(",")

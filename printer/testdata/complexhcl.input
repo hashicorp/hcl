@@ -4,6 +4,8 @@ variable "foo" {
     description =     "bar"
 }
 
+developer = [     "fatih",       "arslan"]
+
 provider "aws" {
                             access_key ="foo"
      secret_key =         "bar"

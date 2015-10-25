@@ -3,6 +3,8 @@ variable "foo" {
 	description = "bar"
 }
 
+developer = ["fatih", "arslan"]
+
 provider "aws" {
 	access_key = "foo"
 	secret_key = "bar"
@@ -31,7 +33,7 @@ resource aws_instance "web" {
 resource "aws_instance" "db" {
 	security_groups = "${aws_security_group.firewall.*.id}"
 	VPC = "foo"
-	depends_on = [	"aws_instance.web"]
+	depends_on = ["aws_instance.web"]
 }
 
 output "web_ip" {
