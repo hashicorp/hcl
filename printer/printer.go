@@ -8,27 +8,20 @@ import (
 )
 
 type printer struct {
-	out  []byte // raw printer result
-	cfg  Config
-	node ast.Node
-}
-
-func (p *printer) output() []byte {
-	return p.printNode(p.node)
+	cfg Config
 }
 
 // A Config node controls the output of Fprint.
 type Config struct {
-	SpaceWidth int // if set, it will use spaces instead of tabs for alignment
+	SpacesWidth int // if set, it will use spaces instead of tabs for alignment
 }
 
-func (c *Config) fprint(output io.Writer, node ast.Node) error {
+func (c *Config) Fprint(output io.Writer, node ast.Node) error {
 	p := &printer{
-		cfg:  *c,
-		node: node,
+		cfg: *c,
 	}
 
-	if _, err := output.Write(p.output()); err != nil {
+	if _, err := output.Write(p.output(node)); err != nil {
 		return err
 	}
 
@@ -39,10 +32,6 @@ func (c *Config) fprint(output io.Writer, node ast.Node) error {
 	}
 
 	return err
-}
-
-func (c *Config) Fprint(output io.Writer, node ast.Node) error {
-	return c.fprint(output, node)
 }
 
 // Fprint "pretty-prints" an HCL node to output

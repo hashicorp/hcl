@@ -113,7 +113,15 @@ func format(src []byte) ([]byte, error) {
 	}
 
 	var buf bytes.Buffer
-	if err := Fprint(&buf, node); err != nil {
+
+	// test with Spaces
+	// cfg := &Config{SpacesWidth: 4}
+	// if err := cfg.Fprint(&buf, node); err != nil {
+	// 	return nil, fmt.Errorf("print: %s", err)
+	// }
+
+	cfg := &Config{}
+	if err := cfg.Fprint(&buf, node); err != nil {
 		return nil, fmt.Errorf("print: %s", err)
 	}
 

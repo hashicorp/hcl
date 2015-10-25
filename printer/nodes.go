@@ -3,7 +3,6 @@ package printer
 import (
 	"bytes"
 	"fmt"
-	"io"
 
 	"github.com/fatih/hcl/ast"
 )
@@ -14,13 +13,14 @@ const (
 	tab     = byte('\t')
 )
 
-func (p *printer) printNode(n ast.Node) []byte {
+// node
+func (p *printer) output(n ast.Node) []byte {
 	var buf bytes.Buffer
 
 	switch t := n.(type) {
 	case *ast.ObjectList:
 		for i, item := range t.Items {
-			buf.Write(p.printObjectItem(item))
+			buf.Write(p.objectItem(item))
 			if i != len(t.Items)-1 {
 				buf.Write([]byte{newline, newline})
 			}
@@ -28,13 +28,13 @@ func (p *printer) printNode(n ast.Node) []byte {
 	case *ast.ObjectKey:
 		buf.WriteString(t.Token.Text)
 	case *ast.ObjectItem:
-		buf.Write(p.printObjectItem(t))
+		buf.Write(p.objectItem(t))
 	case *ast.LiteralType:
 		buf.WriteString(t.Token.Text)
 	case *ast.ListType:
-		buf.Write(p.printList(t))
+		buf.Write(p.list(t))
 	case *ast.ObjectType:
-		buf.Write(p.printObjectType(t))
+		buf.Write(p.objectType(t))
 	default:
 		fmt.Printf(" unknown type: %T\n", n)
 	}
@@ -42,7 +42,7 @@ func (p *printer) printNode(n ast.Node) []byte {
 	return buf.Bytes()
 }
 
-func (p *printer) printObjectItem(o *ast.ObjectItem) []byte {
+func (p *printer) objectItem(o *ast.ObjectItem) []byte {
 	var buf bytes.Buffer
 
 	for i, k := range o.Keys {
@@ -56,21 +56,21 @@ func (p *printer) printObjectItem(o *ast.ObjectItem) []byte {
 		}
 	}
 
-	buf.Write(p.printNode(o.Val))
+	buf.Write(p.output(o.Val))
 	return buf.Bytes()
 }
 
-func (p *printer) printLiteral(l *ast.LiteralType) []byte {
+func (p *printer) literal(l *ast.LiteralType) []byte {
 	return []byte(l.Token.Text)
 }
 
-func (p *printer) printObjectType(o *ast.ObjectType) []byte {
+func (p *printer) objectType(o *ast.ObjectType) []byte {
 	var buf bytes.Buffer
 	buf.WriteString("{")
 	buf.WriteByte(newline)
 
 	for _, item := range o.List.Items {
-		buf.Write(p.indent(p.printObjectItem(item)))
+		buf.Write(p.indent(p.objectItem(item)))
 		buf.WriteByte(newline)
 	}
 
@@ -78,7 +78,8 @@ func (p *printer) printObjectType(o *ast.ObjectType) []byte {
 	return buf.Bytes()
 }
 
-func (p *printer) printList(l *ast.ListType) []byte {
+// printList prints a HCL list
+func (p *printer) list(l *ast.ListType) []byte {
 	var buf bytes.Buffer
 	buf.WriteString("[")
 
@@ -88,8 +89,7 @@ func (p *printer) printList(l *ast.ListType) []byte {
 			buf.WriteByte(newline)
 		}
 
-		buf.WriteByte(tab)
-		buf.Write(p.printNode(item))
+		buf.Write(p.indent(p.output(item)))
 
 		if i != len(l.List)-1 {
 			buf.WriteString(",")
@@ -104,18 +104,15 @@ func (p *printer) printList(l *ast.ListType) []byte {
 	return buf.Bytes()
 }
 
-func writeBlank(buf io.ByteWriter, indent int) {
-	for i := 0; i < indent; i++ {
-		buf.WriteByte(blank)
-	}
-}
-
+// indent indents the lines of the given buffer for each non-empty line
 func (p *printer) indent(buf []byte) []byte {
-	prefix := []byte{tab}
-	if p.cfg.SpaceWidth != 0 {
-		for i := 0; i < p.cfg.SpaceWidth; i++ {
+	var prefix []byte
+	if p.cfg.SpacesWidth != 0 {
+		for i := 0; i < p.cfg.SpacesWidth; i++ {
 			prefix = append(prefix, blank)
 		}
+	} else {
+		prefix = []byte{tab}
 	}
 
 	var res []byte
