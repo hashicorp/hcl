@@ -50,7 +50,7 @@ func (p *printer) objectItem(o *ast.ObjectItem) []byte {
 		buf.WriteByte(blank)
 
 		// reach end of key
-		if i == len(o.Keys)-1 {
+		if i == len(o.Keys)-1 && len(o.Keys) == 1 {
 			buf.WriteString("=")
 			buf.WriteByte(blank)
 		}
