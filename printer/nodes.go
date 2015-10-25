@@ -70,7 +70,7 @@ func (p *printer) printObjectType(o *ast.ObjectType) []byte {
 	buf.WriteByte(newline)
 
 	for _, item := range o.List.Items {
-		buf.Write(indent(p.printObjectItem(item)))
+		buf.Write(p.indent(p.printObjectItem(item)))
 		buf.WriteByte(newline)
 	}
 
@@ -110,12 +110,19 @@ func writeBlank(buf io.ByteWriter, indent int) {
 	}
 }
 
-func indent(buf []byte) []byte {
+func (p *printer) indent(buf []byte) []byte {
+	prefix := []byte{tab}
+	if p.cfg.SpaceWidth != 0 {
+		for i := 0; i < p.cfg.SpaceWidth; i++ {
+			prefix = append(prefix, blank)
+		}
+	}
+
 	var res []byte
 	bol := true
 	for _, c := range buf {
 		if bol && c != '\n' {
-			res = append(res, []byte{tab}...)
+			res = append(res, prefix...)
 		}
 		res = append(res, c)
 		bol = c == '\n'
