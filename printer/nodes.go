@@ -42,20 +42,14 @@ func (p *printer) output(n interface{}) []byte {
 	return buf.Bytes()
 }
 
-func (p *printer) comment(c *ast.CommentGroup) []byte {
-	var buf bytes.Buffer
-	for _, comment := range c.List {
-		buf.WriteString(comment.Text)
-	}
-	return buf.Bytes()
-}
-
 func (p *printer) objectItem(o *ast.ObjectItem) []byte {
 	var buf bytes.Buffer
 
 	if o.LeadComment != nil {
-		buf.Write(p.comment(o.LeadComment))
-		buf.WriteByte(newline)
+		for _, comment := range o.LeadComment.List {
+			buf.WriteString(comment.Text)
+			buf.WriteByte(newline)
+		}
 	}
 
 	for i, k := range o.Keys {
@@ -73,7 +67,9 @@ func (p *printer) objectItem(o *ast.ObjectItem) []byte {
 
 	if o.Val.Pos().Line == o.Keys[0].Pos().Line && o.LineComment != nil {
 		buf.WriteByte(blank)
-		buf.Write(p.comment(o.LineComment))
+		for _, comment := range o.LineComment.List {
+			buf.WriteString(comment.Text)
+		}
 	}
 
 	return buf.Bytes()

@@ -4,6 +4,13 @@ variable "foo" {
     description =     "bar" # yooo
 }
 
+aligned {
+   a = "bar" # yoo1
+   default = "bar" #yoo2
+   bar = "bar" # yoo3
+}
+
+// fatih arslan
 /* This is a developer test
 account and a multine comment */
 developer = [     "fatih",       "arslan"] // fatih arslan
@@ -17,8 +24,8 @@ variable = {
 }
 
 
-// lead comment
+          // lead comment
 foo {
-    bar = "fatih" // line comment 2 
-} // line comment 3
+    bar = "fatih"       // line comment 2 
+}        // line comment 3
 
