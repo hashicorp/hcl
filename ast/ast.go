@@ -14,10 +14,11 @@ func (ObjectList) node() {}
 func (ObjectKey) node()  {}
 func (ObjectItem) node() {}
 
-func (Comment) node()     {}
-func (ObjectType) node()  {}
-func (LiteralType) node() {}
-func (ListType) node()    {}
+func (Comment) node()      {}
+func (CommentGroup) node() {}
+func (ObjectType) node()   {}
+func (LiteralType) node()  {}
+func (ListType) node()     {}
 
 // ObjectList represents a list of ObjectItems. An HCL file itself is an
 // ObjectList.
@@ -49,6 +50,9 @@ type ObjectItem struct {
 	// string. If key length is larger than one, val can be only of type
 	// Object.
 	Val Node
+
+	LeadComment *CommentGroup // associated lead comment
+	LineComment *CommentGroup // associated line comment
 }
 
 func (o *ObjectItem) Pos() token.Pos {
@@ -108,4 +112,14 @@ type Comment struct {
 
 func (c *Comment) Pos() token.Pos {
 	return c.Start
+}
+
+// CommentGroup node represents a sequence of comments with no other tokens and
+// no empty lines between.
+type CommentGroup struct {
+	List []*Comment // len(List) > 0
+}
+
+func (c *CommentGroup) Pos() token.Pos {
+	return c.List[0].Pos()
 }

@@ -1,15 +1,24 @@
-// Foo
+   // This comes from Terraform, as a test
+variable "foo" {
+       default = "bar"
+    description =     "bar" # yooo
+}
 
-/* Bar */
+/* This is a developer test
+account and a multine comment */
+developer = [     "fatih",       "arslan"] // fatih arslan
 
-/*
-/*
-Baz
-*/
+# One line here
+numbers = [1,2] // another line here
 
-# Another
+         # Another comment
+variable = {
+    description =     "bar" # another yooo
+}
 
-# Multiple
-# Lines
 
-foo = "bar"
+// lead comment
+foo {
+    bar = "fatih" // line comment 2 
+} // line comment 3
+

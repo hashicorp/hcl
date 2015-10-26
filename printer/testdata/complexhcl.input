@@ -1,4 +1,3 @@
-// This comes from Terraform, as a test
 variable "foo" {
        default = "bar"
     description =     "bar"

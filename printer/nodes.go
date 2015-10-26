@@ -14,7 +14,7 @@ const (
 )
 
 // output prints creates a printable HCL output and returns it.
-func (p *printer) output(n ast.Node) []byte {
+func (p *printer) output(n interface{}) []byte {
 	var buf bytes.Buffer
 
 	switch t := n.(type) {
@@ -42,8 +42,21 @@ func (p *printer) output(n ast.Node) []byte {
 	return buf.Bytes()
 }
 
+func (p *printer) comment(c *ast.CommentGroup) []byte {
+	var buf bytes.Buffer
+	for _, comment := range c.List {
+		buf.WriteString(comment.Text)
+	}
+	return buf.Bytes()
+}
+
 func (p *printer) objectItem(o *ast.ObjectItem) []byte {
 	var buf bytes.Buffer
+
+	if o.LeadComment != nil {
+		buf.Write(p.comment(o.LeadComment))
+		buf.WriteByte(newline)
+	}
 
 	for i, k := range o.Keys {
 		buf.WriteString(k.Token.Text)
@@ -57,6 +70,12 @@ func (p *printer) objectItem(o *ast.ObjectItem) []byte {
 	}
 
 	buf.Write(p.output(o.Val))
+
+	if o.Val.Pos().Line == o.Keys[0].Pos().Line && o.LineComment != nil {
+		buf.WriteByte(blank)
+		buf.Write(p.comment(o.LineComment))
+	}
+
 	return buf.Bytes()
 }
 

@@ -14,8 +14,13 @@ import (
 type Parser struct {
 	sc *scanner.Scanner
 
-	tok      token.Token // last read token
-	comments []*ast.Comment
+	// Last read token
+	tok token.Token
+
+	// comments
+	comments    []*ast.CommentGroup
+	leadComment *ast.CommentGroup // last lead comment
+	lineComment *ast.CommentGroup // last line comment
 
 	enableTrace bool
 	indent      int
@@ -46,48 +51,56 @@ func (p *Parser) objectList() (*ast.ObjectList, error) {
 	node := &ast.ObjectList{}
 
 	for {
-		n, err := p.next()
+		n, err := p.objectItem()
 		if err == errEofToken {
 			break // we are finished
 		}
 
-		// we don't return a nil, because might want to use already collected
-		// items.
+		// we don't return a nil node, because might want to use already
+		// collected items.
 		if err != nil {
 			return node, err
 		}
 
-		switch t := n.(type) {
-		case *ast.ObjectItem:
-			node.Add(t)
-		case *ast.Comment:
-			p.comments = append(p.comments, t)
-		}
+		node.Add(n)
 	}
 
 	return node, nil
 }
 
-// next returns the next node
-func (p *Parser) next() (ast.Node, error) {
-	defer un(trace(p, "ParseNode"))
+func (p *Parser) consumeComment() (comment *ast.Comment, endline int) {
+	endline = p.tok.Pos.Line
 
-	tok := p.scan()
-
-	switch tok.Type {
-	case token.EOF:
-		return nil, errEofToken
-	case token.IDENT, token.STRING:
-		p.unscan()
-		return p.objectItem()
-	case token.COMMENT:
-		return &ast.Comment{
-			Start: tok.Pos,
-			Text:  tok.Text,
-		}, nil
-	default:
-		return nil, fmt.Errorf("expected: IDENT | STRING | COMMENT got: %+v", tok.Type)
+	// count the endline if it's multiline comment, ie starting with /*
+	if p.tok.Text[1] == '*' {
+		// don't use range here - no need to decode Unicode code points
+		for i := 0; i < len(p.tok.Text); i++ {
+			if p.tok.Text[i] == '\n' {
+				endline++
+			}
+		}
 	}
+
+	comment = &ast.Comment{Start: p.tok.Pos, Text: p.tok.Text}
+	p.tok = p.sc.Scan()
+	return
+}
+
+func (p *Parser) consumeCommentGroup(n int) (comments *ast.CommentGroup, endline int) {
+	var list []*ast.Comment
+	endline = p.tok.Pos.Line
+
+	for p.tok.Type == token.COMMENT && p.tok.Pos.Line <= endline+n {
+		var comment *ast.Comment
+		comment, endline = p.consumeComment()
+		list = append(list, comment)
+	}
+
+	// add comment group to the comments list
+	comments = &ast.CommentGroup{List: list}
+	p.comments = append(p.comments, comments)
+
+	return
 }
 
 // objectItem parses a single object item
@@ -107,10 +120,24 @@ func (p *Parser) objectItem() (*ast.ObjectItem, error) {
 			Assign: p.tok.Pos,
 		}
 
+		if p.leadComment != nil {
+			o.LeadComment = p.leadComment
+			p.leadComment = nil
+		}
+
 		o.Val, err = p.object()
 		if err != nil {
 			return nil, err
 		}
+
+		// do a look-ahead for line comment
+		p.scan()
+		if o.Val.Pos().Line == keys[0].Pos().Line && p.lineComment != nil {
+			o.LineComment = p.lineComment
+			p.lineComment = nil
+		}
+		p.unscan()
+
 		return o, nil
 	case token.LBRACE:
 		// object or nested objects
@@ -118,10 +145,24 @@ func (p *Parser) objectItem() (*ast.ObjectItem, error) {
 			Keys: keys,
 		}
 
+		if p.leadComment != nil {
+			o.LeadComment = p.leadComment
+			// free it up so we don't add it for following items
+			p.leadComment = nil
+		}
+
 		o.Val, err = p.objectType()
 		if err != nil {
 			return nil, err
 		}
+
+		// do a look-ahead for line comment
+		p.scan()
+		if o.Val.Pos().Line == keys[0].Pos().Line && p.lineComment != nil {
+			o.LineComment = p.lineComment
+			p.lineComment = nil
+		}
+		p.unscan()
 		return o, nil
 	}
 
@@ -186,7 +227,7 @@ func (p *Parser) object() (ast.Node, error) {
 	return nil, fmt.Errorf("Unknown token: %+v", tok)
 }
 
-// ibjectType parses an object type and returns a ObjectType AST
+// objectType parses an object type and returns a ObjectType AST
 func (p *Parser) objectType() (*ast.ObjectType, error) {
 	defer un(trace(p, "ParseObjectType"))
 
@@ -225,12 +266,10 @@ func (p *Parser) listType() (*ast.ListType, error) {
 			if err != nil {
 				return nil, err
 			}
+
 			l.Add(node)
 		case token.COMMA:
 			// get next list item or we are at the end
-			continue
-		case token.COMMENT:
-			// TODO(arslan): parse comment
 			continue
 		case token.BOOL:
 			// TODO(arslan) should we support? not supported by HCL yet
@@ -258,8 +297,9 @@ func (p *Parser) literalType() (*ast.LiteralType, error) {
 	}, nil
 }
 
-// scan returns the next token from the underlying scanner.
-// If a token has been unscanned then read that instead.
+// scan returns the next token from the underlying scanner. If a token has
+// been unscanned then read that instead. In the process, it collects any
+// comment groups encountered, and remembers the last lead and line comments.
 func (p *Parser) scan() token.Token {
 	// If we have a token on the buffer, then return it.
 	if p.n != 0 {
@@ -269,7 +309,39 @@ func (p *Parser) scan() token.Token {
 
 	// Otherwise read the next token from the scanner and Save it to the buffer
 	// in case we unscan later.
+	prev := p.tok
 	p.tok = p.sc.Scan()
+
+	if p.tok.Type == token.COMMENT {
+		var comment *ast.CommentGroup
+		var endline int
+
+		// fmt.Printf("p.tok.Pos.Line = %+v prev: %d \n", p.tok.Pos.Line, prev.Pos.Line)
+		if p.tok.Pos.Line == prev.Pos.Line {
+			// The comment is on same line as the previous token; it
+			// cannot be a lead comment but may be a line comment.
+			comment, endline = p.consumeCommentGroup(0)
+			if p.tok.Pos.Line != endline {
+				// The next token is on a different line, thus
+				// the last comment group is a line comment.
+				p.lineComment = comment
+			}
+		}
+
+		// consume successor comments, if any
+		endline = -1
+		for p.tok.Type == token.COMMENT {
+			comment, endline = p.consumeCommentGroup(1)
+		}
+
+		if endline+1 == p.tok.Pos.Line {
+			// The next token is following on the line immediately after the
+			// comment group, thus the last comment group is a lead comment.
+			p.leadComment = comment
+		}
+
+	}
+
 	return p.tok
 }
 
