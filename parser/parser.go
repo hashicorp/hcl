@@ -112,61 +112,38 @@ func (p *Parser) objectItem() (*ast.ObjectItem, error) {
 		return nil, err
 	}
 
+	o := &ast.ObjectItem{
+		Keys: keys,
+	}
+
+	if p.leadComment != nil {
+		o.LeadComment = p.leadComment
+		p.leadComment = nil
+	}
+
 	switch p.tok.Type {
 	case token.ASSIGN:
-		// assignments
-		o := &ast.ObjectItem{
-			Keys:   keys,
-			Assign: p.tok.Pos,
-		}
-
-		if p.leadComment != nil {
-			o.LeadComment = p.leadComment
-			p.leadComment = nil
-		}
-
+		o.Assign = p.tok.Pos
 		o.Val, err = p.object()
 		if err != nil {
 			return nil, err
 		}
-
-		// do a look-ahead for line comment
-		p.scan()
-		if o.Val.Pos().Line == keys[0].Pos().Line && p.lineComment != nil {
-			o.LineComment = p.lineComment
-			p.lineComment = nil
-		}
-		p.unscan()
-
-		return o, nil
 	case token.LBRACE:
-		// object or nested objects
-		o := &ast.ObjectItem{
-			Keys: keys,
-		}
-
-		if p.leadComment != nil {
-			o.LeadComment = p.leadComment
-			// free it up so we don't add it for following items
-			p.leadComment = nil
-		}
-
 		o.Val, err = p.objectType()
 		if err != nil {
 			return nil, err
 		}
-
-		// do a look-ahead for line comment
-		p.scan()
-		if o.Val.Pos().Line == keys[0].Pos().Line && p.lineComment != nil {
-			o.LineComment = p.lineComment
-			p.lineComment = nil
-		}
-		p.unscan()
-		return o, nil
 	}
 
-	return nil, fmt.Errorf("not yet implemented: %s", p.tok.Type)
+	// do a look-ahead for line comment
+	p.scan()
+	if o.Val.Pos().Line == keys[0].Pos().Line && p.lineComment != nil {
+		o.LineComment = p.lineComment
+		p.lineComment = nil
+	}
+
+	p.unscan()
+	return o, nil
 }
 
 // objectKey parses an object key and returns a ObjectKey AST
