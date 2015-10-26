@@ -26,7 +26,7 @@ func TestType(t *testing.T) {
 
 	for _, l := range literals {
 		p := newParser([]byte(l.src))
-		item, err := p.parseObjectItem()
+		item, err := p.objectItem()
 		if err != nil {
 			t.Error(err)
 		}
@@ -67,7 +67,7 @@ func TestListType(t *testing.T) {
 
 	for _, l := range literals {
 		p := newParser([]byte(l.src))
-		item, err := p.parseObjectItem()
+		item, err := p.objectItem()
 		if err != nil {
 			t.Error(err)
 		}
@@ -142,7 +142,7 @@ func TestObjectType(t *testing.T) {
 	for _, l := range literals {
 		p := newParser([]byte(l.src))
 		// p.enableTrace = true
-		item, err := p.parseObjectItem()
+		item, err := p.objectItem()
 		if err != nil {
 			t.Error(err)
 		}
@@ -185,7 +185,7 @@ func TestObjectKey(t *testing.T) {
 
 	for _, k := range keys {
 		p := newParser([]byte(k.src))
-		keys, err := p.parseObjectKey()
+		keys, err := p.objectKey()
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -209,7 +209,7 @@ func TestObjectKey(t *testing.T) {
 
 	for _, k := range errKeys {
 		p := newParser([]byte(k.src))
-		_, err := p.parseObjectKey()
+		_, err := p.objectKey()
 		if err == nil {
 			t.Errorf("case '%s' should give an error", k.src)
 		}

@@ -38,10 +38,10 @@ var errEofToken = errors.New("EOF token found")
 
 // Parse returns the fully parsed source and returns the abstract syntax tree.
 func (p *Parser) Parse() (ast.Node, error) {
-	return p.parseObjectList()
+	return p.objectList()
 }
 
-func (p *Parser) parseObjectList() (*ast.ObjectList, error) {
+func (p *Parser) objectList() (*ast.ObjectList, error) {
 	defer un(trace(p, "ParseObjectList"))
 	node := &ast.ObjectList{}
 
@@ -79,7 +79,7 @@ func (p *Parser) next() (ast.Node, error) {
 		return nil, errEofToken
 	case token.IDENT, token.STRING:
 		p.unscan()
-		return p.parseObjectItem()
+		return p.objectItem()
 	case token.COMMENT:
 		return &ast.Comment{
 			Start: tok.Pos,
@@ -90,11 +90,11 @@ func (p *Parser) next() (ast.Node, error) {
 	}
 }
 
-// parseObjectItem parses a single object item
-func (p *Parser) parseObjectItem() (*ast.ObjectItem, error) {
+// objectItem parses a single object item
+func (p *Parser) objectItem() (*ast.ObjectItem, error) {
 	defer un(trace(p, "ParseObjectItem"))
 
-	keys, err := p.parseObjectKey()
+	keys, err := p.objectKey()
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +107,7 @@ func (p *Parser) parseObjectItem() (*ast.ObjectItem, error) {
 			Assign: p.tok.Pos,
 		}
 
-		o.Val, err = p.parseType()
+		o.Val, err = p.object()
 		if err != nil {
 			return nil, err
 		}
@@ -118,7 +118,7 @@ func (p *Parser) parseObjectItem() (*ast.ObjectItem, error) {
 			Keys: keys,
 		}
 
-		o.Val, err = p.parseObjectType()
+		o.Val, err = p.objectType()
 		if err != nil {
 			return nil, err
 		}
@@ -128,8 +128,8 @@ func (p *Parser) parseObjectItem() (*ast.ObjectItem, error) {
 	return nil, fmt.Errorf("not yet implemented: %s", p.tok.Type)
 }
 
-// parseObjectKey parses an object key and returns a ObjectKey AST
-func (p *Parser) parseObjectKey() ([]*ast.ObjectKey, error) {
+// objectKey parses an object key and returns a ObjectKey AST
+func (p *Parser) objectKey() ([]*ast.ObjectKey, error) {
 	keyCount := 0
 	keys := make([]*ast.ObjectKey, 0)
 
@@ -164,19 +164,19 @@ func (p *Parser) parseObjectKey() ([]*ast.ObjectKey, error) {
 	}
 }
 
-// parseType parses any type of Type, such as number, bool, string, object or
+// object parses any type of object, such as number, bool, string, object or
 // list.
-func (p *Parser) parseType() (ast.Node, error) {
+func (p *Parser) object() (ast.Node, error) {
 	defer un(trace(p, "ParseType"))
 	tok := p.scan()
 
 	switch tok.Type {
 	case token.NUMBER, token.FLOAT, token.BOOL, token.STRING:
-		return p.parseLiteralType()
+		return p.literalType()
 	case token.LBRACE:
-		return p.parseObjectType()
+		return p.objectType()
 	case token.LBRACK:
-		return p.parseListType()
+		return p.listType()
 	case token.COMMENT:
 		// implement comment
 	case token.EOF:
@@ -186,8 +186,8 @@ func (p *Parser) parseType() (ast.Node, error) {
 	return nil, fmt.Errorf("Unknown token: %+v", tok)
 }
 
-// parseObjectType parses an object type and returns a ObjectType AST
-func (p *Parser) parseObjectType() (*ast.ObjectType, error) {
+// ibjectType parses an object type and returns a ObjectType AST
+func (p *Parser) objectType() (*ast.ObjectType, error) {
 	defer un(trace(p, "ParseObjectType"))
 
 	// we assume that the currently scanned token is a LBRACE
@@ -195,7 +195,7 @@ func (p *Parser) parseObjectType() (*ast.ObjectType, error) {
 		Lbrace: p.tok.Pos,
 	}
 
-	l, err := p.parseObjectList()
+	l, err := p.objectList()
 
 	// if we hit RBRACE, we are good to go (means we parsed all Items), if it's
 	// not a RBRACE, it's an syntax error and we just return it.
@@ -208,8 +208,8 @@ func (p *Parser) parseObjectType() (*ast.ObjectType, error) {
 	return o, nil
 }
 
-// parseListType parses a list type and returns a ListType AST
-func (p *Parser) parseListType() (*ast.ListType, error) {
+// listType parses a list type and returns a ListType AST
+func (p *Parser) listType() (*ast.ListType, error) {
 	defer un(trace(p, "ParseListType"))
 
 	// we assume that the currently scanned token is a LBRACK
@@ -221,7 +221,7 @@ func (p *Parser) parseListType() (*ast.ListType, error) {
 		tok := p.scan()
 		switch tok.Type {
 		case token.NUMBER, token.FLOAT, token.STRING:
-			node, err := p.parseLiteralType()
+			node, err := p.literalType()
 			if err != nil {
 				return nil, err
 			}
@@ -249,8 +249,8 @@ func (p *Parser) parseListType() (*ast.ListType, error) {
 	}
 }
 
-// parseLiteralType parses a literal type and returns a LiteralType AST
-func (p *Parser) parseLiteralType() (*ast.LiteralType, error) {
+// literalType parses a literal type and returns a LiteralType AST
+func (p *Parser) literalType() (*ast.LiteralType, error) {
 	defer un(trace(p, "ParseLiteral"))
 
 	return &ast.LiteralType{
