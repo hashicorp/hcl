@@ -75,6 +75,51 @@ func (p *printer) objectItem(o *ast.ObjectItem) []byte {
 	return buf.Bytes()
 }
 
+func (p *printer) alignedItems(items []*ast.ObjectItem) []byte {
+	var buf bytes.Buffer
+
+	var longestLine int
+	for _, item := range items {
+		lineLen := len(item.Keys[0].Token.Text) + len(p.output(item.Val))
+		if lineLen > longestLine {
+			longestLine = lineLen
+		}
+	}
+
+	for _, item := range items {
+		curLen := 0
+		for i, k := range item.Keys {
+			buf.WriteString(k.Token.Text)
+			buf.WriteByte(blank)
+
+			// reach end of key
+			if i == len(item.Keys)-1 && len(item.Keys) == 1 {
+				buf.WriteString("=")
+				buf.WriteByte(blank)
+			}
+
+			curLen = len(k.Token.Text) // two blanks and one assign
+		}
+		val := p.output(item.Val)
+		buf.Write(val)
+		curLen += len(val)
+
+		if item.Val.Pos().Line == item.Keys[0].Pos().Line && item.LineComment != nil {
+			for i := 0; i < longestLine-curLen+1; i++ {
+				buf.WriteByte(blank)
+			}
+
+			for _, comment := range item.LineComment.List {
+				buf.WriteString(comment.Text)
+			}
+		}
+
+		buf.WriteByte(newline)
+	}
+
+	return buf.Bytes()
+}
+
 func (p *printer) literal(l *ast.LiteralType) []byte {
 	return []byte(l.Token.Text)
 }
@@ -84,7 +129,35 @@ func (p *printer) objectType(o *ast.ObjectType) []byte {
 	buf.WriteString("{")
 	buf.WriteByte(newline)
 
-	for _, item := range o.List.Items {
+	// check if we have adjacent one liner items. If yes we'll going to align
+	// the comments.
+	var oneLines []*ast.ObjectItem
+	for i, item := range o.List.Items {
+		// protect agains slice bounds
+		if i == len(o.List.Items)-1 {
+			break
+		}
+
+		if o.List.Items[i+1].Pos().Line == item.Pos().Line+1 {
+			oneLines = append(oneLines, item)
+		} else {
+			// break in any nonadjacent items
+			break
+		}
+	}
+
+	// fmt.Printf("len(oneLines) = %+v\n", len(oneLines))
+	// for _, i := range oneLines {
+	// 	a := i.Keys[0]
+	// 	fmt.Printf("a = %+v\n", a)
+	// }
+	if len(oneLines) != 0 {
+		items := p.alignedItems(oneLines)
+		buf.Write(p.indent(items))
+		buf.WriteByte(newline)
+	}
+
+	for _, item := range o.List.Items[len(oneLines):] {
 		buf.Write(p.indent(p.objectItem(item)))
 		buf.WriteByte(newline)
 	}

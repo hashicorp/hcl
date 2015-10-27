@@ -1,0 +1,11 @@
+aligned {
+   a = "bar" # yoo1
+   default = "bar" # yoo2
+   bar = "bar" # yoo3
+   fatih = ["fatih", "arslan"] // yoo4
+   deneme  = {
+       bar = "fatih"
+   }
+   projects = ["vim-go"] # yoo5
+   default = "foo" # yoo6
+}

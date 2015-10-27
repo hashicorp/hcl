@@ -4,12 +4,6 @@ variable "foo" {
     description =     "bar" # yooo
 }
 
-aligned {
-   a = "bar" # yoo1
-   default = "bar" #yoo2
-   bar = "bar" # yoo3
-}
-
 // fatih arslan
 /* This is a developer test
 account and a multine comment */
