@@ -131,38 +131,59 @@ func (p *printer) objectType(o *ast.ObjectType) []byte {
 
 	// check if we have adjacent one liner items. If yes we'll going to align
 	// the comments.
-	var oneLines []*ast.ObjectItem
-	for i, item := range o.List.Items {
-		// protect agains slice bounds
-		if i == len(o.List.Items)-1 {
+	var index int
+	for {
+		var oneLines []*ast.ObjectItem
+		for _, item := range o.List.Items[index:] {
+			// protect agains slice bounds
+			if index == len(o.List.Items)-1 {
+				// check for the latest item of a series of one liners in the
+				// end of a list.
+				if index != 0 && // do not check if the list length is one
+					lines(string(p.objectItem(item))) < 1 && // be sure it's really a one line
+					o.List.Items[index-1].Pos().Line == item.Pos().Line-1 {
+
+					oneLines = append(oneLines, item)
+					index++
+				}
+				break
+			}
+
+			if o.List.Items[1+index].Pos().Line == item.Pos().Line+1 {
+				oneLines = append(oneLines, item)
+				index++
+			} else {
+				// break in any nonadjacent items
+				break
+			}
+		}
+
+		// fmt.Printf("len(oneLines) = %+v\n", len(oneLines))
+		// for _, i := range oneLines {
+		// 	a := i.Keys[0]
+		// 	fmt.Printf("a = %+v\n", a)
+		// }
+
+		if len(oneLines) != 0 {
+			items := p.alignedItems(oneLines)
+			buf.Write(p.indent(items))
+
+			if index != len(o.List.Items) {
+				buf.WriteByte(newline)
+			}
+		}
+
+		if index == len(o.List.Items) {
 			break
 		}
 
-		if o.List.Items[i+1].Pos().Line == item.Pos().Line+1 {
-			oneLines = append(oneLines, item)
-		} else {
-			// break in any nonadjacent items
-			break
-		}
-	}
-
-	// fmt.Printf("len(oneLines) = %+v\n", len(oneLines))
-	// for _, i := range oneLines {
-	// 	a := i.Keys[0]
-	// 	fmt.Printf("a = %+v\n", a)
-	// }
-	if len(oneLines) != 0 {
-		items := p.alignedItems(oneLines)
-		buf.Write(p.indent(items))
+		buf.Write(p.indent(p.objectItem(o.List.Items[index])))
 		buf.WriteByte(newline)
-	}
-
-	for _, item := range o.List.Items[len(oneLines):] {
-		buf.Write(p.indent(p.objectItem(item)))
-		buf.WriteByte(newline)
+		index++
 	}
 
 	buf.WriteString("}")
+	buf.WriteByte(newline)
 	return buf.Bytes()
 }
 
@@ -215,4 +236,14 @@ func (p *printer) indent(buf []byte) []byte {
 		bol = c == '\n'
 	}
 	return res
+}
+
+func lines(txt string) int {
+	endline := 0
+	for i := 0; i < len(txt); i++ {
+		if txt[i] == '\n' {
+			endline++
+		}
+	}
+	return endline
 }

@@ -8,4 +8,7 @@ aligned {
    }
    projects = ["vim-go"] # yoo5
    default = "foo" # yoo6
+   example  = {
+       bar = "fatih"
+   }
 }
