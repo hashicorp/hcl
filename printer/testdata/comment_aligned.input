@@ -6,8 +6,8 @@ aligned {
    deneme  = {
        bar = "fatih"
    }
-   bar = "bar" # yoo3
-   fatih = ["fatih", "arslan"] // yoo4
+   bar = "bar" # yoo5
+   fatih = ["fatih", "arslan"] // yoo6
    deneme  = {
        bar = "fatih"
    }

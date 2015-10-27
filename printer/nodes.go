@@ -129,39 +129,52 @@ func (p *printer) objectType(o *ast.ObjectType) []byte {
 	buf.WriteString("{")
 	buf.WriteByte(newline)
 
-	// check if we have adjacent one liner items. If yes we'll going to align
-	// the comments.
 	var index int
 	for {
+		// check if we have adjacent one liner items. If yes we'll going to align
+		// the comments.
 		var oneLines []*ast.ObjectItem
 		for _, item := range o.List.Items[index:] {
-			// protect agains slice bounds
-			if index == len(o.List.Items)-1 {
-				// check for the latest item of a series of one liners in the
-				// end of a list.
-				if index != 0 && // do not check if the list length is one
-					lines(string(p.objectItem(item))) < 1 && // be sure it's really a one line
-					o.List.Items[index-1].Pos().Line == item.Pos().Line-1 {
-
-					oneLines = append(oneLines, item)
-					index++
-				}
+			// we don't group one line lists
+			if len(o.List.Items) == 1 {
 				break
 			}
 
-			if o.List.Items[1+index].Pos().Line == item.Pos().Line+1 {
+			cur := lines(string(p.objectItem(item)))
+			if cur != 1 {
+				break
+			}
+
+			next := 0
+			if index != len(o.List.Items)-1 {
+				next = lines(string(p.objectItem(o.List.Items[index+0])))
+			}
+
+			prev := 0
+			if index != 0 {
+				prev = lines(string(p.objectItem(o.List.Items[index-1])))
+			}
+
+			if cur == next {
+				oneLines = append(oneLines, item)
+				index++
+			} else if cur == prev {
 				oneLines = append(oneLines, item)
 				index++
 			} else {
-				// break in any nonadjacent items
 				break
 			}
 		}
 
 		if len(oneLines) != 0 {
 			items := p.alignedItems(oneLines)
+
+			// put newlines if the items are between other non aligned items
+			if index != len(oneLines) {
+				buf.WriteByte(newline)
+			}
 			buf.Write(p.indent(items))
-			if index != len(o.List.Items) {
+			if index != len(o.List.Items) && len(oneLines) > 1 {
 				buf.WriteByte(newline)
 			}
 		}
@@ -236,6 +249,12 @@ func lines(txt string) int {
 		if txt[i] == '\n' {
 			endline++
 		}
+	}
+
+	// some txt do not have any kinde of newlines, treat them also as a one
+	// liner
+	if endline == 0 {
+		endline = 1
 	}
 	return endline
 }
