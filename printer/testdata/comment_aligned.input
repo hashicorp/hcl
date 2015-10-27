@@ -6,9 +6,9 @@ aligned {
    deneme  = {
        bar = "fatih"
    }
-   projects = ["vim-go"] # yoo5
-   default = "foo" # yoo6
-   example  = {
+   bar = "bar" # yoo3
+   fatih = ["fatih", "arslan"] // yoo4
+   deneme  = {
        bar = "fatih"
    }
 }

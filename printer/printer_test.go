@@ -24,9 +24,9 @@ type entry struct {
 
 // Use go test -update to create/update the respective golden files.
 var data = []entry{
-	// {"complexhcl.input", "complexhcl.golden"},
-	// {"list.input", "list.golden"},
-	// {"comment.input", "comment.golden"},
+	{"complexhcl.input", "complexhcl.golden"},
+	{"list.input", "list.golden"},
+	{"comment.input", "comment.golden"},
 	{"comment_aligned.input", "comment_aligned.golden"},
 }
 

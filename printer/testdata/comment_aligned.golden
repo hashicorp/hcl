@@ -7,12 +7,10 @@ aligned = {
 	deneme = {
 		bar = "fatih"
 	}
+	bar = "bar"                 # yoo3
+	fatih = ["fatih", "arslan"] // yoo4
 
-	projects = ["vim-go"] # yoo5
-	default = "foo"       # yoo6
-
-	example = {
+	deneme = {
 		bar = "fatih"
 	}
-
 }

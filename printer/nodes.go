@@ -158,16 +158,9 @@ func (p *printer) objectType(o *ast.ObjectType) []byte {
 			}
 		}
 
-		// fmt.Printf("len(oneLines) = %+v\n", len(oneLines))
-		// for _, i := range oneLines {
-		// 	a := i.Keys[0]
-		// 	fmt.Printf("a = %+v\n", a)
-		// }
-
 		if len(oneLines) != 0 {
 			items := p.alignedItems(oneLines)
 			buf.Write(p.indent(items))
-
 			if index != len(o.List.Items) {
 				buf.WriteByte(newline)
 			}
@@ -183,7 +176,6 @@ func (p *printer) objectType(o *ast.ObjectType) []byte {
 	}
 
 	buf.WriteString("}")
-	buf.WriteByte(newline)
 	return buf.Bytes()
 }
 
