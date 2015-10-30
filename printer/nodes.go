@@ -21,24 +21,14 @@ type printer struct {
 }
 
 func (p *printer) collectComments(node ast.Node) {
-	leadComments := make([]*ast.CommentGroup, 0)
-	lineComments := make([]*ast.CommentGroup, 0)
-
+	// first collect all comments. This is already stored in
+	// ast.File.(comments)
 	ast.Walk(node, func(nn ast.Node) bool {
 		switch t := nn.(type) {
 		case *ast.File:
-			// will happen only once
 			p.comments = t.Comments
-		case *ast.ObjectItem:
-			if t.LeadComment != nil {
-				leadComments = append(leadComments, t.LeadComment)
-			}
-
-			if t.LineComment != nil {
-				lineComments = append(lineComments, t.LineComment)
-			}
+			return false
 		}
-
 		return true
 	})
 
@@ -46,30 +36,39 @@ func (p *printer) collectComments(node ast.Node) {
 	for _, c := range p.comments {
 		standaloneComments[c.Pos()] = c
 	}
-	for _, lead := range leadComments {
-		for _, comment := range lead.List {
-			if _, ok := standaloneComments[comment.Pos()]; ok {
-				delete(standaloneComments, comment.Pos())
-			}
-		}
-	}
 
-	for _, line := range lineComments {
-		for _, comment := range line.List {
-			if _, ok := standaloneComments[comment.Pos()]; ok {
-				delete(standaloneComments, comment.Pos())
+	// next remove all lead and line comments from the overall comment map.
+	// This will give us comments which are standalone, comments which are not
+	// assigned to any kind of node.
+	ast.Walk(node, func(nn ast.Node) bool {
+		switch t := nn.(type) {
+		case *ast.ObjectItem:
+			if t.LeadComment != nil {
+				for _, comment := range t.LeadComment.List {
+					if _, ok := standaloneComments[comment.Pos()]; ok {
+						delete(standaloneComments, comment.Pos())
+					}
+				}
+			}
+
+			if t.LineComment != nil {
+				for _, comment := range t.LineComment.List {
+					if _, ok := standaloneComments[comment.Pos()]; ok {
+						delete(standaloneComments, comment.Pos())
+					}
+				}
 			}
 		}
-	}
+
+		return true
+	})
 
 	for _, c := range standaloneComments {
+		for _, comment := range c.List {
+			fmt.Printf("comment = %+v\n", comment)
+		}
 		p.standaloneComments = append(p.standaloneComments, c)
 	}
-
-	fmt.Printf("All comments len = %+v\n", len(p.comments))
-	fmt.Printf("Lead commetns = %+v\n", len(leadComments))
-	fmt.Printf("len(lineComments) = %+v\n", len(lineComments))
-	fmt.Printf("StandAlone Comments = %+v\n", len(p.standaloneComments))
 }
 
 // output prints creates a printable HCL output and returns it.
