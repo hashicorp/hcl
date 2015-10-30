@@ -18,6 +18,13 @@ func (p *printer) output(n interface{}) []byte {
 	var buf bytes.Buffer
 
 	switch t := n.(type) {
+	case *ast.File:
+		// for i, group := range t.Comments {
+		// 	for _, comment := range group.List {
+		// 		fmt.Printf("[%d] comment = %+v\n", i, comment)
+		// 	}
+		// }
+		return p.output(t.Node)
 	case *ast.ObjectList:
 		for i, item := range t.Items {
 			buf.Write(p.objectItem(item))

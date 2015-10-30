@@ -10,6 +10,7 @@ type Node interface {
 	Pos() token.Pos
 }
 
+func (File) node()       {}
 func (ObjectList) node() {}
 func (ObjectKey) node()  {}
 func (ObjectItem) node() {}
@@ -19,6 +20,16 @@ func (CommentGroup) node() {}
 func (ObjectType) node()   {}
 func (LiteralType) node()  {}
 func (ListType) node()     {}
+
+// File represents a single HCL file
+type File struct {
+	Node     Node            // usually a *ObjectList
+	Comments []*CommentGroup // list of all comments in the source
+}
+
+func (f *File) Pos() token.Pos {
+	return f.Node.Pos()
+}
 
 // ObjectList represents a list of ObjectItems. An HCL file itself is an
 // ObjectList.

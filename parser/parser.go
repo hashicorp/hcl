@@ -34,7 +34,7 @@ func newParser(src []byte) *Parser {
 }
 
 // Parse returns the fully parsed source and returns the abstract syntax tree.
-func Parse(src []byte) (ast.Node, error) {
+func Parse(src []byte) (*ast.File, error) {
 	p := newParser(src)
 	return p.Parse()
 }
@@ -42,8 +42,16 @@ func Parse(src []byte) (ast.Node, error) {
 var errEofToken = errors.New("EOF token found")
 
 // Parse returns the fully parsed source and returns the abstract syntax tree.
-func (p *Parser) Parse() (ast.Node, error) {
-	return p.objectList()
+func (p *Parser) Parse() (*ast.File, error) {
+	f := &ast.File{}
+	var err error
+	f.Node, err = p.objectList()
+	if err != nil {
+		return nil, err
+	}
+
+	f.Comments = p.comments
+	return f, nil
 }
 
 func (p *Parser) objectList() (*ast.ObjectList, error) {
@@ -64,7 +72,6 @@ func (p *Parser) objectList() (*ast.ObjectList, error) {
 
 		node.Add(n)
 	}
-
 	return node, nil
 }
 
