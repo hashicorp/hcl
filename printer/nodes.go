@@ -86,7 +86,14 @@ func (p *printer) alignedItems(items []*ast.ObjectItem) []byte {
 		}
 	}
 
-	for _, item := range items {
+	for i, item := range items {
+		if item.LeadComment != nil {
+			for _, comment := range item.LeadComment.List {
+				buf.WriteString(comment.Text)
+				buf.WriteByte(newline)
+			}
+		}
+
 		curLen := 0
 		for i, k := range item.Keys {
 			buf.WriteString(k.Token.Text)
@@ -114,7 +121,10 @@ func (p *printer) alignedItems(items []*ast.ObjectItem) []byte {
 			}
 		}
 
-		buf.WriteByte(newline)
+		// do not print for the last item
+		if i != len(items)-1 {
+			buf.WriteByte(newline)
+		}
 	}
 
 	return buf.Bytes()
@@ -133,21 +143,24 @@ func (p *printer) objectType(o *ast.ObjectType) []byte {
 	for {
 		// check if we have adjacent one liner items. If yes we'll going to align
 		// the comments.
-		var oneLines []*ast.ObjectItem
-		for _, item := range o.List.Items[index:] {
+		var aligned []*ast.ObjectItem
+		for i, item := range o.List.Items[index:] {
 			// we don't group one line lists
 			if len(o.List.Items) == 1 {
 				break
 			}
 
+			// one means a oneliner with out any lead comment
+			// two means a oneliner with lead comment
+			// anything else might be something else
 			cur := lines(string(p.objectItem(item)))
-			if cur != 1 {
+			if cur > 2 {
 				break
 			}
 
 			next := 0
 			if index != len(o.List.Items)-1 {
-				next = lines(string(p.objectItem(o.List.Items[index+0])))
+				next = lines(string(p.objectItem(o.List.Items[index+1])))
 			}
 
 			prev := 0
@@ -155,37 +168,42 @@ func (p *printer) objectType(o *ast.ObjectType) []byte {
 				prev = lines(string(p.objectItem(o.List.Items[index-1])))
 			}
 
-			if cur == next {
-				oneLines = append(oneLines, item)
+			if (cur == next && next == 1) || (next == 1 && cur == 2 && i == 0) {
+				aligned = append(aligned, item)
 				index++
-			} else if cur == prev {
-				oneLines = append(oneLines, item)
+			} else if (cur == prev && prev == 1) || (prev == 2 && cur == 1) {
+				aligned = append(aligned, item)
 				index++
 			} else {
 				break
 			}
 		}
 
-		if len(oneLines) != 0 {
-			items := p.alignedItems(oneLines)
+		// fmt.Printf("==================> len(aligned) = %+v\n", len(aligned))
+		// for _, b := range aligned {
+		// 	fmt.Printf("b = %+v\n", b)
+		// }
 
-			// put newlines if the items are between other non aligned items
-			if index != len(oneLines) {
-				buf.WriteByte(newline)
-			}
-			buf.Write(p.indent(items))
-			if index != len(o.List.Items) && len(oneLines) > 1 {
-				buf.WriteByte(newline)
-			}
+		// put newlines if the items are between other non aligned items
+		if index != len(aligned) {
+			buf.WriteByte(newline)
 		}
+
+		if len(aligned) >= 1 {
+			items := p.alignedItems(aligned)
+
+			buf.Write(p.indent(items))
+		} else {
+			buf.Write(p.indent(p.objectItem(o.List.Items[index])))
+			index++
+		}
+
+		buf.WriteByte(newline)
 
 		if index == len(o.List.Items) {
 			break
 		}
 
-		buf.Write(p.indent(p.objectItem(o.List.Items[index])))
-		buf.WriteByte(newline)
-		index++
 	}
 
 	buf.WriteString("}")
@@ -244,17 +262,11 @@ func (p *printer) indent(buf []byte) []byte {
 }
 
 func lines(txt string) int {
-	endline := 0
+	endline := 1
 	for i := 0; i < len(txt); i++ {
 		if txt[i] == '\n' {
 			endline++
 		}
-	}
-
-	// some txt do not have any kinde of newlines, treat them also as a one
-	// liner
-	if endline == 0 {
-		endline = 1
 	}
 	return endline
 }

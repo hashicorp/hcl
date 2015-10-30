@@ -1,17 +1,20 @@
 aligned = {
-	a = "bar"                   # yoo1
-	default = "bar"             # yoo2
-	bar = "bar"                 # yoo3
-	fatih = ["fatih", "arslan"] // yoo4
+	# We have some aligned items below
+	foo = "bar"     # yoo1
+	default = "bar" # yoo2
+	bar = "bar"     # yoo3
 
-	deneme = {
-		bar = "fatih"
+	default = {
+		bar = "example"
 	}
 
-	bar = "bar"                 # yoo5
-	fatih = ["fatih", "arslan"] // yoo6
+	#deneme arslan
+	fatih = ["fatih"] # yoo4
 
-	deneme = {
-		bar = "fatih"
+	#fatih arslan
+	fatiharslan = ["arslan"] // yoo5
+
+	default = {
+		bar = "example"
 	}
 }
