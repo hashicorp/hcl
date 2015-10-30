@@ -17,7 +17,6 @@ type Parser struct {
 	// Last read token
 	tok token.Token
 
-	// comments
 	comments    []*ast.CommentGroup
 	leadComment *ast.CommentGroup // last lead comment
 	lineComment *ast.CommentGroup // last line comment

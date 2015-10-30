@@ -12,10 +12,6 @@ import (
 
 var DefaultConfig = Config{}
 
-type printer struct {
-	cfg Config
-}
-
 // A Config node controls the output of Fprint.
 type Config struct {
 	SpacesWidth int // if set, it will use spaces instead of tabs for alignment
@@ -23,8 +19,12 @@ type Config struct {
 
 func (c *Config) Fprint(output io.Writer, node ast.Node) error {
 	p := &printer{
-		cfg: *c,
+		cfg:                *c,
+		comments:           make([]*ast.CommentGroup, 0),
+		standaloneComments: make([]*ast.CommentGroup, 0),
 	}
+
+	p.collectComments(node)
 
 	if _, err := output.Write(p.output(node)); err != nil {
 		return err

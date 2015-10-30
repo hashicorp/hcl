@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/fatih/hcl/ast"
+	"github.com/fatih/hcl/token"
 )
 
 const (
@@ -12,6 +13,64 @@ const (
 	newline = byte('\n')
 	tab     = byte('\t')
 )
+
+type printer struct {
+	cfg                Config
+	comments           []*ast.CommentGroup // may be nil, contains all comments
+	standaloneComments []*ast.CommentGroup // contains all standalone comments (not assigned to any node)
+}
+
+func (p *printer) collectComments(node ast.Node) {
+	leadComments := make([]*ast.CommentGroup, 0)
+	lineComments := make([]*ast.CommentGroup, 0)
+
+	ast.Walk(node, func(nn ast.Node) bool {
+		switch t := nn.(type) {
+		case *ast.File:
+			// will happen only once
+			p.comments = t.Comments
+		case *ast.ObjectItem:
+			if t.LeadComment != nil {
+				leadComments = append(leadComments, t.LeadComment)
+			}
+
+			if t.LineComment != nil {
+				lineComments = append(lineComments, t.LineComment)
+			}
+		}
+
+		return true
+	})
+
+	standaloneComments := make(map[token.Pos]*ast.CommentGroup, 0)
+	for _, c := range p.comments {
+		standaloneComments[c.Pos()] = c
+	}
+	for _, lead := range leadComments {
+		for _, comment := range lead.List {
+			if _, ok := standaloneComments[comment.Pos()]; ok {
+				delete(standaloneComments, comment.Pos())
+			}
+		}
+	}
+
+	for _, line := range lineComments {
+		for _, comment := range line.List {
+			if _, ok := standaloneComments[comment.Pos()]; ok {
+				delete(standaloneComments, comment.Pos())
+			}
+		}
+	}
+
+	for _, c := range standaloneComments {
+		p.standaloneComments = append(p.standaloneComments, c)
+	}
+
+	fmt.Printf("All comments len = %+v\n", len(p.comments))
+	fmt.Printf("Lead commetns = %+v\n", len(leadComments))
+	fmt.Printf("len(lineComments) = %+v\n", len(lineComments))
+	fmt.Printf("StandAlone Comments = %+v\n", len(p.standaloneComments))
+}
 
 // output prints creates a printable HCL output and returns it.
 func (p *printer) output(n interface{}) []byte {

@@ -11,6 +11,8 @@ func Walk(node Node, fn func(Node) bool) {
 	}
 
 	switch n := node.(type) {
+	case *File:
+		Walk(n.Node, fn)
 	case *ObjectList:
 		for _, item := range n.Items {
 			Walk(item, fn)
