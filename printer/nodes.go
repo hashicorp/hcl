@@ -33,6 +33,8 @@ func (b ByPosition) Len() int           { return len(b) }
 func (b ByPosition) Swap(i, j int)      { b[i], b[j] = b[j], b[i] }
 func (b ByPosition) Less(i, j int) bool { return b[i].Pos().Before(b[j].Pos()) }
 
+// collectComments comments all standalone comments which are not lead or line
+// comment
 func (p *printer) collectComments(node ast.Node) {
 	// first collect all comments. This is already stored in
 	// ast.File.(comments)
@@ -83,25 +85,21 @@ func (p *printer) collectComments(node ast.Node) {
 	sort.Sort(ByPosition(p.standaloneComments))
 }
 
-var count int
-
 // output prints creates b printable HCL output and returns it.
 func (p *printer) output(n interface{}) []byte {
 	var buf bytes.Buffer
-	count++
 
 	switch t := n.(type) {
 	case *ast.File:
 		return p.output(t.Node)
 	case *ast.ObjectList:
-
 		var index int
 		var nextItem token.Pos
 		var commented bool
 		for {
 			// TODO(arslan): refactor below comment printing, we have the same in objectType
 
-			// print stand alone upper level stand alone comments
+			// print upper leve stand alone comments
 			for _, c := range p.standaloneComments {
 				for _, comment := range c.List {
 					if index != len(t.Items) {

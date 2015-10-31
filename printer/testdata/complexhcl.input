@@ -36,9 +36,6 @@ resource "aws_instance" "db" {
     VPC = "foo"
 
     depends_on = ["aws_instance.web"]
-
-
-
 }
 
 output "web_ip" {
