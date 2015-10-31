@@ -117,6 +117,7 @@ func (p *printer) output(n interface{}) []byte {
 				fmt.Printf("[%d] OBJECTTYPE t.Pos() = %+v\n", count, t.Pos())
 				if comment.Pos().After(p.prev.Pos()) && comment.Pos().Before(t.Pos()) {
 					buf.WriteString(comment.Text)
+					// TODO(arslan): do not print new lines if the comments are one lines
 					buf.WriteByte(newline)
 					buf.WriteByte(newline)
 				}
@@ -182,26 +183,37 @@ func (p *printer) objectType(o *ast.ObjectType) []byte {
 	buf.WriteString("{")
 	buf.WriteByte(newline)
 
-	for _, c := range p.standaloneComments {
-		for _, comment := range c.List {
-			fmt.Printf("[%d] OBJECTTYPE p.prev = %+v\n", count, p.prev.Pos())
-			fmt.Printf("[%d] OBJECTTYPE comment.Pos() = %+v\n", count, comment.Pos())
-			fmt.Printf("[%d] OBJECTTYPE t.Pos() = %+v\n", count, o.Pos())
-			firstItem := o.List.Pos()
-			if comment.Pos().After(p.prev.Pos()) && comment.Pos().Before(firstItem) {
-				buf.Write(p.indent([]byte(comment.Text))) // TODO(arslan): indent
-				buf.WriteByte(newline)
-				buf.WriteByte(newline)
+	var index int
+	var nextItem token.Pos
+	for {
+		for _, c := range p.standaloneComments {
+			for _, comment := range c.List {
+				fmt.Printf("[%d] OBJECTTYPE p.prev = %+v\n", count, p.prev.Pos())
+				fmt.Printf("[%d] OBJECTTYPE comment.Pos() = %+v\n", count, comment.Pos())
+
+				if index != len(o.List.Items) {
+					nextItem = o.List.Items[index].Pos()
+				} else {
+					nextItem = o.Rbrace
+
+				}
+				fmt.Printf("[%d] OBJECTTYPE nextItem = %+v\n", count, nextItem)
+				if comment.Pos().After(p.prev.Pos()) && comment.Pos().Before(nextItem) {
+					buf.Write(p.indent([]byte(comment.Text))) // TODO(arslan): indent
+					buf.WriteByte(newline)
+					buf.WriteByte(newline)
+				}
 			}
 		}
-	}
 
-	var index int
-	for {
+		if index == len(o.List.Items) {
+			break
+		}
+
 		// check if we have adjacent one liner items. If yes we'll going to align
 		// the comments.
 		var aligned []*ast.ObjectItem
-		for i, item := range o.List.Items[index:] {
+		for _, item := range o.List.Items[index:] {
 			// we don't group one line lists
 			if len(o.List.Items) == 1 {
 				break
@@ -215,31 +227,48 @@ func (p *printer) objectType(o *ast.ObjectType) []byte {
 				break
 			}
 
-			next := 0
+			curPos := item.Pos()
+
+			nextPos := token.Pos{}
 			if index != len(o.List.Items)-1 {
-				next = lines(string(p.objectItem(o.List.Items[index+1])))
+				nextPos = o.List.Items[index+1].Pos()
 			}
 
-			prev := 0
+			prevPos := token.Pos{}
 			if index != 0 {
-				prev = lines(string(p.objectItem(o.List.Items[index-1])))
+				prevPos = o.List.Items[index-1].Pos()
 			}
 
-			if (cur == next && next == 1) || (next == 1 && cur == 2 && i == 0) {
+			// fmt.Println("DEBUG ----------------")
+			// fmt.Printf("prev = %+v prevPos: %s\n", prev, prevPos)
+			// fmt.Printf("cur = %+v curPos: %s\n", cur, curPos)
+			// fmt.Printf("next = %+v nextPos: %s\n", next, nextPos)
+
+			if curPos.Line+1 == nextPos.Line {
 				aligned = append(aligned, item)
 				index++
-			} else if (cur == prev && prev == 1) || (prev == 2 && cur == 1) {
-				aligned = append(aligned, item)
-				index++
-			} else {
-				break
+				continue
 			}
+
+			if curPos.Line-1 == prevPos.Line {
+				aligned = append(aligned, item)
+				index++
+
+				// finish if we have a new line or comment next. This happens
+				// if the next item is not adjacent
+				if curPos.Line+1 != nextPos.Line {
+					break
+				}
+				continue
+			}
+
+			break
 		}
 
-		// fmt.Printf("==================> len(aligned) = %+v\n", len(aligned))
-		// for _, b := range aligned {
-		// 	fmt.Printf("b = %+v\n", b)
-		// }
+		fmt.Printf("==================> len(aligned) = %+v\n", len(aligned))
+		for _, b := range aligned {
+			fmt.Printf("b = %+v\n", b)
+		}
 
 		// put newlines if the items are between other non aligned items
 		if index != len(aligned) {
@@ -259,10 +288,6 @@ func (p *printer) objectType(o *ast.ObjectType) []byte {
 		}
 
 		buf.WriteByte(newline)
-
-		if index == len(o.List.Items) {
-			break
-		}
 
 	}
 
