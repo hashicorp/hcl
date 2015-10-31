@@ -317,10 +317,15 @@ func (p *Parser) scan() token.Token {
 			comment, endline = p.consumeCommentGroup(1)
 		}
 
-		if endline+1 == p.tok.Pos.Line {
-			// The next token is following on the line immediately after the
-			// comment group, thus the last comment group is a lead comment.
-			p.leadComment = comment
+		if endline+1 == p.tok.Pos.Line && p.tok.Type != token.RBRACE {
+			switch p.tok.Type {
+			case token.RBRACE, token.RBRACK:
+				// Do not count for these cases
+			default:
+				// The next token is following on the line immediately after the
+				// comment group, thus the last comment group is a lead comment.
+				p.leadComment = comment
+			}
 		}
 
 	}

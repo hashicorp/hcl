@@ -10,14 +10,15 @@ import (
 )
 
 const (
-	blank   = byte(' ')
-	newline = byte('\n')
-	tab     = byte('\t')
+	blank    = byte(' ')
+	newline  = byte('\n')
+	tab      = byte('\t')
+	infinity = 1 << 30 // offset or line
 )
 
 type printer struct {
 	cfg  Config
-	prev ast.Node
+	prev token.Pos
 
 	comments           []*ast.CommentGroup // may be nil, contains all comments
 	standaloneComments []*ast.CommentGroup // contains all standalone comments (not assigned to any node)
@@ -78,15 +79,8 @@ func (p *printer) collectComments(node ast.Node) {
 	for _, c := range standaloneComments {
 		p.standaloneComments = append(p.standaloneComments, c)
 	}
+
 	sort.Sort(ByPosition(p.standaloneComments))
-
-	fmt.Printf("standaloneComments = %+v\n", len(p.standaloneComments))
-	for _, c := range p.standaloneComments {
-		for _, comment := range c.List {
-			fmt.Printf("comment = %+v\n", comment)
-		}
-	}
-
 }
 
 var count int
@@ -100,31 +94,49 @@ func (p *printer) output(n interface{}) []byte {
 	case *ast.File:
 		return p.output(t.Node)
 	case *ast.ObjectList:
-		for i, item := range t.Items {
-			fmt.Printf("[%d] item: %s\n", i, item.Keys[0].Token.Text)
-			buf.Write(p.output(item))
-			if i != len(t.Items)-1 {
+
+		var index int
+		var nextItem token.Pos
+		var commented bool
+		for {
+			// TODO(arslan): refactor below comment printing, we have the same in objectType
+
+			// print stand alone upper level stand alone comments
+			for _, c := range p.standaloneComments {
+				for _, comment := range c.List {
+					if index != len(t.Items) {
+						nextItem = t.Items[index].Pos()
+					} else {
+						nextItem = token.Pos{Offset: infinity, Line: infinity}
+					}
+
+					if comment.Pos().After(p.prev) && comment.Pos().Before(nextItem) {
+						// if we hit the end add newlines so we can print the comment
+						if index == len(t.Items) {
+							buf.Write([]byte{newline, newline})
+						}
+
+						buf.WriteString(comment.Text)
+						// TODO(arslan): do not print new lines if the comments are one liner
+						buf.Write([]byte{newline, newline})
+					}
+				}
+			}
+
+			if index == len(t.Items) {
+				break
+			}
+
+			buf.Write(p.output(t.Items[index]))
+			if !commented && index != len(t.Items)-1 {
 				buf.Write([]byte{newline, newline})
 			}
+			index++
 		}
 	case *ast.ObjectKey:
 		buf.WriteString(t.Token.Text)
 	case *ast.ObjectItem:
-		for _, c := range p.standaloneComments {
-			for _, comment := range c.List {
-				fmt.Printf("[%d] OBJECTITEM p.prev = %+v\n", count, p.prev.Pos())
-				fmt.Printf("[%d] OBJECTITEM comment.Pos() = %+v\n", count, comment.Pos())
-				fmt.Printf("[%d] OBJECTTYPE t.Pos() = %+v\n", count, t.Pos())
-				if comment.Pos().After(p.prev.Pos()) && comment.Pos().Before(t.Pos()) {
-					buf.WriteString(comment.Text)
-					// TODO(arslan): do not print new lines if the comments are one lines
-					buf.WriteByte(newline)
-					buf.WriteByte(newline)
-				}
-			}
-		}
-
-		p.prev = t
+		p.prev = t.Pos()
 		buf.Write(p.objectItem(t))
 	case *ast.LiteralType:
 		buf.WriteString(t.Token.Text)
@@ -135,10 +147,6 @@ func (p *printer) output(n interface{}) []byte {
 	default:
 		fmt.Printf(" unknown type: %T\n", n)
 	}
-
-	// if item, ok := n.(ast.Node); ok {
-	// 	p.prev = item
-	// }
 
 	return buf.Bytes()
 }
@@ -185,28 +193,36 @@ func (p *printer) objectType(o *ast.ObjectType) []byte {
 
 	var index int
 	var nextItem token.Pos
+	var commented bool
 	for {
+		// Print stand alone comments
 		for _, c := range p.standaloneComments {
 			for _, comment := range c.List {
-				fmt.Printf("[%d] OBJECTTYPE p.prev = %+v\n", count, p.prev.Pos())
-				fmt.Printf("[%d] OBJECTTYPE comment.Pos() = %+v\n", count, comment.Pos())
-
+				// if we hit the end, last item should be the brace
 				if index != len(o.List.Items) {
 					nextItem = o.List.Items[index].Pos()
 				} else {
 					nextItem = o.Rbrace
-
 				}
-				fmt.Printf("[%d] OBJECTTYPE nextItem = %+v\n", count, nextItem)
-				if comment.Pos().After(p.prev.Pos()) && comment.Pos().Before(nextItem) {
-					buf.Write(p.indent([]byte(comment.Text))) // TODO(arslan): indent
+
+				if comment.Pos().After(p.prev) && comment.Pos().Before(nextItem) {
+					// add newline if it's between other printed nodes
+					if index > 0 {
+						commented = true
+						buf.WriteByte(newline)
+					}
+
+					buf.Write(p.indent([]byte(comment.Text)))
 					buf.WriteByte(newline)
-					buf.WriteByte(newline)
+					if index != len(o.List.Items) {
+						buf.WriteByte(newline) // do not print on the end
+					}
 				}
 			}
 		}
 
 		if index == len(o.List.Items) {
+			p.prev = o.Rbrace
 			break
 		}
 
@@ -265,30 +281,26 @@ func (p *printer) objectType(o *ast.ObjectType) []byte {
 			break
 		}
 
-		fmt.Printf("==================> len(aligned) = %+v\n", len(aligned))
-		for _, b := range aligned {
-			fmt.Printf("b = %+v\n", b)
-		}
-
-		// put newlines if the items are between other non aligned items
-		if index != len(aligned) {
+		// put newlines if the items are between other non aligned items.
+		// newlines are also added if there is a standalone comment already, so
+		// check it too
+		if !commented && index != len(aligned) {
 			buf.WriteByte(newline)
 		}
 
 		if len(aligned) >= 1 {
-			p.prev = aligned[len(aligned)-1]
+			p.prev = aligned[len(aligned)-1].Pos()
 
 			items := p.alignedItems(aligned)
 			buf.Write(p.indent(items))
 		} else {
-			p.prev = o.List.Items[index]
+			p.prev = o.List.Items[index].Pos()
 
 			buf.Write(p.indent(p.objectItem(o.List.Items[index])))
 			index++
 		}
 
 		buf.WriteByte(newline)
-
 	}
 
 	buf.WriteString("}")

@@ -22,7 +22,6 @@ func (c *Config) Fprint(output io.Writer, node ast.Node) error {
 		cfg:                *c,
 		comments:           make([]*ast.CommentGroup, 0),
 		standaloneComments: make([]*ast.CommentGroup, 0),
-		prev:               ast.NewNode(),
 		// enableTrace:        true,
 	}
 
