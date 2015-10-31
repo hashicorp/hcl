@@ -78,7 +78,7 @@ func (p *Parser) consumeComment() (comment *ast.Comment, endline int) {
 	endline = p.tok.Pos.Line
 
 	// count the endline if it's multiline comment, ie starting with /*
-	if p.tok.Text[1] == '*' {
+	if len(p.tok.Text) > 1 && p.tok.Text[1] == '*' {
 		// don't use range here - no need to decode Unicode code points
 		for i := 0; i < len(p.tok.Text); i++ {
 			if p.tok.Text[i] == '\n' {
