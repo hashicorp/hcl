@@ -10,6 +10,12 @@ type Node interface {
 	Pos() token.Pos
 }
 
+// NewNode returns a non usable Node interface implementer. The position is
+// initalizied to zero.
+func NewNode() Node {
+	return &zero{}
+}
+
 func (File) node()       {}
 func (ObjectList) node() {}
 func (ObjectKey) node()  {}
@@ -20,6 +26,14 @@ func (CommentGroup) node() {}
 func (ObjectType) node()   {}
 func (LiteralType) node()  {}
 func (ListType) node()     {}
+
+type zero struct{}
+
+func (zero) node() {}
+
+func (z *zero) Pos() token.Pos {
+	return token.Pos{}
+}
 
 // File represents a single HCL file
 type File struct {

@@ -34,3 +34,13 @@ func (p Pos) String() string {
 	}
 	return s
 }
+
+// Before reports whether the position p is before u.
+func (p Pos) Before(u Pos) bool {
+	return u.Offset > p.Offset || u.Line > p.Line
+}
+
+// After reports whether the position p is after u.
+func (p Pos) After(u Pos) bool {
+	return u.Offset < p.Offset || u.Line < p.Line
+}
