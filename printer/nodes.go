@@ -116,7 +116,11 @@ func (p *printer) output(n interface{}) []byte {
 
 						buf.WriteString(comment.Text)
 						// TODO(arslan): do not print new lines if the comments are one liner
-						buf.Write([]byte{newline, newline})
+
+						buf.WriteByte(newline)
+						if index != len(t.Items) {
+							buf.WriteByte(newline)
+						}
 					}
 				}
 			}
