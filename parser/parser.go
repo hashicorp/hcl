@@ -15,7 +15,8 @@ type Parser struct {
 	sc *scanner.Scanner
 
 	// Last read token
-	tok token.Token
+	tok       token.Token
+	commaPrev token.Token
 
 	comments    []*ast.CommentGroup
 	leadComment *ast.CommentGroup // last lead comment
@@ -147,7 +148,6 @@ func (p *Parser) objectItem() (*ast.ObjectItem, error) {
 		o.LineComment = p.lineComment
 		p.lineComment = nil
 	}
-
 	p.unscan()
 	return o, nil
 }
@@ -253,6 +253,17 @@ func (p *Parser) listType() (*ast.ListType, error) {
 			l.Add(node)
 		case token.COMMA:
 			// get next list item or we are at the end
+			// do a look-ahead for line comment
+			p.scan()
+			if p.lineComment != nil {
+				lit, ok := l.List[len(l.List)-1].(*ast.LiteralType)
+				if ok {
+					lit.LineComment = p.lineComment
+					l.List[len(l.List)-1] = lit
+					p.lineComment = nil
+				}
+			}
+			p.unscan()
 			continue
 		case token.BOOL:
 			// TODO(arslan) should we support? not supported by HCL yet
@@ -299,7 +310,8 @@ func (p *Parser) scan() token.Token {
 		var comment *ast.CommentGroup
 		var endline int
 
-		// fmt.Printf("p.tok.Pos.Line = %+v prev: %d \n", p.tok.Pos.Line, prev.Pos.Line)
+		// fmt.Printf("p.tok.Pos.Line = %+v prev: %d endline %d \n",
+		// p.tok.Pos.Line, prev.Pos.Line, endline)
 		if p.tok.Pos.Line == prev.Pos.Line {
 			// The comment is on same line as the previous token; it
 			// cannot be a lead comment but may be a line comment.

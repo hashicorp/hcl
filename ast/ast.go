@@ -97,6 +97,9 @@ func (o *ObjectKey) Pos() token.Pos {
 // token.NUMBER, token.FLOAT, token.BOOL and token.STRING
 type LiteralType struct {
 	Token token.Token
+
+	// associated line comment, only when used in a list
+	LineComment *CommentGroup
 }
 
 func (l *LiteralType) Pos() token.Pos {

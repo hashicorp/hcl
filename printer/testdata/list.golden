@@ -11,8 +11,8 @@ foo = ["fatih", "zeynep",
 ]
 
 foo = [
-	"vim-go", 
-	"golang", 
+	"vim-go",
+	"golang",
 	"hcl",
 ]
 
@@ -21,7 +21,7 @@ foo = []
 foo = [1, 2, 3, 4]
 
 foo = [
-	"kenya", 
-	"ethiopia", 
+	"kenya",
+	"ethiopia",
 	"columbia",
 ]

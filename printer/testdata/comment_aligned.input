@@ -13,4 +13,9 @@ aligned {
    default  = {
      bar = "example"
    }
+
+security_groups = [
+	"foo",    # kenya 1
+	"${aws_security_group.firewall.foo}", # kenya 2
+]
 }

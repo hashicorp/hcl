@@ -57,6 +57,14 @@ func (p *printer) collectComments(node ast.Node) {
 	// assigned to any kind of node.
 	ast.Walk(node, func(nn ast.Node) bool {
 		switch t := nn.(type) {
+		case *ast.LiteralType:
+			if t.LineComment != nil {
+				for _, comment := range t.LineComment.List {
+					if _, ok := standaloneComments[comment.Pos()]; ok {
+						delete(standaloneComments, comment.Pos())
+					}
+				}
+			}
 		case *ast.ObjectItem:
 			if t.LeadComment != nil {
 				for _, comment := range t.LeadComment.List {
@@ -83,6 +91,7 @@ func (p *printer) collectComments(node ast.Node) {
 	}
 
 	sort.Sort(ByPosition(p.standaloneComments))
+
 }
 
 // output prints creates b printable HCL output and returns it.
@@ -98,8 +107,6 @@ func (p *printer) output(n interface{}) []byte {
 		var commented bool
 		for {
 			// TODO(arslan): refactor below comment printing, we have the same in objectType
-
-			// print upper leve stand alone comments
 			for _, c := range p.standaloneComments {
 				for _, comment := range c.List {
 					if index != len(t.Items) {
@@ -115,7 +122,6 @@ func (p *printer) output(n interface{}) []byte {
 						}
 
 						buf.WriteString(comment.Text)
-						// TODO(arslan): do not print new lines if the comments are one liner
 
 						buf.WriteByte(newline)
 						if index != len(t.Items) {
@@ -153,6 +159,9 @@ func (p *printer) output(n interface{}) []byte {
 	return buf.Bytes()
 }
 
+// objectItem returns the printable HCL form of an object item. An object type
+// starts with one/multiple keys and has a value. The value might be of any
+// type.
 func (p *printer) objectItem(o *ast.ObjectItem) []byte {
 	defer un(trace(p, fmt.Sprintf("ObjectItem: %s", o.Keys[0].Token.Text)))
 	var buf bytes.Buffer
@@ -187,6 +196,8 @@ func (p *printer) objectItem(o *ast.ObjectItem) []byte {
 	return buf.Bytes()
 }
 
+// objectType returns the printable HCL form of an object type. An object type
+// begins with a brace and ends with a brace.
 func (p *printer) objectType(o *ast.ObjectType) []byte {
 	defer un(trace(p, "ObjectType"))
 	var buf bytes.Buffer
@@ -364,32 +375,53 @@ func (p *printer) alignedItems(items []*ast.ObjectItem) []byte {
 	return buf.Bytes()
 }
 
-func (p *printer) literal(l *ast.LiteralType) []byte {
-	return []byte(l.Token.Text)
-}
-
-// printList prints a HCL list
+// list returns the printable HCL form of an list type.
 func (p *printer) list(l *ast.ListType) []byte {
 	var buf bytes.Buffer
 	buf.WriteString("[")
+
+	var longestLine int
+	for _, item := range l.List {
+		// for now we assume that the list only contains literal types
+		if lit, ok := item.(*ast.LiteralType); ok {
+			lineLen := len(lit.Token.Text)
+			if lineLen > longestLine {
+				longestLine = lineLen
+			}
+		}
+	}
 
 	for i, item := range l.List {
 		if item.Pos().Line != l.Lbrack.Line {
 			// multiline list, add newline before we add each item
 			buf.WriteByte(newline)
 			// also indent each line
-			buf.Write(p.indent(p.output(item)))
+			val := p.output(item)
+			curLen := len(val)
+			buf.Write(p.indent(val))
+			buf.WriteString(",")
+
+			if lit, ok := item.(*ast.LiteralType); ok && lit.LineComment != nil {
+				for i := 0; i < longestLine-curLen+1; i++ {
+					buf.WriteByte(blank)
+				}
+
+				for _, comment := range lit.LineComment.List {
+					buf.WriteString(comment.Text)
+				}
+			}
+
+			if i == len(l.List)-1 {
+				buf.WriteByte(newline)
+			}
 		} else {
 			buf.Write(p.output(item))
+			if i != len(l.List)-1 {
+				buf.WriteString(",")
+				buf.WriteByte(blank)
+			}
 		}
 
-		if i != len(l.List)-1 {
-			buf.WriteString(",")
-			buf.WriteByte(blank)
-		} else if item.Pos().Line != l.Lbrack.Line {
-			buf.WriteString(",")
-			buf.WriteByte(newline)
-		}
 	}
 
 	buf.WriteString("]")
