@@ -7,6 +7,9 @@ packages to write tools and customize files written in HCL. For example both
 [`hclfmt`](https://github.com/fatih/hclfmt) and `hcl2json` (coming soon) is
 written based on these tools. 
 
+This package is still under heavy development. The next stable version will be
+released with version 0.1. 
+
 ## API
 
 If you are already familiar with Go's own parser family it's really easy to
@@ -23,14 +26,15 @@ following packages:
 
 ## Why 
 
-The whole parser family was created because I wanted a `hclfmt` command, which
-like `gofmt` would format a HCL file. I didn't want to use the package
-[github/hashicorp/hcl](https://github.com/hashicorp/hcl) in the first place,
-because the lexer and parser is generated and it doesn't expose any kind of
-flexibility.
+The whole parser family was created because I wanted a `hclfmt` command. This
+command would be just like `gofmt`, format an HCL file. I didn't want to use
+the package [github/hashicorp/hcl](https://github.com/hashicorp/hcl) in the
+first place, because the lexer and parser is generated and it doesn't expose
+the flexibility I wanted to have.
 
 Another reason was that I wanted to learn and experience how to implement a
-proper lexer and parser in Go. It was really fun and I think it was worth it.
+proper lexer and parser in Go and how a formatter could be implemented from an
+AST. It was really fun and I think it was worth it.
 
 ## License
 
