@@ -10,7 +10,9 @@ import (
 	"github.com/fatih/hcl/parser"
 )
 
-var DefaultConfig = Config{}
+var DefaultConfig = Config{
+	SpacesWidth: 2,
+}
 
 // A Config node controls the output of Fprint.
 type Config struct {
