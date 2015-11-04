@@ -4,7 +4,7 @@
 variable "foo" {
 	# Standalone comment should be still here
 
-	default = "bar"
+	default     = "bar"
 	description = "bar" # yooo
 }
 
