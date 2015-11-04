@@ -323,11 +323,19 @@ func (p *printer) objectType(o *ast.ObjectType) []byte {
 func (p *printer) alignedItems(items []*ast.ObjectItem) []byte {
 	var buf bytes.Buffer
 
-	var longestLine int
+	// find the longest key and value length, needed for alignment
+	var longestKeyLen int // longest key length
+	var longestValLen int // longest value length
 	for _, item := range items {
-		lineLen := len(item.Keys[0].Token.Text) + len(p.output(item.Val))
-		if lineLen > longestLine {
-			longestLine = lineLen
+		key := len(item.Keys[0].Token.Text)
+		val := len(p.output(item.Val))
+
+		if key > longestKeyLen {
+			longestKeyLen = key
+		}
+
+		if val > longestValLen {
+			longestValLen = val
 		}
 	}
 
@@ -339,25 +347,26 @@ func (p *printer) alignedItems(items []*ast.ObjectItem) []byte {
 			}
 		}
 
-		curLen := 0
 		for i, k := range item.Keys {
+			keyLen := len(k.Token.Text)
 			buf.WriteString(k.Token.Text)
-			buf.WriteByte(blank)
+			for i := 0; i < longestKeyLen-keyLen+1; i++ {
+				buf.WriteByte(blank)
+			}
 
 			// reach end of key
 			if i == len(item.Keys)-1 && len(item.Keys) == 1 {
 				buf.WriteString("=")
 				buf.WriteByte(blank)
 			}
-
-			curLen = len(k.Token.Text) // two blanks and one assign
 		}
+
 		val := p.output(item.Val)
+		valLen := len(val)
 		buf.Write(val)
-		curLen += len(val)
 
 		if item.Val.Pos().Line == item.Keys[0].Pos().Line && item.LineComment != nil {
-			for i := 0; i < longestLine-curLen+1; i++ {
+			for i := 0; i < longestValLen-valLen+1; i++ {
 				buf.WriteByte(blank)
 			}
 

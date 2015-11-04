@@ -1,8 +1,8 @@
 aligned = {
 	# We have some aligned items below
-	foo = "bar"     # yoo1
-	default = "bar" # yoo2
-	bar = "bar"     # yoo3
+	foo     = "fatih"       # yoo1
+	default = "bar"         # yoo2
+	bar     = "bar and foo" # yoo3
 
 	default = {
 		bar = "example"
