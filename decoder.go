@@ -531,11 +531,14 @@ func (d *decoder) decodeStruct(name string, node ast.Node, result reflect.Value)
 		var decodeNode ast.Node
 		matches := list.Prefix(fieldName)
 		if len(matches.Items) == 0 {
-			item := list.Get(fieldName)
-			if item == nil {
+			single := list.Get(fieldName)
+			if single == nil {
 				continue
 			}
-			decodeNode = item.Val
+			decodeNode = single.Val
+			if ot, ok := decodeNode.(*ast.ObjectType); ok {
+				decodeNode = &ast.ObjectList{Items: ot.List.Items}
+			}
 		} else {
 			decodeNode = matches
 		}
