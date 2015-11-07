@@ -44,7 +44,9 @@ import (
 top:
 	object
 	{
-		jsonResult = &ast.File{Node: $1}
+		jsonResult = &ast.File{
+			Node: $1.List,
+		}
 	}
 
 object:
