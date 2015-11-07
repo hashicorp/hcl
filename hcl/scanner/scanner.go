@@ -287,10 +287,9 @@ func (s *Scanner) scanNumber(ch rune) token.Type {
 			}
 		}
 
-		// literals of form 01e10 are treates as Numbers in HCL, which differs from Go.
 		if ch == 'e' || ch == 'E' {
 			ch = s.scanExponent(ch)
-			return token.NUMBER
+			return token.FLOAT
 		}
 
 		if ch == '.' {
@@ -315,10 +314,9 @@ func (s *Scanner) scanNumber(ch rune) token.Type {
 
 	s.scanMantissa(ch)
 	ch = s.next() // seek forward
-	// literals of form 1e10 are treates as Numbers in HCL, which differs from Go.
 	if ch == 'e' || ch == 'E' {
 		ch = s.scanExponent(ch)
-		return token.NUMBER
+		return token.FLOAT
 	}
 
 	if ch == '.' {
