@@ -79,7 +79,7 @@ pair:
 			Keys: []*ast.ObjectKey{
 				&ast.ObjectKey{
 					Token: token.Token{
-						Type: token.STRING,
+						Type: token.IDENT,
 						Text: $1,
 					},
 				},
@@ -98,12 +98,7 @@ value:
 	}
 |	number
 	{
-		$$ = &ast.LiteralType{
-			Token: token.Token{
-				Type: token.NUMBER,
-				Text: fmt.Sprintf("%d", $1),
-			},
-		}
+		$$ = $1
 	}
 |	object
 	{
@@ -158,7 +153,10 @@ number:
 	int
 	{
 		$$ = &ast.LiteralType{
-			Token: token.Token{Type: token.NUMBER, Text: fmt.Sprintf("%d", $1)},
+			Token: token.Token{
+				Type: token.NUMBER,
+				Text: fmt.Sprintf("%d", $1),
+			},
 		}
 	}
 |	float

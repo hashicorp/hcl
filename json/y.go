@@ -75,7 +75,7 @@ const jsonEofCode = 1
 const jsonErrCode = 2
 const jsonMaxDepth = 200
 
-//line parse.y:224
+//line parse.y:222
 
 //line yacctab:1
 var jsonExca = [...]int{
@@ -536,7 +536,7 @@ jsondefault:
 				Keys: []*ast.ObjectKey{
 					&ast.ObjectKey{
 						Token: token.Token{
-							Type: token.STRING,
+							Type: token.IDENT,
 							Text: jsonDollar[1].str,
 						},
 					},
@@ -557,22 +557,17 @@ jsondefault:
 		jsonDollar = jsonS[jsonpt-1 : jsonpt+1]
 		//line parse.y:100
 		{
-			jsonVAL.node = &ast.LiteralType{
-				Token: token.Token{
-					Type: token.NUMBER,
-					Text: fmt.Sprintf("%d", jsonDollar[1].node),
-				},
-			}
+			jsonVAL.node = jsonDollar[1].node
 		}
 	case 9:
 		jsonDollar = jsonS[jsonpt-1 : jsonpt+1]
-		//line parse.y:109
+		//line parse.y:104
 		{
 			jsonVAL.node = jsonDollar[1].obj
 		}
 	case 10:
 		jsonDollar = jsonS[jsonpt-1 : jsonpt+1]
-		//line parse.y:113
+		//line parse.y:108
 		{
 			jsonVAL.node = &ast.ListType{
 				List: jsonDollar[1].list,
@@ -580,7 +575,7 @@ jsondefault:
 		}
 	case 11:
 		jsonDollar = jsonS[jsonpt-1 : jsonpt+1]
-		//line parse.y:119
+		//line parse.y:114
 		{
 			jsonVAL.node = &ast.LiteralType{
 				Token: token.Token{Type: token.BOOL, Text: "true"},
@@ -588,7 +583,7 @@ jsondefault:
 		}
 	case 12:
 		jsonDollar = jsonS[jsonpt-1 : jsonpt+1]
-		//line parse.y:125
+		//line parse.y:120
 		{
 			jsonVAL.node = &ast.LiteralType{
 				Token: token.Token{Type: token.BOOL, Text: "false"},
@@ -596,7 +591,7 @@ jsondefault:
 		}
 	case 13:
 		jsonDollar = jsonS[jsonpt-1 : jsonpt+1]
-		//line parse.y:131
+		//line parse.y:126
 		{
 			jsonVAL.node = &ast.LiteralType{
 				Token: token.Token{Type: token.STRING, Text: ""},
@@ -604,39 +599,42 @@ jsondefault:
 		}
 	case 14:
 		jsonDollar = jsonS[jsonpt-2 : jsonpt+1]
-		//line parse.y:139
+		//line parse.y:134
 		{
 			jsonVAL.list = nil
 		}
 	case 15:
 		jsonDollar = jsonS[jsonpt-3 : jsonpt+1]
-		//line parse.y:143
+		//line parse.y:138
 		{
 			jsonVAL.list = jsonDollar[2].list
 		}
 	case 16:
 		jsonDollar = jsonS[jsonpt-1 : jsonpt+1]
-		//line parse.y:149
+		//line parse.y:144
 		{
 			jsonVAL.list = []ast.Node{jsonDollar[1].node}
 		}
 	case 17:
 		jsonDollar = jsonS[jsonpt-3 : jsonpt+1]
-		//line parse.y:153
+		//line parse.y:148
 		{
 			jsonVAL.list = append(jsonDollar[1].list, jsonDollar[3].node)
 		}
 	case 18:
 		jsonDollar = jsonS[jsonpt-1 : jsonpt+1]
-		//line parse.y:159
+		//line parse.y:154
 		{
 			jsonVAL.node = &ast.LiteralType{
-				Token: token.Token{Type: token.NUMBER, Text: fmt.Sprintf("%d", jsonDollar[1].num)},
+				Token: token.Token{
+					Type: token.NUMBER,
+					Text: fmt.Sprintf("%d", jsonDollar[1].num),
+				},
 			}
 		}
 	case 19:
 		jsonDollar = jsonS[jsonpt-1 : jsonpt+1]
-		//line parse.y:165
+		//line parse.y:163
 		{
 			jsonVAL.node = &ast.LiteralType{
 				Token: token.Token{
@@ -647,7 +645,7 @@ jsondefault:
 		}
 	case 20:
 		jsonDollar = jsonS[jsonpt-2 : jsonpt+1]
-		//line parse.y:174
+		//line parse.y:172
 		{
 			fs := fmt.Sprintf("%d%s", jsonDollar[1].num, jsonDollar[2].str)
 			jsonVAL.node = &ast.LiteralType{
@@ -659,7 +657,7 @@ jsondefault:
 		}
 	case 21:
 		jsonDollar = jsonS[jsonpt-2 : jsonpt+1]
-		//line parse.y:184
+		//line parse.y:182
 		{
 			fs := fmt.Sprintf("%f%s", jsonDollar[1].f, jsonDollar[2].str)
 			jsonVAL.node = &ast.LiteralType{
@@ -671,37 +669,37 @@ jsondefault:
 		}
 	case 22:
 		jsonDollar = jsonS[jsonpt-2 : jsonpt+1]
-		//line parse.y:196
+		//line parse.y:194
 		{
 			jsonVAL.num = jsonDollar[2].num * -1
 		}
 	case 23:
 		jsonDollar = jsonS[jsonpt-1 : jsonpt+1]
-		//line parse.y:200
+		//line parse.y:198
 		{
 			jsonVAL.num = jsonDollar[1].num
 		}
 	case 24:
 		jsonDollar = jsonS[jsonpt-2 : jsonpt+1]
-		//line parse.y:206
+		//line parse.y:204
 		{
 			jsonVAL.f = jsonDollar[2].f * -1
 		}
 	case 25:
 		jsonDollar = jsonS[jsonpt-1 : jsonpt+1]
-		//line parse.y:210
+		//line parse.y:208
 		{
 			jsonVAL.f = jsonDollar[1].f
 		}
 	case 26:
 		jsonDollar = jsonS[jsonpt-2 : jsonpt+1]
-		//line parse.y:216
+		//line parse.y:214
 		{
 			jsonVAL.str = "e" + strconv.FormatInt(int64(jsonDollar[2].num), 10)
 		}
 	case 27:
 		jsonDollar = jsonS[jsonpt-2 : jsonpt+1]
-		//line parse.y:220
+		//line parse.y:218
 		{
 			jsonVAL.str = "e-" + strconv.FormatInt(int64(jsonDollar[2].num), 10)
 		}
