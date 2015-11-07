@@ -93,7 +93,10 @@ value:
 	STRING
 	{
 		$$ = &ast.LiteralType{
-			Token: token.Token{Type: token.STRING, Text: $1},
+			Token: token.Token{
+				Type: token.STRING,
+				Text: fmt.Sprintf(`"%s"`, $1),
+			},
 		}
 	}
 |	number

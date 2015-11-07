@@ -75,7 +75,7 @@ const jsonEofCode = 1
 const jsonErrCode = 2
 const jsonMaxDepth = 200
 
-//line parse.y:222
+//line parse.y:225
 
 //line yacctab:1
 var jsonExca = [...]int{
@@ -550,24 +550,27 @@ jsondefault:
 		//line parse.y:94
 		{
 			jsonVAL.node = &ast.LiteralType{
-				Token: token.Token{Type: token.STRING, Text: jsonDollar[1].str},
+				Token: token.Token{
+					Type: token.STRING,
+					Text: fmt.Sprintf(`"%s"`, jsonDollar[1].str),
+				},
 			}
 		}
 	case 8:
 		jsonDollar = jsonS[jsonpt-1 : jsonpt+1]
-		//line parse.y:100
+		//line parse.y:103
 		{
 			jsonVAL.node = jsonDollar[1].node
 		}
 	case 9:
 		jsonDollar = jsonS[jsonpt-1 : jsonpt+1]
-		//line parse.y:104
+		//line parse.y:107
 		{
 			jsonVAL.node = jsonDollar[1].obj
 		}
 	case 10:
 		jsonDollar = jsonS[jsonpt-1 : jsonpt+1]
-		//line parse.y:108
+		//line parse.y:111
 		{
 			jsonVAL.node = &ast.ListType{
 				List: jsonDollar[1].list,
@@ -575,7 +578,7 @@ jsondefault:
 		}
 	case 11:
 		jsonDollar = jsonS[jsonpt-1 : jsonpt+1]
-		//line parse.y:114
+		//line parse.y:117
 		{
 			jsonVAL.node = &ast.LiteralType{
 				Token: token.Token{Type: token.BOOL, Text: "true"},
@@ -583,7 +586,7 @@ jsondefault:
 		}
 	case 12:
 		jsonDollar = jsonS[jsonpt-1 : jsonpt+1]
-		//line parse.y:120
+		//line parse.y:123
 		{
 			jsonVAL.node = &ast.LiteralType{
 				Token: token.Token{Type: token.BOOL, Text: "false"},
@@ -591,7 +594,7 @@ jsondefault:
 		}
 	case 13:
 		jsonDollar = jsonS[jsonpt-1 : jsonpt+1]
-		//line parse.y:126
+		//line parse.y:129
 		{
 			jsonVAL.node = &ast.LiteralType{
 				Token: token.Token{Type: token.STRING, Text: ""},
@@ -599,31 +602,31 @@ jsondefault:
 		}
 	case 14:
 		jsonDollar = jsonS[jsonpt-2 : jsonpt+1]
-		//line parse.y:134
+		//line parse.y:137
 		{
 			jsonVAL.list = nil
 		}
 	case 15:
 		jsonDollar = jsonS[jsonpt-3 : jsonpt+1]
-		//line parse.y:138
+		//line parse.y:141
 		{
 			jsonVAL.list = jsonDollar[2].list
 		}
 	case 16:
 		jsonDollar = jsonS[jsonpt-1 : jsonpt+1]
-		//line parse.y:144
+		//line parse.y:147
 		{
 			jsonVAL.list = []ast.Node{jsonDollar[1].node}
 		}
 	case 17:
 		jsonDollar = jsonS[jsonpt-3 : jsonpt+1]
-		//line parse.y:148
+		//line parse.y:151
 		{
 			jsonVAL.list = append(jsonDollar[1].list, jsonDollar[3].node)
 		}
 	case 18:
 		jsonDollar = jsonS[jsonpt-1 : jsonpt+1]
-		//line parse.y:154
+		//line parse.y:157
 		{
 			jsonVAL.node = &ast.LiteralType{
 				Token: token.Token{
@@ -634,7 +637,7 @@ jsondefault:
 		}
 	case 19:
 		jsonDollar = jsonS[jsonpt-1 : jsonpt+1]
-		//line parse.y:163
+		//line parse.y:166
 		{
 			jsonVAL.node = &ast.LiteralType{
 				Token: token.Token{
@@ -645,7 +648,7 @@ jsondefault:
 		}
 	case 20:
 		jsonDollar = jsonS[jsonpt-2 : jsonpt+1]
-		//line parse.y:172
+		//line parse.y:175
 		{
 			fs := fmt.Sprintf("%d%s", jsonDollar[1].num, jsonDollar[2].str)
 			jsonVAL.node = &ast.LiteralType{
@@ -657,7 +660,7 @@ jsondefault:
 		}
 	case 21:
 		jsonDollar = jsonS[jsonpt-2 : jsonpt+1]
-		//line parse.y:182
+		//line parse.y:185
 		{
 			fs := fmt.Sprintf("%f%s", jsonDollar[1].f, jsonDollar[2].str)
 			jsonVAL.node = &ast.LiteralType{
@@ -669,37 +672,37 @@ jsondefault:
 		}
 	case 22:
 		jsonDollar = jsonS[jsonpt-2 : jsonpt+1]
-		//line parse.y:194
+		//line parse.y:197
 		{
 			jsonVAL.num = jsonDollar[2].num * -1
 		}
 	case 23:
 		jsonDollar = jsonS[jsonpt-1 : jsonpt+1]
-		//line parse.y:198
+		//line parse.y:201
 		{
 			jsonVAL.num = jsonDollar[1].num
 		}
 	case 24:
 		jsonDollar = jsonS[jsonpt-2 : jsonpt+1]
-		//line parse.y:204
+		//line parse.y:207
 		{
 			jsonVAL.f = jsonDollar[2].f * -1
 		}
 	case 25:
 		jsonDollar = jsonS[jsonpt-1 : jsonpt+1]
-		//line parse.y:208
+		//line parse.y:211
 		{
 			jsonVAL.f = jsonDollar[1].f
 		}
 	case 26:
 		jsonDollar = jsonS[jsonpt-2 : jsonpt+1]
-		//line parse.y:214
+		//line parse.y:217
 		{
 			jsonVAL.str = "e" + strconv.FormatInt(int64(jsonDollar[2].num), 10)
 		}
 	case 27:
 		jsonDollar = jsonS[jsonpt-2 : jsonpt+1]
-		//line parse.y:218
+		//line parse.y:221
 		{
 			jsonVAL.str = "e-" + strconv.FormatInt(int64(jsonDollar[2].num), 10)
 		}
