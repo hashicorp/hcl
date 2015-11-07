@@ -383,9 +383,7 @@ func (d *decoder) decodeSlice(name string, node ast.Node, result reflect.Value) 
 		items = []ast.Node{n}
 	case *ast.ListType:
 		items = n.List
-	}
-
-	if items == nil {
+	default:
 		return fmt.Errorf("unknown slice type: %T", node)
 	}
 
