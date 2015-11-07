@@ -56,6 +56,7 @@ var tokenLists = map[string][]tokenPair{
 		{token.IDENT, "a"},
 		{token.IDENT, "a0"},
 		{token.IDENT, "foobar"},
+		{token.IDENT, "foo-bar"},
 		{token.IDENT, "abc123"},
 		{token.IDENT, "LGTM"},
 		{token.IDENT, "_"},
