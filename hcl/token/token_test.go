@@ -49,6 +49,7 @@ func TestTokenValue(t *testing.T) {
 		{Token{Type: NUMBER, Text: `42`}, int64(42)},
 		{Token{Type: IDENT, Text: `foo`}, "foo"},
 		{Token{Type: STRING, Text: `"foo"`}, "foo"},
+		{Token{Type: STRING, Text: `"foo\nbar"`}, "foo\nbar"},
 	}
 
 	for _, token := range tokens {

@@ -136,8 +136,12 @@ func (t Token) Value() interface{} {
 	case IDENT:
 		return t.Text
 	case STRING:
-		// It is wrapped in quotes always
-		return t.Text[1 : len(t.Text)-1]
+		v, err := strconv.Unquote(t.Text)
+		if err != nil {
+			panic(err)
+		}
+
+		return v
 	default:
 		panic(fmt.Sprintf("unimplemented Value for type: %s", t.Type))
 	}
