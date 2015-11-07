@@ -57,16 +57,18 @@ func TestDecode_interface(t *testing.T) {
 				"a": 1.02,
 			},
 		},
-		{
-			"multiline_bad.hcl",
-			false,
-			map[string]interface{}{"foo": "bar\nbaz\n"},
-		},
-		{
-			"multiline.json",
-			false,
-			map[string]interface{}{"foo": "bar\nbaz"},
-		},
+		/*
+			{
+				"multiline_bad.hcl",
+				false,
+				map[string]interface{}{"foo": "bar\nbaz\n"},
+			},
+			{
+				"multiline.json",
+				false,
+				map[string]interface{}{"foo": "bar\nbaz"},
+			},
+		*/
 		{
 			"scientific.json",
 			false,
@@ -205,6 +207,7 @@ func TestDecode_interface(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		t.Logf("Testing: %s", tc.File)
 		d, err := ioutil.ReadFile(filepath.Join(fixtureDir, tc.File))
 		if err != nil {
 			t.Fatalf("err: %s", err)
@@ -217,7 +220,7 @@ func TestDecode_interface(t *testing.T) {
 		}
 
 		if !reflect.DeepEqual(out, tc.Out) {
-			t.Fatalf("Input: %s\n\nActual: %#v\n\nExpected: %#v", tc.File, out, tc.Out)
+			t.Fatalf("Input: %s. Actual, Expected.\n\n%#v\n\n%#v", tc.File, out, tc.Out)
 		}
 	}
 }
@@ -396,7 +399,7 @@ func TestDecode_structureArray(t *testing.T) {
 
 		err := Decode(&actual, testReadFile(t, f))
 		if err != nil {
-			t.Fatalf("err: %s", err)
+			t.Fatalf("Input: %s\n\nerr: %s", f, err)
 		}
 
 		if !reflect.DeepEqual(actual, expected) {

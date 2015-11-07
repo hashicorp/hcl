@@ -3,6 +3,8 @@
 package ast
 
 import (
+	"strings"
+
 	"github.com/hashicorp/hcl/hcl/token"
 )
 
@@ -43,6 +45,21 @@ func (o *ObjectList) Add(item *ObjectItem) {
 	o.Items = append(o.Items, item)
 }
 
+func (o *ObjectList) Get(key string) *ObjectItem {
+	for _, item := range o.Items {
+		if len(item.Keys) == 0 {
+			continue
+		}
+
+		text := item.Keys[0].Token.Text
+		if text == key || strings.EqualFold(text, key) {
+			return item
+		}
+	}
+
+	return nil
+}
+
 func (o *ObjectList) Prefix(keys ...string) *ObjectList {
 	var result ObjectList
 	for _, item := range o.Items {
@@ -53,7 +70,8 @@ func (o *ObjectList) Prefix(keys ...string) *ObjectList {
 
 		match := true
 		for i, key := range item.Keys[:len(keys)] {
-			if key.Token.Text != keys[i] {
+			key := key.Token.Text
+			if key != keys[i] && !strings.EqualFold(key, keys[i]) {
 				match = false
 				break
 			}

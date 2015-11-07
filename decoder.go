@@ -4,7 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/hashicorp/hcl/hcl/ast"
 	"github.com/hashicorp/hcl/hcl/token"
@@ -104,7 +106,7 @@ func (d *decoder) decodeBool(name string, node ast.Node, result reflect.Value) e
 		}
 	}
 
-	return fmt.Errorf("%s: unknown type %t", name, node)
+	return fmt.Errorf("%s: unknown type %T", name, node)
 }
 
 func (d *decoder) decodeFloat(name string, node ast.Node, result reflect.Value) error {
@@ -121,7 +123,7 @@ func (d *decoder) decodeFloat(name string, node ast.Node, result reflect.Value) 
 		}
 	}
 
-	return fmt.Errorf("%s: unknown type %t", name, node)
+	return fmt.Errorf("%s: unknown type %T", name, node)
 }
 
 func (d *decoder) decodeInt(name string, node ast.Node, result reflect.Value) error {
@@ -129,26 +131,39 @@ func (d *decoder) decodeInt(name string, node ast.Node, result reflect.Value) er
 	case *ast.LiteralType:
 		switch n.Token.Type {
 		case token.NUMBER:
-			fallthrough
-		case token.STRING:
-			v, err := strconv.ParseInt(n.Token.Text, 0, 64)
+			v, err := strconv.ParseInt(n.Token.Text, 0, 0)
 			if err != nil {
 				return err
 			}
 
-			result.SetInt(int64(v))
+			result.Set(reflect.ValueOf(int(v)))
+			return nil
+		case token.STRING:
+			v, err := strconv.ParseInt(n.Token.Value().(string), 0, 0)
+			if err != nil {
+				return err
+			}
+
+			result.Set(reflect.ValueOf(int(v)))
 			return nil
 		}
 	}
 
-	return fmt.Errorf("%s: unknown type %t", name, node)
+	return fmt.Errorf("%s: unknown type %T", name, node)
 }
 
 func (d *decoder) decodeInterface(name string, node ast.Node, result reflect.Value) error {
 	var set reflect.Value
 	redecode := true
 
-	switch n := node.(type) {
+	// For testing types, ObjectType should just be treated as a list. We
+	// set this to a temporary var because we want to pass in the real node.
+	testNode := node
+	if ot, ok := node.(*ast.ObjectType); ok {
+		testNode = ot.List
+	}
+
+	switch n := testNode.(type) {
 	case *ast.ObjectList:
 		// If we're at the root or we're directly within a slice, then we
 		// decode objects into map[string]interface{}, otherwise we decode
@@ -170,11 +185,25 @@ func (d *decoder) decodeInterface(name string, node ast.Node, result reflect.Val
 			set = result
 		}
 	case *ast.ObjectType:
-		var temp []map[string]interface{}
-		tempVal := reflect.ValueOf(temp)
-		result := reflect.MakeSlice(
-			reflect.SliceOf(tempVal.Type().Elem()), 0, 1)
-		set = result
+		// If we're at the root or we're directly within a slice, then we
+		// decode objects into map[string]interface{}, otherwise we decode
+		// them into lists.
+		if len(d.stack) == 0 || d.stack[len(d.stack)-1] == reflect.Slice {
+			var temp map[string]interface{}
+			tempVal := reflect.ValueOf(temp)
+			result := reflect.MakeMap(
+				reflect.MapOf(
+					reflect.TypeOf(""),
+					tempVal.Type().Elem()))
+
+			set = result
+		} else {
+			var temp []map[string]interface{}
+			tempVal := reflect.ValueOf(temp)
+			result := reflect.MakeSlice(
+				reflect.SliceOf(tempVal.Type().Elem()), 0, 1)
+			set = result
+		}
 	case *ast.ListType:
 		var temp []interface{}
 		tempVal := reflect.ValueOf(temp)
@@ -347,6 +376,8 @@ func (d *decoder) decodeSlice(name string, node ast.Node, result reflect.Value) 
 		}
 	case *ast.ObjectType:
 		items = []ast.Node{n}
+	case *ast.ListType:
+		items = n.List
 	}
 
 	if items == nil {
@@ -375,154 +406,161 @@ func (d *decoder) decodeString(name string, node ast.Node, result reflect.Value)
 	case *ast.LiteralType:
 		switch n.Token.Type {
 		case token.NUMBER:
-			fallthrough
+			result.Set(reflect.ValueOf(n.Token.Text).Convert(result.Type()))
+			return nil
 		case token.STRING:
-			result.Set(reflect.ValueOf(n.Token.Value()))
+			result.Set(reflect.ValueOf(n.Token.Value()).Convert(result.Type()))
 			return nil
 		}
 	}
 
-	return fmt.Errorf("%s: unknown type %t", name, node)
+	return fmt.Errorf("%s: unknown type %T", name, node)
 }
 
 func (d *decoder) decodeStruct(name string, node ast.Node, result reflect.Value) error {
-	return nil
-	/*
-		item, ok := node.(*ast.ObjectItem)
-		if !ok {
-			return fmt.Errorf("%s: not an object type for map (%t)", name, node)
-		}
+	var item *ast.ObjectItem
+	if it, ok := node.(*ast.ObjectItem); ok {
+		item = it
+		node = it.Val
+	}
 
-		val, ok := node.(*ast.ObjectList)
-		if !ok {
-			return fmt.Errorf("%s: not an object type for map (%t)", name, node)
-		}
+	if ot, ok := node.(*ast.ObjectType); ok {
+		node = ot.List
+	}
 
-		// This slice will keep track of all the structs we'll be decoding.
-		// There can be more than one struct if there are embedded structs
-		// that are squashed.
-		structs := make([]reflect.Value, 1, 5)
-		structs[0] = result
+	list, ok := node.(*ast.ObjectList)
+	if !ok {
+		return fmt.Errorf("%s: not an object type for struct (%T)", name, node)
+	}
 
-		// Compile the list of all the fields that we're going to be decoding
-		// from all the structs.
-		fields := make(map[*reflect.StructField]reflect.Value)
-		for len(structs) > 0 {
-			structVal := structs[0]
-			structs = structs[1:]
+	// This slice will keep track of all the structs we'll be decoding.
+	// There can be more than one struct if there are embedded structs
+	// that are squashed.
+	structs := make([]reflect.Value, 1, 5)
+	structs[0] = result
 
-			structType := structVal.Type()
-			for i := 0; i < structType.NumField(); i++ {
-				fieldType := structType.Field(i)
+	// Compile the list of all the fields that we're going to be decoding
+	// from all the structs.
+	fields := make(map[*reflect.StructField]reflect.Value)
+	for len(structs) > 0 {
+		structVal := structs[0]
+		structs = structs[1:]
 
-				if fieldType.Anonymous {
-					fieldKind := fieldType.Type.Kind()
-					if fieldKind != reflect.Struct {
-						return fmt.Errorf(
-							"%s: unsupported type to struct: %s",
-							fieldType.Name, fieldKind)
-					}
+		structType := structVal.Type()
+		for i := 0; i < structType.NumField(); i++ {
+			fieldType := structType.Field(i)
 
-					// We have an embedded field. We "squash" the fields down
-					// if specified in the tag.
-					squash := false
-					tagParts := strings.Split(fieldType.Tag.Get(tagName), ",")
-					for _, tag := range tagParts[1:] {
-						if tag == "squash" {
-							squash = true
-							break
-						}
-					}
+			if fieldType.Anonymous {
+				fieldKind := fieldType.Type.Kind()
+				if fieldKind != reflect.Struct {
+					return fmt.Errorf(
+						"%s: unsupported type to struct: %s",
+						fieldType.Name, fieldKind)
+				}
 
-					if squash {
-						structs = append(
-							structs, result.FieldByName(fieldType.Name))
-						continue
+				// We have an embedded field. We "squash" the fields down
+				// if specified in the tag.
+				squash := false
+				tagParts := strings.Split(fieldType.Tag.Get(tagName), ",")
+				for _, tag := range tagParts[1:] {
+					if tag == "squash" {
+						squash = true
+						break
 					}
 				}
 
-				// Normal struct field, store it away
-				fields[&fieldType] = structVal.Field(i)
+				if squash {
+					structs = append(
+						structs, result.FieldByName(fieldType.Name))
+					continue
+				}
 			}
+
+			// Normal struct field, store it away
+			fields[&fieldType] = structVal.Field(i)
+		}
+	}
+
+	usedKeys := make(map[string]struct{})
+	decodedFields := make([]string, 0, len(fields))
+	decodedFieldsVal := make([]reflect.Value, 0)
+	unusedKeysVal := make([]reflect.Value, 0)
+	for fieldType, field := range fields {
+		if !field.IsValid() {
+			// This should never happen
+			panic("field is not valid")
 		}
 
-		usedKeys := make(map[string]struct{})
-		decodedFields := make([]string, 0, len(fields))
-		decodedFieldsVal := make([]reflect.Value, 0)
-		unusedKeysVal := make([]reflect.Value, 0)
-		for fieldType, field := range fields {
-			if !field.IsValid() {
-				// This should never happen
-				panic("field is not valid")
-			}
+		// If we can't set the field, then it is unexported or something,
+		// and we just continue onwards.
+		if !field.CanSet() {
+			continue
+		}
 
-			// If we can't set the field, then it is unexported or something,
-			// and we just continue onwards.
-			if !field.CanSet() {
+		fieldName := fieldType.Name
+
+		tagValue := fieldType.Tag.Get(tagName)
+		tagParts := strings.SplitN(tagValue, ",", 2)
+		if len(tagParts) >= 2 {
+			switch tagParts[1] {
+			case "decodedFields":
+				decodedFieldsVal = append(decodedFieldsVal, field)
+				continue
+			case "key":
+				if item == nil {
+					return fmt.Errorf(
+						"%s: %s asked for 'key', impossible",
+						name, fieldName)
+				}
+
+				field.SetString(item.Keys[0].Token.Value().(string))
+				continue
+			case "unusedKeys":
+				unusedKeysVal = append(unusedKeysVal, field)
 				continue
 			}
-
-			fieldName := fieldType.Name
-
-			// This is whether or not we expand the object into its children
-			// later.
-			expand := false
-
-			tagValue := fieldType.Tag.Get(tagName)
-			tagParts := strings.SplitN(tagValue, ",", 2)
-			if len(tagParts) >= 2 {
-				switch tagParts[1] {
-				case "expand":
-					expand = true
-				case "decodedFields":
-					decodedFieldsVal = append(decodedFieldsVal, field)
-					continue
-				case "key":
-					field.SetString(item.Keys[0].Token.Text)
-					continue
-				case "unusedKeys":
-					unusedKeysVal = append(unusedKeysVal, field)
-					continue
-				}
-			}
-
-			if tagParts[0] != "" {
-				fieldName = tagParts[0]
-			}
-
-			// Find the element matching this name
-			continue
-			/*
-				obj := o.Get(fieldName, true)
-					if obj == nil {
-						continue
-					}
-
-				// Track the used key
-				usedKeys[fieldName] = struct{}{}
-
-				// Create the field name and decode. We range over the elements
-				// because we actually want the value.
-				fieldName = fmt.Sprintf("%s.%s", name, fieldName)
-				for _, obj := range obj.Elem(expand) {
-					if err := d.decode(fieldName, obj, field); err != nil {
-						return err
-					}
-				}
-
-			decodedFields = append(decodedFields, fieldType.Name)
 		}
 
-		if len(decodedFieldsVal) > 0 {
-			// Sort it so that it is deterministic
-			sort.Strings(decodedFields)
-
-			for _, v := range decodedFieldsVal {
-				v.Set(reflect.ValueOf(decodedFields))
-			}
+		if tagParts[0] != "" {
+			fieldName = tagParts[0]
 		}
 
-	*/
+		// Determine the element we'll use to decode. If it is a single
+		// match (only object with the field), then we decode it exactly.
+		// If it is a prefix match, then we decode the matches.
+		var decodeNode ast.Node
+		matches := list.Prefix(fieldName)
+		if len(matches.Items) == 0 {
+			item := list.Get(fieldName)
+			if item == nil {
+				continue
+			}
+			decodeNode = item.Val
+		} else {
+			decodeNode = matches
+		}
+
+		// Track the used key
+		usedKeys[fieldName] = struct{}{}
+
+		// Create the field name and decode. We range over the elements
+		// because we actually want the value.
+		fieldName = fmt.Sprintf("%s.%s", name, fieldName)
+		if err := d.decode(fieldName, decodeNode, field); err != nil {
+			return err
+		}
+
+		decodedFields = append(decodedFields, fieldType.Name)
+	}
+
+	if len(decodedFieldsVal) > 0 {
+		// Sort it so that it is deterministic
+		sort.Strings(decodedFields)
+
+		for _, v := range decodedFieldsVal {
+			v.Set(reflect.ValueOf(decodedFields))
+		}
+	}
 
 	return nil
 }
