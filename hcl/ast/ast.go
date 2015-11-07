@@ -45,27 +45,18 @@ func (o *ObjectList) Add(item *ObjectItem) {
 	o.Items = append(o.Items, item)
 }
 
-func (o *ObjectList) Get(key string) *ObjectList {
-	var result ObjectList
-	for _, item := range o.Items {
-		if len(item.Keys) != 1 {
-			continue
-		}
-
-		text := item.Keys[0].Token.Text
-		if text == key || strings.EqualFold(text, key) {
-			result.Add(item)
-		}
-	}
-
-	return &result
-}
-
-func (o *ObjectList) Prefix(keys ...string) *ObjectList {
+// Filter filters out the objects with the given key list as a prefix.
+//
+// The returned list of objects contain ObjectItems where the keys have
+// this prefix already stripped off. This might result in objects with
+// zero-length key lists if they have no children.
+//
+// If no matches are found, an empty ObjectList (non-nil) is returned.
+func (o *ObjectList) Filter(keys ...string) *ObjectList {
 	var result ObjectList
 	for _, item := range o.Items {
 		// If there aren't enough keys, then ignore this
-		if len(item.Keys) < len(keys)+1 {
+		if len(item.Keys) < len(keys) {
 			continue
 		}
 
@@ -85,6 +76,32 @@ func (o *ObjectList) Prefix(keys ...string) *ObjectList {
 		newItem := *item
 		newItem.Keys = newItem.Keys[len(keys):]
 		result.Add(&newItem)
+	}
+
+	return &result
+}
+
+// Children returns further nested objects (key length > 0) within this
+// ObjectList. This should be used with Filter to get at child items.
+func (o *ObjectList) Children() *ObjectList {
+	var result ObjectList
+	for _, item := range o.Items {
+		if len(item.Keys) > 0 {
+			result.Add(item)
+		}
+	}
+
+	return &result
+}
+
+// Elem returns items in the list that are direct element assignments
+// (key length == 0). This should be used with Filter to get at elements.
+func (o *ObjectList) Elem() *ObjectList {
+	var result ObjectList
+	for _, item := range o.Items {
+		if len(item.Keys) == 0 {
+			result.Add(item)
+		}
 	}
 
 	return &result

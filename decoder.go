@@ -309,7 +309,7 @@ func (d *decoder) decodeMap(name string, node ast.Node, result reflect.Value) er
 		// get the objectlist of only these keys.
 		itemVal := item.Val
 		if len(item.Keys) > 1 {
-			itemVal = n.Prefix(keyStr)
+			itemVal = n.Filter(keyStr)
 			done[keyStr] = struct{}{}
 		}
 
@@ -533,8 +533,9 @@ func (d *decoder) decodeStruct(name string, node ast.Node, result reflect.Value)
 		// Determine the element we'll use to decode. If it is a single
 		// match (only object with the field), then we decode it exactly.
 		// If it is a prefix match, then we decode the matches.
-		prefixMatches := list.Prefix(fieldName)
-		matches := list.Get(fieldName)
+		filter := list.Filter(fieldName)
+		prefixMatches := filter.Children()
+		matches := filter.Elem()
 		if len(matches.Items) == 0 && len(prefixMatches.Items) == 0 {
 			continue
 		}
