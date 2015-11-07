@@ -533,19 +533,10 @@ func (d *decoder) decodeStruct(name string, node ast.Node, result reflect.Value)
 		// Determine the element we'll use to decode. If it is a single
 		// match (only object with the field), then we decode it exactly.
 		// If it is a prefix match, then we decode the matches.
-		var decodeNode ast.Node
-		matches := list.Prefix(fieldName)
-		if len(matches.Items) == 0 {
-			single := list.Get(fieldName)
-			if single == nil {
-				continue
-			}
-			decodeNode = single.Val
-			if ot, ok := decodeNode.(*ast.ObjectType); ok {
-				decodeNode = &ast.ObjectList{Items: ot.List.Items}
-			}
-		} else {
-			decodeNode = matches
+		prefixMatches := list.Prefix(fieldName)
+		matches := list.Get(fieldName)
+		if len(matches.Items) == 0 && len(prefixMatches.Items) == 0 {
+			continue
 		}
 
 		// Track the used key
@@ -554,8 +545,20 @@ func (d *decoder) decodeStruct(name string, node ast.Node, result reflect.Value)
 		// Create the field name and decode. We range over the elements
 		// because we actually want the value.
 		fieldName = fmt.Sprintf("%s.%s", name, fieldName)
-		if err := d.decode(fieldName, decodeNode, field); err != nil {
-			return err
+		if len(prefixMatches.Items) > 0 {
+			if err := d.decode(fieldName, prefixMatches, field); err != nil {
+				return err
+			}
+		}
+		for _, match := range matches.Items {
+			var decodeNode ast.Node = match.Val
+			if ot, ok := decodeNode.(*ast.ObjectType); ok {
+				decodeNode = &ast.ObjectList{Items: ot.List.Items}
+			}
+
+			if err := d.decode(fieldName, decodeNode, field); err != nil {
+				return err
+			}
 		}
 
 		decodedFields = append(decodedFields, fieldType.Name)

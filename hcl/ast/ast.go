@@ -45,19 +45,20 @@ func (o *ObjectList) Add(item *ObjectItem) {
 	o.Items = append(o.Items, item)
 }
 
-func (o *ObjectList) Get(key string) *ObjectItem {
+func (o *ObjectList) Get(key string) *ObjectList {
+	var result ObjectList
 	for _, item := range o.Items {
-		if len(item.Keys) == 0 {
+		if len(item.Keys) != 1 {
 			continue
 		}
 
 		text := item.Keys[0].Token.Text
 		if text == key || strings.EqualFold(text, key) {
-			return item
+			result.Add(item)
 		}
 	}
 
-	return nil
+	return &result
 }
 
 func (o *ObjectList) Prefix(keys ...string) *ObjectList {
