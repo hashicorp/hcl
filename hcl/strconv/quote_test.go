@@ -66,6 +66,8 @@ var misquoted = []string{
 	"\"\n\"",
 	"\"\\n\n\"",
 	"'\n'",
+	`"${"`,
+	`"${foo{}"`,
 }
 
 func TestUnquote(t *testing.T) {

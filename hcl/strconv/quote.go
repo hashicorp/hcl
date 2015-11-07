@@ -32,7 +32,7 @@ func Unquote(s string) (t string, err error) {
 	}
 
 	// Is it trivial?  Avoid allocation.
-	if !contains(s, '\\') && !contains(s, quote) {
+	if !contains(s, '\\') && !contains(s, quote) && !contains(s, '$') {
 		switch quote {
 		case '"':
 			return s, nil
@@ -56,7 +56,7 @@ func Unquote(s string) (t string, err error) {
 
 			// Continue reading until we find the closing brace, copying as-is
 			braces := 1
-			for len(s) > 0 {
+			for len(s) > 0 && braces > 0 {
 				r, size := utf8.DecodeRuneInString(s)
 				if r == utf8.RuneError {
 					return "", ErrSyntax
@@ -72,9 +72,6 @@ func Unquote(s string) (t string, err error) {
 					braces++
 				case '}':
 					braces--
-					if braces == 0 {
-						break
-					}
 				}
 			}
 			if braces != 0 {
