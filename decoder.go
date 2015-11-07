@@ -28,14 +28,19 @@ func Decode(out interface{}, in string) error {
 
 // DecodeObject is a lower-level version of Decode. It decodes a
 // raw Object into the given output.
-func DecodeObject(out interface{}, n *ast.File) error {
+func DecodeObject(out interface{}, n ast.Node) error {
 	val := reflect.ValueOf(out)
 	if val.Kind() != reflect.Ptr {
 		return errors.New("result must be a pointer")
 	}
 
+	// If we have the file, we really decode the root node
+	if f, ok := n.(*ast.File); ok {
+		n = f.Node
+	}
+
 	var d decoder
-	return d.decode("root", n.Node, val.Elem())
+	return d.decode("root", n, val.Elem())
 }
 
 type decoder struct {
