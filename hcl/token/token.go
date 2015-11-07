@@ -5,6 +5,8 @@ package token
 import (
 	"fmt"
 	"strconv"
+
+	hclstrconv "github.com/hashicorp/hcl/hcl/strconv"
 )
 
 // Token defines a single HCL token which can be obtained via the Scanner
@@ -136,9 +138,9 @@ func (t Token) Value() interface{} {
 	case IDENT:
 		return t.Text
 	case STRING:
-		v, err := strconv.Unquote(t.Text)
+		v, err := hclstrconv.Unquote(t.Text)
 		if err != nil {
-			panic(err)
+			panic(fmt.Sprintf("unquote %s err: %s", t.Text, err))
 		}
 
 		return v
