@@ -133,6 +133,8 @@ func (t Token) Value() interface{} {
 		}
 
 		return int64(v)
+	case IDENT:
+		return t.Text
 	case STRING:
 		// It is wrapped in quotes always
 		return t.Text[1 : len(t.Text)-1]

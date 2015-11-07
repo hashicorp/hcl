@@ -47,6 +47,7 @@ func TestTokenValue(t *testing.T) {
 		{Token{Type: BOOL, Text: `false`}, false},
 		{Token{Type: FLOAT, Text: `3.14`}, float64(3.14)},
 		{Token{Type: NUMBER, Text: `42`}, int64(42)},
+		{Token{Type: IDENT, Text: `foo`}, "foo"},
 		{Token{Type: STRING, Text: `"foo"`}, "foo"},
 	}
 
