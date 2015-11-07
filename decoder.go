@@ -106,7 +106,7 @@ func (d *decoder) decodeBool(name string, node ast.Node, result reflect.Value) e
 				return err
 			}
 
-			result.SetBool(v)
+			result.Set(reflect.ValueOf(v))
 			return nil
 		}
 	}
