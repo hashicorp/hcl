@@ -44,8 +44,15 @@ var errEofToken = errors.New("EOF token found")
 // Parse returns the fully parsed source and returns the abstract syntax tree.
 func (p *Parser) Parse() (*ast.File, error) {
 	f := &ast.File{}
-	var err error
+	var err, scerr error
+	p.sc.Error = func(pos token.Pos, msg string) {
+		scerr = fmt.Errorf("%s: %s", pos, msg)
+	}
+
 	f.Node, err = p.objectList()
+	if scerr != nil {
+		return nil, scerr
+	}
 	if err != nil {
 		return nil, err
 	}
