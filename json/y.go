@@ -8,17 +8,21 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/hashicorp/hcl/hcl"
+	"github.com/hashicorp/hcl/hcl/ast"
+	"github.com/hashicorp/hcl/hcl/token"
 )
 
-//line parse.y:15
+//line parse.y:16
 type jsonSymType struct {
 	yys     int
 	f       float64
+	list    []ast.Node
+	node    ast.Node
 	num     int
 	str     string
-	obj     *hcl.Object
-	objlist []*hcl.Object
+	obj     *ast.ObjectType
+	objitem *ast.ObjectItem
+	objlist *ast.ObjectList
 }
 
 const FLOAT = 57346
@@ -71,7 +75,7 @@ const jsonEofCode = 1
 const jsonErrCode = 2
 const jsonMaxDepth = 200
 
-//line parse.y:210
+//line parse.y:224
 
 //line yacctab:1
 var jsonExca = [...]int{
@@ -94,8 +98,8 @@ var jsonAct = [...]int{
 	21, 22, 30, 17, 18, 19, 23, 25, 24, 26,
 	25, 24, 36, 32, 13, 3, 10, 22, 33, 17,
 	18, 19, 23, 35, 34, 23, 38, 9, 7, 39,
-	5, 29, 6, 8, 37, 15, 2, 1, 4, 31,
-	16, 14, 11,
+	5, 29, 6, 8, 37, 15, 2, 1, 4, 14,
+	31, 16, 11,
 }
 var jsonPact = [...]int{
 
@@ -106,14 +110,14 @@ var jsonPact = [...]int{
 }
 var jsonPgo = [...]int{
 
-	0, 10, 4, 51, 45, 42, 0, 50, 49, 48,
+	0, 10, 51, 50, 49, 0, 4, 45, 42, 48,
 	19, 47,
 }
 var jsonR1 = [...]int{
 
-	0, 11, 4, 4, 9, 9, 5, 6, 6, 6,
-	6, 6, 6, 6, 7, 7, 8, 8, 3, 3,
-	3, 3, 2, 2, 1, 1, 10, 10,
+	0, 11, 7, 7, 9, 9, 8, 5, 5, 5,
+	5, 5, 5, 5, 2, 2, 3, 3, 4, 4,
+	4, 4, 6, 6, 1, 1, 10, 10,
 }
 var jsonR2 = [...]int{
 
@@ -123,10 +127,10 @@ var jsonR2 = [...]int{
 }
 var jsonChk = [...]int{
 
-	-1000, -11, -4, 12, -9, 13, -5, 11, 13, 7,
-	6, -5, -6, 11, -3, -4, -7, 16, 17, 18,
-	-2, -1, 14, 19, 5, 4, -10, 21, 22, -10,
-	15, -8, -6, -2, -1, 5, 5, 15, 7, -6,
+	-1000, -11, -7, 12, -9, 13, -8, 11, 13, 7,
+	6, -8, -5, 11, -4, -7, -2, 16, 17, 18,
+	-6, -1, 14, 19, 5, 4, -10, 21, 22, -10,
+	15, -3, -5, -6, -1, 5, 5, 15, 7, -5,
 }
 var jsonDef = [...]int{
 
@@ -491,206 +495,213 @@ jsondefault:
 
 	case 1:
 		jsonDollar = jsonS[jsonpt-1 : jsonpt+1]
-		//line parse.y:39
+		//line parse.y:46
 		{
-			jsonResult = jsonDollar[1].obj
+			jsonResult = &ast.File{Node: jsonDollar[1].obj}
 		}
 	case 2:
 		jsonDollar = jsonS[jsonpt-3 : jsonpt+1]
-		//line parse.y:45
+		//line parse.y:52
 		{
-			jsonVAL.obj = &hcl.Object{
-				Type:  hcl.ValueTypeObject,
-				Value: hcl.ObjectList(jsonDollar[2].objlist).Flat(),
+			jsonVAL.obj = &ast.ObjectType{
+				List: jsonDollar[2].objlist,
 			}
 		}
 	case 3:
 		jsonDollar = jsonS[jsonpt-2 : jsonpt+1]
-		//line parse.y:52
+		//line parse.y:58
 		{
-			jsonVAL.obj = &hcl.Object{Type: hcl.ValueTypeObject}
+			jsonVAL.obj = &ast.ObjectType{}
 		}
 	case 4:
 		jsonDollar = jsonS[jsonpt-1 : jsonpt+1]
-		//line parse.y:58
+		//line parse.y:64
 		{
-			jsonVAL.objlist = []*hcl.Object{jsonDollar[1].obj}
+			jsonVAL.objlist = &ast.ObjectList{
+				Items: []*ast.ObjectItem{jsonDollar[1].objitem},
+			}
 		}
 	case 5:
 		jsonDollar = jsonS[jsonpt-3 : jsonpt+1]
-		//line parse.y:62
+		//line parse.y:70
 		{
-			jsonVAL.objlist = append(jsonDollar[1].objlist, jsonDollar[3].obj)
+			jsonDollar[1].objlist.Items = append(jsonDollar[1].objlist.Items, jsonDollar[3].objitem)
+			jsonVAL.objlist = jsonDollar[1].objlist
 		}
 	case 6:
 		jsonDollar = jsonS[jsonpt-3 : jsonpt+1]
-		//line parse.y:68
+		//line parse.y:77
 		{
-			jsonDollar[3].obj.Key = jsonDollar[1].str
-			jsonVAL.obj = jsonDollar[3].obj
+			jsonVAL.objitem = &ast.ObjectItem{
+				Keys: []*ast.ObjectKey{
+					&ast.ObjectKey{
+						Token: token.Token{
+							Type: token.STRING,
+							Text: jsonDollar[1].str,
+						},
+					},
+				},
+
+				Val: jsonDollar[3].node,
+			}
 		}
 	case 7:
 		jsonDollar = jsonS[jsonpt-1 : jsonpt+1]
-		//line parse.y:75
+		//line parse.y:94
 		{
-			jsonVAL.obj = &hcl.Object{
-				Type:  hcl.ValueTypeString,
-				Value: jsonDollar[1].str,
+			jsonVAL.node = &ast.LiteralType{
+				Token: token.Token{Type: token.STRING, Text: jsonDollar[1].str},
 			}
 		}
 	case 8:
 		jsonDollar = jsonS[jsonpt-1 : jsonpt+1]
-		//line parse.y:82
+		//line parse.y:100
 		{
-			jsonVAL.obj = jsonDollar[1].obj
+			jsonVAL.node = &ast.LiteralType{
+				Token: token.Token{
+					Type: token.NUMBER,
+					Text: fmt.Sprintf("%d", jsonDollar[1].node),
+				},
+			}
 		}
 	case 9:
 		jsonDollar = jsonS[jsonpt-1 : jsonpt+1]
-		//line parse.y:86
+		//line parse.y:109
 		{
-			jsonVAL.obj = jsonDollar[1].obj
+			jsonVAL.node = jsonDollar[1].obj
 		}
 	case 10:
 		jsonDollar = jsonS[jsonpt-1 : jsonpt+1]
-		//line parse.y:90
+		//line parse.y:113
 		{
-			jsonVAL.obj = &hcl.Object{
-				Type:  hcl.ValueTypeList,
-				Value: jsonDollar[1].objlist,
+			jsonVAL.node = &ast.ListType{
+				List: jsonDollar[1].list,
 			}
 		}
 	case 11:
 		jsonDollar = jsonS[jsonpt-1 : jsonpt+1]
-		//line parse.y:97
+		//line parse.y:119
 		{
-			jsonVAL.obj = &hcl.Object{
-				Type:  hcl.ValueTypeBool,
-				Value: true,
+			jsonVAL.node = &ast.LiteralType{
+				Token: token.Token{Type: token.BOOL, Text: "true"},
 			}
 		}
 	case 12:
 		jsonDollar = jsonS[jsonpt-1 : jsonpt+1]
-		//line parse.y:104
+		//line parse.y:125
 		{
-			jsonVAL.obj = &hcl.Object{
-				Type:  hcl.ValueTypeBool,
-				Value: false,
+			jsonVAL.node = &ast.LiteralType{
+				Token: token.Token{Type: token.BOOL, Text: "false"},
 			}
 		}
 	case 13:
 		jsonDollar = jsonS[jsonpt-1 : jsonpt+1]
-		//line parse.y:111
+		//line parse.y:131
 		{
-			jsonVAL.obj = &hcl.Object{
-				Type:  hcl.ValueTypeNil,
-				Value: nil,
+			jsonVAL.node = &ast.LiteralType{
+				Token: token.Token{Type: token.STRING, Text: ""},
 			}
 		}
 	case 14:
 		jsonDollar = jsonS[jsonpt-2 : jsonpt+1]
-		//line parse.y:120
+		//line parse.y:139
 		{
-			jsonVAL.objlist = nil
+			jsonVAL.list = nil
 		}
 	case 15:
 		jsonDollar = jsonS[jsonpt-3 : jsonpt+1]
-		//line parse.y:124
+		//line parse.y:143
 		{
-			jsonVAL.objlist = jsonDollar[2].objlist
+			jsonVAL.list = jsonDollar[2].list
 		}
 	case 16:
 		jsonDollar = jsonS[jsonpt-1 : jsonpt+1]
-		//line parse.y:130
+		//line parse.y:149
 		{
-			jsonVAL.objlist = []*hcl.Object{jsonDollar[1].obj}
+			jsonVAL.list = []ast.Node{jsonDollar[1].node}
 		}
 	case 17:
 		jsonDollar = jsonS[jsonpt-3 : jsonpt+1]
-		//line parse.y:134
+		//line parse.y:153
 		{
-			jsonVAL.objlist = append(jsonDollar[1].objlist, jsonDollar[3].obj)
+			jsonVAL.list = append(jsonDollar[1].list, jsonDollar[3].node)
 		}
 	case 18:
 		jsonDollar = jsonS[jsonpt-1 : jsonpt+1]
-		//line parse.y:140
+		//line parse.y:159
 		{
-			jsonVAL.obj = &hcl.Object{
-				Type:  hcl.ValueTypeInt,
-				Value: jsonDollar[1].num,
+			jsonVAL.node = &ast.LiteralType{
+				Token: token.Token{Type: token.NUMBER, Text: fmt.Sprintf("%d", jsonDollar[1].num)},
 			}
 		}
 	case 19:
 		jsonDollar = jsonS[jsonpt-1 : jsonpt+1]
-		//line parse.y:147
+		//line parse.y:165
 		{
-			jsonVAL.obj = &hcl.Object{
-				Type:  hcl.ValueTypeFloat,
-				Value: jsonDollar[1].f,
+			jsonVAL.node = &ast.LiteralType{
+				Token: token.Token{
+					Type: token.FLOAT,
+					Text: fmt.Sprintf("%f", jsonDollar[1].f),
+				},
 			}
 		}
 	case 20:
 		jsonDollar = jsonS[jsonpt-2 : jsonpt+1]
-		//line parse.y:154
+		//line parse.y:174
 		{
 			fs := fmt.Sprintf("%d%s", jsonDollar[1].num, jsonDollar[2].str)
-			f, err := strconv.ParseFloat(fs, 64)
-			if err != nil {
-				panic(err)
-			}
-
-			jsonVAL.obj = &hcl.Object{
-				Type:  hcl.ValueTypeFloat,
-				Value: f,
+			jsonVAL.node = &ast.LiteralType{
+				Token: token.Token{
+					Type: token.FLOAT,
+					Text: fs,
+				},
 			}
 		}
 	case 21:
 		jsonDollar = jsonS[jsonpt-2 : jsonpt+1]
-		//line parse.y:167
+		//line parse.y:184
 		{
 			fs := fmt.Sprintf("%f%s", jsonDollar[1].f, jsonDollar[2].str)
-			f, err := strconv.ParseFloat(fs, 64)
-			if err != nil {
-				panic(err)
-			}
-
-			jsonVAL.obj = &hcl.Object{
-				Type:  hcl.ValueTypeFloat,
-				Value: f,
+			jsonVAL.node = &ast.LiteralType{
+				Token: token.Token{
+					Type: token.FLOAT,
+					Text: fs,
+				},
 			}
 		}
 	case 22:
 		jsonDollar = jsonS[jsonpt-2 : jsonpt+1]
-		//line parse.y:182
+		//line parse.y:196
 		{
 			jsonVAL.num = jsonDollar[2].num * -1
 		}
 	case 23:
 		jsonDollar = jsonS[jsonpt-1 : jsonpt+1]
-		//line parse.y:186
+		//line parse.y:200
 		{
 			jsonVAL.num = jsonDollar[1].num
 		}
 	case 24:
 		jsonDollar = jsonS[jsonpt-2 : jsonpt+1]
-		//line parse.y:192
+		//line parse.y:206
 		{
 			jsonVAL.f = jsonDollar[2].f * -1
 		}
 	case 25:
 		jsonDollar = jsonS[jsonpt-1 : jsonpt+1]
-		//line parse.y:196
+		//line parse.y:210
 		{
 			jsonVAL.f = jsonDollar[1].f
 		}
 	case 26:
 		jsonDollar = jsonS[jsonpt-2 : jsonpt+1]
-		//line parse.y:202
+		//line parse.y:216
 		{
 			jsonVAL.str = "e" + strconv.FormatInt(int64(jsonDollar[2].num), 10)
 		}
 	case 27:
 		jsonDollar = jsonS[jsonpt-2 : jsonpt+1]
-		//line parse.y:206
+		//line parse.y:220
 		{
 			jsonVAL.str = "e-" + strconv.FormatInt(int64(jsonDollar[2].num), 10)
 		}

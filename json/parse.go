@@ -3,18 +3,18 @@ package json
 import (
 	"sync"
 
-	"github.com/hashicorp/hcl/hcl"
 	"github.com/hashicorp/go-multierror"
+	"github.com/hashicorp/hcl/hcl/ast"
 )
 
 // jsonErrors are the errors built up from parsing. These should not
 // be accessed directly.
 var jsonErrors []error
 var jsonLock sync.Mutex
-var jsonResult *hcl.Object
+var jsonResult *ast.File
 
 // Parse parses the given string and returns the result.
-func Parse(v string) (*hcl.Object, error) {
+func Parse(v string) (*ast.File, error) {
 	jsonLock.Lock()
 	defer jsonLock.Unlock()
 	jsonErrors = nil

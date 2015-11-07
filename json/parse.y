@@ -7,23 +7,30 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/hashicorp/hcl/hcl"
+	"github.com/hashicorp/hcl/hcl/ast"
+	"github.com/hashicorp/hcl/hcl/token"
 )
 
 %}
 
 %union {
 	f        float64
+	list     []ast.Node
+	node     ast.Node
 	num      int
 	str      string
-	obj      *hcl.Object
-	objlist  []*hcl.Object
+	obj      *ast.ObjectType
+	objitem  *ast.ObjectItem
+	objlist  *ast.ObjectList
 }
 
 %type	<f> float
+%type	<list> array elements
+%type   <node> number value
 %type	<num> int
-%type	<obj> number object pair value
-%type	<objlist> array elements members
+%type	<obj> object
+%type	<objitem> pair
+%type	<objlist> members
 %type	<str> exp
 
 %token  <f> FLOAT
@@ -37,50 +44,66 @@ import (
 top:
 	object
 	{
-		jsonResult = $1
+		jsonResult = &ast.File{Node: $1}
 	}
 
 object:
 	LEFTBRACE members RIGHTBRACE
 	{
-		$$ = &hcl.Object{
-			Type:  hcl.ValueTypeObject,
-			Value: hcl.ObjectList($2).Flat(),
+		$$ = &ast.ObjectType{
+			List: $2,
 		}
 	}
 |	LEFTBRACE RIGHTBRACE
 	{
-		$$ = &hcl.Object{Type: hcl.ValueTypeObject}
+		$$ = &ast.ObjectType{}
 	}
 
 members:
 	pair
 	{
-		$$ = []*hcl.Object{$1}
+		$$ = &ast.ObjectList{
+			Items: []*ast.ObjectItem{$1},
+		}
 	}
 |	members COMMA pair
 	{
-		$$ = append($1, $3)
+		$1.Items = append($1.Items, $3)
+		$$ = $1
 	}
 
 pair:
 	STRING COLON value
 	{
-		$3.Key = $1
-		$$ = $3
+		$$ = &ast.ObjectItem{
+			Keys: []*ast.ObjectKey{
+				&ast.ObjectKey{
+					Token: token.Token{
+						Type: token.STRING,
+						Text: $1,
+					},
+				},
+			},
+
+			Val: $3,
+		}
 	}
 
 value:
 	STRING
 	{
-		$$ = &hcl.Object{
-			Type:  hcl.ValueTypeString,
-			Value: $1,
+		$$ = &ast.LiteralType{
+			Token: token.Token{Type: token.STRING, Text: $1},
 		}
 	}
 |	number
 	{
-		$$ = $1
+		$$ = &ast.LiteralType{
+			Token: token.Token{
+				Type: token.NUMBER,
+				Text: fmt.Sprintf("%d", $1),
+			},
+		}
 	}
 |	object
 	{
@@ -88,30 +111,26 @@ value:
 	}
 |	array
 	{
-		$$ = &hcl.Object{
-			Type:  hcl.ValueTypeList,
-			Value: $1,
+		$$ = &ast.ListType{
+			List: $1,
 		}
 	}
 |	TRUE
 	{
-		$$ = &hcl.Object{
-			Type:  hcl.ValueTypeBool,
-			Value: true,
+		$$ = &ast.LiteralType{
+			Token: token.Token{Type: token.BOOL, Text: "true"},
 		}
 	}
 |	FALSE
 	{
-		$$ = &hcl.Object{
-			Type:  hcl.ValueTypeBool,
-			Value: false,
+		$$ = &ast.LiteralType{
+			Token: token.Token{Type: token.BOOL, Text: "false"},
 		}
 	}
 |	NULL
 	{
-		$$ = &hcl.Object{
-			Type:  hcl.ValueTypeNil,
-			Value: nil,
+		$$ = &ast.LiteralType{
+			Token: token.Token{Type: token.STRING, Text: ""},
 		}
 	}
 
@@ -128,7 +147,7 @@ array:
 elements:
 	value
 	{
-		$$ = []*hcl.Object{$1}
+		$$ = []ast.Node{$1}
 	}
 |	elements COMMA value
 	{
@@ -138,42 +157,37 @@ elements:
 number:
 	int
 	{
-		$$ = &hcl.Object{
-			Type:  hcl.ValueTypeInt,
-			Value: $1,
+		$$ = &ast.LiteralType{
+			Token: token.Token{Type: token.NUMBER, Text: fmt.Sprintf("%d", $1)},
 		}
 	}
 |	float
 	{
-		$$ = &hcl.Object{
-			Type:  hcl.ValueTypeFloat,
-			Value: $1,
+		$$ = &ast.LiteralType{
+			Token: token.Token{
+				Type: token.FLOAT,
+				Text: fmt.Sprintf("%f", $1),
+			},
 		}
 	}
 |   int exp
     {
 		fs := fmt.Sprintf("%d%s", $1, $2)
-		f, err := strconv.ParseFloat(fs, 64)
-		if err != nil {
-			panic(err)
-		}
-
-		$$ = &hcl.Object{
-			Type:  hcl.ValueTypeFloat,
-			Value: f,
+		$$ = &ast.LiteralType{
+			Token: token.Token{
+				Type: token.FLOAT,
+				Text: fs,
+			},
 		}
     }
 |   float exp
     {
 		fs := fmt.Sprintf("%f%s", $1, $2)
-		f, err := strconv.ParseFloat(fs, 64)
-		if err != nil {
-			panic(err)
-		}
-
-		$$ = &hcl.Object{
-			Type:  hcl.ValueTypeFloat,
-			Value: f,
+		$$ = &ast.LiteralType{
+			Token: token.Token{
+				Type: token.FLOAT,
+				Text: fs,
+			},
 		}
     }
 
