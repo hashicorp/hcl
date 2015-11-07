@@ -43,6 +43,34 @@ func (o *ObjectList) Add(item *ObjectItem) {
 	o.Items = append(o.Items, item)
 }
 
+func (o *ObjectList) Prefix(keys ...string) *ObjectList {
+	var result ObjectList
+	for _, item := range o.Items {
+		// If there aren't enough keys, then ignore this
+		if len(item.Keys) < len(keys)+1 {
+			continue
+		}
+
+		match := true
+		for i, key := range item.Keys[:len(keys)] {
+			if key.Token.Text != keys[i] {
+				match = false
+				break
+			}
+		}
+		if !match {
+			continue
+		}
+
+		// Strip off the prefix from the children
+		newItem := *item
+		newItem.Keys = newItem.Keys[len(keys):]
+		result.Add(&newItem)
+	}
+
+	return &result
+}
+
 func (o *ObjectList) Pos() token.Pos {
 	// always returns the uninitiliazed position
 	return o.Items[0].Pos()
