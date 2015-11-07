@@ -103,3 +103,40 @@ func (t Type) IsOperator() bool { return operator_beg < t && t < operator_end }
 func (t Token) String() string {
 	return fmt.Sprintf("%s %s %s", t.Pos.String(), t.Type.String(), t.Text)
 }
+
+// Value returns the properly typed value for this token. The type of
+// the returned interface{} is guaranteed based on the Type field.
+//
+// This can only be called for literal types. If it is called for any other
+// type, this will panic.
+func (t Token) Value() interface{} {
+	switch t.Type {
+	case BOOL:
+		if t.Text == "true" {
+			return true
+		} else if t.Text == "false" {
+			return false
+		}
+
+		panic("unknown bool value: " + t.Text)
+	case FLOAT:
+		v, err := strconv.ParseFloat(t.Text, 64)
+		if err != nil {
+			panic(err)
+		}
+
+		return float64(v)
+	case NUMBER:
+		v, err := strconv.ParseInt(t.Text, 0, 64)
+		if err != nil {
+			panic(err)
+		}
+
+		return int64(v)
+	case STRING:
+		// It is wrapped in quotes always
+		return t.Text[1 : len(t.Text)-1]
+	default:
+		panic(fmt.Sprintf("unimplemented Value for type: %s", t.Type))
+	}
+}

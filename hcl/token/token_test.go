@@ -1,6 +1,9 @@
 package token
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func TestTypeString(t *testing.T) {
 	var tokens = []struct {
@@ -30,6 +33,26 @@ func TestTypeString(t *testing.T) {
 		if token.tt.String() != token.str {
 			t.Errorf("want: %q got:%q\n", token.str, token.tt)
 
+		}
+	}
+
+}
+
+func TestTokenValue(t *testing.T) {
+	var tokens = []struct {
+		tt Token
+		v  interface{}
+	}{
+		{Token{Type: BOOL, Text: `true`}, true},
+		{Token{Type: BOOL, Text: `false`}, false},
+		{Token{Type: FLOAT, Text: `3.14`}, float64(3.14)},
+		{Token{Type: NUMBER, Text: `42`}, int64(42)},
+		{Token{Type: STRING, Text: `"foo"`}, "foo"},
+	}
+
+	for _, token := range tokens {
+		if val := token.tt.Value(); !reflect.DeepEqual(val, token.v) {
+			t.Errorf("want: %v got:%v\n", token.v, val)
 		}
 	}
 
