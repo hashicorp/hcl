@@ -375,6 +375,7 @@ func (s *Scanner) scanExponent(ch rune) rune {
 
 // scanString scans a quoted string
 func (s *Scanner) scanString() {
+	braces := 0
 	for {
 		// '"' opening already consumed
 		// read character after quote
@@ -385,8 +386,19 @@ func (s *Scanner) scanString() {
 			return
 		}
 
-		if ch == '"' {
+		if ch == '"' && braces == 0 {
 			break
+		}
+
+		// If we're going into a ${} then we can ignore quotes for awhile
+		if braces == 0 && ch == '$' && s.peek() == '{' {
+			braces++
+			s.next()
+		} else if braces > 0 && ch == '{' {
+			braces++
+		}
+		if braces > 0 && ch == '}' {
+			braces--
 		}
 
 		if ch == '\\' {
