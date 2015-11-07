@@ -23,7 +23,7 @@ numbers = [1, 2] // another line here
 variable = {
 	description = "bar" # another yooo
 
-	foo = {
+	foo {
 		# Nested standalone
 
 		bar = "fatih"
@@ -31,6 +31,6 @@ variable = {
 }
 
 // lead comment
-foo = {
+foo {
 	bar = "fatih" // line comment 2 
 } // line comment 3

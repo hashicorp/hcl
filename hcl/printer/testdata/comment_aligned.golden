@@ -1,4 +1,4 @@
-aligned = {
+aligned {
 	# We have some aligned items below
 	foo     = "fatih"       # yoo1
 	default = "bar"         # yoo2
