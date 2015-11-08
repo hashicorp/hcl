@@ -65,41 +65,13 @@ func flattenObjects(node ast.Node) {
 			item := frontier[n-1]
 			frontier = frontier[:n-1]
 
-			// We only care if the value of this item is an object
-			ot, ok := item.Val.(*ast.ObjectType)
-			if !ok {
+			switch v := item.Val.(type) {
+			case *ast.ObjectType:
+				items, frontier = flattenObjectType(v, item, items, frontier)
+			case *ast.ListType:
+				items, frontier = flattenListType(v, item, items, frontier)
+			default:
 				items = append(items, item)
-				continue
-			}
-
-			// All the elements of this object must also be objects!
-			match := true
-			for _, item := range ot.List.Items {
-				if _, ok := item.Val.(*ast.ObjectType); !ok {
-					match = false
-					break
-				}
-			}
-			if !match {
-				items = append(items, item)
-				continue
-			}
-
-			// Great! We have a match go through all the items and flatten
-			for _, subitem := range ot.List.Items {
-				// Copy the new key
-				keys := make([]*ast.ObjectKey, len(item.Keys)+len(subitem.Keys))
-				copy(keys, item.Keys)
-				copy(keys[len(item.Keys):], subitem.Keys)
-
-				// Add it to the frontier so that we can recurse
-				frontier = append(frontier, &ast.ObjectItem{
-					Keys:        keys,
-					Assign:      item.Assign,
-					Val:         subitem.Val,
-					LeadComment: item.LeadComment,
-					LineComment: item.LineComment,
-				})
 			}
 		}
 
@@ -113,4 +85,76 @@ func flattenObjects(node ast.Node) {
 		list.Items = items
 		return true
 	})
+}
+
+func flattenListType(
+	ot *ast.ListType,
+	item *ast.ObjectItem,
+	items []*ast.ObjectItem,
+	frontier []*ast.ObjectItem) ([]*ast.ObjectItem, []*ast.ObjectItem) {
+	// All the elements of this object must also be objects!
+	for _, subitem := range ot.List {
+		if _, ok := subitem.(*ast.ObjectType); !ok {
+			items = append(items, item)
+			return items, frontier
+		}
+	}
+
+	// Great! We have a match go through all the items and flatten
+	for _, elem := range ot.List {
+		// This won't fail since we verified it earlier
+		ot := elem.(*ast.ObjectType)
+
+		// Go over all the subitems and merge them in
+		for _, subitem := range ot.List.Items {
+			// Copy the new key
+			keys := make([]*ast.ObjectKey, len(item.Keys)+len(subitem.Keys))
+			copy(keys, item.Keys)
+			copy(keys[len(item.Keys):], subitem.Keys)
+
+			// Add it to the frontier so that we can recurse
+			frontier = append(frontier, &ast.ObjectItem{
+				Keys:        keys,
+				Assign:      item.Assign,
+				Val:         subitem.Val,
+				LeadComment: item.LeadComment,
+				LineComment: item.LineComment,
+			})
+		}
+	}
+
+	return items, frontier
+}
+
+func flattenObjectType(
+	ot *ast.ObjectType,
+	item *ast.ObjectItem,
+	items []*ast.ObjectItem,
+	frontier []*ast.ObjectItem) ([]*ast.ObjectItem, []*ast.ObjectItem) {
+	// All the elements of this object must also be objects!
+	for _, subitem := range ot.List.Items {
+		if _, ok := subitem.Val.(*ast.ObjectType); !ok {
+			items = append(items, item)
+			return items, frontier
+		}
+	}
+
+	// Great! We have a match go through all the items and flatten
+	for _, subitem := range ot.List.Items {
+		// Copy the new key
+		keys := make([]*ast.ObjectKey, len(item.Keys)+len(subitem.Keys))
+		copy(keys, item.Keys)
+		copy(keys[len(item.Keys):], subitem.Keys)
+
+		// Add it to the frontier so that we can recurse
+		frontier = append(frontier, &ast.ObjectItem{
+			Keys:        keys,
+			Assign:      item.Assign,
+			Val:         subitem.Val,
+			LeadComment: item.LeadComment,
+			LineComment: item.LineComment,
+		})
+	}
+
+	return items, frontier
 }

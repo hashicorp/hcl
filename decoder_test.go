@@ -159,7 +159,7 @@ func TestDecode_interface(t *testing.T) {
 			"structure_list.json",
 			false,
 			map[string]interface{}{
-				"foo": []interface{}{
+				"foo": []map[string]interface{}{
 					map[string]interface{}{
 						"key": 7,
 					},
