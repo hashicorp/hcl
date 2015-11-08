@@ -182,6 +182,8 @@ func (s *Scanner) Scan() token.Token {
 			tok = token.RBRACE
 		case ',':
 			tok = token.COMMA
+		case ':':
+			tok = token.COLON
 		case '-':
 			if isDecimal(s.peek()) {
 				ch := s.next()
@@ -190,7 +192,7 @@ func (s *Scanner) Scan() token.Token {
 				s.err("illegal char")
 			}
 		default:
-			s.err("illegal char")
+			s.err("illegal char: " + string(ch))
 		}
 	}
 

@@ -229,97 +229,49 @@ func TestFloat(t *testing.T) {
 	testTokenList(t, tokenLists["float"])
 }
 
-/*
 func TestRealExample(t *testing.T) {
-	complexHCL := `// This comes from Terraform, as a test
-	variable "foo" {
-	    default = "bar"
-	    description = "bar"
-	}
-
-	provider "aws" {
-	  access_key = "foo"
-	  secret_key = "bar"
-	}
-
-	resource "aws_security_group" "firewall" {
-	    count = 5
-	}
-
-	resource aws_instance "web" {
-	    ami = "${var.foo}"
-	    security_groups = [
-	        "foo",
-	        "${aws_security_group.firewall.foo}"
-	    ]
-
-	    network_interface {
-	        device_index = 0
-	        description = "Main network interface"
-	    }
-	}`
+	complexReal := `
+{
+    "variable": {
+        "foo": {
+            "default": "bar",
+            "description": "bar",
+            "depends_on": ["something"]
+        }
+    }
+}`
 
 	literals := []struct {
 		tokenType token.Type
 		literal   string
 	}{
-		{token.COMMENT, `// This comes from Terraform, as a test`},
-		{token.IDENT, `variable`},
+		{token.LBRACE, `{`},
+		{token.STRING, `"variable"`},
+		{token.COLON, `:`},
+		{token.LBRACE, `{`},
 		{token.STRING, `"foo"`},
+		{token.COLON, `:`},
 		{token.LBRACE, `{`},
-		{token.IDENT, `default`},
-		{token.ASSIGN, `=`},
+		{token.STRING, `"default"`},
+		{token.COLON, `:`},
 		{token.STRING, `"bar"`},
-		{token.IDENT, `description`},
-		{token.ASSIGN, `=`},
-		{token.STRING, `"bar"`},
-		{token.RBRACE, `}`},
-		{token.IDENT, `provider`},
-		{token.STRING, `"aws"`},
-		{token.LBRACE, `{`},
-		{token.IDENT, `access_key`},
-		{token.ASSIGN, `=`},
-		{token.STRING, `"foo"`},
-		{token.IDENT, `secret_key`},
-		{token.ASSIGN, `=`},
-		{token.STRING, `"bar"`},
-		{token.RBRACE, `}`},
-		{token.IDENT, `resource`},
-		{token.STRING, `"aws_security_group"`},
-		{token.STRING, `"firewall"`},
-		{token.LBRACE, `{`},
-		{token.IDENT, `count`},
-		{token.ASSIGN, `=`},
-		{token.NUMBER, `5`},
-		{token.RBRACE, `}`},
-		{token.IDENT, `resource`},
-		{token.IDENT, `aws_instance`},
-		{token.STRING, `"web"`},
-		{token.LBRACE, `{`},
-		{token.IDENT, `ami`},
-		{token.ASSIGN, `=`},
-		{token.STRING, `"${var.foo}"`},
-		{token.IDENT, `security_groups`},
-		{token.ASSIGN, `=`},
-		{token.LBRACK, `[`},
-		{token.STRING, `"foo"`},
 		{token.COMMA, `,`},
-		{token.STRING, `"${aws_security_group.firewall.foo}"`},
+		{token.STRING, `"description"`},
+		{token.COLON, `:`},
+		{token.STRING, `"bar"`},
+		{token.COMMA, `,`},
+		{token.STRING, `"depends_on"`},
+		{token.COLON, `:`},
+		{token.LBRACK, `[`},
+		{token.STRING, `"something"`},
 		{token.RBRACK, `]`},
-		{token.IDENT, `network_interface`},
-		{token.LBRACE, `{`},
-		{token.IDENT, `device_index`},
-		{token.ASSIGN, `=`},
-		{token.NUMBER, `0`},
-		{token.IDENT, `description`},
-		{token.ASSIGN, `=`},
-		{token.STRING, `"Main network interface"`},
+		{token.RBRACE, `}`},
 		{token.RBRACE, `}`},
 		{token.RBRACE, `}`},
 		{token.EOF, ``},
 	}
 
-	s := New([]byte(complexHCL))
+	s := New([]byte(complexReal))
 	for _, l := range literals {
 		tok := s.Scan()
 		if l.tokenType != tok.Type {
@@ -332,7 +284,6 @@ func TestRealExample(t *testing.T) {
 	}
 
 }
-*/
 
 func TestError(t *testing.T) {
 	testError(t, "\x80", "1:1", "illegal UTF-8 encoding", token.ILLEGAL)
@@ -343,7 +294,7 @@ func TestError(t *testing.T) {
 
 	testError(t, `01238`, "1:7", "numbers cannot start with 0", token.NUMBER)
 	testError(t, `01238123`, "1:10", "numbers cannot start with 0", token.NUMBER)
-	testError(t, `'aa'`, "1:1", "illegal char", token.ILLEGAL)
+	testError(t, `'aa'`, "1:1", "illegal char: '", token.ILLEGAL)
 
 	testError(t, `"`, "1:2", "literal not terminated", token.STRING)
 	testError(t, `"abc`, "1:5", "literal not terminated", token.STRING)
