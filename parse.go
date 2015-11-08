@@ -5,7 +5,7 @@ import (
 
 	"github.com/hashicorp/hcl/hcl/ast"
 	hclParser "github.com/hashicorp/hcl/hcl/parser"
-	"github.com/hashicorp/hcl/json"
+	jsonParser "github.com/hashicorp/hcl/json/parser"
 )
 
 // Parse parses the given input and returns the root object.
@@ -16,7 +16,7 @@ func Parse(input string) (*ast.File, error) {
 	case lexModeHcl:
 		return hclParser.Parse([]byte(input))
 	case lexModeJson:
-		return json.Parse(input)
+		return jsonParser.Parse([]byte(input))
 	}
 
 	return nil, fmt.Errorf("unknown config format")
