@@ -178,7 +178,7 @@ func TestDecode_interface(t *testing.T) {
 						"foo": []map[string]interface{}{
 							map[string]interface{}{
 								"name": "terraform_example",
-								"ingress": []interface{}{
+								"ingress": []map[string]interface{}{
 									map[string]interface{}{
 										"from_port": 22,
 									},
@@ -205,6 +205,36 @@ func TestDecode_interface(t *testing.T) {
 			"unterminated_block_comment.hcl",
 			true,
 			nil,
+		},
+
+		{
+			"object_list.json",
+			false,
+			map[string]interface{}{
+				"resource": []map[string]interface{}{
+					map[string]interface{}{
+						"aws_instance": []map[string]interface{}{
+							map[string]interface{}{
+								"db": []map[string]interface{}{
+									map[string]interface{}{
+										"vpc": "foo",
+										"provisioner": []map[string]interface{}{
+											map[string]interface{}{
+												"file": []map[string]interface{}{
+													map[string]interface{}{
+														"source":      "foo",
+														"destination": "bar",
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 
