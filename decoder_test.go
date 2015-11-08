@@ -132,6 +132,8 @@ func TestDecode_interface(t *testing.T) {
 						"baz": []map[string]interface{}{
 							map[string]interface{}{"key": 7},
 						},
+					},
+					map[string]interface{}{
 						"bar": []map[string]interface{}{
 							map[string]interface{}{"key": 12},
 						},
@@ -447,8 +449,9 @@ func TestDecode_structureMap(t *testing.T) {
 	}
 
 	for _, f := range files {
-		var actual rawConfig
+		t.Logf("Testing: %s", f)
 
+		var actual rawConfig
 		err := Decode(&actual, testReadFile(t, f))
 		if err != nil {
 			t.Fatalf("Input: %s\n\nerr: %s", f, err)
