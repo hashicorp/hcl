@@ -31,9 +31,7 @@ func Walk(node Node, fn func(Node) bool) {
 			Walk(l, fn)
 		}
 	case *ObjectType:
-		for _, l := range n.List.Items {
-			Walk(l, fn)
-		}
+		Walk(n.List, fn)
 	default:
 		fmt.Printf(" unknown type: %T\n", n)
 	}
