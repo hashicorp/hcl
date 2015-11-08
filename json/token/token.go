@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	hclstrconv "github.com/hashicorp/hcl/hcl/strconv"
+	hcltoken "github.com/hashicorp/hcl/hcl/token"
 )
 
 // Token defines a single HCL token which can be obtained via the Scanner
@@ -137,5 +138,25 @@ func (t Token) Value() interface{} {
 		return v
 	default:
 		panic(fmt.Sprintf("unimplemented Value for type: %s", t.Type))
+	}
+}
+
+// HCLToken converts this token to an HCL token.
+//
+// The token type must be a literal type or this will panic.
+func (t Token) HCLToken() hcltoken.Token {
+	switch t.Type {
+	case BOOL:
+		return hcltoken.Token{Type: hcltoken.BOOL, Text: t.Text}
+	case FLOAT:
+		return hcltoken.Token{Type: hcltoken.FLOAT, Text: t.Text}
+	case NULL:
+		return hcltoken.Token{Type: hcltoken.STRING, Text: ""}
+	case NUMBER:
+		return hcltoken.Token{Type: hcltoken.NUMBER, Text: t.Text}
+	case STRING:
+		return hcltoken.Token{Type: hcltoken.STRING, Text: t.Text}
+	default:
+		panic(fmt.Sprintf("unimplemented HCLToken for type: %s", t.Type))
 	}
 }
