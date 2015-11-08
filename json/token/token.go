@@ -37,6 +37,7 @@ const (
 	LBRACE // {
 	COMMA  // ,
 	PERIOD // .
+	COLON  // :
 
 	RBRACK // ]
 	RBRACE // }
@@ -59,6 +60,7 @@ var tokens = [...]string{
 	LBRACE: "LBRACE",
 	COMMA:  "COMMA",
 	PERIOD: "PERIOD",
+	COLON:  "COLON",
 
 	RBRACK: "RBRACK",
 	RBRACE: "RBRACE",
