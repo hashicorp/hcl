@@ -57,16 +57,18 @@ func TestDecode_interface(t *testing.T) {
 				"a": 1.02,
 			},
 		},
-		{
-			"multiline_bad.hcl",
-			false,
-			map[string]interface{}{"foo": "bar\nbaz\n"},
-		},
-		{
-			"multiline.json",
-			false,
-			map[string]interface{}{"foo": "bar\nbaz"},
-		},
+		/*
+			{
+				"multiline_bad.hcl",
+				false,
+				map[string]interface{}{"foo": "bar\nbaz\n"},
+			},
+			{
+				"multiline.json",
+				false,
+				map[string]interface{}{"foo": "bar\nbaz"},
+			},
+		*/
 		{
 			"scientific.json",
 			false,
@@ -130,6 +132,8 @@ func TestDecode_interface(t *testing.T) {
 						"baz": []map[string]interface{}{
 							map[string]interface{}{"key": 7},
 						},
+					},
+					map[string]interface{}{
 						"bar": []map[string]interface{}{
 							map[string]interface{}{"key": 12},
 						},
@@ -155,7 +159,7 @@ func TestDecode_interface(t *testing.T) {
 			"structure_list.json",
 			false,
 			map[string]interface{}{
-				"foo": []interface{}{
+				"foo": []map[string]interface{}{
 					map[string]interface{}{
 						"key": 7,
 					},
@@ -174,7 +178,7 @@ func TestDecode_interface(t *testing.T) {
 						"foo": []map[string]interface{}{
 							map[string]interface{}{
 								"name": "terraform_example",
-								"ingress": []interface{}{
+								"ingress": []map[string]interface{}{
 									map[string]interface{}{
 										"from_port": 22,
 									},
@@ -202,9 +206,40 @@ func TestDecode_interface(t *testing.T) {
 			true,
 			nil,
 		},
+
+		{
+			"object_list.json",
+			false,
+			map[string]interface{}{
+				"resource": []map[string]interface{}{
+					map[string]interface{}{
+						"aws_instance": []map[string]interface{}{
+							map[string]interface{}{
+								"db": []map[string]interface{}{
+									map[string]interface{}{
+										"vpc": "foo",
+										"provisioner": []map[string]interface{}{
+											map[string]interface{}{
+												"file": []map[string]interface{}{
+													map[string]interface{}{
+														"source":      "foo",
+														"destination": "bar",
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tc := range cases {
+		t.Logf("Testing: %s", tc.File)
 		d, err := ioutil.ReadFile(filepath.Join(fixtureDir, tc.File))
 		if err != nil {
 			t.Fatalf("err: %s", err)
@@ -217,7 +252,7 @@ func TestDecode_interface(t *testing.T) {
 		}
 
 		if !reflect.DeepEqual(out, tc.Out) {
-			t.Fatalf("Input: %s\n\nActual: %#v\n\nExpected: %#v", tc.File, out, tc.Out)
+			t.Fatalf("Input: %s. Actual, Expected.\n\n%#v\n\n%#v", tc.File, out, tc.Out)
 		}
 	}
 }
@@ -396,7 +431,7 @@ func TestDecode_structureArray(t *testing.T) {
 
 		err := Decode(&actual, testReadFile(t, f))
 		if err != nil {
-			t.Fatalf("err: %s", err)
+			t.Fatalf("Input: %s\n\nerr: %s", f, err)
 		}
 
 		if !reflect.DeepEqual(actual, expected) {
@@ -444,8 +479,9 @@ func TestDecode_structureMap(t *testing.T) {
 	}
 
 	for _, f := range files {
-		var actual rawConfig
+		t.Logf("Testing: %s", f)
 
+		var actual rawConfig
 		err := Decode(&actual, testReadFile(t, f))
 		if err != nil {
 			t.Fatalf("Input: %s\n\nerr: %s", f, err)
