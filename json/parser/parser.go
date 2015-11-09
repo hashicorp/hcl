@@ -82,7 +82,6 @@ func (p *Parser) objectList() (*ast.ObjectList, error) {
 
 		// Check for a followup comma. If it isn't a comma, then we're done
 		if tok := p.scan(); tok.Type != token.COMMA {
-			p.unscan()
 			break
 		}
 	}
