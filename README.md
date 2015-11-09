@@ -46,10 +46,8 @@ and JSON as the interoperability layer.
 
 ## Syntax
 
-The complete grammar
-[can be found here](https://github.com/hashicorp/hcl/blob/master/hcl/parse.y),
-if you're more comfortable reading specifics, but a high-level overview
-of the syntax and grammar are listed here.
+For a complete grammar, please see the parser itself. A high-level overview
+of the syntax and grammer is listed here.
 
   * Single line comments start with `#` or `//`
 
@@ -82,3 +80,13 @@ variable "ami" {
     description = "the AMI to use"
 }
 ```
+
+## Thanks
+
+Thanks to:
+
+  * [@vstakhov](https://github.com/vstakhov) - The original libucl parser
+    and syntax that HCL was based off of.
+
+  * [@fatih](https://github.com/fatih) - The rewritten HCL parser
+    in pure Go (no goyacc) and support for a printer.
