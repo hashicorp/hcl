@@ -212,6 +212,13 @@ func (p *Parser) listType() (*ast.ListType, error) {
 			l.Add(node)
 		case token.COMMA:
 			continue
+		case token.LBRACE:
+			node, err := p.objectType()
+			if err != nil {
+				return nil, err
+			}
+
+			l.Add(node)
 		case token.BOOL:
 			// TODO(arslan) should we support? not supported by HCL yet
 		case token.LBRACK:

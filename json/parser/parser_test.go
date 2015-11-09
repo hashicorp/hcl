@@ -66,6 +66,10 @@ func TestListType(t *testing.T) {
 			`"foo": ["123", 123]`,
 			[]token.Type{token.STRING, token.NUMBER},
 		},
+		{
+			`"foo": ["123", {}]`,
+			[]token.Type{token.STRING, token.LBRACE},
+		},
 	}
 
 	for _, l := range literals {
@@ -84,8 +88,11 @@ func TestListType(t *testing.T) {
 
 		tokens := []token.Type{}
 		for _, li := range list.List {
-			if tp, ok := li.(*ast.LiteralType); ok {
-				tokens = append(tokens, tp.Token.Type)
+			switch v := li.(type) {
+			case *ast.LiteralType:
+				tokens = append(tokens, v.Token.Type)
+			case *ast.ObjectType:
+				tokens = append(tokens, token.LBRACE)
 			}
 		}
 
