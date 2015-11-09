@@ -14,6 +14,7 @@ type Token struct {
 	Type Type
 	Pos  Pos
 	Text string
+	JSON bool
 }
 
 // Type is the set of lexical tokens of the HCL (HashiCorp Configuration Language)
@@ -138,7 +139,15 @@ func (t Token) Value() interface{} {
 	case IDENT:
 		return t.Text
 	case STRING:
-		v, err := hclstrconv.Unquote(t.Text)
+		// Determine the Unquote method to use. If it came from JSON,
+		// then we need to use the built-in unquote since we have to
+		// escape interpolations there.
+		f := hclstrconv.Unquote
+		if t.JSON {
+			f = strconv.Unquote
+		}
+
+		v, err := f(t.Text)
 		if err != nil {
 			panic(fmt.Sprintf("unquote %s err: %s", t.Text, err))
 		}

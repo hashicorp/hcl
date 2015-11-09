@@ -111,7 +111,7 @@ func (t Token) HCLToken() hcltoken.Token {
 	case NUMBER:
 		return hcltoken.Token{Type: hcltoken.NUMBER, Text: t.Text}
 	case STRING:
-		return hcltoken.Token{Type: hcltoken.STRING, Text: t.Text}
+		return hcltoken.Token{Type: hcltoken.STRING, Text: t.Text, JSON: true}
 	default:
 		panic(fmt.Sprintf("unimplemented HCLToken for type: %s", t.Type))
 	}
