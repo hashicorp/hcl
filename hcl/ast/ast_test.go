@@ -7,9 +7,9 @@ import (
 	"github.com/hashicorp/hcl/hcl/token"
 )
 
-func TestObjectListPrefix(t *testing.T) {
+func TestObjectListFilter(t *testing.T) {
 	var cases = []struct {
-		Prefix []string
+		Filter []string
 		Input  []*ObjectItem
 		Output []*ObjectItem
 	}{
@@ -19,12 +19,16 @@ func TestObjectListPrefix(t *testing.T) {
 				&ObjectItem{
 					Keys: []*ObjectKey{
 						&ObjectKey{
-							Token: token.Token{Type: token.STRING, Text: `foo`},
+							Token: token.Token{Type: token.STRING, Text: `"foo"`},
 						},
 					},
 				},
 			},
-			nil,
+			[]*ObjectItem{
+				&ObjectItem{
+					Keys: []*ObjectKey{},
+				},
+			},
 		},
 
 		{
@@ -32,20 +36,20 @@ func TestObjectListPrefix(t *testing.T) {
 			[]*ObjectItem{
 				&ObjectItem{
 					Keys: []*ObjectKey{
-						&ObjectKey{Token: token.Token{Type: token.STRING, Text: `foo`}},
-						&ObjectKey{Token: token.Token{Type: token.STRING, Text: `bar`}},
+						&ObjectKey{Token: token.Token{Type: token.STRING, Text: `"foo"`}},
+						&ObjectKey{Token: token.Token{Type: token.STRING, Text: `"bar"`}},
 					},
 				},
 				&ObjectItem{
 					Keys: []*ObjectKey{
-						&ObjectKey{Token: token.Token{Type: token.STRING, Text: `baz`}},
+						&ObjectKey{Token: token.Token{Type: token.STRING, Text: `"baz"`}},
 					},
 				},
 			},
 			[]*ObjectItem{
 				&ObjectItem{
 					Keys: []*ObjectKey{
-						&ObjectKey{Token: token.Token{Type: token.STRING, Text: `bar`}},
+						&ObjectKey{Token: token.Token{Type: token.STRING, Text: `"bar"`}},
 					},
 				},
 			},
@@ -55,7 +59,7 @@ func TestObjectListPrefix(t *testing.T) {
 	for _, tc := range cases {
 		input := &ObjectList{Items: tc.Input}
 		expected := &ObjectList{Items: tc.Output}
-		if actual := input.Prefix(tc.Prefix...); !reflect.DeepEqual(actual, expected) {
+		if actual := input.Filter(tc.Filter...); !reflect.DeepEqual(actual, expected) {
 			t.Fatalf("in order: input, expected, actual\n\n%#v\n\n%#v\n\n%#v", input, expected, actual)
 		}
 	}
