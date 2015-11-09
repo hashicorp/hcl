@@ -57,7 +57,7 @@ func (p *Parser) Parse() (*ast.File, error) {
 
 	// Flatten it, which finds patterns and turns them into more HCL-like
 	// AST trees.
-	// flattenObjects(f.Node)
+	flattenObjects(f.Node)
 
 	return f, nil
 }
