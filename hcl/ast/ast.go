@@ -14,11 +14,10 @@ type Node interface {
 	Pos() token.Pos
 }
 
-func (File) node()       {}
-func (ObjectList) node() {}
-func (ObjectKey) node()  {}
-func (ObjectItem) node() {}
-
+func (File) node()         {}
+func (ObjectList) node()   {}
+func (ObjectKey) node()    {}
+func (ObjectItem) node()   {}
 func (Comment) node()      {}
 func (CommentGroup) node() {}
 func (ObjectType) node()   {}
