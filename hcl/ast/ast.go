@@ -14,11 +14,10 @@ type Node interface {
 	Pos() token.Pos
 }
 
-func (File) node()       {}
-func (ObjectList) node() {}
-func (ObjectKey) node()  {}
-func (ObjectItem) node() {}
-
+func (File) node()         {}
+func (ObjectList) node()   {}
+func (ObjectKey) node()    {}
+func (ObjectItem) node()   {}
 func (Comment) node()      {}
 func (CommentGroup) node() {}
 func (ObjectType) node()   {}
@@ -62,7 +61,7 @@ func (o *ObjectList) Filter(keys ...string) *ObjectList {
 
 		match := true
 		for i, key := range item.Keys[:len(keys)] {
-			key := key.Token.Text
+			key := key.Token.Value().(string)
 			if key != keys[i] && !strings.EqualFold(key, keys[i]) {
 				match = false
 				break

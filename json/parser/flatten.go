@@ -1,54 +1,12 @@
-package json
+package parser
 
 import (
-	"sync"
-
-	"github.com/hashicorp/go-multierror"
 	"github.com/hashicorp/hcl/hcl/ast"
 )
 
-// jsonErrors are the errors built up from parsing. These should not
-// be accessed directly.
-var jsonErrors []error
-var jsonLock sync.Mutex
-var jsonResult *ast.File
-
-// Parse parses the given string and returns the result.
-func Parse(v string) (*ast.File, error) {
-	jsonLock.Lock()
-	defer jsonLock.Unlock()
-	jsonErrors = nil
-	jsonResult = nil
-
-	// Parse
-	lex := &jsonLex{Input: v}
-	jsonParse(lex)
-
-	// If we have an error in the lexer itself, return it
-	if lex.err != nil {
-		return nil, lex.err
-	}
-
-	// If we have a result, flatten it. This is an operation we take on
-	// to make our AST look more like traditional HCL. This makes parsing
-	// it a lot easier later.
-	if jsonResult != nil {
-		flattenObjects(jsonResult)
-	}
-
-	// Build up the errors
-	var err error
-	if len(jsonErrors) > 0 {
-		err = &multierror.Error{Errors: jsonErrors}
-		jsonResult = nil
-	}
-
-	return jsonResult, err
-}
-
 // flattenObjects takes an AST node, walks it, and flattens
 func flattenObjects(node ast.Node) {
-	ast.Walk(jsonResult, func(n ast.Node) bool {
+	ast.Walk(node, func(n ast.Node) bool {
 		// We only care about lists, because this is what we modify
 		list, ok := n.(*ast.ObjectList)
 		if !ok {

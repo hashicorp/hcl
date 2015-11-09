@@ -1,12 +1,10 @@
-// Package token defines constants representing the lexical tokens for HCL
-// (HashiCorp Configuration Language)
 package token
 
 import (
 	"fmt"
 	"strconv"
 
-	hclstrconv "github.com/hashicorp/hcl/hcl/strconv"
+	hcltoken "github.com/hashicorp/hcl/hcl/token"
 )
 
 // Token defines a single HCL token which can be obtained via the Scanner
@@ -14,7 +12,6 @@ type Token struct {
 	Type Type
 	Pos  Pos
 	Text string
-	JSON bool
 }
 
 // Type is the set of lexical tokens of the HCL (HashiCorp Configuration Language)
@@ -24,15 +21,14 @@ const (
 	// Special tokens
 	ILLEGAL Type = iota
 	EOF
-	COMMENT
 
 	identifier_beg
-	IDENT // literals
 	literal_beg
 	NUMBER // 12345
 	FLOAT  // 123.45
 	BOOL   // true,false
 	STRING // "abc"
+	NULL   // null
 	literal_end
 	identifier_end
 
@@ -41,39 +37,33 @@ const (
 	LBRACE // {
 	COMMA  // ,
 	PERIOD // .
+	COLON  // :
 
 	RBRACK // ]
 	RBRACE // }
 
-	ASSIGN // =
-	ADD    // +
-	SUB    // -
 	operator_end
 )
 
 var tokens = [...]string{
 	ILLEGAL: "ILLEGAL",
 
-	EOF:     "EOF",
-	COMMENT: "COMMENT",
+	EOF: "EOF",
 
-	IDENT:  "IDENT",
 	NUMBER: "NUMBER",
 	FLOAT:  "FLOAT",
 	BOOL:   "BOOL",
 	STRING: "STRING",
+	NULL:   "NULL",
 
 	LBRACK: "LBRACK",
 	LBRACE: "LBRACE",
 	COMMA:  "COMMA",
 	PERIOD: "PERIOD",
+	COLON:  "COLON",
 
 	RBRACK: "RBRACK",
 	RBRACE: "RBRACE",
-
-	ASSIGN: "ASSIGN",
-	ADD:    "ADD",
-	SUB:    "SUB",
 }
 
 // String returns the string corresponding to the token tok.
@@ -107,53 +97,22 @@ func (t Token) String() string {
 	return fmt.Sprintf("%s %s %s", t.Pos.String(), t.Type.String(), t.Text)
 }
 
-// Value returns the properly typed value for this token. The type of
-// the returned interface{} is guaranteed based on the Type field.
+// HCLToken converts this token to an HCL token.
 //
-// This can only be called for literal types. If it is called for any other
-// type, this will panic.
-func (t Token) Value() interface{} {
+// The token type must be a literal type or this will panic.
+func (t Token) HCLToken() hcltoken.Token {
 	switch t.Type {
 	case BOOL:
-		if t.Text == "true" {
-			return true
-		} else if t.Text == "false" {
-			return false
-		}
-
-		panic("unknown bool value: " + t.Text)
+		return hcltoken.Token{Type: hcltoken.BOOL, Text: t.Text}
 	case FLOAT:
-		v, err := strconv.ParseFloat(t.Text, 64)
-		if err != nil {
-			panic(err)
-		}
-
-		return float64(v)
+		return hcltoken.Token{Type: hcltoken.FLOAT, Text: t.Text}
+	case NULL:
+		return hcltoken.Token{Type: hcltoken.STRING, Text: ""}
 	case NUMBER:
-		v, err := strconv.ParseInt(t.Text, 0, 64)
-		if err != nil {
-			panic(err)
-		}
-
-		return int64(v)
-	case IDENT:
-		return t.Text
+		return hcltoken.Token{Type: hcltoken.NUMBER, Text: t.Text}
 	case STRING:
-		// Determine the Unquote method to use. If it came from JSON,
-		// then we need to use the built-in unquote since we have to
-		// escape interpolations there.
-		f := hclstrconv.Unquote
-		if t.JSON {
-			f = strconv.Unquote
-		}
-
-		v, err := f(t.Text)
-		if err != nil {
-			panic(fmt.Sprintf("unquote %s err: %s", t.Text, err))
-		}
-
-		return v
+		return hcltoken.Token{Type: hcltoken.STRING, Text: t.Text, JSON: true}
 	default:
-		panic(fmt.Sprintf("unimplemented Value for type: %s", t.Type))
+		panic(fmt.Sprintf("unimplemented HCLToken for type: %s", t.Type))
 	}
 }
