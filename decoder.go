@@ -228,6 +228,8 @@ func (d *decoder) decodeInterface(name string, node ast.Node, result reflect.Val
 			set = reflect.Indirect(reflect.New(reflect.TypeOf(result)))
 		case token.STRING:
 			set = reflect.Indirect(reflect.New(reflect.TypeOf("")))
+		case token.HEREDOC:
+			set = reflect.Indirect(reflect.New(reflect.TypeOf("")))
 		default:
 			return fmt.Errorf(
 				"%s: cannot decode into interface: %T",
@@ -412,6 +414,9 @@ func (d *decoder) decodeString(name string, node ast.Node, result reflect.Value)
 			result.Set(reflect.ValueOf(n.Token.Text).Convert(result.Type()))
 			return nil
 		case token.STRING:
+			result.Set(reflect.ValueOf(n.Token.Value()).Convert(result.Type()))
+			return nil
+		case token.HEREDOC:
 			result.Set(reflect.ValueOf(n.Token.Value()).Convert(result.Type()))
 			return nil
 		}
