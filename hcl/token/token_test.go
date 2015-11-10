@@ -18,6 +18,7 @@ func TestTypeString(t *testing.T) {
 		{FLOAT, "FLOAT"},
 		{BOOL, "BOOL"},
 		{STRING, "STRING"},
+		{HEREDOC, "HEREDOC"},
 		{LBRACK, "LBRACK"},
 		{LBRACE, "LBRACE"},
 		{COMMA, "COMMA"},
@@ -32,7 +33,6 @@ func TestTypeString(t *testing.T) {
 	for _, token := range tokens {
 		if token.tt.String() != token.str {
 			t.Errorf("want: %q got:%q\n", token.str, token.tt)
-
 		}
 	}
 
@@ -50,6 +50,7 @@ func TestTokenValue(t *testing.T) {
 		{Token{Type: IDENT, Text: `foo`}, "foo"},
 		{Token{Type: STRING, Text: `"foo"`}, "foo"},
 		{Token{Type: STRING, Text: `"foo\nbar"`}, "foo\nbar"},
+		{Token{Type: HEREDOC, Text: "<<EOF\nfoo\nbar\nEOF"}, "foo\nbar"},
 	}
 
 	for _, token := range tokens {

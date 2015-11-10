@@ -71,6 +71,9 @@ var tokenLists = map[string][]tokenPair{
 		{token.IDENT, "foo६४"},
 		{token.IDENT, "bar９８７６"},
 	},
+	"heredoc": []tokenPair{
+		{token.HEREDOC, "<<EOF\nhello\nworld\nEOF"},
+	},
 	"string": []tokenPair{
 		{token.STRING, `" "`},
 		{token.STRING, `"a"`},
@@ -229,6 +232,7 @@ var orderedTokenLists = []string{
 	"operator",
 	"bool",
 	"ident",
+	"heredoc",
 	"string",
 	"number",
 	"float",
@@ -327,7 +331,9 @@ func TestRealExample(t *testing.T) {
 
 	    network_interface {
 	        device_index = 0
-	        description = "Main network interface"
+	        description = <<EOF
+Main interface
+EOF
 	    }
 	}`
 
@@ -385,7 +391,7 @@ func TestRealExample(t *testing.T) {
 		{token.NUMBER, `0`},
 		{token.IDENT, `description`},
 		{token.ASSIGN, `=`},
-		{token.STRING, `"Main network interface"`},
+		{token.HEREDOC, "<<EOF\nMain interface\nEOF\n"},
 		{token.RBRACE, `}`},
 		{token.RBRACE, `}`},
 		{token.EOF, ``},

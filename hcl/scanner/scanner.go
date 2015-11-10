@@ -174,6 +174,9 @@ func (s *Scanner) Scan() token.Token {
 				ch = s.scanMantissa(ch)
 				ch = s.scanExponent(ch)
 			}
+		case '<':
+			tok = token.HEREDOC
+			s.scanHeredoc()
 		case '[':
 			tok = token.LBRACK
 		case ']':
@@ -369,6 +372,67 @@ func (s *Scanner) scanExponent(ch rune) rune {
 		ch = s.scanMantissa(ch)
 	}
 	return ch
+}
+
+// scanHeredoc scans a heredoc string.
+func (s *Scanner) scanHeredoc() {
+	// Scan the second '<' in example: '<<EOF'
+	if s.next() != '<' {
+		s.err("heredoc expected second '<', didn't see it")
+		return
+	}
+
+	// Get the original offset so we can read just the heredoc ident
+	offs := s.srcPos.Offset
+
+	// Scan the identifier
+	ch := s.next()
+	for isLetter(ch) {
+		ch = s.next()
+	}
+
+	// If we reached an EOF then that is not good
+	if ch == eof {
+		s.err("heredoc not terminated")
+		return
+	}
+
+	// If we didn't reach a newline then that is also not good
+	if ch != '\n' {
+		s.err("invalid characters in heredoc anchor")
+		return
+	}
+
+	// Read the identifier
+	identBytes := s.src[offs : s.srcPos.Offset-s.lastCharLen]
+
+	// Read the actual string value
+	lineStart := s.srcPos.Offset
+	for {
+		ch := s.next()
+
+		// Special newline handling.
+		if ch == '\n' {
+			// Math is fast, so we first compare the byte counts to
+			// see if we have a chance of seeing the same identifier. If those
+			// match, then we compare the string values directly.
+			lineBytesLen := s.srcPos.Offset - s.lastCharLen - lineStart
+			if lineBytesLen == len(identBytes) &&
+				bytes.Equal(identBytes, s.src[lineStart:s.srcPos.Offset-s.lastCharLen]) {
+				break
+			}
+
+			// Not an anchor match, record the start of a new line
+			lineStart = s.srcPos.Offset
+		}
+
+		if ch == eof {
+			s.err("heredoc not terminated")
+			return
+		}
+	}
+
+	return
 }
 
 // scanString scans a quoted string

@@ -32,7 +32,9 @@ resource "aws_security_group" "firewall" {
 
            network_interface = {
                  device_index = 1
-                    description = "Another network interface"
+                    description = <<EOF
+ANOTHER NETWORK INTERFACE
+EOF
         }
     }
 
@@ -45,5 +47,7 @@ resource "aws_instance" "db" {
 
 output "web_ip" {
 
-    value="${aws_instance.web.private_ip}"
+    value=<<EOF
+TUBES
+EOF
 }

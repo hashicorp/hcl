@@ -29,7 +29,7 @@ func (c *Config) Fprint(output io.Writer, node ast.Node) error {
 
 	p.collectComments(node)
 
-	if _, err := output.Write(p.output(node)); err != nil {
+	if _, err := output.Write(p.unindent(p.output(node))); err != nil {
 		return err
 	}
 

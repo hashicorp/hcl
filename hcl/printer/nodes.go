@@ -16,6 +16,10 @@ const (
 	infinity = 1 << 30 // offset or line
 )
 
+var (
+	unindent = []byte("\uE123") // in the private use space
+)
+
 type printer struct {
 	cfg  Config
 	prev token.Pos
@@ -147,7 +151,7 @@ func (p *printer) output(n interface{}) []byte {
 		p.prev = t.Pos()
 		buf.Write(p.objectItem(t))
 	case *ast.LiteralType:
-		buf.WriteString(t.Token.Text)
+		buf.Write(p.literalType(t))
 	case *ast.ListType:
 		buf.Write(p.list(t))
 	case *ast.ObjectType:
@@ -157,6 +161,21 @@ func (p *printer) output(n interface{}) []byte {
 	}
 
 	return buf.Bytes()
+}
+
+func (p *printer) literalType(lit *ast.LiteralType) []byte {
+	result := []byte(lit.Token.Text)
+	if lit.Token.Type == token.HEREDOC {
+		// Clear the trailing newline from heredocs
+		if result[len(result)-1] == '\n' {
+			result = result[:len(result)-1]
+		}
+
+		// Poison lines 2+ so that we don't indent them
+		result = p.heredocIndent(result)
+	}
+
+	return result
 }
 
 // objectItem returns the printable HCL form of an object item. An object type
@@ -459,6 +478,51 @@ func (p *printer) indent(buf []byte) []byte {
 	for _, c := range buf {
 		if bol && c != '\n' {
 			res = append(res, prefix...)
+		}
+
+		res = append(res, c)
+		bol = c == '\n'
+	}
+	return res
+}
+
+// unindent removes all the indentation from the tombstoned lines
+func (p *printer) unindent(buf []byte) []byte {
+	var res []byte
+	for i := 0; i < len(buf); i++ {
+		skip := len(buf)-i <= len(unindent)
+		if !skip {
+			skip = !bytes.Equal(unindent, buf[i:i+len(unindent)])
+		}
+		if skip {
+			res = append(res, buf[i])
+			continue
+		}
+
+		// We have a marker. we have to backtrace here and clean out
+		// any whitespace ahead of our tombstone up to a \n
+		for j := len(res) - 1; j >= 0; j-- {
+			if res[j] == '\n' {
+				break
+			}
+
+			res = res[:j]
+		}
+
+		// Skip the entire unindent marker
+		i += len(unindent) - 1
+	}
+
+	return res
+}
+
+// heredocIndent marks all the 2nd and further lines as unindentable
+func (p *printer) heredocIndent(buf []byte) []byte {
+	var res []byte
+	bol := false
+	for _, c := range buf {
+		if bol && c != '\n' {
+			res = append(res, unindent...)
 		}
 		res = append(res, c)
 		bol = c == '\n'

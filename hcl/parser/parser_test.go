@@ -22,6 +22,7 @@ func TestType(t *testing.T) {
 		{token.FLOAT, `foo = 123.12`},
 		{token.FLOAT, `foo = -123.12`},
 		{token.BOOL, `foo = true`},
+		{token.HEREDOC, "foo = <<EOF\nHello\nWorld\nEOF"},
 	}
 
 	for _, l := range literals {

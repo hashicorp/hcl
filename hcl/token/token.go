@@ -5,6 +5,7 @@ package token
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	hclstrconv "github.com/hashicorp/hcl/hcl/strconv"
 )
@@ -29,10 +30,11 @@ const (
 	identifier_beg
 	IDENT // literals
 	literal_beg
-	NUMBER // 12345
-	FLOAT  // 123.45
-	BOOL   // true,false
-	STRING // "abc"
+	NUMBER  // 12345
+	FLOAT   // 123.45
+	BOOL    // true,false
+	STRING  // "abc"
+	HEREDOC // <<FOO\nbar\nFOO
 	literal_end
 	identifier_end
 
@@ -63,10 +65,11 @@ var tokens = [...]string{
 	BOOL:   "BOOL",
 	STRING: "STRING",
 
-	LBRACK: "LBRACK",
-	LBRACE: "LBRACE",
-	COMMA:  "COMMA",
-	PERIOD: "PERIOD",
+	LBRACK:  "LBRACK",
+	LBRACE:  "LBRACE",
+	COMMA:   "COMMA",
+	PERIOD:  "PERIOD",
+	HEREDOC: "HEREDOC",
 
 	RBRACK: "RBRACK",
 	RBRACE: "RBRACE",
@@ -138,6 +141,14 @@ func (t Token) Value() interface{} {
 		return int64(v)
 	case IDENT:
 		return t.Text
+	case HEREDOC:
+		// We need to find the end of the marker
+		idx := strings.IndexByte(t.Text, '\n')
+		if idx == -1 {
+			panic("heredoc doesn't contain newline")
+		}
+
+		return string(t.Text[idx+1 : len(t.Text)-idx+1])
 	case STRING:
 		// Determine the Unquote method to use. If it came from JSON,
 		// then we need to use the built-in unquote since we have to
