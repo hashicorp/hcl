@@ -202,7 +202,7 @@ func (p *Parser) object() (ast.Node, error) {
 	tok := p.scan()
 
 	switch tok.Type {
-	case token.NUMBER, token.FLOAT, token.BOOL, token.STRING:
+	case token.NUMBER, token.FLOAT, token.BOOL, token.STRING, token.HEREDOC:
 		return p.literalType()
 	case token.LBRACE:
 		return p.objectType()
