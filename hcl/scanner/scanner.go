@@ -195,6 +195,13 @@ func (s *Scanner) Scan() token.Token {
 			} else {
 				tok = token.SUB
 			}
+		case '<':
+			if s.next() != '<' {
+				s.err("heredoc must start with <<")
+			} else {
+				tok = token.HEREDOC
+				s.scanHeredoc()
+			}
 		default:
 			s.err("illegal char")
 		}
@@ -246,6 +253,64 @@ func (s *Scanner) scanComment(ch rune) {
 		ch = s.next()
 		if ch0 == '*' && ch == '/' {
 			break
+		}
+	}
+}
+
+func (s *Scanner) scanHeredoc() {
+	// determine the marker
+	var buf bytes.Buffer
+
+	for {
+		ch := s.next()
+
+		// marker runs until end of line
+		if ch == '\n' {
+			break
+		}
+
+		if _, err := buf.WriteRune(ch); err != nil {
+ 			s.err("could not read heredoc")
+ 			return
+ 		}
+	}
+
+	marker := buf.String()
+	if marker == "" {
+		s.err("heredoc must have marker, e.g. <<FOO")
+		return
+	}
+
+	check := true
+	for {
+		ch := s.next()
+
+		// check if we see marker
+		if check {
+			for _, r := range marker {
+				if r != ch {
+					check = false
+					break
+				}
+				ch = s.next()
+			}
+
+			// check if we saw marker
+			if check {
+				if ch != eof {
+					s.unread()
+				}
+				return
+			}
+		}
+
+		if ch == '\n' {
+			check = true
+		}
+
+		if ch < 0 || ch == eof {
+			s.err("heredoc not terminated")
+			return
 		}
 	}
 }

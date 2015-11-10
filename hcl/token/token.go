@@ -5,6 +5,7 @@ package token
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	hclstrconv "github.com/hashicorp/hcl/hcl/strconv"
 )
@@ -33,6 +34,7 @@ const (
 	FLOAT  // 123.45
 	BOOL   // true,false
 	STRING // "abc"
+	HEREDOC// <<EOFfoo\nbar\nEOF
 	literal_end
 	identifier_end
 
@@ -62,6 +64,7 @@ var tokens = [...]string{
 	FLOAT:  "FLOAT",
 	BOOL:   "BOOL",
 	STRING: "STRING",
+	HEREDOC:"HEREDOC",
 
 	LBRACK: "LBRACK",
 	LBRACE: "LBRACE",
@@ -153,6 +156,13 @@ func (t Token) Value() interface{} {
 		}
 
 		return v
+	case HEREDOC:
+		// determine length of first line
+		markerLength := strings.IndexRune(t.Text, '\n')
+
+		// strip "<<", leading and trailing marker with newlines
+		return t.Text[markerLength+1:len(t.Text)-markerLength+2]
+
 	default:
 		panic(fmt.Sprintf("unimplemented Value for type: %s", t.Type))
 	}
