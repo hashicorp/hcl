@@ -226,9 +226,7 @@ func (d *decoder) decodeInterface(name string, node ast.Node, result reflect.Val
 		case token.NUMBER:
 			var result int
 			set = reflect.Indirect(reflect.New(reflect.TypeOf(result)))
-		case token.STRING:
-			set = reflect.Indirect(reflect.New(reflect.TypeOf("")))
-		case token.HEREDOC:
+		case token.STRING, token.HEREDOC:
 			set = reflect.Indirect(reflect.New(reflect.TypeOf("")))
 		default:
 			return fmt.Errorf(
@@ -413,10 +411,7 @@ func (d *decoder) decodeString(name string, node ast.Node, result reflect.Value)
 		case token.NUMBER:
 			result.Set(reflect.ValueOf(n.Token.Text).Convert(result.Type()))
 			return nil
-		case token.STRING:
-			result.Set(reflect.ValueOf(n.Token.Value()).Convert(result.Type()))
-			return nil
-		case token.HEREDOC:
+		case token.STRING, token.HEREDOC:
 			result.Set(reflect.ValueOf(n.Token.Value()).Convert(result.Type()))
 			return nil
 		}
