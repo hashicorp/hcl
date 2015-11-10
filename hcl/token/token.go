@@ -29,19 +29,19 @@ const (
 	identifier_beg
 	IDENT // literals
 	literal_beg
-	NUMBER // 12345
-	FLOAT  // 123.45
-	BOOL   // true,false
-	STRING // "abc"
+	NUMBER  // 12345
+	FLOAT   // 123.45
+	BOOL    // true,false
+	STRING  // "abc"
+	HEREDOC // <<FOO\nbar\nFOO
 	literal_end
 	identifier_end
 
 	operator_beg
-	LBRACK  // [
-	LBRACE  // {
-	COMMA   // ,
-	PERIOD  // .
-	HEREDOC // <<
+	LBRACK // [
+	LBRACE // {
+	COMMA  // ,
+	PERIOD // .
 
 	RBRACK // ]
 	RBRACE // }

@@ -18,6 +18,7 @@ func TestTypeString(t *testing.T) {
 		{FLOAT, "FLOAT"},
 		{BOOL, "BOOL"},
 		{STRING, "STRING"},
+		{HEREDOC, "HEREDOC"},
 		{LBRACK, "LBRACK"},
 		{LBRACE, "LBRACE"},
 		{COMMA, "COMMA"},
