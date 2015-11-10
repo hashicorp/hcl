@@ -264,11 +264,6 @@ func (s *Scanner) scanHeredoc() {
 	for {
 		ch := s.next()
 
-		if ch < 0 || ch == eof {
-			s.err("heredoc not terminated")
-			return
-		}
-
 		// marker runs until end of line
 		if ch == '\n' {
 			break
@@ -292,20 +287,30 @@ func (s *Scanner) scanHeredoc() {
 
 		// check if we see marker
 		if check {
-			check = false
-
 			for _, r := range marker {
-				if r != s.next() {
+				if r != ch {
+					check = false
 					break
 				}
+				ch = s.next()
+			}
+
+			// check if we saw marker
+			if check {
+				if ch != eof {
+					s.unread()
+				}
+				return
 			}
 		}
 
 		if ch == '\n' {
 			check = true
 		}
-		if ch == eof {
-			break
+
+		if ch < 0 || ch == eof {
+			s.err("heredoc not terminated")
+			return
 		}
 	}
 }

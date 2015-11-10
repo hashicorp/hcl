@@ -157,11 +157,11 @@ func (t Token) Value() interface{} {
 
 		return v
 	case HEREDOC:
-		// determine length of marker
+		// determine length of first line
 		markerLength := strings.IndexRune(t.Text, '\n')
 
-		// strip leading and trailing marker
-		return t.Text[markerLength+1:len(t.Text)-markerLength+1]
+		// strip "<<", leading and trailing marker with newlines
+		return t.Text[markerLength+1:len(t.Text)-markerLength+2]
 
 	default:
 		panic(fmt.Sprintf("unimplemented Value for type: %s", t.Type))
