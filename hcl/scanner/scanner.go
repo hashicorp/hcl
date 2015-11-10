@@ -198,9 +198,10 @@ func (s *Scanner) Scan() token.Token {
 		case '<':
 			if s.next() != '<' {
 				s.err("heredoc must start with <<")
+			} else {
+				tok = token.HEREDOC
+				s.scanHeredoc()
 			}
-			tok = token.HEREDOC
-			s.scanHeredoc()
 		default:
 			s.err("illegal char")
 		}
