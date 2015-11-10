@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	
+
 	hclstrconv "github.com/hashicorp/hcl/hcl/strconv"
 )
 
@@ -160,6 +160,7 @@ func (t Token) Value() interface{} {
 		// determine length of marker
 		markerLength := strings.IndexRune(t.Text, '\n')
 
+		// strip leading and trailing marker
 		return t.Text[markerLength+1:len(t.Text)-markerLength+1]
 
 	default:
