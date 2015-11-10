@@ -37,7 +37,6 @@ resource aws_instance "web" {
 		description = <<EOF
 ANOTHER NETWORK INTERFACE
 EOF
-
 	}
 }
 
@@ -52,5 +51,4 @@ output "web_ip" {
 	value = <<EOF
 TUBES
 EOF
-
 }

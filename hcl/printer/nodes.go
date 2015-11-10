@@ -319,6 +319,7 @@ func (p *printer) objectType(o *ast.ObjectType) []byte {
 			// If the value is a heredoc, we "poison" it so that we can
 			// clean it up later. Heredocs don't indent their fields.
 			if lit, ok := item.Val.(*ast.LiteralType); ok && lit.Token.Type == token.HEREDOC {
+				val = val[:len(val)-1]
 				val = p.heredocIndent(val)
 			}
 
