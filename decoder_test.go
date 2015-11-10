@@ -57,18 +57,16 @@ func TestDecode_interface(t *testing.T) {
 				"a": 1.02,
 			},
 		},
-		/*
-			{
-				"multiline_bad.hcl",
-				false,
-				map[string]interface{}{"foo": "bar\nbaz\n"},
-			},
-			{
-				"multiline.json",
-				false,
-				map[string]interface{}{"foo": "bar\nbaz"},
-			},
-		*/
+		{
+			"multiline_bad.hcl",
+			false,
+			map[string]interface{}{"foo": "bar\nbaz\n"},
+		},
+		{
+			"multiline.json",
+			false,
+			map[string]interface{}{"foo": "bar\nbaz"},
+		},
 		{
 			"scientific.json",
 			false,
