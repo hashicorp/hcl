@@ -71,6 +71,9 @@ var tokenLists = map[string][]tokenPair{
 		{token.IDENT, "foo६४"},
 		{token.IDENT, "bar９８７６"},
 	},
+	"heredoc": []tokenPair{
+		{token.HEREDOC, "<<EOF\nhello\nworld\nEOF"},
+	},
 	"string": []tokenPair{
 		{token.STRING, `" "`},
 		{token.STRING, `"a"`},
@@ -229,6 +232,7 @@ var orderedTokenLists = []string{
 	"operator",
 	"bool",
 	"ident",
+	"heredoc",
 	"string",
 	"number",
 	"float",

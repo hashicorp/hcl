@@ -37,10 +37,11 @@ const (
 	identifier_end
 
 	operator_beg
-	LBRACK // [
-	LBRACE // {
-	COMMA  // ,
-	PERIOD // .
+	LBRACK  // [
+	LBRACE  // {
+	COMMA   // ,
+	PERIOD  // .
+	HEREDOC // <<
 
 	RBRACK // ]
 	RBRACE // }
@@ -63,10 +64,11 @@ var tokens = [...]string{
 	BOOL:   "BOOL",
 	STRING: "STRING",
 
-	LBRACK: "LBRACK",
-	LBRACE: "LBRACE",
-	COMMA:  "COMMA",
-	PERIOD: "PERIOD",
+	LBRACK:  "LBRACK",
+	LBRACE:  "LBRACE",
+	COMMA:   "COMMA",
+	PERIOD:  "PERIOD",
+	HEREDOC: "HEREDOC",
 
 	RBRACK: "RBRACK",
 	RBRACE: "RBRACE",
