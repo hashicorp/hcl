@@ -16,6 +16,10 @@ const (
 	infinity = 1 << 30 // offset or line
 )
 
+var (
+	unindent = []byte("\uE123") // in the private use space
+)
+
 type printer struct {
 	cfg  Config
 	prev token.Pos
@@ -309,7 +313,16 @@ func (p *printer) objectType(o *ast.ObjectType) []byte {
 		} else {
 			p.prev = o.List.Items[index].Pos()
 
-			buf.Write(p.indent(p.objectItem(o.List.Items[index])))
+			item := o.List.Items[index]
+			val := p.objectItem(item)
+
+			// If the value is a heredoc, we "poison" it so that we can
+			// clean it up later. Heredocs don't indent their fields.
+			if lit, ok := item.Val.(*ast.LiteralType); ok && lit.Token.Type == token.HEREDOC {
+				val = p.heredocIndent(val)
+			}
+
+			buf.Write(p.indent(val))
 			index++
 		}
 
@@ -459,6 +472,51 @@ func (p *printer) indent(buf []byte) []byte {
 	for _, c := range buf {
 		if bol && c != '\n' {
 			res = append(res, prefix...)
+		}
+
+		res = append(res, c)
+		bol = c == '\n'
+	}
+	return res
+}
+
+// unindent removes all the indentation from the tombstoned lines
+func (p *printer) unindent(buf []byte) []byte {
+	var res []byte
+	for i := 0; i < len(buf); i++ {
+		skip := len(buf)-i <= len(unindent)
+		if !skip {
+			skip = !bytes.Equal(unindent, buf[i:i+len(unindent)])
+		}
+		if skip {
+			res = append(res, buf[i])
+			continue
+		}
+
+		// We have a marker. we have to backtrace here and clean out
+		// any whitespace ahead of our tombstone up to a \n
+		for j := len(res) - 1; j >= 0; j-- {
+			if res[j] == '\n' {
+				break
+			}
+
+			res = res[:j]
+		}
+
+		// Skip the entire unindent marker
+		i += len(unindent) - 1
+	}
+
+	return res
+}
+
+// heredocIndent marks all the 2nd and further lines as unindentable
+func (p *printer) heredocIndent(buf []byte) []byte {
+	var res []byte
+	bol := false
+	for _, c := range buf {
+		if bol && c != '\n' {
+			res = append(res, unindent...)
 		}
 		res = append(res, c)
 		bol = c == '\n'
