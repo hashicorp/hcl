@@ -440,6 +440,48 @@ func TestDecode_structureArray(t *testing.T) {
 	}
 }
 
+func TestDecode_sliceExpand(t *testing.T) {
+	type testInner struct {
+		Name string `hcl:",key"`
+		Key  string
+	}
+
+	type testStruct struct {
+		Services []testInner `hcl:"service,expand"`
+	}
+
+	expected := testStruct{
+		Services: []testInner{
+			testInner{
+				Name: "my-service-0",
+				Key:  "value",
+			},
+			testInner{
+				Name: "my-service-1",
+				Key:  "value",
+			},
+		},
+	}
+
+	files := []string{
+		"slice_expand.hcl",
+	}
+
+	for _, f := range files {
+		t.Logf("Testing: %s", f)
+
+		var actual testStruct
+		err := Decode(&actual, testReadFile(t, f))
+		if err != nil {
+			t.Fatalf("Input: %s\n\nerr: %s", f, err)
+		}
+
+		if !reflect.DeepEqual(actual, expected) {
+			t.Fatalf("Input: %s\n\nActual: %#v\n\nExpected: %#v", f, actual, expected)
+		}
+	}
+}
+
 func TestDecode_structureMap(t *testing.T) {
 	// This test is extracted from a failure in Terraform (terraform.io),
 	// hence the interesting structure naming.
