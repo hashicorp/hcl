@@ -151,7 +151,7 @@ func (p *printer) output(n interface{}) []byte {
 		p.prev = t.Pos()
 		buf.Write(p.objectItem(t))
 	case *ast.LiteralType:
-		buf.WriteString(t.Token.Text)
+		buf.Write(p.literalType(t))
 	case *ast.ListType:
 		buf.Write(p.list(t))
 	case *ast.ObjectType:
@@ -161,6 +161,21 @@ func (p *printer) output(n interface{}) []byte {
 	}
 
 	return buf.Bytes()
+}
+
+func (p *printer) literalType(lit *ast.LiteralType) []byte {
+	result := []byte(lit.Token.Text)
+	if lit.Token.Type == token.HEREDOC {
+		// Clear the trailing newline from heredocs
+		if result[len(result)-1] == '\n' {
+			result = result[:len(result)-1]
+		}
+
+		// Poison lines 2+ so that we don't indent them
+		result = p.heredocIndent(result)
+	}
+
+	return result
 }
 
 // objectItem returns the printable HCL form of an object item. An object type
@@ -313,17 +328,7 @@ func (p *printer) objectType(o *ast.ObjectType) []byte {
 		} else {
 			p.prev = o.List.Items[index].Pos()
 
-			item := o.List.Items[index]
-			val := p.objectItem(item)
-
-			// If the value is a heredoc, we "poison" it so that we can
-			// clean it up later. Heredocs don't indent their fields.
-			if lit, ok := item.Val.(*ast.LiteralType); ok && lit.Token.Type == token.HEREDOC {
-				val = val[:len(val)-1]
-				val = p.heredocIndent(val)
-			}
-
-			buf.Write(p.indent(val))
+			buf.Write(p.indent(p.objectItem(o.List.Items[index])))
 			index++
 		}
 
