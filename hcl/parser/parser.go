@@ -248,16 +248,22 @@ func (p *Parser) listType() (*ast.ListType, error) {
 		Lbrack: p.tok.Pos,
 	}
 
+	needComma := false
 	for {
 		tok := p.scan()
 		switch tok.Type {
 		case token.NUMBER, token.FLOAT, token.STRING:
+			if needComma {
+				return nil, fmt.Errorf("unexpected token: %s. Expecting %s", tok.Type, token.COMMA)
+			}
+
 			node, err := p.literalType()
 			if err != nil {
 				return nil, err
 			}
 
 			l.Add(node)
+			needComma = true
 		case token.COMMA:
 			// get next list item or we are at the end
 			// do a look-ahead for line comment
@@ -271,6 +277,8 @@ func (p *Parser) listType() (*ast.ListType, error) {
 				}
 			}
 			p.unscan()
+
+			needComma = false
 			continue
 		case token.BOOL:
 			// TODO(arslan) should we support? not supported by HCL yet
