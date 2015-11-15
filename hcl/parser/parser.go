@@ -46,7 +46,7 @@ func (p *Parser) Parse() (*ast.File, error) {
 	f := &ast.File{}
 	var err, scerr error
 	p.sc.Error = func(pos token.Pos, msg string) {
-		scerr = fmt.Errorf("%s: %s", pos, msg)
+		scerr = &PosError{Pos: pos, Err: errors.New(msg)}
 	}
 
 	f.Node, err = p.objectList()
@@ -173,11 +173,17 @@ func (p *Parser) objectKey() ([]*ast.ObjectKey, error) {
 			// assignment or object only, but not nested objects. this is not
 			// allowed: `foo bar = {}`
 			if keyCount > 1 {
-				return nil, fmt.Errorf("nested object expected: LBRACE got: %s", p.tok.Type)
+				return nil, &PosError{
+					Pos: p.tok.Pos,
+					Err: fmt.Errorf("nested object expected: LBRACE got: %s", p.tok.Type),
+				}
 			}
 
 			if keyCount == 0 {
-				return nil, errors.New("no keys found!!!")
+				return nil, &PosError{
+					Pos: p.tok.Pos,
+					Err: errors.New("no object keys found!"),
+				}
 			}
 
 			return keys, nil
@@ -190,7 +196,10 @@ func (p *Parser) objectKey() ([]*ast.ObjectKey, error) {
 		case token.ILLEGAL:
 			fmt.Println("illegal")
 		default:
-			return nil, fmt.Errorf("expected: IDENT | STRING | ASSIGN | LBRACE got: %s", p.tok.Type)
+			return nil, &PosError{
+				Pos: p.tok.Pos,
+				Err: fmt.Errorf("expected: IDENT | STRING | ASSIGN | LBRACE got: %s", p.tok.Type),
+			}
 		}
 	}
 }
@@ -214,7 +223,10 @@ func (p *Parser) object() (ast.Node, error) {
 		return nil, errEofToken
 	}
 
-	return nil, fmt.Errorf("Unknown token: %+v", tok)
+	return nil, &PosError{
+		Pos: tok.Pos,
+		Err: fmt.Errorf("Unknown token: %+v", tok),
+	}
 }
 
 // objectType parses an object type and returns a ObjectType AST
@@ -254,7 +266,10 @@ func (p *Parser) listType() (*ast.ListType, error) {
 		switch tok.Type {
 		case token.NUMBER, token.FLOAT, token.STRING:
 			if needComma {
-				return nil, fmt.Errorf("unexpected token: %s. Expecting %s", tok.Type, token.COMMA)
+				return nil, &PosError{
+					Pos: tok.Pos,
+					Err: fmt.Errorf("unexpected token: %s. Expecting %s", tok.Type, token.COMMA),
+				}
 			}
 
 			node, err := p.literalType()
@@ -291,9 +306,11 @@ func (p *Parser) listType() (*ast.ListType, error) {
 			l.Rbrack = p.tok.Pos
 			return l, nil
 		default:
-			return nil, fmt.Errorf("unexpected token while parsing list: %s", tok.Type)
+			return nil, &PosError{
+				Pos: tok.Pos,
+				Err: fmt.Errorf("unexpected token while parsing list: %s", tok.Type),
+			}
 		}
-
 	}
 }
 
