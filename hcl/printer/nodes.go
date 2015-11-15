@@ -42,13 +42,13 @@ func (b ByPosition) Less(i, j int) bool { return b[i].Pos().Before(b[j].Pos()) }
 func (p *printer) collectComments(node ast.Node) {
 	// first collect all comments. This is already stored in
 	// ast.File.(comments)
-	ast.Walk(node, func(nn ast.Node) bool {
+	ast.Walk(node, func(nn ast.Node) (ast.Node, bool) {
 		switch t := nn.(type) {
 		case *ast.File:
 			p.comments = t.Comments
-			return false
+			return nn, false
 		}
-		return true
+		return nn, true
 	})
 
 	standaloneComments := make(map[token.Pos]*ast.CommentGroup, 0)
@@ -59,7 +59,7 @@ func (p *printer) collectComments(node ast.Node) {
 	// next remove all lead and line comments from the overall comment map.
 	// This will give us comments which are standalone, comments which are not
 	// assigned to any kind of node.
-	ast.Walk(node, func(nn ast.Node) bool {
+	ast.Walk(node, func(nn ast.Node) (ast.Node, bool) {
 		switch t := nn.(type) {
 		case *ast.LiteralType:
 			if t.LineComment != nil {
@@ -87,7 +87,7 @@ func (p *printer) collectComments(node ast.Node) {
 			}
 		}
 
-		return true
+		return nn, true
 	})
 
 	for _, c := range standaloneComments {

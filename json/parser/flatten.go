@@ -6,11 +6,11 @@ import (
 
 // flattenObjects takes an AST node, walks it, and flattens
 func flattenObjects(node ast.Node) {
-	ast.Walk(node, func(n ast.Node) bool {
+	ast.Walk(node, func(n ast.Node) (ast.Node, bool) {
 		// We only care about lists, because this is what we modify
 		list, ok := n.(*ast.ObjectList)
 		if !ok {
-			return true
+			return n, true
 		}
 
 		// Rebuild the item list
@@ -41,7 +41,7 @@ func flattenObjects(node ast.Node) {
 
 		// Done! Set the original items
 		list.Items = items
-		return true
+		return n, true
 	})
 }
 

@@ -2,39 +2,51 @@ package ast
 
 import "fmt"
 
+// WalkFunc describes a function to be called for each node during a Walk. The
+// returned node can be used to rewrite the AST. Walking stops the returned
+// bool is false.
+type WalkFunc func(Node) (Node, bool)
+
 // Walk traverses an AST in depth-first order: It starts by calling fn(node);
-// node must not be nil.  If f returns true, Walk invokes f recursively for
-// each of the non-nil children of node, followed by a call of f(nil).
-func Walk(node Node, fn func(Node) bool) {
-	if !fn(node) {
-		return
+// node must not be nil. If fn returns true, Walk invokes fn recursively for
+// each of the non-nil children of node, followed by a call of fn(nil). The
+// returned node of fn can be used to rewrite the passed node to fn.
+func Walk(node Node, fn WalkFunc) Node {
+	rewritten, ok := fn(node)
+	if !ok {
+		return rewritten
 	}
 
 	switch n := node.(type) {
 	case *File:
-		Walk(n.Node, fn)
+		n.Node = Walk(n.Node, fn)
 	case *ObjectList:
-		for _, item := range n.Items {
-			Walk(item, fn)
+		for i, item := range n.Items {
+			n.Items[i] = Walk(item, fn).(*ObjectItem)
 		}
 	case *ObjectKey:
 		// nothing to do
 	case *ObjectItem:
-		for _, k := range n.Keys {
-			Walk(k, fn)
+		for i, k := range n.Keys {
+			n.Keys[i] = Walk(k, fn).(*ObjectKey)
 		}
-		Walk(n.Val, fn)
+
+		if n.Val != nil {
+			n.Val = Walk(n.Val, fn)
+		}
 	case *LiteralType:
 		// nothing to do
 	case *ListType:
-		for _, l := range n.List {
-			Walk(l, fn)
+		for i, l := range n.List {
+			n.List[i] = Walk(l, fn)
 		}
 	case *ObjectType:
-		Walk(n.List, fn)
+		n.List = Walk(n.List, fn).(*ObjectList)
 	default:
-		fmt.Printf(" unknown type: %T\n", n)
+		// should we panic here?
+		fmt.Printf("unknown type: %T\n", n)
 	}
 
 	fn(nil)
+	return rewritten
 }
