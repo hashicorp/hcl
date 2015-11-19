@@ -178,6 +178,60 @@ func TestObjectType(t *testing.T) {
 	}
 }
 
+func TestFlattenObjects(t *testing.T) {
+	var literals = []struct {
+		src      string
+		nodeType []ast.Node
+	}{
+		{
+			`{
+				"foo": [
+					{
+						"foo": "svh",
+						"bar": "fatih"
+					}
+				]
+			}`,
+			[]ast.Node{
+				&ast.ObjectType{},
+				&ast.LiteralType{},
+				&ast.LiteralType{},
+				&ast.ListType{},
+			},
+		},
+	}
+
+	for _, l := range literals {
+		t.Logf("Testing:\n%s\n", l.src)
+
+		f, err := Parse([]byte(l.src))
+		if err != nil {
+			t.Error(err)
+		}
+
+		// the first object is always an ObjectList so just assert that one
+		// so we can use it as such
+		obj, ok := f.Node.(*ast.ObjectList)
+		if !ok {
+			t.Errorf("node should be *ast.ObjectList, got: %T", f.Node)
+		}
+
+		// check if the types are correct
+		var i int
+		for _, item := range obj.Items {
+			equals(t, reflect.TypeOf(l.nodeType[i]), reflect.TypeOf(item.Val))
+			i++
+
+			if obj, ok := item.Val.(*ast.ObjectType); ok {
+				for _, item := range obj.List.Items {
+					equals(t, reflect.TypeOf(l.nodeType[i]), reflect.TypeOf(item.Val))
+					i++
+				}
+			}
+		}
+	}
+}
+
 func TestObjectKey(t *testing.T) {
 	keys := []struct {
 		exp []token.Type
@@ -226,15 +280,15 @@ func TestParse(t *testing.T) {
 		Err  bool
 	}{
 		{
+			"array.json",
+			false,
+		},
+		{
 			"basic.json",
 			false,
 		},
 		{
 			"object.json",
-			false,
-		},
-		{
-			"array.json",
 			false,
 		},
 		{
