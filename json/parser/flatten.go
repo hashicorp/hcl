@@ -1,8 +1,6 @@
 package parser
 
-import (
-	"github.com/hashicorp/hcl/hcl/ast"
-)
+import "github.com/hashicorp/hcl/hcl/ast"
 
 // flattenObjects takes an AST node, walks it, and flattens
 func flattenObjects(node ast.Node) {
@@ -60,25 +58,14 @@ func flattenListType(
 
 	// Great! We have a match go through all the items and flatten
 	for _, elem := range ot.List {
-		// This won't fail since we verified it earlier
-		ot := elem.(*ast.ObjectType)
-
-		// Go over all the subitems and merge them in
-		for _, subitem := range ot.List.Items {
-			// Copy the new key
-			keys := make([]*ast.ObjectKey, len(item.Keys)+len(subitem.Keys))
-			copy(keys, item.Keys)
-			copy(keys[len(item.Keys):], subitem.Keys)
-
-			// Add it to the frontier so that we can recurse
-			frontier = append(frontier, &ast.ObjectItem{
-				Keys:        keys,
-				Assign:      item.Assign,
-				Val:         subitem.Val,
-				LeadComment: item.LeadComment,
-				LineComment: item.LineComment,
-			})
-		}
+		// Add it to the frontier so that we can recurse
+		frontier = append(frontier, &ast.ObjectItem{
+			Keys:        item.Keys,
+			Assign:      item.Assign,
+			Val:         elem,
+			LeadComment: item.LeadComment,
+			LineComment: item.LineComment,
+		})
 	}
 
 	return items, frontier
