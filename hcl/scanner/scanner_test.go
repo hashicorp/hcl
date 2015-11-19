@@ -79,6 +79,7 @@ var tokenLists = map[string][]tokenPair{
 		{token.STRING, `"a"`},
 		{token.STRING, `"本"`},
 		{token.STRING, `"${file("foo")}"`},
+		{token.STRING, `"${file(\"foo\")}"`},
 		{token.STRING, `"\a"`},
 		{token.STRING, `"\b"`},
 		{token.STRING, `"\f"`},

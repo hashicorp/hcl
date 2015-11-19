@@ -51,6 +51,13 @@ func TestDecode_interface(t *testing.T) {
 			},
 		},
 		{
+			"interpolate_escape.hcl",
+			false,
+			map[string]interface{}{
+				"foo": "${file(\"bing/bong.txt\")}",
+			},
+		},
+		{
 			"float.hcl",
 			false,
 			map[string]interface{}{
