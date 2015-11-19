@@ -86,7 +86,12 @@ func Unquote(s string) (t string, err error) {
 				return "", ErrSyntax
 			}
 			if len(s) == 0 {
+				// If there's no string left, we're done!
 				break
+			} else {
+				// If there's more left, we need to pop back up to the top of the loop
+				// in case there's another interpolation in this string.
+				continue
 			}
 		}
 
