@@ -76,6 +76,12 @@ func flattenObjectType(
 	item *ast.ObjectItem,
 	items []*ast.ObjectItem,
 	frontier []*ast.ObjectItem) ([]*ast.ObjectItem, []*ast.ObjectItem) {
+	// If the list has no items we do not have to flatten anything
+	if ot.List.Items == nil {
+		items = append(items, item)
+		return items, frontier
+	}
+
 	// All the elements of this object must also be objects!
 	for _, subitem := range ot.List.Items {
 		if _, ok := subitem.Val.(*ast.ObjectType); !ok {

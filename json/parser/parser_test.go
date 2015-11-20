@@ -182,6 +182,7 @@ func TestFlattenObjects(t *testing.T) {
 	var literals = []struct {
 		src      string
 		nodeType []ast.Node
+		itemLen  int
 	}{
 		{
 			`{
@@ -196,8 +197,19 @@ func TestFlattenObjects(t *testing.T) {
 				&ast.ObjectType{},
 				&ast.LiteralType{},
 				&ast.LiteralType{},
-				&ast.ListType{},
 			},
+			3,
+		},
+		{
+			`{
+				"variable": {
+					"foo": {}
+				}
+			}`,
+			[]ast.Node{
+				&ast.ObjectType{},
+			},
+			1,
 		},
 	}
 
@@ -229,6 +241,10 @@ func TestFlattenObjects(t *testing.T) {
 				}
 			}
 		}
+
+		// check if the number of items is correct
+		equals(t, l.itemLen, i)
+
 	}
 }
 
