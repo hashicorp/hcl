@@ -44,6 +44,15 @@ func TestDecode_interface(t *testing.T) {
 			},
 		},
 		{
+			"tfvars.hcl",
+			false,
+			map[string]interface{}{
+				"regularvar": "Should work",
+				"map.key1":   "Value",
+				"map.key2":   "Other value",
+			},
+		},
+		{
 			"escape.hcl",
 			false,
 			map[string]interface{}{

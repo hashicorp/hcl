@@ -516,7 +516,7 @@ func (s *Scanner) scanDigits(ch rune, base, n int) rune {
 func (s *Scanner) scanIdentifier() string {
 	offs := s.srcPos.Offset - s.lastCharLen
 	ch := s.next()
-	for isLetter(ch) || isDigit(ch) || ch == '-' {
+	for isLetter(ch) || isDigit(ch) || ch == '-' || ch == '.' {
 		ch = s.next()
 	}
 
