@@ -64,6 +64,15 @@ func TestListType(t *testing.T) {
 			`foo = ["123", 123]`,
 			[]token.Type{token.STRING, token.NUMBER},
 		},
+		{
+			`foo = [1,
+"string",
+<<EOF
+heredoc contents
+EOF
+]`,
+			[]token.Type{token.NUMBER, token.STRING, token.HEREDOC},
+		},
 	}
 
 	for _, l := range literals {

@@ -264,7 +264,7 @@ func (p *Parser) listType() (*ast.ListType, error) {
 	for {
 		tok := p.scan()
 		switch tok.Type {
-		case token.NUMBER, token.FLOAT, token.STRING:
+		case token.NUMBER, token.FLOAT, token.STRING, token.HEREDOC:
 			if needComma {
 				return nil, &PosError{
 					Pos: tok.Pos,
