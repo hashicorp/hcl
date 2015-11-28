@@ -232,6 +232,10 @@ func TestParse(t *testing.T) {
 			false,
 		},
 		{
+			"comment_lastline.hcl",
+			false,
+		},
+		{
 			"comment_single.hcl",
 			false,
 		},
