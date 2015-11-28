@@ -224,10 +224,12 @@ func (s *Scanner) scanComment(ch rune) {
 	// single line comments
 	if ch == '#' || (ch == '/' && s.peek() != '*') {
 		ch = s.next()
-		for ch != '\n' && ch >= 0 {
+		for ch != '\n' && ch >= 0 && ch != eof {
 			ch = s.next()
 		}
-		s.unread()
+		if ch != eof && ch >= 0 {
+			s.unread()
+		}
 		return
 	}
 
