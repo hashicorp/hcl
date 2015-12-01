@@ -399,6 +399,13 @@ func (s *Scanner) scanHeredoc() {
 		return
 	}
 
+	// Ignore the '\r' in Windows line endings
+	if ch == '\r' {
+		if s.peek() == '\n' {
+			ch = s.next()
+		}
+	}
+
 	// If we didn't reach a newline then that is also not good
 	if ch != '\n' {
 		s.err("invalid characters in heredoc anchor")
