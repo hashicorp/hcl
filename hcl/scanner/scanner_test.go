@@ -73,6 +73,7 @@ var tokenLists = map[string][]tokenPair{
 	},
 	"heredoc": []tokenPair{
 		{token.HEREDOC, "<<EOF\nhello\nworld\nEOF"},
+		{token.HEREDOC, "<<EOF123\nhello\nworld\nEOF123"},
 	},
 	"string": []tokenPair{
 		{token.STRING, `" "`},
