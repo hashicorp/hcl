@@ -389,7 +389,7 @@ func (s *Scanner) scanHeredoc() {
 
 	// Scan the identifier
 	ch := s.next()
-	for isLetter(ch) {
+	for isLetter(ch) || isDigit(ch) {
 		ch = s.next()
 	}
 
@@ -571,12 +571,12 @@ func isLetter(ch rune) bool {
 	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_' || ch >= 0x80 && unicode.IsLetter(ch)
 }
 
-// isHexadecimal returns true if the given rune is a decimal digit
+// isDigit returns true if the given rune is a decimal digit
 func isDigit(ch rune) bool {
 	return '0' <= ch && ch <= '9' || ch >= 0x80 && unicode.IsDigit(ch)
 }
 
-// isHexadecimal returns true if the given rune is a decimal number
+// isDecimal returns true if the given rune is a decimal number
 func isDecimal(ch rune) bool {
 	return '0' <= ch && ch <= '9'
 }
