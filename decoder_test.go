@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"reflect"
 	"testing"
+
+	"github.com/hashicorp/hcl/hcl/ast"
 )
 
 func TestDecode_interface(t *testing.T) {
@@ -586,3 +588,77 @@ func TestDecode_intString(t *testing.T) {
 		t.Fatalf("bad: %#v", value.Count)
 	}
 }
+
+func TestDecode_Node(t *testing.T) {
+	// given
+	var value struct {
+		Content ast.Node
+		Nested  struct {
+			Content ast.Node
+		}
+	}
+
+	content := `
+content {
+	hello = "world"
+}
+`
+
+	// when
+	err := Decode(&value, content)
+
+	// then
+	if err != nil {
+		t.Errorf("unable to decode content, %v", err)
+		return
+	}
+
+	// verify ast.Node can be decoded later
+	var v map[string]interface{}
+	err = DecodeObject(&v, value.Content)
+	if err != nil {
+		t.Errorf("unable to decode content, %v", err)
+		return
+	}
+
+	if v["hello"] != "world" {
+		t.Errorf("expected mapping to be returned")
+	}
+}
+
+func TestDecode_NestedNode(t *testing.T) {
+	// given
+	var value struct {
+		Nested  struct {
+			Content ast.Node
+		}
+	}
+
+	content := `
+nested "content" {
+	hello = "world"
+}
+`
+
+	// when
+	err := Decode(&value, content)
+
+	// then
+	if err != nil {
+		t.Errorf("unable to decode content, %v", err)
+		return
+	}
+
+	// verify ast.Node can be decoded later
+	var v map[string]interface{}
+	err = DecodeObject(&v, value.Nested.Content)
+	if err != nil {
+		t.Errorf("unable to decode content, %v", err)
+		return
+	}
+
+	if v["hello"] != "world" {
+		t.Errorf("expected mapping to be returned")
+	}
+}
+
