@@ -49,7 +49,7 @@ and JSON as the interoperability layer.
 ## Syntax
 
 For a complete grammar, please see the parser itself. A high-level overview
-of the syntax and grammer is listed here.
+of the syntax and grammar is listed here.
 
   * Single line comments start with `#` or `//`
 
