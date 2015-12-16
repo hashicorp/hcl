@@ -15,6 +15,11 @@ import (
 // This is the tag to use with structures to have settings for HCL
 const tagName = "hcl"
 
+var (
+	// nodeType holds a reference to the type of ast.Node
+	nodeType reflect.Type = findNodeType()
+)
+
 // Decode reads the given input and decodes it into the structure
 // given by `out`.
 func Decode(out interface{}, in string) error {
@@ -158,6 +163,14 @@ func (d *decoder) decodeInt(name string, node ast.Node, result reflect.Value) er
 }
 
 func (d *decoder) decodeInterface(name string, node ast.Node, result reflect.Value) error {
+	// When we see an ast.Node, we retain the value to enable deferred decoding.
+	// Very useful in situations where we want to preserve ast.Node information
+	// like Pos
+	if result.Type() == nodeType && result.CanSet() {
+		result.Set(reflect.ValueOf(node))
+		return nil
+	}
+
 	var set reflect.Value
 	redecode := true
 
@@ -573,4 +586,13 @@ func (d *decoder) decodeStruct(name string, node ast.Node, result reflect.Value)
 	}
 
 	return nil
+}
+
+// findNodeType returns the type of ast.Node
+func findNodeType() reflect.Type {
+	var nodeContainer struct {
+		Node ast.Node
+	}
+	value := reflect.ValueOf(nodeContainer).FieldByName("Node")
+	return value.Type()
 }
