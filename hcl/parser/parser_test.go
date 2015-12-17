@@ -292,6 +292,10 @@ func TestParse(t *testing.T) {
 			"array_comment_2.hcl",
 			true,
 		},
+		{
+			"missing_braces.hcl",
+			true,
+		},
 	}
 
 	const fixtureDir = "./test-fixtures"
