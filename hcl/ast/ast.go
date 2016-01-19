@@ -3,6 +3,7 @@
 package ast
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/hashicorp/hcl/hcl/token"
@@ -202,3 +203,9 @@ type CommentGroup struct {
 func (c *CommentGroup) Pos() token.Pos {
 	return c.List[0].Pos()
 }
+
+//-------------------------------------------------------------------
+// GoStringer
+//-------------------------------------------------------------------
+
+func (o *ObjectKey) GoString() string { return fmt.Sprintf("*%#v", *o) }
