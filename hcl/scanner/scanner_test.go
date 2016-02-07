@@ -131,6 +131,7 @@ var tokenLists = map[string][]tokenPair{
 		{token.NUMBER, "-00"},
 		{token.NUMBER, "-01"},
 		{token.NUMBER, "-07"},
+		{token.NUMBER, "-29"},
 		{token.NUMBER, "-042"},
 		{token.NUMBER, "-01234567"},
 		{token.NUMBER, "-0x0"},
