@@ -432,12 +432,8 @@ func (p *printer) list(l *ast.ListType) []byte {
 			if lit, ok := item.(*ast.LiteralType); ok && lit.LineComment != nil {
 				// if the next item doesn't have any comments, do not align
 				buf.WriteByte(blank) // align one space
-				if i != len(l.List)-1 {
-					if lit, ok := l.List[i+1].(*ast.LiteralType); ok && lit.LineComment != nil {
-						for i := 0; i < longestLine-curLen; i++ {
-							buf.WriteByte(blank)
-						}
-					}
+				for i := 0; i < longestLine-curLen; i++ {
+					buf.WriteByte(blank)
 				}
 
 				for _, comment := range lit.LineComment.List {
