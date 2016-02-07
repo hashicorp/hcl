@@ -419,8 +419,7 @@ func (p *printer) list(l *ast.ListType) []byte {
 		}
 	}
 
-	var insertSpaceBeforeItem bool = false
-
+	insertSpaceBeforeItem := false
 	for i, item := range l.List {
 		if item.Pos().Line != l.Lbrack.Line {
 			// multiline list, add newline before we add each item
