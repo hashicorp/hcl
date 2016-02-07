@@ -419,10 +419,13 @@ func (p *printer) list(l *ast.ListType) []byte {
 		}
 	}
 
+	var insertSpaceBeforeItem bool = false
+
 	for i, item := range l.List {
 		if item.Pos().Line != l.Lbrack.Line {
 			// multiline list, add newline before we add each item
 			buf.WriteByte(newline)
+			insertSpaceBeforeItem = false
 			// also indent each line
 			val := p.output(item)
 			curLen := len(val)
@@ -449,10 +452,14 @@ func (p *printer) list(l *ast.ListType) []byte {
 				buf.WriteByte(newline)
 			}
 		} else {
+			if insertSpaceBeforeItem {
+				buf.WriteByte(blank)
+				insertSpaceBeforeItem = false
+			}
 			buf.Write(p.output(item))
 			if i != len(l.List)-1 {
 				buf.WriteString(",")
-				buf.WriteByte(blank)
+				insertSpaceBeforeItem = true
 			}
 		}
 
