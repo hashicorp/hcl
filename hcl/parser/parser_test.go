@@ -19,6 +19,7 @@ func TestType(t *testing.T) {
 	}{
 		{token.STRING, `foo = "foo"`},
 		{token.NUMBER, `foo = 123`},
+		{token.NUMBER, `foo = -29`},
 		{token.FLOAT, `foo = 123.12`},
 		{token.FLOAT, `foo = -123.12`},
 		{token.BOOL, `foo = true`},
