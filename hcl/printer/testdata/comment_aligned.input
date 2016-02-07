@@ -18,4 +18,11 @@ security_groups = [
 	"foo",    # kenya 1
 	"${aws_security_group.firewall.foo}", # kenya 2
 ]
+
+security_groups2 = [
+	"foo",    # kenya 1
+	"bar",  # kenya 1.5
+	"${aws_security_group.firewall.foo}", # kenya 2
+	"foobar", # kenya 3
+]
 }
