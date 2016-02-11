@@ -106,45 +106,8 @@ func (p *printer) output(n interface{}) []byte {
 	case *ast.File:
 		return p.output(t.Node)
 	case *ast.ObjectList:
-		var index int
-		var nextItem token.Pos
-		var commented bool
-		for {
-			// TODO(arslan): refactor below comment printing, we have the same in objectType
-			for _, c := range p.standaloneComments {
-				for _, comment := range c.List {
-					if index != len(t.Items) {
-						nextItem = t.Items[index].Pos()
-					} else {
-						nextItem = token.Pos{Offset: infinity, Line: infinity}
-					}
-
-					if comment.Pos().After(p.prev) && comment.Pos().Before(nextItem) {
-						// if we hit the end add newlines so we can print the comment
-						if index == len(t.Items) {
-							buf.Write([]byte{newline, newline})
-						}
-
-						buf.WriteString(comment.Text)
-
-						buf.WriteByte(newline)
-						if index != len(t.Items) {
-							buf.WriteByte(newline)
-						}
-					}
-				}
-			}
-
-			if index == len(t.Items) {
-				break
-			}
-
-			buf.Write(p.output(t.Items[index]))
-			if !commented && index != len(t.Items)-1 {
-				buf.Write([]byte{newline, newline})
-			}
-			index++
-		}
+		end := token.Pos{Offset: infinity, Line: infinity}
+		buf.Write(p.objectList(t, end))
 	case *ast.ObjectKey:
 		buf.WriteString(t.Token.Text)
 	case *ast.ObjectItem:
@@ -215,26 +178,22 @@ func (p *printer) objectItem(o *ast.ObjectItem) []byte {
 	return buf.Bytes()
 }
 
-// objectType returns the printable HCL form of an object type. An object type
-// begins with a brace and ends with a brace.
-func (p *printer) objectType(o *ast.ObjectType) []byte {
-	defer un(trace(p, "ObjectType"))
+// objectList returns the printable HCL form of a list of objects.
+func (p *printer) objectList(o *ast.ObjectList, end token.Pos) []byte {
 	var buf bytes.Buffer
-	buf.WriteString("{")
-	buf.WriteByte(newline)
-
 	var index int
 	var nextItem token.Pos
-	var commented bool
 	for {
+		commented := false
+
 		// Print stand alone comments
 		for _, c := range p.standaloneComments {
 			for _, comment := range c.List {
 				// if we hit the end, last item should be the brace
-				if index != len(o.List.Items) {
-					nextItem = o.List.Items[index].Pos()
+				if index != len(o.Items) {
+					nextItem = o.Items[index].Pos()
 				} else {
-					nextItem = o.Rbrace
+					nextItem = end
 				}
 
 				if comment.Pos().After(p.prev) && comment.Pos().Before(nextItem) {
@@ -244,26 +203,26 @@ func (p *printer) objectType(o *ast.ObjectType) []byte {
 						buf.WriteByte(newline)
 					}
 
-					buf.Write(p.indent([]byte(comment.Text)))
+					buf.Write([]byte(comment.Text))
 					buf.WriteByte(newline)
-					if index != len(o.List.Items) {
+					if index != len(o.Items) {
 						buf.WriteByte(newline) // do not print on the end
 					}
 				}
 			}
 		}
 
-		if index == len(o.List.Items) {
-			p.prev = o.Rbrace
+		if index == len(o.Items) {
+			p.prev = end
 			break
 		}
 
 		// check if we have adjacent one liner items. If yes we'll going to align
 		// the comments.
 		var aligned []*ast.ObjectItem
-		for _, item := range o.List.Items[index:] {
+		for _, item := range o.Items[index:] {
 			// we don't group one line lists
-			if len(o.List.Items) == 1 {
+			if len(o.Items) == 1 {
 				break
 			}
 
@@ -278,19 +237,19 @@ func (p *printer) objectType(o *ast.ObjectType) []byte {
 			curPos := item.Pos()
 
 			nextPos := token.Pos{}
-			if index != len(o.List.Items)-1 {
-				nextPos = o.List.Items[index+1].Pos()
+			if index != len(o.Items)-1 {
+				nextPos = o.Items[index+1].Pos()
 			}
 
 			prevPos := token.Pos{}
 			if index != 0 {
-				prevPos = o.List.Items[index-1].Pos()
+				prevPos = o.Items[index-1].Pos()
 			}
 
 			// fmt.Println("DEBUG ----------------")
-			// fmt.Printf("prev = %+v prevPos: %s\n", prev, prevPos)
+			// fmt.Printf("prev = %#v prevPos: %s\n", "", prevPos)
 			// fmt.Printf("cur = %+v curPos: %s\n", cur, curPos)
-			// fmt.Printf("next = %+v nextPos: %s\n", next, nextPos)
+			// fmt.Printf("next = %#v nextPos: %s\n", "", nextPos)
 
 			if curPos.Line+1 == nextPos.Line {
 				aligned = append(aligned, item)
@@ -324,17 +283,28 @@ func (p *printer) objectType(o *ast.ObjectType) []byte {
 			p.prev = aligned[len(aligned)-1].Pos()
 
 			items := p.alignedItems(aligned)
-			buf.Write(p.indent(items))
+			buf.Write(items)
 		} else {
-			p.prev = o.List.Items[index].Pos()
+			p.prev = o.Items[index].Pos()
 
-			buf.Write(p.indent(p.objectItem(o.List.Items[index])))
+			buf.Write(p.objectItem(o.Items[index]))
 			index++
 		}
 
 		buf.WriteByte(newline)
 	}
 
+	return buf.Bytes()
+}
+
+// objectType returns the printable HCL form of an object type. An object type
+// begins with a brace and ends with a brace.
+func (p *printer) objectType(o *ast.ObjectType) []byte {
+	defer un(trace(p, "ObjectType"))
+	var buf bytes.Buffer
+	buf.WriteString("{")
+	buf.WriteByte(newline)
+	buf.Write(p.indent(p.objectList(o.List, o.Rbrace)))
 	buf.WriteString("}")
 	return buf.Bytes()
 }
