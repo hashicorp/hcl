@@ -1,6 +1,8 @@
 foo = "bar"
 longer = "baz"
 
+other = "foo"
+
 foo {
     foo = "bar"
     longer = "baz"
