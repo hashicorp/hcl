@@ -1,0 +1,7 @@
+foo = "bar"
+longer = "baz"
+
+foo {
+	foo    = "bar"
+	longer = "baz"
+}

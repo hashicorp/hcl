@@ -139,9 +139,29 @@ func (p *printer) output(n interface{}) []byte {
 				break
 			}
 
-			buf.Write(p.output(t.Items[index]))
-			if !commented && index != len(t.Items)-1 {
-				buf.Write([]byte{newline, newline})
+			item := t.Items[index]
+			buf.Write(p.output(item))
+
+			last := index == len(t.Items)-1
+			if !last {
+				// We put items back to back to each other if they're both
+				// assigned items (= is there) and they're not separated
+				// manually by more than one line. Example:
+				//
+				//   foo = "bar"
+				//   bar = "baz"
+				//
+				//   quux = "foo"
+				//
+				next := t.Items[index+1]
+				singleLine := item.Assign.IsValid() && next.Assign.IsValid() &&
+					next.Pos().Line <= item.Pos().Line+1
+
+				if singleLine {
+					buf.Write([]byte{newline})
+				} else if !commented {
+					buf.Write([]byte{newline, newline})
+				}
 			}
 			index++
 		}
