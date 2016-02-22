@@ -148,7 +148,8 @@ func (t Token) Value() interface{} {
 			panic("heredoc doesn't contain newline")
 		}
 
-		return string(t.Text[idx+1 : len(t.Text)-idx+1])
+		// Trim any trailing whitespace from the start of the marker
+		return strings.TrimRight(string(t.Text[idx+1:len(t.Text)-idx+1]), " \t")
 	case STRING:
 		// Determine the Unquote method to use. If it came from JSON,
 		// then we need to use the built-in unquote since we have to
