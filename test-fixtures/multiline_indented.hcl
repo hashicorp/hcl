@@ -1,4 +1,4 @@
 foo = <<-EOF
         bar
         baz
-    EOF
+      EOF
