@@ -1,0 +1,11 @@
+os: Windows Server 2012 R2
+
+clone_folder: c:\gopath\src\hashicorp\hcl
+
+environment:
+  GOPATH: c:\gopath
+  GO15VENDOREXPERIMENT: 1
+
+build_script:
+  - go get
+  - go test
