@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"runtime"
 	"sort"
 	"syscall"
 	"testing"
@@ -303,6 +304,11 @@ func TestRunWrite(t *testing.T) {
 }
 
 func TestRunDiff(t *testing.T) {
+	var expectedLineEnding = "\n"
+	if runtime.GOOS == "windows" {
+		expectedLineEnding = "\r\n"
+	}
+
 	path, err := renderFixtures("")
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
@@ -314,12 +320,12 @@ func TestRunDiff(t *testing.T) {
 		if len(fixture.diff) > 0 {
 			expectedOut.WriteString(
 				regexp.QuoteMeta(
-					fmt.Sprintf("diff a/%s/%s b/%s/%s\n", path, fixture.filename, path, fixture.filename),
+					fmt.Sprintf("diff a/%s/%s b/%s/%s%s", path, fixture.filename, path, fixture.filename, expectedLineEnding),
 				),
 			)
 			// Need to use regex to ignore datetimes in diff.
-			expectedOut.WriteString(`--- .+?\n`)
-			expectedOut.WriteString(`\+\+\+ .+?\n`)
+			expectedOut.WriteString(fmt.Sprintf(`--- .+?%s`, expectedLineEnding))
+			expectedOut.WriteString(fmt.Sprintf(`\+\+\+ .+?%s`, expectedLineEnding))
 			expectedOut.WriteString(regexp.QuoteMeta(string(fixture.diff)))
 		}
 	}
