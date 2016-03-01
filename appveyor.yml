@@ -17,7 +17,6 @@ install:
   - msiexec /i go1.5.windows-amd64.msi /q
   - go version
   - go env
-  - mkdir c:\gopath
 build_script:
   - cd %APPVEYOR_BUILD_FOLDER%
   - go test ./...
