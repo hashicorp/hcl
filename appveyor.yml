@@ -1,6 +1,7 @@
 # version format
 version: "{build}"
 os: Windows Server 2012 R2
+clone_folder: c:\gopath\src\github.com\hashicorp\hcl
 environment:
   GOPATH: c:\gopath
 init:
