@@ -291,6 +291,16 @@ func TestDecode_interface(t *testing.T) {
 		if !reflect.DeepEqual(out, tc.Out) {
 			t.Fatalf("Input: %s. Actual, Expected.\n\n%#v\n\n%#v", tc.File, out, tc.Out)
 		}
+
+		var v interface{}
+		err = Unmarshal(d, &v)
+		if (err != nil) != tc.Err {
+			t.Fatalf("Input: %s\n\nError: %s", tc.File, err)
+		}
+
+		if !reflect.DeepEqual(v, tc.Out) {
+			t.Fatalf("Input: %s. Actual, Expected.\n\n%#v\n\n%#v", tc.File, out, tc.Out)
+		}
 	}
 }
 

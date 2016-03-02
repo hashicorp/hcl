@@ -28,7 +28,7 @@ func TestLexMode(t *testing.T) {
 	}
 
 	for i, tc := range cases {
-		actual := lexMode(tc.Input)
+		actual := lexMode([]byte(tc.Input))
 
 		if actual != tc.Mode {
 			t.Fatalf("%d: %#v", i, actual)
