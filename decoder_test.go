@@ -667,3 +667,35 @@ nested "content" {
 		t.Errorf("expected mapping to be returned")
 	}
 }
+
+// https://github.com/hashicorp/hcl/issues/60
+func TestDecode_topLevelKeys(t *testing.T) {
+	type Template struct {
+		Source string
+	}
+
+	templates := struct {
+		Templates []*Template `hcl:"template"`
+	}{}
+
+	err := Decode(&templates, `
+	template {
+	    source = "blah"
+	}
+
+	template {
+	    source = "blahblah"
+	}`)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if templates.Templates[0].Source != "blah" {
+		t.Errorf("bad source: %s", templates.Templates[0].Source)
+	}
+
+	if templates.Templates[1].Source != "blahblah" {
+		t.Errorf("bad source: %s", templates.Templates[1].Source)
+	}
+}
