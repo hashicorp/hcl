@@ -21,6 +21,17 @@ var (
 	nodeType reflect.Type = findNodeType()
 )
 
+// Unmarshal accepts a byte slice as input and writes the
+// data to the value pointed to by v.
+func Unmarshal(bs []byte, v interface{}) error {
+	root, err := parse(bs)
+	if err != nil {
+		return err
+	}
+
+	return DecodeObject(v, root)
+}
+
 // Decode reads the given input and decodes it into the structure
 // given by `out`.
 func Decode(out interface{}, in string) error {
