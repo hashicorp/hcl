@@ -128,6 +128,13 @@ func (p *Parser) objectItem() (*ast.ObjectItem, error) {
 		// receive a value (but we did receive a key) for the item.
 		err = nil
 	}
+	if len(keys) > 0 && err != nil && p.tok.Type == token.RBRACE {
+		// Object key with no value in an object
+		err = nil
+
+		// Reset the token type so we don't think it completed fine.
+		p.tok.Type = token.EOF
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -215,7 +222,7 @@ func (p *Parser) objectKey() ([]*ast.ObjectKey, error) {
 		case token.ILLEGAL:
 			fmt.Println("illegal")
 		default:
-			return nil, &PosError{
+			return keys, &PosError{
 				Pos: p.tok.Pos,
 				Err: fmt.Errorf("expected: IDENT | STRING | ASSIGN | LBRACE got: %s", p.tok.Type),
 			}

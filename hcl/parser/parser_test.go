@@ -311,6 +311,10 @@ func TestParse(t *testing.T) {
 			"key_without_value.hcl",
 			true,
 		},
+		{
+			"object_key_without_value.hcl",
+			true,
+		},
 	}
 
 	const fixtureDir = "./test-fixtures"
