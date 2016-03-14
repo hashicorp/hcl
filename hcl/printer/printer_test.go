@@ -29,6 +29,7 @@ var data = []entry{
 	{"comment.input", "comment.golden"},
 	{"comment_aligned.input", "comment_aligned.golden"},
 	{"comment_standalone.input", "comment_standalone.golden"},
+	{"empty_block.input", "empty_block.golden"},
 }
 
 func TestFiles(t *testing.T) {
