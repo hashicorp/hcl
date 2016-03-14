@@ -336,6 +336,9 @@ func (d *decoder) decodeMap(name string, node ast.Node, result reflect.Value) er
 		if item.Val == nil {
 			continue
 		}
+		if len(item.Keys) == 0 {
+			continue
+		}
 
 		// Get the key we're dealing with, which is the first item
 		keyStr := item.Keys[0].Token.Value().(string)
