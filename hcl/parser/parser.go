@@ -5,6 +5,7 @@ package parser
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/hcl/hcl/ast"
 	"github.com/hashicorp/hcl/hcl/scanner"
@@ -122,6 +123,11 @@ func (p *Parser) objectItem() (*ast.ObjectItem, error) {
 	defer un(trace(p, "ParseObjectItem"))
 
 	keys, err := p.objectKey()
+	if len(keys) > 0 && err == errEofToken {
+		// We ignore eof token here since it is an error if we didn't
+		// receive a value (but we did receive a key) for the item.
+		err = nil
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -147,6 +153,15 @@ func (p *Parser) objectItem() (*ast.ObjectItem, error) {
 		if err != nil {
 			return nil, err
 		}
+	default:
+		keyStr := make([]string, 0, len(keys))
+		for _, k := range keys {
+			keyStr = append(keyStr, k.Token.Text)
+		}
+
+		return nil, fmt.Errorf(
+			"key '%s' expected start of object ('{') or assignment ('=')",
+			strings.Join(keyStr, " "))
 	}
 
 	// do a look-ahead for line comment
@@ -168,7 +183,11 @@ func (p *Parser) objectKey() ([]*ast.ObjectKey, error) {
 		tok := p.scan()
 		switch tok.Type {
 		case token.EOF:
-			return nil, errEofToken
+			// It is very important to also return the keys here as well as
+			// the error. This is because we need to be able to tell if we
+			// did parse keys prior to finding the EOF, or if we just found
+			// a bare EOF.
+			return keys, errEofToken
 		case token.ASSIGN:
 			// assignment or object only, but not nested objects. this is not
 			// allowed: `foo bar = {}`
