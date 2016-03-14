@@ -129,10 +129,16 @@ func (p *Parser) objectItem() (*ast.ObjectItem, error) {
 		err = nil
 	}
 	if len(keys) > 0 && err != nil && p.tok.Type == token.RBRACE {
-		// Object key with no value in an object
+		// This is a strange boolean statement, but what it means is:
+		// We have keys with no value, and we're likely in an object
+		// (since RBrace ends an object). For this, we set err to nil so
+		// we continue and get the error below of having the wrong value
+		// type.
 		err = nil
 
-		// Reset the token type so we don't think it completed fine.
+		// Reset the token type so we don't think it completed fine. See
+		// objectType which uses p.tok.Type to check if we're done with
+		// the object.
 		p.tok.Type = token.EOF
 	}
 	if err != nil {
