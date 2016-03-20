@@ -1,11 +1,16 @@
-os: Windows Server 2012 R2
-
-clone_folder: c:\gopath\src\hashicorp\hcl
-
+version: "build-{branch}-{build}"
+image: Visual Studio 2015
+clone_folder: c:\gopath\src\github.com\hashicorp\hcl
 environment:
   GOPATH: c:\gopath
-  GO15VENDOREXPERIMENT: 1
+init:
+  - git config --global core.autocrlf true
+install:
+- cmd: >-
+    echo %Path%
 
+    go version
+
+    go env
 build_script:
-  - go get
-  - go test
+- cmd: go test -v ./...
