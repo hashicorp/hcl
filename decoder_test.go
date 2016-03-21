@@ -246,6 +246,14 @@ func TestDecode_interface(t *testing.T) {
 		},
 
 		{
+			"nested_provider_bad.hcl",
+			true,
+			// This is not ideal but without significant rework of the decoder
+			// we get a partial result back as well as an error.
+			map[string]interface{}{},
+		},
+
+		{
 			"object_list.json",
 			false,
 			map[string]interface{}{
