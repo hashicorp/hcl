@@ -92,6 +92,16 @@ func TestDecode_interface(t *testing.T) {
 			map[string]interface{}{"foo": testhelper.Unix2dos("bar\nbaz\n")},
 		},
 		{
+			"multiline_indented.hcl",
+			false,
+			map[string]interface{}{"foo": testhelper.Unix2dos("  bar\n  baz\n")},
+		},
+		{
+			"multiline_no_hanging_indent.hcl",
+			false,
+			map[string]interface{}{"foo": testhelper.Unix2dos("  baz\n    bar\n      foo\n")},
+		},
+		{
 			"multiline_no_eof.hcl",
 			false,
 			map[string]interface{}{"foo": testhelper.Unix2dos("bar\nbaz\n"), "key": "value"},

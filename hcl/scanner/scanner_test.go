@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/hcl/hcl/token"
 	"strings"
+
+	"github.com/hashicorp/hcl/hcl/token"
 )
 
 var f100 = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
@@ -377,6 +378,14 @@ func TestRealExample(t *testing.T) {
 Main interface
 EOF
 	    }
+	    
+		network_interface {
+	        device_index = 1
+	        description = <<-EOF
+			Outer text
+				Indented text
+			EOF
+		}
 	}`
 
 	literals := []struct {
@@ -435,6 +444,15 @@ EOF
 		{token.ASSIGN, `=`},
 		{token.HEREDOC, "<<EOF\nMain interface\nEOF\n"},
 		{token.RBRACE, `}`},
+		{token.IDENT, `network_interface`},
+		{token.LBRACE, `{`},
+		{token.IDENT, `device_index`},
+		{token.ASSIGN, `=`},
+		{token.NUMBER, `1`},
+		{token.IDENT, `description`},
+		{token.ASSIGN, `=`},
+		{token.HEREDOC, "<<-EOF\n\t\t\tOuter text\n\t\t\t\tIndented text\n\t\t\tEOF\n"},
+		{token.RBRACE, `}`},
 		{token.RBRACE, `}`},
 		{token.EOF, ``},
 	}
@@ -447,7 +465,7 @@ EOF
 		}
 
 		if l.literal != tok.Text {
-			t.Errorf("got: %s want %s\n", tok, l.literal)
+			t.Errorf("got:\n%+v\n%s\n want:\n%+v\n%s\n", []byte(tok.String()), tok, []byte(l.literal), l.literal)
 		}
 	}
 
