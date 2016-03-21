@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/hcl/hcl/ast"
+	"github.com/hashicorp/hcl/testhelper"
 )
 
 func TestDecode_interface(t *testing.T) {
@@ -88,12 +89,12 @@ func TestDecode_interface(t *testing.T) {
 		{
 			"multiline.hcl",
 			false,
-			map[string]interface{}{"foo": "bar\nbaz\n"},
+			map[string]interface{}{"foo": testhelper.Unix2dos("bar\nbaz\n")},
 		},
 		{
 			"multiline_no_eof.hcl",
 			false,
-			map[string]interface{}{"foo": "bar\nbaz\n", "key": "value"},
+			map[string]interface{}{"foo": testhelper.Unix2dos("bar\nbaz\n"), "key": "value"},
 		},
 		{
 			"multiline.json",
