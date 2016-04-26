@@ -1,4 +1,4 @@
-// +build -windows
+// +build !windows
 // TODO(jen20): These need fixing on Windows but fmt is not used right now
 // and red CI is making it harder to process other bugs, so ignore until
 // we get around to fixing them.
