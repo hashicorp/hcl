@@ -14,30 +14,130 @@ import (
 )
 
 // This is the tag to use with structures to have settings for HCL
-const tagName = "hcl"
+const defaultTagName = "hcl"
 
 var (
 	// nodeType holds a reference to the type of ast.Node
 	nodeType reflect.Type = findNodeType()
 )
 
-// Decode reads the given input and decodes it into the structure
-// given by `out`.
+// A Decoder takes a raw interface value and turns it into structured
+// data, keeping track of rich error information along the way in case
+// anything goes wrong. Unlike the basic top-level Decode method, you can
+// more finely control how the Decoder behaves using the DecoderConfig
+// structure. The top-level Decode method is just a convenience that sets
+// up the most basic Decoder.
+type Decoder struct {
+	config *DecoderConfig
+	stack  []reflect.Kind
+}
+
+// DecoderConfig is the configuration that is used to create a new decoder and
+// allows customization of various aspects of decoding.
+type DecoderConfig struct {
+	// If ErrorUnused is true, then it is an error for there to exist keys in the
+	// original file that were unused in the decoding process (extra keys).
+	ErrorUnused bool
+
+	// Metadata is the struct that will contain extra metadata about the decoding.
+	// If this is nil, then no metadata is tracked.
+	Metadata *Metadata
+
+	// Result is a pointer to the struct that will contain the decoded value.
+	Result interface{}
+
+	// The tag name that mapstructure reads for field names. This defaults to
+	// "hcl".
+	TagName string
+}
+
+// Metadata contains information about decoding a structure such as the list of
+// used keys.
+type Metadata struct {
+	// Keys are the keys of the structure which were successfully decoded.
+	Keys []string
+
+	// Unused is a slice of keys that were found in the raw value but were not
+	// decoded since there was no matching field in the result interface.
+	Unused []string
+}
+
+// Decode reads the given input and decodes it into the structure given by out.
 func Decode(out interface{}, in string) error {
+	config := &DecoderConfig{
+		Metadata: nil,
+		Result:   out,
+	}
+
+	decoder, err := NewDecoder(config)
+	if err != nil {
+		return err
+	}
+
+	return decoder.Decode(in)
+}
+
+// DecodeObject is a lower-level version of Decode. It decodes a raw Object into
+// the given output.
+func DecodeObject(out interface{}, n ast.Node) error {
+	config := &DecoderConfig{
+		Metadata: nil,
+		Result:   out,
+	}
+
+	decoder, err := NewDecoder(config)
+	if err != nil {
+		return err
+	}
+
+	return decoder.DecodeObject(n)
+}
+
+// NewDecoder creates and returns a new decoder for the given configuration.
+// Once a decoder is created, the configuration must not be used again.
+func NewDecoder(config *DecoderConfig) (*Decoder, error) {
+	if config.Metadata != nil {
+		if config.Metadata.Keys == nil {
+			config.Metadata.Keys = make([]string, 0)
+		}
+
+		if config.Metadata.Unused == nil {
+			config.Metadata.Unused = make([]string, 0)
+		}
+	}
+
+	if config.TagName == "" {
+		config.TagName = defaultTagName
+	}
+
+	result := &Decoder{
+		config: config,
+	}
+
+	return result, nil
+}
+
+// Decode parses the given string as HCL into the decoder's result struct.
+func (d *Decoder) Decode(in string) error {
 	obj, err := Parse(in)
 	if err != nil {
 		return err
 	}
 
-	return DecodeObject(out, obj)
+	return d.DecodeObject(obj)
 }
 
-// DecodeObject is a lower-level version of Decode. It decodes a
-// raw Object into the given output.
-func DecodeObject(out interface{}, n ast.Node) error {
-	val := reflect.ValueOf(out)
+// DecodeObject is a lower-level version of Decode that accepts an ast node
+// that allows you to decode a raw object into the result.
+func (d *Decoder) DecodeObject(n ast.Node) error {
+	val := reflect.ValueOf(d.config.Result)
 	if val.Kind() != reflect.Ptr {
 		return errors.New("result must be a pointer")
+	}
+
+	val = val.Elem()
+	if !val.CanAddr() {
+		return errors.New("result must be addressable (a pointer)")
 	}
 
 	// If we have the file, we really decode the root node
@@ -45,15 +145,10 @@ func DecodeObject(out interface{}, n ast.Node) error {
 		n = f.Node
 	}
 
-	var d decoder
-	return d.decode("root", n, val.Elem())
+	return d.decode("root", n, val)
 }
 
-type decoder struct {
-	stack []reflect.Kind
-}
-
-func (d *decoder) decode(name string, node ast.Node, result reflect.Value) error {
+func (d *Decoder) decode(name string, node ast.Node, result reflect.Value) error {
 	k := result
 
 	// If we have an interface with a valid value, we use that
@@ -103,7 +198,7 @@ func (d *decoder) decode(name string, node ast.Node, result reflect.Value) error
 	}
 }
 
-func (d *decoder) decodeBool(name string, node ast.Node, result reflect.Value) error {
+func (d *Decoder) decodeBool(name string, node ast.Node, result reflect.Value) error {
 	switch n := node.(type) {
 	case *ast.LiteralType:
 		if n.Token.Type == token.BOOL {
@@ -123,7 +218,7 @@ func (d *decoder) decodeBool(name string, node ast.Node, result reflect.Value) e
 	}
 }
 
-func (d *decoder) decodeFloat(name string, node ast.Node, result reflect.Value) error {
+func (d *Decoder) decodeFloat(name string, node ast.Node, result reflect.Value) error {
 	switch n := node.(type) {
 	case *ast.LiteralType:
 		if n.Token.Type == token.FLOAT {
@@ -143,7 +238,7 @@ func (d *decoder) decodeFloat(name string, node ast.Node, result reflect.Value) 
 	}
 }
 
-func (d *decoder) decodeInt(name string, node ast.Node, result reflect.Value) error {
+func (d *Decoder) decodeInt(name string, node ast.Node, result reflect.Value) error {
 	switch n := node.(type) {
 	case *ast.LiteralType:
 		switch n.Token.Type {
@@ -172,7 +267,7 @@ func (d *decoder) decodeInt(name string, node ast.Node, result reflect.Value) er
 	}
 }
 
-func (d *decoder) decodeInterface(name string, node ast.Node, result reflect.Value) error {
+func (d *Decoder) decodeInterface(name string, node ast.Node, result reflect.Value) error {
 	// When we see an ast.Node, we retain the value to enable deferred decoding.
 	// Very useful in situations where we want to preserve ast.Node information
 	// like Pos
@@ -278,7 +373,7 @@ func (d *decoder) decodeInterface(name string, node ast.Node, result reflect.Val
 	return nil
 }
 
-func (d *decoder) decodeMap(name string, node ast.Node, result reflect.Value) error {
+func (d *Decoder) decodeMap(name string, node ast.Node, result reflect.Value) error {
 	if item, ok := node.(*ast.ObjectItem); ok {
 		node = &ast.ObjectList{Items: []*ast.ObjectItem{item}}
 	}
@@ -369,7 +464,7 @@ func (d *decoder) decodeMap(name string, node ast.Node, result reflect.Value) er
 	return nil
 }
 
-func (d *decoder) decodePtr(name string, node ast.Node, result reflect.Value) error {
+func (d *Decoder) decodePtr(name string, node ast.Node, result reflect.Value) error {
 	// Create an element of the concrete (non pointer) type and decode
 	// into that. Then set the value of the pointer to this type.
 	resultType := result.Type()
@@ -383,7 +478,7 @@ func (d *decoder) decodePtr(name string, node ast.Node, result reflect.Value) er
 	return nil
 }
 
-func (d *decoder) decodeSlice(name string, node ast.Node, result reflect.Value) error {
+func (d *Decoder) decodeSlice(name string, node ast.Node, result reflect.Value) error {
 	// If we have an interface, then we can address the interface,
 	// but not the slice itself, so get the element but set the interface
 	set := result
@@ -436,7 +531,7 @@ func (d *decoder) decodeSlice(name string, node ast.Node, result reflect.Value) 
 	return nil
 }
 
-func (d *decoder) decodeString(name string, node ast.Node, result reflect.Value) error {
+func (d *Decoder) decodeString(name string, node ast.Node, result reflect.Value) error {
 	switch n := node.(type) {
 	case *ast.LiteralType:
 		switch n.Token.Type {
@@ -455,7 +550,7 @@ func (d *decoder) decodeString(name string, node ast.Node, result reflect.Value)
 	}
 }
 
-func (d *decoder) decodeStruct(name string, node ast.Node, result reflect.Value) error {
+func (d *Decoder) decodeStruct(name string, node ast.Node, result reflect.Value) error {
 	var item *ast.ObjectItem
 	if it, ok := node.(*ast.ObjectItem); ok {
 		item = it
@@ -504,7 +599,7 @@ func (d *decoder) decodeStruct(name string, node ast.Node, result reflect.Value)
 				// We have an embedded field. We "squash" the fields down
 				// if specified in the tag.
 				squash := false
-				tagParts := strings.Split(fieldType.Tag.Get(tagName), ",")
+				tagParts := strings.Split(fieldType.Tag.Get(d.config.TagName), ",")
 				for _, tag := range tagParts[1:] {
 					if tag == "squash" {
 						squash = true
@@ -542,7 +637,7 @@ func (d *decoder) decodeStruct(name string, node ast.Node, result reflect.Value)
 
 		fieldName := fieldType.Name
 
-		tagValue := fieldType.Tag.Get(tagName)
+		tagValue := fieldType.Tag.Get(d.config.TagName)
 		tagParts := strings.SplitN(tagValue, ",", 2)
 		if len(tagParts) >= 2 {
 			switch tagParts[1] {

@@ -667,3 +667,100 @@ nested "content" {
 		t.Errorf("expected mapping to be returned")
 	}
 }
+
+func TestDecode_TagName(t *testing.T) {
+	type config struct {
+		DifferentName string `panda:"key"`
+	}
+
+	content := `
+key = "foo"
+`
+
+	var c config
+	decoder, err := NewDecoder(&DecoderConfig{
+		TagName: "panda",
+		Result:  &c,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := decoder.Decode(content); err != nil {
+		t.Fatal(err)
+	}
+
+	if c.DifferentName != "foo" {
+		t.Errorf("bad: %s", c.DifferentName)
+	}
+}
+
+func TestDecode_Metadata(t *testing.T) {
+	type config struct {
+		Key string
+	}
+
+	content := `
+key = "bar"
+extra = "panda"
+`
+
+	var c config
+	var m Metadata
+	decoder, err := NewDecoder(&DecoderConfig{
+		Result:   &c,
+		Metadata: &m,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := decoder.Decode(content); err != nil {
+		t.Fatalf("unable to decode content, %v", err)
+	}
+
+	if !reflect.DeepEqual(m.Keys, []string{"key"}) {
+		t.Errorf("bad: %#v", m.Keys)
+	}
+
+	if !reflect.DeepEqual(m.Unused, []string{"extra"}) {
+		t.Errorf("bad: %#v", m.Unused)
+	}
+}
+
+func TestDecode_MetadataNested(t *testing.T) {
+	type config struct {
+		Path struct {
+			Key string
+		}
+	}
+
+	content := `
+path "content" {
+	key = "bar"
+	extra = "panda"
+}
+`
+
+	var c config
+	var m Metadata
+	decoder, err := NewDecoder(&DecoderConfig{
+		Result:   &c,
+		Metadata: &m,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := decoder.Decode(content); err != nil {
+		t.Fatalf("unable to decode content, %v", err)
+	}
+
+	if !reflect.DeepEqual(m.Keys, []string{"key"}) {
+		t.Errorf("bad: %#v", m.Keys)
+	}
+
+	if !reflect.DeepEqual(m.Unused, []string{"path.extra"}) {
+		t.Errorf("bad: %#v", m.Unused)
+	}
+}
