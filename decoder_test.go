@@ -406,9 +406,12 @@ func TestDecode_flatMap(t *testing.T) {
 }
 
 func TestDecode_structure(t *testing.T) {
+	type Embedded interface{}
+
 	type V struct {
-		Key int
-		Foo string
+		Embedded `hcl:"-"`
+		Key      int
+		Foo      string
 	}
 
 	var actual V
