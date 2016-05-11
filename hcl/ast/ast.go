@@ -56,7 +56,7 @@ func (o *ObjectList) Filter(keys ...string) *ObjectList {
 	var result ObjectList
 	for _, item := range o.Items {
 		// If there aren't enough keys, then ignore this
-		if len(item.Keys) < len(keys) {
+		if item == nil || len(item.Keys) < len(keys) {
 			continue
 		}
 
