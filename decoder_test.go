@@ -59,7 +59,12 @@ func TestDecode_interface(t *testing.T) {
 			"escape.hcl",
 			false,
 			map[string]interface{}{
-				"foo": "bar\"baz\\n",
+				"foo":          "bar\"baz\\n",
+				"qux":          "back\\slash",
+				"bar":          "new\nline",
+				"qax":          `slash\:colon`,
+				"nested":       `${HH\:mm\:ss}`,
+				"nestedquotes": `${"okay"}`,
 			},
 		},
 		{
