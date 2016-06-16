@@ -64,14 +64,7 @@ func TestDecode_interface(t *testing.T) {
 				"bar":          "new\nline",
 				"qax":          `slash\:colon`,
 				"nested":       `${HH\:mm\:ss}`,
-				"nestedquotes": `${"okay"}`,
-			},
-		},
-		{
-			"interpolate_escape.hcl",
-			false,
-			map[string]interface{}{
-				"foo": "${file(\"bing/bong.txt\")}",
+				"nestedquotes": `${"\"stringwrappedinquotes\""}`,
 			},
 		},
 		{

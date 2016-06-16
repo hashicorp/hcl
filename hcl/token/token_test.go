@@ -50,7 +50,7 @@ func TestTokenValue(t *testing.T) {
 		{Token{Type: IDENT, Text: `foo`}, "foo"},
 		{Token{Type: STRING, Text: `"foo"`}, "foo"},
 		{Token{Type: STRING, Text: `"foo\nbar"`}, "foo\nbar"},
-		{Token{Type: STRING, Text: `"${file(\"foo\")}"`}, `${file("foo")}`},
+		{Token{Type: STRING, Text: `"${file("foo")}"`}, `${file("foo")}`},
 		{Token{Type: HEREDOC, Text: "<<EOF\nfoo\nbar\nEOF"}, "foo\nbar"},
 	}
 
