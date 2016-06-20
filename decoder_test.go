@@ -110,6 +110,19 @@ func TestDecode_interface(t *testing.T) {
 			map[string]interface{}{"foo": "bar\nbaz"},
 		},
 		{
+			"null_strings.json",
+			false,
+			map[string]interface{}{
+				"module": []map[string]interface{}{
+					map[string]interface{}{
+						"app": []map[string]interface{}{
+							map[string]interface{}{"foo": ""},
+						},
+					},
+				},
+			},
+		},
+		{
 			"scientific.json",
 			false,
 			map[string]interface{}{
