@@ -283,6 +283,11 @@ func TestPosition(t *testing.T) {
 	}
 }
 
+func TestNullChar(t *testing.T) {
+	s := New([]byte("\"\\0"))
+	s.Scan() // Used to panic
+}
+
 func TestComment(t *testing.T) {
 	testTokenList(t, tokenLists["comment"])
 }
@@ -378,7 +383,7 @@ func TestRealExample(t *testing.T) {
 Main interface
 EOF
 	    }
-	    
+
 		network_interface {
 	        device_index = 1
 	        description = <<-EOF
