@@ -331,7 +331,7 @@ func (p *Parser) listType() (*ast.ListType, error) {
 			// get next list item or we are at the end
 			// do a look-ahead for line comment
 			p.scan()
-			if p.lineComment != nil {
+			if p.lineComment != nil && len(l.List) > 0 {
 				lit, ok := l.List[len(l.List)-1].(*ast.LiteralType)
 				if ok {
 					lit.LineComment = p.lineComment

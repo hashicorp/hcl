@@ -343,9 +343,13 @@ func TestParse_inline(t *testing.T) {
 		{"o{{}}", true},
 		{"t t e d N{{}}", true},
 		{"t t e d{{}}", true},
+		{"N{}N{{}}", true},
+		{"v\nN{{}}", true},
+		{"v=/\n[,", true},
 	}
 
 	for _, tc := range cases {
+		t.Logf("Testing: %q", tc.Value)
 		ast, err := Parse([]byte(tc.Value))
 		if (err != nil) != tc.Err {
 			t.Fatalf("Input: %q\n\nError: %s\n\nAST: %s", tc.Value, err, spew.Sdump(ast))
