@@ -220,8 +220,19 @@ func (p *Parser) objectKey() ([]*ast.ObjectKey, error) {
 
 			return keys, nil
 		case token.LBRACE:
+			var err error
+
+			// If we have no keys, then it is a syntax error. i.e. {{}} is not
+			// allowed.
+			if len(keys) == 0 {
+				err = &PosError{
+					Pos: p.tok.Pos,
+					Err: fmt.Errorf("expected: IDENT | STRING got: %s", p.tok.Type),
+				}
+			}
+
 			// object
-			return keys, nil
+			return keys, err
 		case token.IDENT, token.STRING:
 			keyCount++
 			keys = append(keys, &ast.ObjectKey{Token: p.tok})

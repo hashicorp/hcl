@@ -332,6 +332,22 @@ func TestParse(t *testing.T) {
 	}
 }
 
+func TestParse_inline(t *testing.T) {
+	cases := []struct {
+		Value string
+		Err   bool
+	}{
+		{"{:{", true},
+	}
+
+	for _, tc := range cases {
+		_, err := Parse([]byte(tc.Value))
+		if (err != nil) != tc.Err {
+			t.Fatalf("Input: %q\n\nError: %s", tc.Value, err)
+		}
+	}
+}
+
 // equals fails the test if exp is not equal to act.
 func equals(tb testing.TB, exp, act interface{}) {
 	if !reflect.DeepEqual(exp, act) {
