@@ -340,6 +340,7 @@ func TestDecode_interfaceInline(t *testing.T) {
 	}{
 		{"t t e{{}}", true, nil},
 		{"t=0t d {}", true, map[string]interface{}{"t": 0}},
+		{"v=0E0v d{}", true, map[string]interface{}{"v": float64(0)}},
 	}
 
 	for _, tc := range cases {
