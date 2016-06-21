@@ -529,6 +529,8 @@ func (s *Scanner) scanDigits(ch rune, base, n int) rune {
 	for n > 0 && digitVal(ch) < base {
 		ch = s.next()
 		if ch == eof {
+			// If we see an EOF, we halt any more scanning of digits
+			// immediately.
 			break
 		}
 
