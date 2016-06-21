@@ -338,11 +338,8 @@ func TestDecode_interfaceInline(t *testing.T) {
 		Err   bool
 		Out   interface{}
 	}{
-		{
-			"t t e{{}}",
-			true,
-			nil,
-		},
+		{"t t e{{}}", true, nil},
+		{"t=0t d {}", true, map[string]interface{}{"t": 0}},
 	}
 
 	for _, tc := range cases {

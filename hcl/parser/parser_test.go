@@ -8,6 +8,8 @@ import (
 	"runtime"
 	"testing"
 
+	"github.com/davecgh/go-spew/spew"
+
 	"github.com/hashicorp/hcl/hcl/ast"
 	"github.com/hashicorp/hcl/hcl/token"
 )
@@ -338,12 +340,15 @@ func TestParse_inline(t *testing.T) {
 		Err   bool
 	}{
 		{"t t e{{}}", true},
+		{"o{{}}", true},
+		{"t t e d N{{}}", true},
+		{"t t e d{{}}", true},
 	}
 
 	for _, tc := range cases {
-		_, err := Parse([]byte(tc.Value))
+		ast, err := Parse([]byte(tc.Value))
 		if (err != nil) != tc.Err {
-			t.Fatalf("Input: %q\n\nError: %s", tc.Value, err)
+			t.Fatalf("Input: %q\n\nError: %s\n\nAST: %s", tc.Value, err, spew.Sdump(ast))
 		}
 	}
 }
