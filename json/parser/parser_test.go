@@ -311,6 +311,10 @@ func TestParse(t *testing.T) {
 			"types.json",
 			false,
 		},
+		{
+			"bad_input_128.json",
+			true,
+		},
 	}
 
 	const fixtureDir = "./test-fixtures"
