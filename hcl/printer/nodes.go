@@ -140,8 +140,31 @@ func (p *printer) output(n interface{}) []byte {
 			}
 
 			buf.Write(p.output(t.Items[index]))
+			// Write newlines for each ObjectItem in the list
+			// If the line isn't commented, and we aren't on the next to last line,
 			if !commented && index != len(t.Items)-1 {
-				buf.Write([]byte{newline, newline})
+				// Check if next item is valid
+				if ok := t.Items[index+1]; ok != nil {
+					// If next line is an assignment line,
+					// and the current line is an assignment line
+					// and the line doesn't contain a lead comment
+					if t.Items[index+1].Assign.IsValid() &&
+						t.Items[index].Assign.IsValid() &&
+						t.Items[index+1].LeadComment == nil {
+
+						switch t.Items[index].Val.(type) {
+						// Add two newlines for a list-type
+						case *ast.ListType:
+							buf.Write([]byte{newline, newline})
+							// Single newline for all other cases matching above
+						default:
+							buf.Write([]byte{newline})
+						}
+					} else {
+						// Two newlines by default
+						buf.Write([]byte{newline, newline})
+					}
+				}
 			}
 			index++
 		}
