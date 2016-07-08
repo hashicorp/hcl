@@ -195,6 +195,27 @@ func TestDecode_interface(t *testing.T) {
 			},
 		},
 		{
+			"list_of_maps.hcl",
+			false,
+			map[string]interface{}{
+				"foo": []interface{}{
+					map[string]interface{}{"somekey1": "someval1"},
+					map[string]interface{}{"somekey2": "someval2", "someextrakey": "someextraval"},
+				},
+			},
+		},
+		{
+			"assign_deep.hcl",
+			false,
+			map[string]interface{}{
+				"resource": []interface{}{
+					map[string]interface{}{
+						"foo": []interface{}{
+							map[string]interface{}{
+								"bar": []map[string]interface{}{
+									map[string]interface{}{}}}}}}},
+		},
+		{
 			"structure_list.hcl",
 			false,
 			map[string]interface{}{
