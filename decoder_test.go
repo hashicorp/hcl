@@ -80,6 +80,12 @@ func TestDecode_interface(t *testing.T) {
 			nil,
 		},
 		{
+			"multiline_literal.hcl",
+			false,
+			map[string]interface{}{"multiline_literal": testhelper.Unix2dos(`hello
+  world`)},
+		},
+		{
 			"multiline_no_marker.hcl",
 			true,
 			nil,

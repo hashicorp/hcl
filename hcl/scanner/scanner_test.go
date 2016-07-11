@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/hcl/hcl/token"
 )
 
-var f100 = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+var f100 = strings.Repeat("f", 100)
 
 type tokenPair struct {
 	tok  token.Type
@@ -494,7 +494,7 @@ func TestError(t *testing.T) {
 
 	testError(t, `"`, "1:2", "literal not terminated", token.STRING)
 	testError(t, `"abc`, "1:5", "literal not terminated", token.STRING)
-	testError(t, `"abc`+"\n", "1:5", "literal not terminated", token.STRING)
+	testError(t, `"abc`+"\n", "2:1", "literal not terminated", token.STRING)
 	testError(t, `/*/`, "1:4", "comment not terminated", token.COMMENT)
 }
 
