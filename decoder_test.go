@@ -328,6 +328,26 @@ func TestDecode_interface(t *testing.T) {
 				},
 			},
 		},
+
+		{
+			"subsection-panic.hcl",
+			false,
+			map[string]interface{}{
+				"section": []map[string]interface{}{
+					map[string]interface{}{
+						"subsection": []map[string]interface{}{
+							map[string]interface{}{},
+						},
+					},
+					map[string]interface{}{},
+					map[string]interface{}{
+						"subsection": []map[string]interface{}{
+							map[string]interface{}{},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tc := range cases {

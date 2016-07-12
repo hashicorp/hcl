@@ -336,6 +336,9 @@ func (d *decoder) decodeMap(name string, node ast.Node, result reflect.Value) er
 		if item.Val == nil {
 			continue
 		}
+		if len(item.Keys) == 0 {
+			continue
+		}
 
 		// github.com/hashicorp/terraform/issue/5740
 		if len(item.Keys) == 0 {
