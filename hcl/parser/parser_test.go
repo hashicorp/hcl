@@ -397,6 +397,7 @@ func TestParse_inline(t *testing.T) {
 		{"N{}N{{}}", true},
 		{"v\nN{{}}", true},
 		{"v=/\n[,", true},
+		{"v=10kb", true},
 	}
 
 	for _, tc := range cases {
