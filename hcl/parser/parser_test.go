@@ -398,13 +398,14 @@ func TestParse_inline(t *testing.T) {
 		{"v\nN{{}}", true},
 		{"v=/\n[,", true},
 		{"v=10kb", true},
+		{"v=/foo", true},
 	}
 
 	for _, tc := range cases {
 		t.Logf("Testing: %q", tc.Value)
-		_, err := Parse([]byte(tc.Value))
+		ast, err := Parse([]byte(tc.Value))
 		if (err != nil) != tc.Err {
-			t.Fatalf("Input: %q\n\nError: %s\n\nAST: %s", tc.Value, err)
+			t.Fatalf("Input: %q\n\nError: %s\n\nAST: %#v", tc.Value, err, ast)
 		}
 	}
 }
