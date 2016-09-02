@@ -496,6 +496,7 @@ func TestError(t *testing.T) {
 	testError(t, `"abc`, "1:5", "literal not terminated", token.STRING)
 	testError(t, `"abc`+"\n", "2:1", "literal not terminated", token.STRING)
 	testError(t, `/*/`, "1:4", "comment not terminated", token.COMMENT)
+	testError(t, `/foo`, "1:1", "expected '/' for comment", token.COMMENT)
 }
 
 func testError(t *testing.T, src, pos, msg string, tok token.Type) {
