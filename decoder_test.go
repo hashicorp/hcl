@@ -63,7 +63,7 @@ func TestDecode_interface(t *testing.T) {
 				"qux":          "back\\slash",
 				"bar":          "new\nline",
 				"qax":          `slash\:colon`,
-				"nested":       `${HH\:mm\:ss}`,
+				"nested":       `${HH\\:mm\\:ss}`,
 				"nestedquotes": `${"\"stringwrappedinquotes\""}`,
 			},
 		},
@@ -355,6 +355,20 @@ func TestDecode_interface(t *testing.T) {
 			"block_assign.hcl",
 			true,
 			nil,
+		},
+
+		{
+			"escape_backslash.hcl",
+			false,
+			map[string]interface{}{
+				"output": []map[string]interface{}{
+					map[string]interface{}{
+						"one":  `${replace(var.sub_domain, ".", "\\.")}`,
+						"two":  `${replace(var.sub_domain, ".", "\\\\.")}`,
+						"many": `${replace(var.sub_domain, ".", "\\\\\\\\.")}`,
+					},
+				},
+			},
 		},
 	}
 

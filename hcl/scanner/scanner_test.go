@@ -363,7 +363,7 @@ func TestRealExample(t *testing.T) {
 
 	provider "aws" {
 	  access_key = "foo"
-	  secret_key = "bar"
+	  secret_key = "${replace(var.foo, ".", "\\.")}"
 	}
 
 	resource "aws_security_group" "firewall" {
@@ -416,7 +416,7 @@ EOF
 		{token.STRING, `"foo"`},
 		{token.IDENT, `secret_key`},
 		{token.ASSIGN, `=`},
-		{token.STRING, `"bar"`},
+		{token.STRING, `"${replace(var.foo, ".", "\\.")}"`},
 		{token.RBRACE, `}`},
 		{token.IDENT, `resource`},
 		{token.STRING, `"aws_security_group"`},
