@@ -851,3 +851,53 @@ func TestDecode_topLevelKeys(t *testing.T) {
 		t.Errorf("bad source: %s", templates.Templates[1].Source)
 	}
 }
+
+func TestDecode_structureMixedFields(t *testing.T) {
+	jsonConfig := `{
+  "vars": {
+    "var_1": {
+      "default": {
+        "key1": "a",
+        "key2": "b"
+      }
+    },
+    "var_2": {
+      "description": "an extra field is required",
+      "default": {
+        "key1": "a",
+        "key2": "b"
+      }
+    }
+  }
+}
+`
+
+	type V struct {
+		Name        string `hcl:",key"`
+		Description string
+		Default     map[string]string
+	}
+
+	type Root struct {
+		Vars []*V
+	}
+
+	var r Root
+
+	err := Decode(&r, jsonConfig)
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	if len(r.Vars) != 2 {
+		t.Fatalf("expected 2 Vars, got %d", len(r.Vars))
+	}
+
+	if r.Vars[1].Default == nil {
+		t.Fatalf("failed to decode Default field in %#v", r.Vars[1])
+	}
+
+	if !reflect.DeepEqual(r.Vars[0].Default, r.Vars[1].Default) {
+		t.Fatalf("defaults should match\n[0]: %#v\n[1]: %#v\n", r.Vars[0], r.Vars[1])
+	}
+}
