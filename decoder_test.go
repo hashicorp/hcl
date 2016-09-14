@@ -852,21 +852,25 @@ func TestDecode_topLevelKeys(t *testing.T) {
 	}
 }
 
-func TestDecode_structureMixedFields(t *testing.T) {
-	jsonConfig := `{
-  "vars": {
-    "var_1": {
-      "default": {
-        "key1": "a",
-        "key2": "b"
-      }
-    },
-    "var_2": {
-      "description": "an extra field is required",
-      "default": {
-        "key1": "a",
-        "key2": "b"
-      }
+func TestDecode_structureFlattened(t *testing.T) {
+	jsonA := `
+{
+  "var_1": {
+    "default": {
+      "key1": "a",
+      "key2": "b"
+    }
+  }
+}
+`
+
+	jsonB := `
+{
+  "var_2": {
+    "description": "an extra field is required",
+    "default": {
+      "key1": "a",
+      "key2": "b"
     }
   }
 }
@@ -878,26 +882,27 @@ func TestDecode_structureMixedFields(t *testing.T) {
 		Default     map[string]string
 	}
 
-	type Root struct {
-		Vars []*V
-	}
+	var vA, vB []*V
 
-	var r Root
-
-	err := Decode(&r, jsonConfig)
+	err := Decode(&vA, jsonA)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
-	if len(r.Vars) != 2 {
-		t.Fatalf("expected 2 Vars, got %d", len(r.Vars))
+	err = Decode(&vB, jsonB)
+	if err != nil {
+		t.Fatalf("err: %s", err)
 	}
 
-	if r.Vars[1].Default == nil {
-		t.Fatalf("failed to decode Default field in %#v", r.Vars[1])
+	if len(vA) == 0 {
+		t.Fatal("failed to decode vA")
 	}
 
-	if !reflect.DeepEqual(r.Vars[0].Default, r.Vars[1].Default) {
-		t.Fatalf("defaults should match\n[0]: %#v\n[1]: %#v\n", r.Vars[0], r.Vars[1])
+	if len(vB) == 0 {
+		t.Fatal("failed to decode vB")
+	}
+
+	if !reflect.DeepEqual(vA[0].Default, vB[0].Default) {
+		t.Fatalf("defaults should match\n[0]: %#v\n[1]: %#v\n", vA[0], vB[0])
 	}
 }
