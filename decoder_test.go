@@ -867,7 +867,7 @@ func TestDecode_structureFlattened(t *testing.T) {
 	jsonB := `
 {
   "var_2": {
-    "description": "an extra field is required",
+    "description": "Described",
     "default": {
       "key1": "a",
       "key2": "b"
@@ -876,6 +876,7 @@ func TestDecode_structureFlattened(t *testing.T) {
 }
 `
 
+	// make sure we can also correctly extract the Name key
 	type V struct {
 		Name        string `hcl:",key"`
 		Description string
@@ -888,21 +889,36 @@ func TestDecode_structureFlattened(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
+	if len(vA) != 1 {
+		t.Fatal("failed to decode jsonA")
+	}
 
 	err = Decode(&vB, jsonB)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-
-	if len(vA) == 0 {
-		t.Fatal("failed to decode vA")
+	if len(vB) != 1 {
+		t.Fatal("failed to decode jsonB")
 	}
 
-	if len(vB) == 0 {
-		t.Fatal("failed to decode vB")
+	expectedA := []*V{
+		&V{
+			Name:    "var_1",
+			Default: map[string]string{"key1": "a", "key2": "b"},
+		},
+	}
+	expectedB := []*V{
+		&V{
+			Name:        "var_2",
+			Description: "Described",
+			Default:     map[string]string{"key1": "a", "key2": "b"},
+		},
 	}
 
-	if !reflect.DeepEqual(vA[0].Default, vB[0].Default) {
-		t.Fatalf("defaults should match\n[0]: %#v\n[1]: %#v\n", vA[0], vB[0])
+	if !reflect.DeepEqual(vA, expectedA) {
+		t.Fatalf("\nexpected: %#v\ngot: %#v\n", expectedA[0], vA[0])
+	}
+	if !reflect.DeepEqual(vB, expectedB) {
+		t.Fatalf("\nexpected: %#v\ngot: %#v\n", expectedB[0], vB[0])
 	}
 }

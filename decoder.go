@@ -409,7 +409,6 @@ func (d *decoder) decodeSlice(name string, node ast.Node, result reflect.Value) 
 	if result.Kind() == reflect.Interface {
 		result = result.Elem()
 	}
-
 	// Create the slice if it isn't nil
 	resultType := result.Type()
 	resultElemType := resultType.Elem()
@@ -417,6 +416,20 @@ func (d *decoder) decodeSlice(name string, node ast.Node, result reflect.Value) 
 		resultSliceType := reflect.SliceOf(resultElemType)
 		result = reflect.MakeSlice(
 			resultSliceType, 0, 0)
+	}
+
+	// if node is an object that was decoded from ambiguous JSON and flattened
+	// as a list, decode into a single value in the slice.
+	if objAsList(node, resultElemType) {
+		val := reflect.Indirect(reflect.New(resultElemType))
+		err := d.decodeFlatObj(name+"[0]", node, val)
+		if err != nil {
+			return err
+		}
+
+		result = reflect.Append(result, val)
+		set.Set(result)
+		return nil
 	}
 
 	// Figure out the items we'll be copying into the slice
@@ -453,6 +466,85 @@ func (d *decoder) decodeSlice(name string, node ast.Node, result reflect.Value) 
 
 	set.Set(result)
 	return nil
+}
+
+// decode a flattened object into a single struct
+func (d decoder) decodeFlatObj(name string, node ast.Node, result reflect.Value) error {
+	list := node.(*ast.ObjectList)
+	var keyToken token.Token
+	// get the key token, and strip it out of the key-val nodes
+	for _, item := range list.Items {
+		keyToken = item.Keys[0].Token
+		item.Keys = item.Keys[1:]
+	}
+
+	// we need to un-flatten the ast enough to decode
+	newNode := &ast.ObjectItem{
+		Keys: []*ast.ObjectKey{
+			&ast.ObjectKey{
+				Token: keyToken,
+			},
+		},
+		Val: &ast.ObjectType{
+			List: list,
+		},
+	}
+
+	if err := d.decode(name, newNode, result); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// objAsList detects if an ambiguous JSON object was flattened to a List which
+// should be decoded into a struct.
+func objAsList(node ast.Node, elemType reflect.Type) bool {
+	objList, ok := node.(*ast.ObjectList)
+	if !ok {
+		return false
+	}
+
+	// our target type must be a struct
+	switch elemType.Kind() {
+	case reflect.Ptr:
+		switch elemType.Elem().Kind() {
+		case reflect.Struct:
+			//OK
+		default:
+			return false
+		}
+	case reflect.Struct:
+		//OK
+	default:
+		return false
+	}
+
+	fieldNames := make(map[string]bool)
+	prevKey := ""
+
+	for _, item := range objList.Items {
+		// a list value will have a key and field name
+		if len(item.Keys) != 2 {
+			return false
+		}
+
+		key := item.Keys[0].Token.Value().(string)
+		if prevKey != "" && key != prevKey {
+			// the same object will have all the same key
+			return false
+		}
+		prevKey = key
+
+		fieldName := item.Keys[1].Token.Value().(string)
+
+		if ok := fieldNames[fieldName]; ok {
+			// A single struct won't have duplicate fields.
+			return false
+		}
+	}
+
+	return true
 }
 
 func (d *decoder) decodeString(name string, node ast.Node, result reflect.Value) error {
@@ -606,6 +698,7 @@ func (d *decoder) decodeStruct(name string, node ast.Node, result reflect.Value)
 		// match (only object with the field), then we decode it exactly.
 		// If it is a prefix match, then we decode the matches.
 		filter := list.Filter(fieldName)
+
 		prefixMatches := filter.Children()
 		matches := filter.Elem()
 		if len(matches.Items) == 0 && len(prefixMatches.Items) == 0 {
