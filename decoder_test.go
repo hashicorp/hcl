@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/hcl/hcl/ast"
 	"github.com/hashicorp/hcl/testhelper"
 )
@@ -852,21 +853,46 @@ func TestDecode_topLevelKeys(t *testing.T) {
 	}
 }
 
-func TestDecode_structureFlattened(t *testing.T) {
-	jsonA := `
+func TestDecode_flattenedJSON(t *testing.T) {
+	// make sure we can also correctly extract a Name key too
+	type V struct {
+		Name        string `hcl:",key"`
+		Description string
+		Default     map[string]string
+	}
+	type Vars struct {
+		Variable []*V
+	}
+
+	cases := []struct {
+		JSON     string
+		Out      interface{}
+		Expected interface{}
+	}{
+		{ // Nested object, no sibling keys
+			JSON: `
 {
-  "var_1": {
+  "var_name": {
     "default": {
       "key1": "a",
       "key2": "b"
     }
   }
 }
-`
+			`,
+			Out: &[]*V{},
+			Expected: &[]*V{
+				&V{
+					Name:    "var_name",
+					Default: map[string]string{"key1": "a", "key2": "b"},
+				},
+			},
+		},
 
-	jsonB := `
+		{ // Nested object with a sibling key (this worked previously)
+			JSON: `
 {
-  "var_2": {
+  "var_name": {
     "description": "Described",
     "default": {
       "key1": "a",
@@ -874,51 +900,132 @@ func TestDecode_structureFlattened(t *testing.T) {
     }
   }
 }
-`
+			`,
+			Out: &[]*V{},
+			Expected: &[]*V{
+				&V{
+					Name:        "var_name",
+					Description: "Described",
+					Default:     map[string]string{"key1": "a", "key2": "b"},
+				},
+			},
+		},
 
-	// make sure we can also correctly extract the Name key
-	type V struct {
-		Name        string `hcl:",key"`
-		Description string
-		Default     map[string]string
-	}
+		{ // Multiple nested objects, one with a sibling key
+			JSON: `
+{
+  "variable": {
+    "var_1": {
+      "default": {
+        "key1": "a",
+        "key2": "b"
+      }
+    },
+    "var_2": {
+      "description": "Described",
+      "default": {
+        "key1": "a",
+        "key2": "b"
+      }
+    }
+  }
+}
+			`,
+			Out: &Vars{},
+			Expected: &Vars{
+				Variable: []*V{
+					&V{
+						Name:    "var_1",
+						Default: map[string]string{"key1": "a", "key2": "b"},
+					},
+					&V{
+						Name:        "var_2",
+						Description: "Described",
+						Default:     map[string]string{"key1": "a", "key2": "b"},
+					},
+				},
+			},
+		},
 
-	var vA, vB []*V
+		{ // Nested object to maps
+			JSON: `
+{
+  "variable": {
+    "var_name": {
+      "description": "Described",
+      "default": {
+        "key1": "a",
+        "key2": "b"
+      }
+    }
+  }
+}
+			`,
+			Out: &[]map[string]interface{}{},
+			Expected: &[]map[string]interface{}{
+				{
+					"variable": []map[string]interface{}{
+						{
+							"var_name": []map[string]interface{}{
+								{
+									"description": "Described",
+									"default": []map[string]interface{}{
+										{
+											"key1": "a",
+											"key2": "b",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 
-	err := Decode(&vA, jsonA)
-	if err != nil {
-		t.Fatalf("err: %s", err)
-	}
-	if len(vA) != 1 {
-		t.Fatal("failed to decode jsonA")
-	}
-
-	err = Decode(&vB, jsonB)
-	if err != nil {
-		t.Fatalf("err: %s", err)
-	}
-	if len(vB) != 1 {
-		t.Fatal("failed to decode jsonB")
-	}
-
-	expectedA := []*V{
-		&V{
-			Name:    "var_1",
-			Default: map[string]string{"key1": "a", "key2": "b"},
+		{ // Nested object to maps without a sibling key should decode the same as above
+			JSON: `
+{
+  "variable": {
+    "var_name": {
+      "default": {
+        "key1": "a",
+        "key2": "b"
+      }
+    }
+  }
+}
+			`,
+			Out: &[]map[string]interface{}{},
+			Expected: &[]map[string]interface{}{
+				{
+					"variable": []map[string]interface{}{
+						{
+							"var_name": []map[string]interface{}{
+								{
+									"default": []map[string]interface{}{
+										{
+											"key1": "a",
+											"key2": "b",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 	}
-	expectedB := []*V{
-		&V{
-			Name:        "var_2",
-			Description: "Described",
-			Default:     map[string]string{"key1": "a", "key2": "b"},
-		},
-	}
 
-	if !reflect.DeepEqual(vA, expectedA) {
-		t.Fatalf("\nexpected: %#v\ngot: %#v\n", expectedA[0], vA[0])
-	}
-	if !reflect.DeepEqual(vB, expectedB) {
-		t.Fatalf("\nexpected: %#v\ngot: %#v\n", expectedB[0], vB[0])
+	for i, tc := range cases {
+		err := Decode(tc.Out, tc.JSON)
+		if err != nil {
+			t.Fatalf("[%d] err: %s", i, err)
+		}
+
+		if !reflect.DeepEqual(tc.Out, tc.Expected) {
+			t.Fatalf("[%d]\ngot: %s\nexpected: %s\n", i, spew.Sdump(tc.Out), spew.Sdump(tc.Expected))
+		}
 	}
 }
