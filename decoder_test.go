@@ -1016,6 +1016,64 @@ func TestDecode_flattenedJSON(t *testing.T) {
 				},
 			},
 		},
+
+		{ // Nested objects, one with a sibling key, and one without
+			JSON: `
+{
+  "variable": {
+    "var_1": {
+      "default": {
+        "key1": "a",
+        "key2": "b"
+      }
+    },
+    "var_2": {
+      "description": "Described",
+      "default": {
+        "key1": "a",
+        "key2": "b"
+      }
+    }
+  }
+}
+			`,
+			Out: &[]map[string]interface{}{},
+			Expected: &[]map[string]interface{}{
+				{
+					"variable": []map[string]interface{}{
+						{
+							"var_1": []map[string]interface{}{
+								{
+									"default": []map[string]interface{}{
+										{
+											"key1": "a",
+											"key2": "b",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					"variable": []map[string]interface{}{
+						{
+							"var_2": []map[string]interface{}{
+								{
+									"description": "Described",
+									"default": []map[string]interface{}{
+										{
+											"key1": "a",
+											"key2": "b",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for i, tc := range cases {

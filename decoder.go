@@ -418,20 +418,6 @@ func (d *decoder) decodeSlice(name string, node ast.Node, result reflect.Value) 
 			resultSliceType, 0, 0)
 	}
 
-	// if node is an object that was decoded from ambiguous JSON and flattened
-	// as a list, decode into a single value in the slice.
-	if objAsList(node, resultElemType) {
-		val := reflect.Indirect(reflect.New(resultElemType))
-		err := d.decodeFlatObj(name+"[0]", node, val)
-		if err != nil {
-			return err
-		}
-
-		result = reflect.Append(result, val)
-		set.Set(result)
-		return nil
-	}
-
 	// Figure out the items we'll be copying into the slice
 	var items []ast.Node
 	switch n := node.(type) {
@@ -456,6 +442,12 @@ func (d *decoder) decodeSlice(name string, node ast.Node, result reflect.Value) 
 
 		// Decode
 		val := reflect.Indirect(reflect.New(resultElemType))
+
+		// if item is an object that was decoded from ambiguous JSON and
+		// flattened, make sure it's expanded if it needs to decode into a
+		// defined structure.
+		item := expandObject(item, val)
+
 		if err := d.decode(fieldName, item, val); err != nil {
 			return err
 		}
@@ -468,15 +460,39 @@ func (d *decoder) decodeSlice(name string, node ast.Node, result reflect.Value) 
 	return nil
 }
 
-// decode a flattened object into a single struct
-func (d decoder) decodeFlatObj(name string, node ast.Node, result reflect.Value) error {
-	list := node.(*ast.ObjectList)
-	var keyToken token.Token
-	// get the key token, and strip it out of the key-val nodes
-	for _, item := range list.Items {
-		keyToken = item.Keys[0].Token
-		item.Keys = item.Keys[1:]
+// expandObject detects if an ambiguous JSON object was flattened to a List which
+// should be decoded into a struct, and expands the ast to properly deocode.
+func expandObject(node ast.Node, result reflect.Value) ast.Node {
+	item, ok := node.(*ast.ObjectItem)
+	if !ok {
+		return node
 	}
+
+	elemType := result.Type()
+
+	// our target type must be a struct
+	switch elemType.Kind() {
+	case reflect.Ptr:
+		switch elemType.Elem().Kind() {
+		case reflect.Struct:
+			//OK
+		default:
+			return node
+		}
+	case reflect.Struct:
+		//OK
+	default:
+		return node
+	}
+
+	// A list value will have a key and field name. If it had more fields,
+	// it wouldn't have been flattened.
+	if len(item.Keys) != 2 {
+		return node
+	}
+
+	keyToken := item.Keys[0].Token
+	item.Keys = item.Keys[1:]
 
 	// we need to un-flatten the ast enough to decode
 	newNode := &ast.ObjectItem{
@@ -486,65 +502,13 @@ func (d decoder) decodeFlatObj(name string, node ast.Node, result reflect.Value)
 			},
 		},
 		Val: &ast.ObjectType{
-			List: list,
+			List: &ast.ObjectList{
+				Items: []*ast.ObjectItem{item},
+			},
 		},
 	}
 
-	if err := d.decode(name, newNode, result); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// objAsList detects if an ambiguous JSON object was flattened to a List which
-// should be decoded into a struct.
-func objAsList(node ast.Node, elemType reflect.Type) bool {
-	objList, ok := node.(*ast.ObjectList)
-	if !ok {
-		return false
-	}
-
-	// our target type must be a struct
-	switch elemType.Kind() {
-	case reflect.Ptr:
-		switch elemType.Elem().Kind() {
-		case reflect.Struct:
-			//OK
-		default:
-			return false
-		}
-	case reflect.Struct:
-		//OK
-	default:
-		return false
-	}
-
-	fieldNames := make(map[string]bool)
-	prevKey := ""
-
-	for _, item := range objList.Items {
-		// a list value will have a key and field name
-		if len(item.Keys) != 2 {
-			return false
-		}
-
-		key := item.Keys[0].Token.Value().(string)
-		if prevKey != "" && key != prevKey {
-			// the same object will have all the same key
-			return false
-		}
-		prevKey = key
-
-		fieldName := item.Keys[1].Token.Value().(string)
-
-		if ok := fieldNames[fieldName]; ok {
-			// A single struct won't have duplicate fields.
-			return false
-		}
-	}
-
-	return true
+	return newNode
 }
 
 func (d *decoder) decodeString(name string, node ast.Node, result reflect.Value) error {
