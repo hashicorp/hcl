@@ -95,7 +95,6 @@ func (p *printer) collectComments(node ast.Node) {
 	}
 
 	sort.Sort(ByPosition(p.standaloneComments))
-
 }
 
 // output prints creates b printable HCL output and returns it.
@@ -104,11 +103,14 @@ func (p *printer) output(n interface{}) []byte {
 
 	switch t := n.(type) {
 	case *ast.File:
+		// File doesn't trace so we add the tracing here
+		defer un(trace(p, "File"))
 		return p.output(t.Node)
 	case *ast.ObjectList:
+		defer un(trace(p, "ObjectList"))
+
 		var index int
 		var nextItem token.Pos
-		var commented bool
 		for {
 			// TODO(arslan): refactor below comment printing, we have the same in objectType
 			for _, c := range p.standaloneComments {
@@ -140,7 +142,7 @@ func (p *printer) output(n interface{}) []byte {
 			}
 
 			buf.Write(p.output(t.Items[index]))
-			if !commented && index != len(t.Items)-1 {
+			if index != len(t.Items)-1 {
 				buf.Write([]byte{newline, newline})
 			}
 			index++

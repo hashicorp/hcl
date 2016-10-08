@@ -42,7 +42,9 @@ func TestFiles(t *testing.T) {
 	for _, e := range data {
 		source := filepath.Join(dataDir, e.source)
 		golden := filepath.Join(dataDir, e.golden)
-		check(t, source, golden)
+		t.Run(e.source, func(t *testing.T) {
+			check(t, source, golden)
+		})
 	}
 }
 
