@@ -33,6 +33,7 @@ var data = []entry{
 	{"list.input", "list.golden"},
 	{"comment.input", "comment.golden"},
 	{"comment_aligned.input", "comment_aligned.golden"},
+	{"comment_newline.input", "comment_newline.golden"},
 	{"comment_standalone.input", "comment_standalone.golden"},
 	{"empty_block.input", "empty_block.golden"},
 	{"list_of_objects.input", "list_of_objects.golden"},
@@ -42,7 +43,9 @@ func TestFiles(t *testing.T) {
 	for _, e := range data {
 		source := filepath.Join(dataDir, e.source)
 		golden := filepath.Join(dataDir, e.golden)
-		check(t, source, golden)
+		t.Run(e.source, func(t *testing.T) {
+			check(t, source, golden)
+		})
 	}
 }
 
