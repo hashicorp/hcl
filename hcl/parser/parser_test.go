@@ -152,6 +152,109 @@ func TestListOfMaps_requiresComma(t *testing.T) {
 	}
 }
 
+func TestListType_leadComment(t *testing.T) {
+	var literals = []struct {
+		src     string
+		comment []string
+	}{
+		{
+			`foo = [
+			1,
+			# bar
+			2,
+			3,
+			]`,
+			[]string{"", "# bar", ""},
+		},
+	}
+
+	for _, l := range literals {
+		p := newParser([]byte(l.src))
+		item, err := p.objectItem()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		list, ok := item.Val.(*ast.ListType)
+		if !ok {
+			t.Fatalf("node should be of type LiteralType, got: %T", item.Val)
+		}
+
+		if len(list.List) != len(l.comment) {
+			t.Fatalf("bad: %d", len(list.List))
+		}
+
+		for i, li := range list.List {
+			lt := li.(*ast.LiteralType)
+			comment := l.comment[i]
+
+			if (lt.LeadComment == nil) != (comment == "") {
+				t.Fatalf("bad: %#v", lt)
+			}
+
+			if comment == "" {
+				continue
+			}
+
+			actual := lt.LeadComment.List[0].Text
+			if actual != comment {
+				t.Fatalf("bad: %q %q", actual, comment)
+			}
+		}
+	}
+}
+
+func TestListType_lineComment(t *testing.T) {
+	var literals = []struct {
+		src     string
+		comment []string
+	}{
+		{
+			`foo = [
+			1,
+			2, # bar
+			3,
+			]`,
+			[]string{"", "# bar", ""},
+		},
+	}
+
+	for _, l := range literals {
+		p := newParser([]byte(l.src))
+		item, err := p.objectItem()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		list, ok := item.Val.(*ast.ListType)
+		if !ok {
+			t.Fatalf("node should be of type LiteralType, got: %T", item.Val)
+		}
+
+		if len(list.List) != len(l.comment) {
+			t.Fatalf("bad: %d", len(list.List))
+		}
+
+		for i, li := range list.List {
+			lt := li.(*ast.LiteralType)
+			comment := l.comment[i]
+
+			if (lt.LineComment == nil) != (comment == "") {
+				t.Fatalf("bad: %s", lt)
+			}
+
+			if comment == "" {
+				continue
+			}
+
+			actual := lt.LineComment.List[0].Text
+			if actual != comment {
+				t.Fatalf("bad: %q %q", actual, comment)
+			}
+		}
+	}
+}
+
 func TestObjectType(t *testing.T) {
 	var literals = []struct {
 		src      string
