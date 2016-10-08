@@ -123,7 +123,10 @@ func (p *printer) output(n interface{}) []byte {
 
 					if comment.Pos().After(p.prev) && comment.Pos().Before(nextItem) {
 						// if we hit the end add newlines so we can print the comment
-						if index == len(t.Items) {
+						// we don't do this if prev is invalid which means the
+						// beginning of the file since the first comment should
+						// be at the first line.
+						if p.prev.IsValid() && index == len(t.Items) {
 							buf.Write([]byte{newline, newline})
 						}
 

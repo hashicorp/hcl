@@ -282,6 +282,29 @@ func TestObjectKey(t *testing.T) {
 	}
 }
 
+func TestCommentGroup(t *testing.T) {
+	var cases = []struct {
+		src    string
+		groups int
+	}{
+		{"# Hello\n# World", 1},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.src, func(t *testing.T) {
+			p := newParser([]byte(tc.src))
+			file, err := p.Parse()
+			if err != nil {
+				t.Fatalf("parse error: %s", err)
+			}
+
+			if len(file.Comments) != tc.groups {
+				t.Fatalf("bad: %#v", file.Comments)
+			}
+		})
+	}
+}
+
 // Official HCL tests
 func TestParse(t *testing.T) {
 	cases := []struct {
