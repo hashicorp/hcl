@@ -33,6 +33,7 @@ var data = []entry{
 	{"list.input", "list.golden"},
 	{"comment.input", "comment.golden"},
 	{"comment_aligned.input", "comment_aligned.golden"},
+	{"comment_array.input", "comment_array.golden"},
 	{"comment_newline.input", "comment_newline.golden"},
 	{"comment_standalone.input", "comment_standalone.golden"},
 	{"empty_block.input", "empty_block.golden"},

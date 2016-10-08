@@ -62,6 +62,14 @@ func (p *printer) collectComments(node ast.Node) {
 	ast.Walk(node, func(nn ast.Node) (ast.Node, bool) {
 		switch t := nn.(type) {
 		case *ast.LiteralType:
+			if t.LeadComment != nil {
+				for _, comment := range t.LeadComment.List {
+					if _, ok := standaloneComments[comment.Pos()]; ok {
+						delete(standaloneComments, comment.Pos())
+					}
+				}
+			}
+
 			if t.LineComment != nil {
 				for _, comment := range t.LineComment.List {
 					if _, ok := standaloneComments[comment.Pos()]; ok {
@@ -445,6 +453,17 @@ func (p *printer) list(l *ast.ListType) []byte {
 			// multiline list, add newline before we add each item
 			buf.WriteByte(newline)
 			insertSpaceBeforeItem = false
+
+			// If we have a lead comment, then we want to write that first
+			leadComment := false
+			if lit, ok := item.(*ast.LiteralType); ok && lit.LeadComment != nil {
+				leadComment = true
+				for _, comment := range lit.LeadComment.List {
+					buf.Write(p.indent([]byte(comment.Text)))
+					buf.WriteByte(newline)
+				}
+			}
+
 			// also indent each line
 			val := p.output(item)
 			curLen := len(val)
@@ -464,6 +483,10 @@ func (p *printer) list(l *ast.ListType) []byte {
 			}
 
 			if i == len(l.List)-1 {
+				buf.WriteByte(newline)
+			}
+
+			if leadComment {
 				buf.WriteByte(newline)
 			}
 		} else {
