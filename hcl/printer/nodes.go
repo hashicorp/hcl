@@ -448,6 +448,7 @@ func (p *printer) list(l *ast.ListType) []byte {
 	}
 
 	insertSpaceBeforeItem := false
+	lastHadLeadComment := false
 	for i, item := range l.List {
 		if item.Pos().Line != l.Lbrack.Line {
 			// multiline list, add newline before we add each item
@@ -458,6 +459,16 @@ func (p *printer) list(l *ast.ListType) []byte {
 			leadComment := false
 			if lit, ok := item.(*ast.LiteralType); ok && lit.LeadComment != nil {
 				leadComment = true
+
+				// If this isn't the first item and the previous element
+				// didn't have a lead comment, then we need to add an extra
+				// newline to properly space things out. If it did have a
+				// lead comment previously then this would be done
+				// automatically.
+				if i > 0 && !lastHadLeadComment {
+					buf.WriteByte(newline)
+				}
+
 				for _, comment := range lit.LeadComment.List {
 					buf.Write(p.indent([]byte(comment.Text)))
 					buf.WriteByte(newline)
@@ -482,13 +493,16 @@ func (p *printer) list(l *ast.ListType) []byte {
 				}
 			}
 
-			if i == len(l.List)-1 {
+			lastItem := i == len(l.List)-1
+			if lastItem {
 				buf.WriteByte(newline)
 			}
 
-			if leadComment {
+			if leadComment && !lastItem {
 				buf.WriteByte(newline)
 			}
+
+			lastHadLeadComment = leadComment
 		} else {
 			if insertSpaceBeforeItem {
 				buf.WriteByte(blank)
