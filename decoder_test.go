@@ -275,6 +275,14 @@ func TestDecode_interface(t *testing.T) {
 		},
 
 		{
+			"structure_list_empty.json",
+			false,
+			map[string]interface{}{
+				"foo": []interface{}{},
+			},
+		},
+
+		{
 			"nested_block_comment.hcl",
 			false,
 			map[string]interface{}{
