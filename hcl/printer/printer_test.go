@@ -40,6 +40,7 @@ var data = []entry{
 	{"comment_standalone.input", "comment_standalone.golden"},
 	{"empty_block.input", "empty_block.golden"},
 	{"list_of_objects.input", "list_of_objects.golden"},
+	{"multiline_string.input", "multiline_string.golden"},
 }
 
 func TestFiles(t *testing.T) {
