@@ -34,6 +34,7 @@ var data = []entry{
 	{"comment.input", "comment.golden"},
 	{"comment_aligned.input", "comment_aligned.golden"},
 	{"comment_array.input", "comment_array.golden"},
+	{"comment_multiline_indent.input", "comment_multiline_indent.golden"},
 	{"comment_multiline_no_stanza.input", "comment_multiline_no_stanza.golden"},
 	{"comment_multiline_stanza.input", "comment_multiline_stanza.golden"},
 	{"comment_newline.input", "comment_newline.golden"},
