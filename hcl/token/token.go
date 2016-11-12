@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	hclstrconv "github.com/hashicorp/hcl/hcl/strconv"
+	hclstrconv "github.com/GMTror/hcl/hcl/strconv"
 )
 
 // Token defines a single HCL token which can be obtained via the Scanner

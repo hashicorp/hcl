@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hashicorp/hcl/hcl/token"
+	"github.com/GMTror/hcl/hcl/token"
 )
 
 // Node is an element in the abstract syntax tree.
