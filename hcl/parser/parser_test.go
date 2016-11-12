@@ -63,10 +63,6 @@ func TestListType(t *testing.T) {
 			[]token.Type{},
 		},
 		{
-			`foo = ["123", 123]`,
-			[]token.Type{token.STRING, token.NUMBER},
-		},
-		{
 			`foo = [1,
 "string",
 <<EOF
