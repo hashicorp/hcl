@@ -1,6 +1,7 @@
 package hcl
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"reflect"
@@ -20,6 +21,14 @@ var (
 	// nodeType holds a reference to the type of ast.Node
 	nodeType reflect.Type = findNodeType()
 )
+
+// Unmarshaler is the interface implemented by types
+// that can unmarshal a HCL description of themselves.
+// The input can be assumed to be a valid encoding of
+// a HCL value.
+type Unmarshaler interface {
+	UnmarshalHcl([]byte) error
+}
 
 // Unmarshal accepts a byte slice as input and writes the
 // data to the value pointed to by v.
@@ -93,6 +102,8 @@ func (d *decoder) decode(name string, node ast.Node, result reflect.Value) error
 		return d.decodeFloat(name, node, result)
 	case reflect.Int:
 		return d.decodeInt(name, node, result)
+	case reflect.Uint:
+		return d.decodeUint(name, node, result)
 	case reflect.Interface:
 		// When we see an interface, we make our own thing
 		return d.decodeInterface(name, node, result)
@@ -173,6 +184,49 @@ func (d *decoder) decodeInt(name string, node ast.Node, result reflect.Value) er
 			}
 
 			result.Set(reflect.ValueOf(int(v)))
+			return nil
+		}
+	}
+
+	return &parser.PosError{
+		Pos: node.Pos(),
+		Err: fmt.Errorf("%s: unknown type %T", name, node),
+	}
+}
+
+func (d *decoder) decodeUint(name string, node ast.Node, result reflect.Value) error {
+	switch n := node.(type) {
+	case *ast.LiteralType:
+		switch n.Token.Type {
+		case token.NUMBER:
+			v, err := strconv.ParseInt(n.Token.Text, 0, 0)
+			if err != nil {
+				return err
+			}
+
+			if v < 0 {
+				return &parser.PosError{
+					Pos: node.Pos(),
+					Err: fmt.Errorf("%s: unknown type %T", name, node),
+				}
+			}
+
+			result.Set(reflect.ValueOf(uint(v)))
+			return nil
+		case token.STRING:
+			v, err := strconv.ParseInt(n.Token.Value().(string), 0, 0)
+			if err != nil {
+				return err
+			}
+
+			if v < 0 {
+				return &parser.PosError{
+					Pos: node.Pos(),
+					Err: fmt.Errorf("%s: unknown type %T", name, node),
+				}
+			}
+
+			result.Set(reflect.ValueOf(uint(v)))
 			return nil
 		}
 	}
@@ -394,7 +448,17 @@ func (d *decoder) decodePtr(name string, node ast.Node, result reflect.Value) er
 	resultType := result.Type()
 	resultElemType := resultType.Elem()
 	val := reflect.New(resultElemType)
-	if err := d.decode(name, node, reflect.Indirect(val)); err != nil {
+
+	if i, ok := val.Interface().(Unmarshaler); ok {
+		literal, ok := node.(*ast.LiteralType)
+		if !ok {
+			return &parser.PosError{
+				Pos: node.Pos(),
+				Err: fmt.Errorf("unknown type for Unmarshaler: %T", node),
+			}
+		}
+		i.UnmarshalHcl(bytes.NewBufferString(literal.Token.Text).Bytes())
+	} else if err := d.decode(name, node, reflect.Indirect(val)); err != nil {
 		return err
 	}
 
