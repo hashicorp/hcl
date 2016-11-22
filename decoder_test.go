@@ -379,6 +379,12 @@ func TestDecode_interface(t *testing.T) {
 				},
 			},
 		},
+
+		{
+			"git_crypt.hcl",
+			true,
+			nil,
+		},
 	}
 
 	for _, tc := range cases {
