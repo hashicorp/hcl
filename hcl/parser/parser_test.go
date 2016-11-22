@@ -504,6 +504,10 @@ func TestParse(t *testing.T) {
 			"object_key_assign_without_value3.hcl",
 			true,
 		},
+		{
+			"git_crypt.hcl",
+			true,
+		},
 	}
 
 	const fixtureDir = "./test-fixtures"
