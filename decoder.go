@@ -494,6 +494,14 @@ func (d *decoder) decodeSlice(name string, node ast.Node, result reflect.Value) 
 		items = []ast.Node{n}
 	case *ast.ListType:
 		items = n.List
+	case *ast.LiteralType:
+		b := []byte(n.Token.Text)
+		for i := 1; i < len(b)-1; i++ {
+			rb := reflect.ValueOf(b[i])
+			result = reflect.Append(result, rb)
+		}
+		set.Set(result)
+		return nil
 	default:
 		return &parser.PosError{
 			Pos: node.Pos(),
@@ -503,6 +511,7 @@ func (d *decoder) decodeSlice(name string, node ast.Node, result reflect.Value) 
 
 	for i, item := range items {
 		fieldName := fmt.Sprintf("%s[%d]", name, i)
+		fmt.Println(fieldName)
 
 		// Decode
 		val := reflect.Indirect(reflect.New(resultElemType))
