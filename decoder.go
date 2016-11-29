@@ -511,7 +511,6 @@ func (d *decoder) decodeSlice(name string, node ast.Node, result reflect.Value) 
 
 	for i, item := range items {
 		fieldName := fmt.Sprintf("%s[%d]", name, i)
-		fmt.Println(fieldName)
 
 		// Decode
 		val := reflect.Indirect(reflect.New(resultElemType))
