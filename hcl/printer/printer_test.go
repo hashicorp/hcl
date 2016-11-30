@@ -1,8 +1,3 @@
-// +build !windows
-// TODO(jen20): These need fixing on Windows but printer is not used right now
-// and red CI is making it harder to process other bugs, so ignore until
-// we get around to fixing them.package printer
-
 package printer
 
 import (
@@ -32,6 +27,7 @@ var data = []entry{
 	{"complexhcl.input", "complexhcl.golden"},
 	{"list.input", "list.golden"},
 	{"comment.input", "comment.golden"},
+	{"comment_crlf.input", "comment.golden"},
 	{"comment_aligned.input", "comment_aligned.golden"},
 	{"comment_array.input", "comment_array.golden"},
 	{"comment_multiline_indent.input", "comment_multiline_indent.golden"},
@@ -104,8 +100,8 @@ func diff(aname, bname string, a, b []byte) error {
 	for i := 0; i < len(a) && i < len(b); i++ {
 		ch := a[i]
 		if ch != b[i] {
-			fmt.Fprintf(&buf, "\n%s:%d:%d: %s", aname, line, i-offs+1, lineAt(a, offs))
-			fmt.Fprintf(&buf, "\n%s:%d:%d: %s", bname, line, i-offs+1, lineAt(b, offs))
+			fmt.Fprintf(&buf, "\n%s:%d:%d: %q", aname, line, i-offs+1, lineAt(a, offs))
+			fmt.Fprintf(&buf, "\n%s:%d:%d: %q", bname, line, i-offs+1, lineAt(b, offs))
 			fmt.Fprintf(&buf, "\n\n")
 			break
 		}
