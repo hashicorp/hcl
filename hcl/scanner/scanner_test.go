@@ -476,6 +476,36 @@ EOF
 
 }
 
+func TestScan_crlf(t *testing.T) {
+	complexHCL := "foo {\r\n  bar = \"baz\"\r\n}\r\n"
+
+	literals := []struct {
+		tokenType token.Type
+		literal   string
+	}{
+		{token.IDENT, `foo`},
+		{token.LBRACE, `{`},
+		{token.IDENT, `bar`},
+		{token.ASSIGN, `=`},
+		{token.STRING, `"baz"`},
+		{token.RBRACE, `}`},
+		{token.EOF, ``},
+	}
+
+	s := New([]byte(complexHCL))
+	for _, l := range literals {
+		tok := s.Scan()
+		if l.tokenType != tok.Type {
+			t.Errorf("got: %s want %s for %s\n", tok, l.tokenType, tok.String())
+		}
+
+		if l.literal != tok.Text {
+			t.Errorf("got:\n%+v\n%s\n want:\n%+v\n%s\n", []byte(tok.String()), tok, []byte(l.literal), l.literal)
+		}
+	}
+
+}
+
 func TestError(t *testing.T) {
 	testError(t, "\x80", "1:1", "illegal UTF-8 encoding", token.ILLEGAL)
 	testError(t, "\xff", "1:1", "illegal UTF-8 encoding", token.ILLEGAL)
