@@ -1,15 +1,15 @@
-// Foo
-
-/* Bar */
-
-/*
-/*
-Baz
-*/
-
-# Another
-
-# Multiple
-# Lines
-
-foo = "bar"
+// Foo
+
+/* Bar */
+
+/*
+/*
+Baz
+*/
+
+# Another
+
+# Multiple
+# Lines
+
+foo = "bar"
