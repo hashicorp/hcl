@@ -9,6 +9,7 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/hcl/hcl/ast"
 	"github.com/hashicorp/hcl/testhelper"
+	hilAST "github.com/hashicorp/hil/ast"
 )
 
 func TestDecode_interface(t *testing.T) {
@@ -846,6 +847,78 @@ nested "content" {
 
 	if v["hello"] != "world" {
 		t.Errorf("expected mapping to be returned")
+	}
+}
+
+func TestDecode_HIL(t *testing.T) {
+	fixtures := []string{
+		"hil.hcl",
+		"hil.json",
+	}
+
+	for _, testFile := range fixtures {
+		t.Run(testFile, func(t *testing.T) {
+			var value struct {
+				String hilAST.Node
+				Int    hilAST.Node
+				Bool   hilAST.Node
+				Float  hilAST.Node
+				Expr   hilAST.Node
+			}
+
+			err := Decode(&value, testReadFile(t, testFile))
+			if err != nil {
+				t.Fatalf("err: %s", err)
+			}
+
+			if lit, ok := value.String.(*hilAST.LiteralNode); ok {
+				if got, want := lit.Typex, hilAST.TypeString; got != want {
+					t.Errorf("String type is %s; want %s", got, want)
+				}
+				if got, want := lit.Value, "foo"; got != want {
+					t.Errorf("String value is %#v; want %#v", got, want)
+				}
+			} else {
+				t.Errorf("String is %T; want *ast.LiteralNode", value.String)
+			}
+
+			if lit, ok := value.Int.(*hilAST.LiteralNode); ok {
+				if got, want := lit.Typex, hilAST.TypeInt; got != want {
+					t.Errorf("Int type is %s; want %s", got, want)
+				}
+				if got, want := lit.Value, 1; got != want {
+					t.Errorf("Int value is %#v; want %#v", got, want)
+				}
+			} else {
+				t.Errorf("Int is %T; want *ast.LiteralNode", value.Int)
+			}
+
+			if lit, ok := value.Bool.(*hilAST.LiteralNode); ok {
+				if got, want := lit.Typex, hilAST.TypeBool; got != want {
+					t.Errorf("Bool type is %s; want %s", got, want)
+				}
+				if got, want := lit.Value, true; got != want {
+					t.Errorf("Bool value is %#v; want %#v", got, want)
+				}
+			} else {
+				t.Errorf("Bool is %T; want *ast.LiteralNode", value.Bool)
+			}
+
+			if lit, ok := value.Float.(*hilAST.LiteralNode); ok {
+				if got, want := lit.Typex, hilAST.TypeFloat; got != want {
+					t.Errorf("Float type is %s; want %s", got, want)
+				}
+				if got, want := lit.Value, 1.2; got != want {
+					t.Errorf("Float value is %#v; want %#v", got, want)
+				}
+			} else {
+				t.Errorf("Float is %T; want *ast.LiteralNode", value.Float)
+			}
+
+			if _, ok := value.Expr.(*hilAST.Output); !ok {
+				t.Errorf("Expr is %T; want *ast.Output", value.Expr)
+			}
+		})
 	}
 }
 

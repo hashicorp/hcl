@@ -11,6 +11,9 @@ import (
 	"github.com/hashicorp/hcl/hcl/ast"
 	"github.com/hashicorp/hcl/hcl/parser"
 	"github.com/hashicorp/hcl/hcl/token"
+	"github.com/hashicorp/hil"
+	hilAST "github.com/hashicorp/hil/ast"
+	hilParser "github.com/hashicorp/hil/parser"
 )
 
 // This is the tag to use with structures to have settings for HCL
@@ -19,6 +22,9 @@ const tagName = "hcl"
 var (
 	// nodeType holds a reference to the type of ast.Node
 	nodeType reflect.Type = findNodeType()
+
+	// hilNodeType holds a reference to the type of hilAST.Node
+	hilNodeType reflect.Type = findHILNodeType()
 )
 
 // Unmarshal accepts a byte slice as input and writes the
@@ -190,6 +196,12 @@ func (d *decoder) decodeInterface(name string, node ast.Node, result reflect.Val
 	if result.Type() == nodeType && result.CanSet() {
 		result.Set(reflect.ValueOf(node))
 		return nil
+	}
+
+	// When we see a HIL AST node, we parse it immediately and store the
+	// resulting node.
+	if result.Type() == hilNodeType && result.CanSet() {
+		return d.decodeHILNode(name, node, result)
 	}
 
 	var set reflect.Value
@@ -706,10 +718,87 @@ func (d *decoder) decodeStruct(name string, node ast.Node, result reflect.Value)
 	return nil
 }
 
+func (d *decoder) decodeHILNode(name string, node ast.Node, result reflect.Value) error {
+	pos := node.Pos()
+	hilPos := hilAST.Pos{
+		Line:     pos.Line,
+		Column:   pos.Column,
+		Filename: pos.Filename,
+	}
+
+	switch n := node.(type) {
+	case *ast.LiteralType:
+		switch n.Token.Type {
+		case token.BOOL, token.FLOAT, token.NUMBER:
+			// These types can't contain HIL expressions, but we'll interpret
+			// them as HIL literal nodes for the caller's convenience.
+
+			val := n.Token.Value()
+
+			// HCL uses int64 while HIL uses int, so we'll do a conversion
+			// here in spite of this being potentially-lossy. :(
+			if intVal, ok := val.(int64); ok {
+				val = int(intVal)
+			}
+
+			var hilNode hilAST.Node
+			var err error
+			hilNode, err = hilAST.NewLiteralNode(val, hilPos)
+			if err != nil {
+				// should never happen, since all of the types here
+				// are supported by HIL.
+				return err
+			}
+			result.Set(reflect.ValueOf(hilNode))
+			return nil
+		case token.STRING, token.HEREDOC:
+			hilSrc := n.Token.Value().(string)
+			hilNode, err := hil.ParseWithPosition(hilSrc, hilPos)
+			if err != nil {
+				// If HIL has given us an error with a position then
+				// we'll translate it back into a HCL position so the
+				// caller can just deal with HCL's PosError.
+				if hilErr, ok := err.(*hilParser.ParseError); ok {
+					return &parser.PosError{
+						Pos: token.Pos{
+							Filename: hilErr.Pos.Filename,
+							Line:     hilErr.Pos.Line,
+							Column:   hilErr.Pos.Column,
+
+							// HIL doesn't track offsets, so we'll just use
+							// the HCL node's offset as a "good enough"
+							// answer.
+							Offset: pos.Offset,
+						},
+						Err: err,
+					}
+				} else {
+					return err
+				}
+			}
+			result.Set(reflect.ValueOf(hilNode))
+			return nil
+		}
+	}
+	return &parser.PosError{
+		Pos: node.Pos(),
+		Err: fmt.Errorf("%s: cannot decode into HIL node: %T", name, node),
+	}
+}
+
 // findNodeType returns the type of ast.Node
 func findNodeType() reflect.Type {
 	var nodeContainer struct {
 		Node ast.Node
+	}
+	value := reflect.ValueOf(nodeContainer).FieldByName("Node")
+	return value.Type()
+}
+
+// findHILNodeType returns the type of hilAST.Node
+func findHILNodeType() reflect.Type {
+	var nodeContainer struct {
+		Node hilAST.Node
 	}
 	value := reflect.ValueOf(nodeContainer).FieldByName("Node")
 	return value.Type()
