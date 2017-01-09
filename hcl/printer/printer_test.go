@@ -132,7 +132,7 @@ func format(src []byte) ([]byte, error) {
 
 	// make sure formatted output is syntactically correct
 	if _, err := parser.Parse(formatted); err != nil {
-		return nil, fmt.Errorf("parse: %s\n%s", err, src)
+		return nil, fmt.Errorf("parse: %s\n%s", err, formatted)
 	}
 
 	return formatted, nil
