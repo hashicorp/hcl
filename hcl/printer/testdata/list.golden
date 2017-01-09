@@ -25,3 +25,14 @@ foo = [
   "ethiopia",
   "columbia",
 ]
+
+foo = [
+  <<EOS
+one
+EOS
+  ,
+  <<EOS
+two
+EOS
+  ,
+]
