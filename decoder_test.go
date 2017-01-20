@@ -391,6 +391,23 @@ func TestDecode_interface(t *testing.T) {
 			true,
 			nil,
 		},
+
+		{
+			"object_with_bool.hcl",
+			false,
+			map[string]interface{}{
+				"path": []map[string]interface{}{
+					map[string]interface{}{
+						"policy": "write",
+						"permissions": []map[string]interface{}{
+							map[string]interface{}{
+								"bool": []interface{}{false},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tc := range cases {
