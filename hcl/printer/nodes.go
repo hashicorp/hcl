@@ -263,17 +263,24 @@ func (p *printer) objectType(o *ast.ObjectType) []byte {
 	var nextItem token.Pos
 	var commented, newlinePrinted bool
 	for {
+		// Determine the location of the next actual non-comment
+		// item. If we're at the end, the next item is the closing brace
+		if index != len(o.List.Items) {
+			nextItem = o.List.Items[index].Pos()
+		} else {
+			nextItem = o.Rbrace
+		}
 
-		// Print stand alone comments
+		// Go through the standalone comments in the file and print out
+		// the comments that we should be for this object item.
 		for _, c := range p.standaloneComments {
+			printed := false
+			var lastCommentPos token.Pos
 			for _, comment := range c.List {
-				// if we hit the end, last item should be the brace
-				if index != len(o.List.Items) {
-					nextItem = o.List.Items[index].Pos()
-				} else {
-					nextItem = o.Rbrace
-				}
-
+				// We only care about comments after the previous item
+				// we've printed so that comments are printed in the
+				// correct locations (between two objects for example).
+				// And before the next item.
 				if comment.Pos().After(p.prev) && comment.Pos().Before(nextItem) {
 					// If there are standalone comments and the initial newline has not
 					// been printed yet, do it now.
@@ -288,11 +295,33 @@ func (p *printer) objectType(o *ast.ObjectType) []byte {
 						buf.WriteByte(newline)
 					}
 
+					// Store this position
+					lastCommentPos = comment.Pos()
+
+					// output the comment itself
 					buf.Write(p.indent(p.heredocIndent([]byte(comment.Text))))
+
+					// Set printed to true to note that we printed something
+					printed = true
+
+					/*
+						if index != len(o.List.Items) {
+							buf.WriteByte(newline) // do not print on the end
+						}
+					*/
+				}
+			}
+
+			// Stuff to do if we had comments
+			if printed {
+				// Always write a newline
+				buf.WriteByte(newline)
+
+				// If there is another item in the object and our comment
+				// didn't hug it directly, then make sure there is a blank
+				// line separating them.
+				if nextItem != o.Rbrace && nextItem.Line != lastCommentPos.Line+1 {
 					buf.WriteByte(newline)
-					if index != len(o.List.Items) {
-						buf.WriteByte(newline) // do not print on the end
-					}
 				}
 			}
 		}
