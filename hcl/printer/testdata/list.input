@@ -31,8 +31,7 @@ EOS
 ,
     ]
 
-foo = [
-    <<EOS
+foo = [<<EOS
 one
 EOS
     ]
