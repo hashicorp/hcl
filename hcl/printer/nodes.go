@@ -579,7 +579,10 @@ func (p *printer) list(l *ast.ListType) []byte {
 			}
 
 			// Output the item itself
-			buf.Write(p.output(item))
+			// also indent each line
+			val := p.output(item)
+			curLen := len(val)
+			buf.Write(val)
 
 			// If this is a heredoc item we always have to output a newline
 			// so that it parses properly.
@@ -591,6 +594,18 @@ func (p *printer) list(l *ast.ListType) []byte {
 			if i != len(l.List)-1 {
 				buf.WriteString(",")
 				insertSpaceBeforeItem = true
+			}
+
+			if lit, ok := item.(*ast.LiteralType); ok && lit.LineComment != nil {
+				// if the next item doesn't have any comments, do not align
+				buf.WriteByte(blank) // align one space
+				for i := 0; i < longestLine-curLen; i++ {
+					buf.WriteByte(blank)
+				}
+
+				for _, comment := range lit.LineComment.List {
+					buf.WriteString(comment.Text)
+				}
 			}
 		}
 
