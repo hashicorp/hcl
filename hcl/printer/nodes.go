@@ -171,7 +171,15 @@ func (p *printer) output(n interface{}) []byte {
 
 			buf.Write(p.output(t.Items[index]))
 			if index != len(t.Items)-1 {
-				buf.Write([]byte{newline, newline})
+				// Always write a newline to separate us from the next item
+				buf.WriteByte(newline)
+
+				// If the next item is an object that is exactly one line,
+				// then we don't output another newline.
+				next := t.Items[index+1]
+				if next.Pos().Line != t.Items[index].Pos().Line+1 || !p.isSingleLineObject(next) {
+					buf.WriteByte(newline)
+				}
 			}
 			index++
 		}
@@ -681,6 +689,36 @@ func (p *printer) heredocIndent(buf []byte) []byte {
 		bol = c == '\n'
 	}
 	return res
+}
+
+// isSingleLineObject tells whether the given object item is a single
+// line object such as "obj {}".
+//
+// A single line object:
+//
+//   * has no lead comments (hence multi-line)
+//   * has no assignment
+//   * has no values in the stanza (within {})
+//
+func (p *printer) isSingleLineObject(val *ast.ObjectItem) bool {
+	// If there is a lead comment, can't be one line
+	if val.LeadComment != nil {
+		return false
+	}
+
+	// If there is assignment, we always break by line
+	if val.Assign.IsValid() {
+		return false
+	}
+
+	// If it isn't an object type, then its not a single line object
+	ot, ok := val.Val.(*ast.ObjectType)
+	if !ok {
+		return false
+	}
+
+	// If the object has no items, it is single line!
+	return len(ot.List.Items) == 0
 }
 
 func lines(txt string) int {
