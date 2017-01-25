@@ -38,6 +38,7 @@ var data = []entry{
 	{"comment_multiline_no_stanza.input", "comment_multiline_no_stanza.golden"},
 	{"comment_multiline_stanza.input", "comment_multiline_stanza.golden"},
 	{"comment_newline.input", "comment_newline.golden"},
+	{"comment_object_multi.input", "comment_object_multi.golden"},
 	{"comment_standalone.input", "comment_standalone.golden"},
 	{"empty_block.input", "empty_block.golden"},
 	{"list_of_objects.input", "list_of_objects.golden"},
