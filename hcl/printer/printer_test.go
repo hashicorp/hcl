@@ -31,6 +31,7 @@ type entry struct {
 var data = []entry{
 	{"complexhcl.input", "complexhcl.golden"},
 	{"list.input", "list.golden"},
+	{"list_comment.input", "list_comment.golden"},
 	{"comment.input", "comment.golden"},
 	{"comment_aligned.input", "comment_aligned.golden"},
 	{"comment_array.input", "comment_array.golden"},
