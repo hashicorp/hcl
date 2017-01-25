@@ -474,6 +474,13 @@ func (p *printer) list(l *ast.ListType) []byte {
 	insertSpaceBeforeItem := false
 	lastHadLeadComment := false
 	for i, item := range l.List {
+		// Keep track of whether this item is a heredoc since that has
+		// unique behavior.
+		heredoc := false
+		if lit, ok := item.(*ast.LiteralType); ok && lit.Token.Type == token.HEREDOC {
+			heredoc = true
+		}
+
 		if item.Pos().Line != l.Lbrack.Line {
 			// multiline list, add newline before we add each item
 			buf.WriteByte(newline)
@@ -507,7 +514,7 @@ func (p *printer) list(l *ast.ListType) []byte {
 			// if this item is a heredoc, then we output the comma on
 			// the next line. This is the only case this happens.
 			comma := []byte{','}
-			if lit, ok := item.(*ast.LiteralType); ok && lit.Token.Type == token.HEREDOC {
+			if heredoc {
 				buf.WriteByte(newline)
 				comma = p.indent(comma)
 			}
@@ -541,7 +548,17 @@ func (p *printer) list(l *ast.ListType) []byte {
 				buf.WriteByte(blank)
 				insertSpaceBeforeItem = false
 			}
+
+			// Output the item itself
 			buf.Write(p.output(item))
+
+			// If this is a heredoc item we always have to output a newline
+			// so that it parses properly.
+			if heredoc {
+				buf.WriteByte(newline)
+			}
+
+			// If this isn't the last element, write a comma.
 			if i != len(l.List)-1 {
 				buf.WriteString(",")
 				insertSpaceBeforeItem = true
