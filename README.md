@@ -66,12 +66,24 @@ of the syntax and grammar is listed here.
 
   * Multi-line strings start with `<<EOF` at the end of a line, and end
     with `EOF` on its own line ([here documents](https://en.wikipedia.org/wiki/Here_document)).
-    Any text may be used in place of `EOF`. Example:
-```
-<<FOO
+    With `<<-EOF` leading whitespace are automatically trimmed. Any text
+    may be used in place of `EOF`. The following examples are equivalent:
+```hcl
+variable "var" {
+    description = <<FOO
 hello
 world
 FOO
+}
+```
+
+```hcl
+variable "var" {
+    description = <<-FOO
+                  hello
+                  world
+                  FOO
+}
 ```
 
   * Numbers are assumed to be base 10. If you prefix a number with 0x,
