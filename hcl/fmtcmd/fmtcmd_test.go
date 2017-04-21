@@ -17,7 +17,7 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/hashicorp/hcl/testhelper"
+	"github.com/GMTror/hcl/testhelper"
 )
 
 var fixtureExtensions = []string{"hcl"}

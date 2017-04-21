@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	hcltoken "github.com/hashicorp/hcl/hcl/token"
+	hcltoken "github.com/GMTror/hcl/hcl/token"
 )
 
 // Token defines a single HCL token which can be obtained via the Scanner

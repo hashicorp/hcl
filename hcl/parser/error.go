@@ -3,7 +3,7 @@ package parser
 import (
 	"fmt"
 
-	"github.com/hashicorp/hcl/hcl/token"
+	"github.com/GMTror/hcl/hcl/token"
 )
 
 // PosError is a parse error that contains a position.
