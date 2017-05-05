@@ -808,6 +808,36 @@ func TestDecode_intString(t *testing.T) {
 	}
 }
 
+func TestDecode_float32(t *testing.T) {
+	var value struct {
+		A float32 `hcl:"a"`
+	}
+
+	err := Decode(&value, testReadFile(t, "float.hcl"))
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	if got, want := value.A, float32(1.02); got != want {
+		t.Fatalf("wrong result %#v; want %#v", got, want)
+	}
+}
+
+func TestDecode_float64(t *testing.T) {
+	var value struct {
+		A float64 `hcl:"a"`
+	}
+
+	err := Decode(&value, testReadFile(t, "float.hcl"))
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	if got, want := value.A, float64(1.02); got != want {
+		t.Fatalf("wrong result %#v; want %#v", got, want)
+	}
+}
+
 func TestDecode_intStringAliased(t *testing.T) {
 	var value struct {
 		Count time.Duration
