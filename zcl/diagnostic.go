@@ -37,7 +37,7 @@ type Diagnostic struct {
 }
 
 // Diagnostics is a list of Diagnostic instances.
-type Diagnostics []Diagnostic
+type Diagnostics []*Diagnostic
 
 // error implementation, so that diagnostics can be returned via APIs
 // that normally deal in vanilla Go errors.
@@ -60,4 +60,27 @@ func (d Diagnostics) Error() string {
 	default:
 		return fmt.Sprintf("%s, and %d other diagnostic(s)", d[0].Error(), count-1)
 	}
+}
+
+// Append appends a new error to a Diagnostics and return the whole Diagnostics.
+//
+// This is provided as a convenience for returning from a function that
+// collects and then returns a set of diagnostics:
+//
+//     return nil, diags.Append(&zcl.Diagnostic{ ... })
+//
+// Note that this modifies the array underlying the diagnostics slice, so
+// must be used carefully within a single codepath. It is incorrect (and rude)
+// to extend a diagnostics created by a different subsystem.
+func (d Diagnostics) Append(diag *Diagnostic) Diagnostics {
+	return append(d, diag)
+}
+
+// Extend concatenates the given Diagnostics with the receiver and returns
+// the whole new Diagnostics.
+//
+// This is similar to Append but accepts multiple diagnostics to add. It has
+// all the same caveats and constraints.
+func (d Diagnostics) Extend(diags Diagnostics) Diagnostics {
+	return append(d, diags...)
 }
