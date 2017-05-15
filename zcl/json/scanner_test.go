@@ -16,7 +16,43 @@ func TestScan(t *testing.T) {
 	}{
 		{
 			``,
-			nil,
+			[]token{
+				{
+					Type: tokenEOF,
+					Range: zcl.Range{
+						Start: zcl.Pos{
+							Byte:   0,
+							Line:   1,
+							Column: 1,
+						},
+						End: zcl.Pos{
+							Byte:   0,
+							Line:   1,
+							Column: 1,
+						},
+					},
+				},
+			},
+		},
+		{
+			`   `,
+			[]token{
+				{
+					Type: tokenEOF,
+					Range: zcl.Range{
+						Start: zcl.Pos{
+							Byte:   3,
+							Line:   1,
+							Column: 4,
+						},
+						End: zcl.Pos{
+							Byte:   3,
+							Line:   1,
+							Column: 4,
+						},
+					},
+				},
+			},
 		},
 		{
 			`{}`,
@@ -45,6 +81,21 @@ func TestScan(t *testing.T) {
 							Byte:   1,
 							Line:   1,
 							Column: 2,
+						},
+						End: zcl.Pos{
+							Byte:   2,
+							Line:   1,
+							Column: 3,
+						},
+					},
+				},
+				{
+					Type: tokenEOF,
+					Range: zcl.Range{
+						Start: zcl.Pos{
+							Byte:   2,
+							Line:   1,
+							Column: 3,
 						},
 						End: zcl.Pos{
 							Byte:   2,
@@ -90,6 +141,21 @@ func TestScan(t *testing.T) {
 						},
 					},
 				},
+				{
+					Type: tokenEOF,
+					Range: zcl.Range{
+						Start: zcl.Pos{
+							Byte:   2,
+							Line:   1,
+							Column: 3,
+						},
+						End: zcl.Pos{
+							Byte:   2,
+							Line:   1,
+							Column: 3,
+						},
+					},
+				},
 			},
 		},
 		{
@@ -127,6 +193,21 @@ func TestScan(t *testing.T) {
 						},
 					},
 				},
+				{
+					Type: tokenEOF,
+					Range: zcl.Range{
+						Start: zcl.Pos{
+							Byte:   2,
+							Line:   1,
+							Column: 3,
+						},
+						End: zcl.Pos{
+							Byte:   2,
+							Line:   1,
+							Column: 3,
+						},
+					},
+				},
 			},
 		},
 		{
@@ -140,6 +221,21 @@ func TestScan(t *testing.T) {
 							Byte:   0,
 							Line:   1,
 							Column: 1,
+						},
+						End: zcl.Pos{
+							Byte:   1,
+							Line:   1,
+							Column: 2,
+						},
+					},
+				},
+				{
+					Type: tokenEOF,
+					Range: zcl.Range{
+						Start: zcl.Pos{
+							Byte:   1,
+							Line:   1,
+							Column: 2,
 						},
 						End: zcl.Pos{
 							Byte:   1,
@@ -169,6 +265,21 @@ func TestScan(t *testing.T) {
 						},
 					},
 				},
+				{
+					Type: tokenEOF,
+					Range: zcl.Range{
+						Start: zcl.Pos{
+							Byte:   3,
+							Line:   1,
+							Column: 4,
+						},
+						End: zcl.Pos{
+							Byte:   3,
+							Line:   1,
+							Column: 4,
+						},
+					},
+				},
 			},
 		},
 		{
@@ -182,6 +293,21 @@ func TestScan(t *testing.T) {
 							Byte:   2,
 							Line:   1,
 							Column: 3,
+						},
+						End: zcl.Pos{
+							Byte:   4,
+							Line:   1,
+							Column: 5,
+						},
+					},
+				},
+				{
+					Type: tokenEOF,
+					Range: zcl.Range{
+						Start: zcl.Pos{
+							Byte:   4,
+							Line:   1,
+							Column: 5,
 						},
 						End: zcl.Pos{
 							Byte:   4,
@@ -227,6 +353,21 @@ func TestScan(t *testing.T) {
 						},
 					},
 				},
+				{
+					Type: tokenEOF,
+					Range: zcl.Range{
+						Start: zcl.Pos{
+							Byte:   3,
+							Line:   1,
+							Column: 4,
+						},
+						End: zcl.Pos{
+							Byte:   3,
+							Line:   1,
+							Column: 4,
+						},
+					},
+				},
 			},
 		},
 		{
@@ -256,6 +397,21 @@ func TestScan(t *testing.T) {
 							Byte:   4,
 							Line:   3,
 							Column: 2,
+						},
+						End: zcl.Pos{
+							Byte:   5,
+							Line:   3,
+							Column: 3,
+						},
+					},
+				},
+				{
+					Type: tokenEOF,
+					Range: zcl.Range{
+						Start: zcl.Pos{
+							Byte:   5,
+							Line:   3,
+							Column: 3,
 						},
 						End: zcl.Pos{
 							Byte:   5,
@@ -301,6 +457,21 @@ func TestScan(t *testing.T) {
 						},
 					},
 				},
+				{
+					Type: tokenEOF,
+					Range: zcl.Range{
+						Start: zcl.Pos{
+							Byte:   6,
+							Line:   1,
+							Column: 7,
+						},
+						End: zcl.Pos{
+							Byte:   6,
+							Line:   1,
+							Column: 7,
+						},
+					},
+				},
 			},
 		},
 		{
@@ -314,6 +485,21 @@ func TestScan(t *testing.T) {
 							Byte:   0,
 							Line:   1,
 							Column: 1,
+						},
+						End: zcl.Pos{
+							Byte:   4,
+							Line:   1,
+							Column: 5,
+						},
+					},
+				},
+				{
+					Type: tokenEOF,
+					Range: zcl.Range{
+						Start: zcl.Pos{
+							Byte:   4,
+							Line:   1,
+							Column: 5,
 						},
 						End: zcl.Pos{
 							Byte:   4,
@@ -343,6 +529,21 @@ func TestScan(t *testing.T) {
 						},
 					},
 				},
+				{
+					Type: tokenEOF,
+					Range: zcl.Range{
+						Start: zcl.Pos{
+							Byte:   2,
+							Line:   1,
+							Column: 3,
+						},
+						End: zcl.Pos{
+							Byte:   2,
+							Line:   1,
+							Column: 3,
+						},
+					},
+				},
 			},
 		},
 		{
@@ -364,6 +565,21 @@ func TestScan(t *testing.T) {
 						},
 					},
 				},
+				{
+					Type: tokenEOF,
+					Range: zcl.Range{
+						Start: zcl.Pos{
+							Byte:   7,
+							Line:   1,
+							Column: 8,
+						},
+						End: zcl.Pos{
+							Byte:   7,
+							Line:   1,
+							Column: 8,
+						},
+					},
+				},
 			},
 		},
 		{
@@ -377,6 +593,21 @@ func TestScan(t *testing.T) {
 							Byte:   0,
 							Line:   1,
 							Column: 1,
+						},
+						End: zcl.Pos{
+							Byte:   9,
+							Line:   1,
+							Column: 10,
+						},
+					},
+				},
+				{
+					Type: tokenEOF,
+					Range: zcl.Range{
+						Start: zcl.Pos{
+							Byte:   9,
+							Line:   1,
+							Column: 10,
 						},
 						End: zcl.Pos{
 							Byte:   9,
@@ -414,6 +645,21 @@ func TestScan(t *testing.T) {
 							Byte:   10,
 							Line:   1,
 							Column: 11,
+						},
+						End: zcl.Pos{
+							Byte:   11,
+							Line:   1,
+							Column: 12,
+						},
+					},
+				},
+				{
+					Type: tokenEOF,
+					Range: zcl.Range{
+						Start: zcl.Pos{
+							Byte:   11,
+							Line:   1,
+							Column: 12,
 						},
 						End: zcl.Pos{
 							Byte:   11,

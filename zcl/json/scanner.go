@@ -19,6 +19,7 @@ const (
 	tokenKeyword tokenType = 'K'
 	tokenString  tokenType = 'S'
 	tokenNumber  tokenType = 'N'
+	tokenEOF     tokenType = '␄'
 	tokenInvalid tokenType = 0
 )
 
@@ -40,12 +41,22 @@ func scan(buf []byte, start pos) []token {
 	p := start
 	for {
 		if len(buf) == 0 {
+			tokens = append(tokens, token{
+				Type:  tokenEOF,
+				Bytes: nil,
+				Range: posRange(p, p),
+			})
 			return tokens
 		}
 
 		buf, p = skipWhitespace(buf, p)
 
 		if len(buf) == 0 {
+			tokens = append(tokens, token{
+				Type:  tokenEOF,
+				Bytes: nil,
+				Range: posRange(p, p),
+			})
 			return tokens
 		}
 
