@@ -165,7 +165,7 @@ Byte:
 	for i = 0; i < len(buf); i++ {
 		b := buf[i]
 		switch {
-		case b >= 'a' || b <= 'z' || b >= 'A' || b <= 'Z' || b == '_':
+		case (b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || b == '_':
 			p.Pos.Byte++
 			p.Pos.Column++
 		default:

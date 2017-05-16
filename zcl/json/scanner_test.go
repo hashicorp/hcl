@@ -511,6 +511,74 @@ func TestScan(t *testing.T) {
 			},
 		},
 		{
+			`[true]`,
+			[]token{
+				{
+					Type:  tokenBrackO,
+					Bytes: []byte(`[`),
+					Range: zcl.Range{
+						Start: zcl.Pos{
+							Byte:   0,
+							Line:   1,
+							Column: 1,
+						},
+						End: zcl.Pos{
+							Byte:   1,
+							Line:   1,
+							Column: 2,
+						},
+					},
+				},
+				{
+					Type:  tokenKeyword,
+					Bytes: []byte(`true`),
+					Range: zcl.Range{
+						Start: zcl.Pos{
+							Byte:   1,
+							Line:   1,
+							Column: 2,
+						},
+						End: zcl.Pos{
+							Byte:   5,
+							Line:   1,
+							Column: 6,
+						},
+					},
+				},
+				{
+					Type:  tokenBrackC,
+					Bytes: []byte(`]`),
+					Range: zcl.Range{
+						Start: zcl.Pos{
+							Byte:   5,
+							Line:   1,
+							Column: 6,
+						},
+						End: zcl.Pos{
+							Byte:   6,
+							Line:   1,
+							Column: 7,
+						},
+					},
+				},
+				{
+					Type: tokenEOF,
+					Range: zcl.Range{
+						Start: zcl.Pos{
+							Byte:   6,
+							Line:   1,
+							Column: 7,
+						},
+						End: zcl.Pos{
+							Byte:   6,
+							Line:   1,
+							Column: 7,
+						},
+					},
+				},
+			},
+		},
+		{
 			`""`,
 			[]token{
 				{
