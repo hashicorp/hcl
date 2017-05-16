@@ -1,6 +1,7 @@
 package json
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/apparentlymart/go-zcl/zcl"
@@ -16,7 +17,12 @@ func parseFileContent(buf []byte, filename string) (node, zcl.Diagnostics) {
 		},
 	})
 	p := newPeeker(tokens)
-	return parseValue(p)
+	node, diags := parseValue(p)
+	if diags.HasErrors() {
+		// Don't return a node if there were errors during parsing.
+		return nil, diags
+	}
+	return node, diags
 }
 
 func parseValue(p *peeker) (node, zcl.Diagnostics) {
@@ -103,7 +109,7 @@ Token:
 		key := keyStrNode.Value
 
 		colon := p.Read()
-		if colon.Type != tokenComma {
+		if colon.Type != tokenColon {
 			if colon.Type == tokenBraceC || colon.Type == tokenComma {
 				// Catch common mistake of using braces instead of brackets
 				// for an array.
@@ -129,6 +135,19 @@ Token:
 			return nil, diags
 		}
 
+		if existing := attrs[key]; existing != nil {
+			// Generate a diagnostic for the duplicate key, but continue parsing
+			// anyway since this is a semantic error we can recover from.
+			diags = diags.Append(&zcl.Diagnostic{
+				Severity: zcl.DiagError,
+				Summary:  "Duplicate object attribute",
+				Detail: fmt.Sprintf(
+					"An attribute named %q was previously introduced at %s",
+					key, existing.NameRange.String(),
+				),
+				Subject: &colon.Range,
+			})
+		}
 		attrs[key] = &objectAttr{
 			Name:      key,
 			Value:     valNode,
@@ -148,6 +167,20 @@ Token:
 				})
 			}
 			continue Token
+		case tokenEOF:
+			return nil, diags.Append(&zcl.Diagnostic{
+				Severity: zcl.DiagError,
+				Summary:  "Unclosed object",
+				Detail:   "No closing brace was found for this JSON object.",
+				Subject:  &open.Range,
+			})
+		case tokenBrackC:
+			return nil, diags.Append(&zcl.Diagnostic{
+				Severity: zcl.DiagError,
+				Summary:  "Mismatched braces",
+				Detail:   "A JSON object must be closed with a brace, not a bracket.",
+				Subject:  p.Peek().Range.Ptr(),
+			})
 		case tokenBraceC:
 			break Token
 		default:
@@ -178,7 +211,58 @@ func parseNumber(p *peeker) (node, zcl.Diagnostics) {
 }
 
 func parseString(p *peeker) (node, zcl.Diagnostics) {
-	return nil, nil
+	tok := p.Read()
+	var str string
+	err := json.Unmarshal(tok.Bytes, &str)
+
+	if err != nil {
+		var errRange zcl.Range
+		if serr, ok := err.(*json.SyntaxError); ok {
+			errOfs := serr.Offset
+			errPos := tok.Range.Start
+			errPos.Byte += int(errOfs)
+
+			// TODO: Use the byte offset to properly count unicode
+			// characters for the column, and mark the whole of the
+			// character that was wrong as part of our range.
+			errPos.Column += int(errOfs)
+
+			errEndPos := errPos
+			errEndPos.Byte++
+			errEndPos.Column++
+
+			errRange = zcl.Range{
+				Filename: tok.Range.Filename,
+				Start:    errPos,
+				End:      errEndPos,
+			}
+		} else {
+			errRange = tok.Range
+		}
+
+		var contextRange *zcl.Range
+		if errRange != tok.Range {
+			contextRange = &tok.Range
+		}
+
+		// FIXME: Eventually we should parse strings directly here so
+		// we can produce a more useful error message in the face fo things
+		// such as invalid escapes, etc.
+		return nil, zcl.Diagnostics{
+			{
+				Severity: zcl.DiagError,
+				Summary:  "Invalid JSON string",
+				Detail:   fmt.Sprintf("There is a syntax error in the given JSON string."),
+				Subject:  &errRange,
+				Context:  contextRange,
+			},
+		}
+	}
+
+	return &stringVal{
+		Value:    str,
+		SrcRange: tok.Range,
+	}, nil
 }
 
 func parseKeyword(p *peeker) (node, zcl.Diagnostics) {
