@@ -17,8 +17,9 @@ func (p *peeker) Peek() token {
 }
 
 func (p *peeker) Read() token {
-	if p.tokens[p.pos].Type != tokenEOF {
+	ret := p.tokens[p.pos]
+	if ret.Type != tokenEOF {
 		p.pos++
 	}
-	return p.tokens[p.pos]
+	return ret
 }
