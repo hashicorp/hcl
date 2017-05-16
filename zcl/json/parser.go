@@ -1,6 +1,8 @@
 package json
 
 import (
+	"fmt"
+
 	"github.com/apparentlymart/go-zcl/zcl"
 )
 
@@ -180,5 +182,46 @@ func parseString(p *peeker) (node, zcl.Diagnostics) {
 }
 
 func parseKeyword(p *peeker) (node, zcl.Diagnostics) {
-	return nil, nil
+	tok := p.Read()
+	s := string(tok.Bytes)
+
+	switch s {
+	case "true":
+		return &booleanVal{
+			Value:    true,
+			SrcRange: tok.Range,
+		}, nil
+	case "false":
+		return &booleanVal{
+			Value:    false,
+			SrcRange: tok.Range,
+		}, nil
+	case "null":
+		return &nullVal{
+			SrcRange: tok.Range,
+		}, nil
+	case "undefined", "NaN", "Infinity":
+		return nil, zcl.Diagnostics{
+			{
+				Severity: zcl.DiagError,
+				Summary:  "Invalid JSON keyword",
+				Detail:   fmt.Sprintf("The JavaScript identifier %q cannot be used in JSON.", s),
+				Subject:  &tok.Range,
+			},
+		}
+	default:
+		var dym string
+		if suggest := keywordSuggestion(s); suggest != "" {
+			dym = fmt.Sprintf(" Did you mean %q?", suggest)
+		}
+
+		return nil, zcl.Diagnostics{
+			{
+				Severity: zcl.DiagError,
+				Summary:  "Invalid JSON keyword",
+				Detail:   fmt.Sprintf("%q is not a valid JSON keyword.%s", s, dym),
+				Subject:  &tok.Range,
+			},
+		}
+	}
 }
