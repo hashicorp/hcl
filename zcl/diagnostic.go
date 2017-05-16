@@ -45,7 +45,7 @@ type Diagnostics []*Diagnostic
 // This presents only minimal context about the error, for compatibility
 // with usual expectations about how errors will present as strings.
 func (d *Diagnostic) Error() string {
-	return fmt.Sprintf("%s: %s", d.Subject.Start, d.Summary)
+	return fmt.Sprintf("%s: %s; %s", d.Subject, d.Summary, d.Detail)
 }
 
 // error implementation, so that sets of diagnostics can be returned via
