@@ -84,3 +84,14 @@ func (d Diagnostics) Append(diag *Diagnostic) Diagnostics {
 func (d Diagnostics) Extend(diags Diagnostics) Diagnostics {
 	return append(d, diags...)
 }
+
+// HasErrors returns true if the receiver contains any diagnostics of
+// severity DiagError.
+func (d Diagnostics) HasErrors() bool {
+	for _, diag := range d {
+		if diag.Severity == DiagError {
+			return true
+		}
+	}
+	return false
+}
