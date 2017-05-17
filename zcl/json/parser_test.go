@@ -188,6 +188,11 @@ func TestParse(t *testing.T) {
 			nil,
 			1,
 		},
+		{
+			`1 2`,
+			nil,
+			1,
+		},
 
 		// Objects
 		{

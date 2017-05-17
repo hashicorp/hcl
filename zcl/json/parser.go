@@ -19,6 +19,14 @@ func parseFileContent(buf []byte, filename string) (node, zcl.Diagnostics) {
 	})
 	p := newPeeker(tokens)
 	node, diags := parseValue(p)
+	if len(diags) == 0 && p.Peek().Type != tokenEOF {
+		diags = diags.Append(&zcl.Diagnostic{
+			Severity: zcl.DiagError,
+			Summary:  "Extraneous data after value",
+			Detail:   "Extra characters appear after the JSON value.",
+			Subject:  p.Peek().Range.Ptr(),
+		})
+	}
 	if diags.HasErrors() {
 		// Don't return a node if there were errors during parsing.
 		return nil, diags
