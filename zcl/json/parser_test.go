@@ -314,6 +314,136 @@ func TestParse(t *testing.T) {
 			nil,
 			1,
 		},
+		{
+			`[]`,
+			&arrayVal{
+				Values: []node{},
+				SrcRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   zcl.Pos{Line: 1, Column: 3, Byte: 2},
+				},
+				OpenRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+				},
+			},
+			0,
+		},
+		{
+			`[true]`,
+			&arrayVal{
+				Values: []node{
+					&booleanVal{
+						Value: true,
+						SrcRange: zcl.Range{
+							Start: zcl.Pos{Line: 1, Column: 2, Byte: 1},
+							End:   zcl.Pos{Line: 1, Column: 6, Byte: 5},
+						},
+					},
+				},
+				SrcRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   zcl.Pos{Line: 1, Column: 7, Byte: 6},
+				},
+				OpenRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+				},
+			},
+			0,
+		},
+		{
+			`[true, false]`,
+			&arrayVal{
+				Values: []node{
+					&booleanVal{
+						Value: true,
+						SrcRange: zcl.Range{
+							Start: zcl.Pos{Line: 1, Column: 2, Byte: 1},
+							End:   zcl.Pos{Line: 1, Column: 6, Byte: 5},
+						},
+					},
+					&booleanVal{
+						Value: false,
+						SrcRange: zcl.Range{
+							Start: zcl.Pos{Line: 1, Column: 8, Byte: 7},
+							End:   zcl.Pos{Line: 1, Column: 13, Byte: 12},
+						},
+					},
+				},
+				SrcRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   zcl.Pos{Line: 1, Column: 14, Byte: 13},
+				},
+				OpenRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+				},
+			},
+			0,
+		},
+		{
+			`[[]]`,
+			&arrayVal{
+				Values: []node{
+					&arrayVal{
+						Values: []node{},
+						SrcRange: zcl.Range{
+							Start: zcl.Pos{Line: 1, Column: 2, Byte: 1},
+							End:   zcl.Pos{Line: 1, Column: 4, Byte: 3},
+						},
+						OpenRange: zcl.Range{
+							Start: zcl.Pos{Line: 1, Column: 2, Byte: 1},
+							End:   zcl.Pos{Line: 1, Column: 3, Byte: 2},
+						},
+					},
+				},
+				SrcRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   zcl.Pos{Line: 1, Column: 5, Byte: 4},
+				},
+				OpenRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+				},
+			},
+			0,
+		},
+		{
+			`[`,
+			nil,
+			1,
+		},
+		{
+			`[true`,
+			nil,
+			1,
+		},
+		{
+			`]`,
+			nil,
+			1,
+		},
+		{
+			`[true,]`,
+			nil,
+			1,
+		},
+		{
+			`[[],]`,
+			nil,
+			1,
+		},
+		{
+			`["hello":true]`,
+			nil,
+			1,
+		},
+		{
+			`[true}`,
+			nil,
+			1,
+		},
 	}
 
 	for _, test := range tests {

@@ -58,6 +58,15 @@ func parseValue(p *peeker) (node, zcl.Diagnostics) {
 				Subject:  &tok.Range,
 			},
 		}
+	case tokenEOF:
+		return nil, zcl.Diagnostics{
+			{
+				Severity: zcl.DiagError,
+				Summary:  "Missing value",
+				Detail:   "The JSON data ends prematurely.",
+				Subject:  &tok.Range,
+			},
+		}
 	default:
 		return nil, zcl.Diagnostics{
 			{
@@ -132,7 +141,7 @@ Token:
 
 		valNode, valDiags := parseValue(p)
 		diags = diags.Extend(valDiags)
-		if keyNode == nil {
+		if valNode == nil {
 			return nil, diags
 		}
 
@@ -157,14 +166,14 @@ Token:
 
 		switch p.Peek().Type {
 		case tokenComma:
-			p.Read()
+			comma := p.Read()
 			if p.Peek().Type == tokenBraceC {
 				// Special error message for this common mistake
 				return nil, diags.Append(&zcl.Diagnostic{
 					Severity: zcl.DiagError,
 					Summary:  "Trailing comma in object",
 					Detail:   "JSON does not permit a trailing comma after the final attribute in an object.",
-					Subject:  &colon.Range,
+					Subject:  &comma.Range,
 				})
 			}
 			continue Token
@@ -189,7 +198,7 @@ Token:
 				Severity: zcl.DiagError,
 				Summary:  "Missing attribute seperator comma",
 				Detail:   "A comma must appear between each attribute declaration in an object.",
-				Subject:  &colon.Range,
+				Subject:  p.Peek().Range.Ptr(),
 			})
 		}
 
@@ -204,7 +213,78 @@ Token:
 }
 
 func parseArray(p *peeker) (node, zcl.Diagnostics) {
-	return nil, nil
+	var diags zcl.Diagnostics
+
+	open := p.Read()
+	vals := []node{}
+
+Token:
+	for {
+		if p.Peek().Type == tokenBrackC {
+			break Token
+		}
+
+		valNode, valDiags := parseValue(p)
+		diags = diags.Extend(valDiags)
+		if valNode == nil {
+			return nil, diags
+		}
+
+		vals = append(vals, valNode)
+
+		switch p.Peek().Type {
+		case tokenComma:
+			comma := p.Read()
+			if p.Peek().Type == tokenBrackC {
+				// Special error message for this common mistake
+				return nil, diags.Append(&zcl.Diagnostic{
+					Severity: zcl.DiagError,
+					Summary:  "Trailing comma in array",
+					Detail:   "JSON does not permit a trailing comma after the final attribute in an array.",
+					Subject:  &comma.Range,
+				})
+			}
+			continue Token
+		case tokenColon:
+			return nil, diags.Append(&zcl.Diagnostic{
+				Severity: zcl.DiagError,
+				Summary:  "Invalid array value",
+				Detail:   "A colon is not used to introduce values in a JSON array.",
+				Subject:  p.Peek().Range.Ptr(),
+			})
+		case tokenEOF:
+			return nil, diags.Append(&zcl.Diagnostic{
+				Severity: zcl.DiagError,
+				Summary:  "Unclosed object",
+				Detail:   "No closing bracket was found for this JSON array.",
+				Subject:  &open.Range,
+			})
+		case tokenBraceC:
+			return nil, diags.Append(&zcl.Diagnostic{
+				Severity: zcl.DiagError,
+				Summary:  "Mismatched brackets",
+				Detail:   "A JSON array must be closed with a bracket, not a brace.",
+				Subject:  p.Peek().Range.Ptr(),
+			})
+		case tokenBrackC:
+			break Token
+		default:
+			return nil, diags.Append(&zcl.Diagnostic{
+				Severity: zcl.DiagError,
+				Summary:  "Missing attribute seperator comma",
+				Detail:   "A comma must appear between each value in an array.",
+				Subject:  p.Peek().Range.Ptr(),
+			})
+		}
+
+	}
+
+	close := p.Read()
+	return &arrayVal{
+		Values:    vals,
+		SrcRange:  zcl.RangeBetween(open.Range, close.Range),
+		OpenRange: open.Range,
+	}, diags
 }
 
 func parseNumber(p *peeker) (node, zcl.Diagnostics) {
