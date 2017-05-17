@@ -1,6 +1,7 @@
 package json
 
 import (
+	"math/big"
 	"reflect"
 	"testing"
 
@@ -108,6 +109,82 @@ func TestParse(t *testing.T) {
 		},
 		{
 			`"he\llo"`,
+			nil,
+			1,
+		},
+		{
+			`1`,
+			&numberVal{
+				Value: mustBigFloat("1"),
+				SrcRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+				},
+			},
+			0,
+		},
+		{
+			`1.2`,
+			&numberVal{
+				Value: mustBigFloat("1.2"),
+				SrcRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   zcl.Pos{Line: 1, Column: 4, Byte: 3},
+				},
+			},
+			0,
+		},
+		{
+			`-1`,
+			&numberVal{
+				Value: mustBigFloat("-1"),
+				SrcRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   zcl.Pos{Line: 1, Column: 3, Byte: 2},
+				},
+			},
+			0,
+		},
+		{
+			`1.2e5`,
+			&numberVal{
+				Value: mustBigFloat("120000"),
+				SrcRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   zcl.Pos{Line: 1, Column: 6, Byte: 5},
+				},
+			},
+			0,
+		},
+		{
+			`1.2e+5`,
+			&numberVal{
+				Value: mustBigFloat("120000"),
+				SrcRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   zcl.Pos{Line: 1, Column: 7, Byte: 6},
+				},
+			},
+			0,
+		},
+		{
+			`1.2e-5`,
+			&numberVal{
+				Value: mustBigFloat("1.2e-5"),
+				SrcRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   zcl.Pos{Line: 1, Column: 7, Byte: 6},
+				},
+			},
+			0,
+		},
+		{
+			`.1`,
+			nil,
+			1,
+		},
+		{
+			`+2`,
 			nil,
 			1,
 		},
@@ -258,4 +335,12 @@ func TestParse(t *testing.T) {
 			}
 		})
 	}
+}
+
+func mustBigFloat(s string) *big.Float {
+	f, _, err := (&big.Float{}).Parse(s, 10)
+	if err != nil {
+		panic(err)
+	}
+	return f
 }

@@ -3,6 +3,7 @@ package json
 import (
 	"encoding/json"
 	"fmt"
+	"math/big"
 
 	"github.com/apparentlymart/go-zcl/zcl"
 )
@@ -207,7 +208,41 @@ func parseArray(p *peeker) (node, zcl.Diagnostics) {
 }
 
 func parseNumber(p *peeker) (node, zcl.Diagnostics) {
-	return nil, nil
+	tok := p.Read()
+
+	// Use encoding/json to validate the number syntax.
+	// TODO: Do this more directly to produce better diagnostics.
+	var num json.Number
+	err := json.Unmarshal(tok.Bytes, &num)
+	if err != nil {
+		return nil, zcl.Diagnostics{
+			{
+				Severity: zcl.DiagError,
+				Summary:  "Invalid JSON number",
+				Detail:   fmt.Sprintf("There is a syntax error in the given JSON number."),
+				Subject:  &tok.Range,
+			},
+		}
+	}
+
+	f, _, err := (&big.Float{}).Parse(string(num), 10)
+	if err != nil {
+		// Should never happen if above passed, since JSON numbers are a subset
+		// of what big.Float can parse...
+		return nil, zcl.Diagnostics{
+			{
+				Severity: zcl.DiagError,
+				Summary:  "Invalid JSON number",
+				Detail:   fmt.Sprintf("There is a syntax error in the given JSON number."),
+				Subject:  &tok.Range,
+			},
+		}
+	}
+
+	return &numberVal{
+		Value:    f,
+		SrcRange: tok.Range,
+	}, nil
 }
 
 func parseString(p *peeker) (node, zcl.Diagnostics) {
