@@ -6,7 +6,8 @@ import (
 
 // File is the top-level node that results from parsing a ZCL file.
 type File struct {
-	Body Body
+	Body  Body
+	Bytes []byte
 }
 
 // Block represents a nested block within a Body.
