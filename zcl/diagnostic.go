@@ -95,3 +95,9 @@ func (d Diagnostics) HasErrors() bool {
 	}
 	return false
 }
+
+// A DiagnosticWriter emits diagnostics somehow.
+type DiagnosticWriter interface {
+	WriteDiagnostic(*Diagnostic) error
+	WriteDiagnostics(Diagnostics) error
+}
