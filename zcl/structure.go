@@ -47,7 +47,7 @@ type Body interface {
 
 // BodyContent is the result of applying a BodySchema to a Body.
 type BodyContent struct {
-	Attributes map[string]Attribute
+	Attributes map[string]*Attribute
 	Blocks     Blocks
 }
 
@@ -64,7 +64,7 @@ type Attribute struct {
 // Expression is a literal value or an expression provided in the
 // configuration, which can be evaluated within a scope to produce a value.
 type Expression interface {
-	LiteralValue() cty.Value
+	LiteralValue() (cty.Value, Diagnostics)
 	// TODO: evaluation of non-literal expressions
 }
 
