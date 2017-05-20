@@ -190,7 +190,13 @@ func TestParse(t *testing.T) {
 		},
 		{
 			`1 2`,
-			nil,
+			&numberVal{
+				Value: mustBigFloat("1"),
+				SrcRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+				},
+			},
 			1,
 		},
 
@@ -306,7 +312,32 @@ func TestParse(t *testing.T) {
 		},
 		{
 			`{"hello": true, "hello": true}`,
-			nil,
+			&objectVal{
+				Attrs: map[string]*objectAttr{
+					"hello": {
+						Name: "hello",
+						Value: &booleanVal{
+							Value: true,
+							SrcRange: zcl.Range{
+								Start: zcl.Pos{Line: 1, Column: 26, Byte: 25},
+								End:   zcl.Pos{Line: 1, Column: 30, Byte: 29},
+							},
+						},
+						NameRange: zcl.Range{
+							Start: zcl.Pos{Line: 1, Column: 17, Byte: 16},
+							End:   zcl.Pos{Line: 1, Column: 24, Byte: 23},
+						},
+					},
+				},
+				SrcRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   zcl.Pos{Line: 1, Column: 31, Byte: 30},
+				},
+				OpenRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+				},
+			},
 			1,
 		},
 		{

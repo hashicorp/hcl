@@ -27,10 +27,6 @@ func parseFileContent(buf []byte, filename string) (node, zcl.Diagnostics) {
 			Subject:  p.Peek().Range.Ptr(),
 		})
 	}
-	if diags.HasErrors() {
-		// Don't return a node if there were errors during parsing.
-		return nil, diags
-	}
 	return node, diags
 }
 
