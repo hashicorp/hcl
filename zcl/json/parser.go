@@ -154,12 +154,12 @@ Token:
 			// anyway since this is a semantic error we can recover from.
 			diags = diags.Append(&zcl.Diagnostic{
 				Severity: zcl.DiagError,
-				Summary:  "Duplicate object attribute",
+				Summary:  "Duplicate JSON object property",
 				Detail: fmt.Sprintf(
-					"An attribute named %q was previously introduced at %s",
+					"An property named %q was previously introduced at %s",
 					key, existing.NameRange.String(),
 				),
-				Subject: &colon.Range,
+				Subject: &keyStrNode.SrcRange,
 			})
 		}
 		attrs[key] = &objectAttr{
