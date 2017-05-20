@@ -123,6 +123,25 @@ func (b *body) PartialContent(schema *zcl.BodySchema) (*zcl.BodyContent, zcl.Bod
 	return content, unusedBody, diags
 }
 
+// JustAttributes for JSON bodies interprets all properties of the wrapped
+// JSON object as attributes and returns them.
+func (b *body) JustAttributes() (map[string]*zcl.Attribute, zcl.Diagnostics) {
+	attrs := make(map[string]*zcl.Attribute)
+	for name, jsonAttr := range b.obj.Attrs {
+		attrs[name] = &zcl.Attribute{
+			Name:      name,
+			Expr:      &expression{src: jsonAttr.Value},
+			Range:     zcl.RangeBetween(jsonAttr.NameRange, jsonAttr.Value.Range()),
+			NameRange: jsonAttr.NameRange,
+			ExprRange: jsonAttr.Value.Range(),
+		}
+	}
+
+	// No diagnostics possible here, since the parser already took care of
+	// finding duplicates and every JSON value can be a valid attribute value.
+	return attrs, nil
+}
+
 func (b *body) unpackBlock(v node, typeName string, typeRange *zcl.Range, labelsLeft []string, labelsUsed []string, labelRanges []zcl.Range, blocks *zcl.Blocks) (diags zcl.Diagnostics) {
 	if len(labelsLeft) > 0 {
 		labelName := labelsLeft[0]

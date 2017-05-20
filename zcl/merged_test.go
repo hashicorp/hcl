@@ -8,7 +8,7 @@ import (
 	"github.com/davecgh/go-spew/spew"
 )
 
-func TestMergedBodies(t *testing.T) {
+func TestMergedBodiesContent(t *testing.T) {
 	tests := []struct {
 		Bodies    []Body
 		Schema    *BodySchema
@@ -410,4 +410,31 @@ func (v *testMergedBodiesVictim) PartialContent(schema *BodySchema) (*BodyConten
 	}
 
 	return content, emptyBody, diags
+}
+
+func (v *testMergedBodiesVictim) JustAttributes() (map[string]*Attribute, Diagnostics) {
+	attrs := make(map[string]*Attribute)
+
+	rng := Range{
+		Filename: v.Name,
+	}
+
+	for _, name := range v.HasAttributes {
+		attrs[name] = &Attribute{
+			Name:      name,
+			NameRange: rng,
+		}
+	}
+
+	diags := make(Diagnostics, v.DiagCount)
+	for i := range diags {
+		diags[i] = &Diagnostic{
+			Severity: DiagError,
+			Summary:  fmt.Sprintf("Fake diagnostic %d", i),
+			Detail:   "For testing only.",
+			Context:  &rng,
+		}
+	}
+
+	return attrs, diags
 }

@@ -597,3 +597,69 @@ func TestBodyContent(t *testing.T) {
 		})
 	}
 }
+
+func TestJustAttributes(t *testing.T) {
+	// We test most of the functionality already in TestBodyPartialContent, so
+	// this test focuses on the handling of extraneous attributes.
+	tests := []struct {
+		src  string
+		want map[string]*zcl.Attribute
+	}{
+		{
+			`{}`,
+			map[string]*zcl.Attribute{},
+		},
+		{
+			`{"foo": true}`,
+			map[string]*zcl.Attribute{
+				"foo": {
+					Name: "foo",
+					Expr: &expression{
+						src: &booleanVal{
+							Value: true,
+							SrcRange: zcl.Range{
+								Filename: "test.json",
+								Start:    zcl.Pos{Byte: 8, Line: 1, Column: 9},
+								End:      zcl.Pos{Byte: 12, Line: 1, Column: 13},
+							},
+						},
+					},
+					Range: zcl.Range{
+						Filename: "test.json",
+						Start:    zcl.Pos{Byte: 1, Line: 1, Column: 2},
+						End:      zcl.Pos{Byte: 12, Line: 1, Column: 13},
+					},
+					NameRange: zcl.Range{
+						Filename: "test.json",
+						Start:    zcl.Pos{Byte: 1, Line: 1, Column: 2},
+						End:      zcl.Pos{Byte: 6, Line: 1, Column: 7},
+					},
+					ExprRange: zcl.Range{
+						Filename: "test.json",
+						Start:    zcl.Pos{Byte: 8, Line: 1, Column: 9},
+						End:      zcl.Pos{Byte: 12, Line: 1, Column: 13},
+					},
+				},
+			},
+		},
+	}
+
+	for i, test := range tests {
+		t.Run(fmt.Sprintf("%02d-%s", i, test.src), func(t *testing.T) {
+			file, diags := Parse([]byte(test.src), "test.json")
+			if len(diags) != 0 {
+				t.Fatalf("Parse produced diagnostics: %s", diags)
+			}
+			got, diags := file.Body.JustAttributes()
+			if len(diags) != 0 {
+				t.Errorf("Wrong number of diagnostics %d; want %d", len(diags), 0)
+				for _, diag := range diags {
+					t.Logf(" - %s", diag)
+				}
+			}
+			if !reflect.DeepEqual(got, test.want) {
+				t.Errorf("wrong result\ngot:  %s\nwant: %s", spew.Sdump(got), spew.Sdump(test.want))
+			}
+		})
+	}
+}

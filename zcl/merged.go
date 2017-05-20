@@ -93,6 +93,40 @@ func (mb mergedBodies) PartialContent(schema *BodySchema) (*BodyContent, Body, D
 	return mb.mergedContent(schema, true)
 }
 
+func (mb mergedBodies) JustAttributes() (map[string]*Attribute, Diagnostics) {
+	attrs := make(map[string]*Attribute)
+	var diags Diagnostics
+
+	for _, body := range mb {
+		thisAttrs, thisDiags := body.JustAttributes()
+
+		if len(thisDiags) != 0 {
+			diags = append(diags, thisDiags...)
+		}
+
+		if thisAttrs != nil {
+			for name, attr := range thisAttrs {
+				if existing := attrs[name]; existing != nil {
+					diags = diags.Append(&Diagnostic{
+						Severity: DiagError,
+						Summary:  "Duplicate attribute",
+						Detail: fmt.Sprintf(
+							"Attribute %q was already assigned at %s",
+							name, existing.NameRange.String(),
+						),
+						Subject: &attr.NameRange,
+					})
+					continue
+				}
+
+				attrs[name] = attr
+			}
+		}
+	}
+
+	return attrs, diags
+}
+
 func (mb mergedBodies) mergedContent(schema *BodySchema, partial bool) (*BodyContent, Body, Diagnostics) {
 	// We need to produce a new schema with none of the attributes marked as
 	// required, since _any one_ of our bodies can contribute an attribute value.

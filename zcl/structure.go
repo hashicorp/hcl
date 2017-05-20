@@ -48,6 +48,19 @@ type Body interface {
 	// schema. If any are present, the returned Body is non-nil and contains
 	// the remaining items from the body that were not selected by the schema.
 	PartialContent(schema *BodySchema) (*BodyContent, Body, Diagnostics)
+
+	// JustAttributes attempts to interpret all of the contents of the body
+	// as attributes, allowing for the contents to be accessed without a priori
+	// knowledge of the structure.
+	//
+	// The behavior of this method depends on the body's source language.
+	// Some languages, like JSON, can't distinguish between attributes and
+	// blocks without schema hints, but for languages that _can_ error
+	// diagnostics will be generated if any blocks are present in the body.
+	//
+	// Diagnostics may be produced for other reasons too, such as duplicate
+	// declarations of the same attribute.
+	JustAttributes() (map[string]*Attribute, Diagnostics)
 }
 
 // BodyContent is the result of applying a BodySchema to a Body.
