@@ -34,6 +34,7 @@ func Parse(src []byte, filename string) (*zcl.File, zcl.Diagnostics) {
 				obj: rootNode.(*objectVal),
 			},
 			Bytes: src,
+			Nav:   navigation{rootNode.(*objectVal)},
 		}
 	}
 	return file, diags
