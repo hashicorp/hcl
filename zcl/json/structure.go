@@ -25,9 +25,40 @@ type expression struct {
 }
 
 func (b *body) Content(schema *zcl.BodySchema) (*zcl.BodyContent, zcl.Diagnostics) {
-	content, _, diags := b.PartialContent(schema)
+	content, newBody, diags := b.PartialContent(schema)
 
-	// TODO: generate errors for the stuff we didn't use in PartialContent
+	hiddenAttrs := newBody.(*body).hiddenAttrs
+
+	var nameSuggestions []string
+	for _, attrS := range schema.Attributes {
+		if _, ok := hiddenAttrs[attrS.Name]; !ok {
+			// Only suggest an attribute name if we didn't use it already.
+			nameSuggestions = append(nameSuggestions, attrS.Name)
+		}
+	}
+	for _, blockS := range schema.Blocks {
+		// Blocks can appear multiple times, so we'll suggest their type
+		// names regardless of whether they've already been used.
+		nameSuggestions = append(nameSuggestions, blockS.Type)
+	}
+
+	for k, attr := range b.obj.Attrs {
+		if _, ok := hiddenAttrs[k]; !ok {
+			var fixItHint string
+			suggestion := nameSuggestion(k, nameSuggestions)
+			if suggestion != "" {
+				fixItHint = fmt.Sprintf(" Did you mean %q?", suggestion)
+			}
+
+			diags = append(diags, &zcl.Diagnostic{
+				Severity: zcl.DiagError,
+				Summary:  "Extraneous JSON object property",
+				Detail:   fmt.Sprintf("No attribute or block type is named %q.%s", k, fixItHint),
+				Subject:  &attr.NameRange,
+				Context:  attr.Range().Ptr(),
+			})
+		}
+	}
 
 	return content, diags
 }
@@ -61,7 +92,6 @@ func (b *body) PartialContent(schema *zcl.BodySchema) (*zcl.BodyContent, zcl.Bod
 					Subject:  &obj.OpenRange,
 				})
 			}
-			usedNames[attrS.Name] = struct{}{}
 			continue
 		}
 		content.Attributes[attrS.Name] = &zcl.Attribute{

@@ -527,7 +527,7 @@ func TestBodyPartialContent(t *testing.T) {
 		t.Run(fmt.Sprintf("%02d-%s", i, test.src), func(t *testing.T) {
 			file, diags := Parse([]byte(test.src), "test.json")
 			if len(diags) != 0 {
-				t.Errorf("Parse produced diagnostics: %s", diags)
+				t.Fatalf("Parse produced diagnostics: %s", diags)
 			}
 			got, _, diags := file.Body.PartialContent(test.schema)
 			if len(diags) != test.diagCount {
@@ -539,6 +539,60 @@ func TestBodyPartialContent(t *testing.T) {
 
 			if !reflect.DeepEqual(got, test.want) {
 				t.Errorf("wrong result\ngot:  %s\nwant: %s", spew.Sdump(got), spew.Sdump(test.want))
+			}
+		})
+	}
+}
+
+func TestBodyContent(t *testing.T) {
+	// We test most of the functionality already in TestBodyPartialContent, so
+	// this test focuses on the handling of extraneous attributes.
+	tests := []struct {
+		src       string
+		schema    *zcl.BodySchema
+		diagCount int
+	}{
+		{
+			`{"unknown": true}`,
+			&zcl.BodySchema{},
+			1,
+		},
+		{
+			`{"unknow": true}`,
+			&zcl.BodySchema{
+				Attributes: []zcl.AttributeSchema{
+					{
+						Name: "unknown",
+					},
+				},
+			},
+			1,
+		},
+		{
+			`{"unknow": true, "unnown": true}`,
+			&zcl.BodySchema{
+				Attributes: []zcl.AttributeSchema{
+					{
+						Name: "unknown",
+					},
+				},
+			},
+			2,
+		},
+	}
+
+	for i, test := range tests {
+		t.Run(fmt.Sprintf("%02d-%s", i, test.src), func(t *testing.T) {
+			file, diags := Parse([]byte(test.src), "test.json")
+			if len(diags) != 0 {
+				t.Fatalf("Parse produced diagnostics: %s", diags)
+			}
+			_, diags = file.Body.Content(test.schema)
+			if len(diags) != test.diagCount {
+				t.Errorf("Wrong number of diagnostics %d; want %d", len(diags), test.diagCount)
+				for _, diag := range diags {
+					t.Logf(" - %s", diag)
+				}
 			}
 		})
 	}
