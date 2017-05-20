@@ -33,53 +33,60 @@ func parseFileContent(buf []byte, filename string) (node, zcl.Diagnostics) {
 func parseValue(p *peeker) (node, zcl.Diagnostics) {
 	tok := p.Peek()
 
+	wrapInvalid := func(n node, diags zcl.Diagnostics) (node, zcl.Diagnostics) {
+		if n != nil {
+			return n, diags
+		}
+		return invalidVal{tok.Range}, diags
+	}
+
 	switch tok.Type {
 	case tokenBraceO:
-		return parseObject(p)
+		return wrapInvalid(parseObject(p))
 	case tokenBrackO:
-		return parseArray(p)
+		return wrapInvalid(parseArray(p))
 	case tokenNumber:
-		return parseNumber(p)
+		return wrapInvalid(parseNumber(p))
 	case tokenString:
-		return parseString(p)
+		return wrapInvalid(parseString(p))
 	case tokenKeyword:
-		return parseKeyword(p)
+		return wrapInvalid(parseKeyword(p))
 	case tokenBraceC:
-		return nil, zcl.Diagnostics{
+		return wrapInvalid(nil, zcl.Diagnostics{
 			{
 				Severity: zcl.DiagError,
 				Summary:  "Missing attribute value",
 				Detail:   "A JSON value must start with a brace, a bracket, a number, a string, or a keyword.",
 				Subject:  &tok.Range,
 			},
-		}
+		})
 	case tokenBrackC:
-		return nil, zcl.Diagnostics{
+		return wrapInvalid(nil, zcl.Diagnostics{
 			{
 				Severity: zcl.DiagError,
 				Summary:  "Missing array element value",
 				Detail:   "A JSON value must start with a brace, a bracket, a number, a string, or a keyword.",
 				Subject:  &tok.Range,
 			},
-		}
+		})
 	case tokenEOF:
-		return nil, zcl.Diagnostics{
+		return wrapInvalid(nil, zcl.Diagnostics{
 			{
 				Severity: zcl.DiagError,
 				Summary:  "Missing value",
 				Detail:   "The JSON data ends prematurely.",
 				Subject:  &tok.Range,
 			},
-		}
+		})
 	default:
-		return nil, zcl.Diagnostics{
+		return wrapInvalid(nil, zcl.Diagnostics{
 			{
 				Severity: zcl.DiagError,
 				Summary:  "Invalid start of value",
 				Detail:   "A JSON value must start with a brace, a bracket, a number, a string, or a keyword.",
 				Subject:  &tok.Range,
 			},
-		}
+		})
 	}
 }
 
@@ -97,6 +104,29 @@ func parseObject(p *peeker) (node, zcl.Diagnostics) {
 
 	open := p.Read()
 	attrs := map[string]*objectAttr{}
+
+	// recover is used to shift the peeker to what seems to be the end of
+	// our object, so that when we encounter an error we leave the peeker
+	// at a reasonable point in the token stream to continue parsing.
+	recover := func(tok token) {
+		open := 1
+		for {
+			switch tok.Type {
+			case tokenBraceO:
+				open++
+			case tokenBraceC:
+				open--
+				if open <= 1 {
+					return
+				}
+			case tokenEOF:
+				// Ran out of source before we were able to recover,
+				// so we'll bail here and let the caller deal with it.
+				return
+			}
+			tok = p.Read()
+		}
+	}
 
 Token:
 	for {
@@ -124,13 +154,25 @@ Token:
 
 		colon := p.Read()
 		if colon.Type != tokenColon {
+			recover(colon)
+
 			if colon.Type == tokenBraceC || colon.Type == tokenComma {
 				// Catch common mistake of using braces instead of brackets
-				// for an array.
+				// for an object.
 				return nil, diags.Append(&zcl.Diagnostic{
 					Severity: zcl.DiagError,
 					Summary:  "Missing object value",
 					Detail:   "A JSON object attribute must have a value, introduced by a colon.",
+					Subject:  &colon.Range,
+				})
+			}
+
+			if colon.Type == tokenEquals {
+				// Possible confusion with native zcl syntax.
+				return nil, diags.Append(&zcl.Diagnostic{
+					Severity: zcl.DiagError,
+					Summary:  "Missing attribute value colon",
+					Detail:   "JSON uses a colon as its name/value delimiter, not an equals sign.",
 					Subject:  &colon.Range,
 				})
 			}
@@ -189,6 +231,9 @@ Token:
 				Subject:  &open.Range,
 			})
 		case tokenBrackC:
+			// Consume the bracket anyway, so that we don't return with the peeker
+			// at a strange place.
+			p.Read()
 			return nil, diags.Append(&zcl.Diagnostic{
 				Severity: zcl.DiagError,
 				Summary:  "Mismatched braces",
@@ -198,6 +243,7 @@ Token:
 		case tokenBraceC:
 			break Token
 		default:
+			recover(p.Read())
 			return nil, diags.Append(&zcl.Diagnostic{
 				Severity: zcl.DiagError,
 				Summary:  "Missing attribute seperator comma",
@@ -221,6 +267,29 @@ func parseArray(p *peeker) (node, zcl.Diagnostics) {
 
 	open := p.Read()
 	vals := []node{}
+
+	// recover is used to shift the peeker to what seems to be the end of
+	// our array, so that when we encounter an error we leave the peeker
+	// at a reasonable point in the token stream to continue parsing.
+	recover := func(tok token) {
+		open := 1
+		for {
+			switch tok.Type {
+			case tokenBrackO:
+				open++
+			case tokenBrackC:
+				open--
+				if open <= 1 {
+					return
+				}
+			case tokenEOF:
+				// Ran out of source before we were able to recover,
+				// so we'll bail here and let the caller deal with it.
+				return
+			}
+			tok = p.Read()
+		}
+	}
 
 Token:
 	for {
@@ -250,6 +319,7 @@ Token:
 			}
 			continue Token
 		case tokenColon:
+			recover(p.Read())
 			return nil, diags.Append(&zcl.Diagnostic{
 				Severity: zcl.DiagError,
 				Summary:  "Invalid array value",
@@ -257,6 +327,7 @@ Token:
 				Subject:  p.Peek().Range.Ptr(),
 			})
 		case tokenEOF:
+			recover(p.Read())
 			return nil, diags.Append(&zcl.Diagnostic{
 				Severity: zcl.DiagError,
 				Summary:  "Unclosed object",
@@ -264,6 +335,7 @@ Token:
 				Subject:  &open.Range,
 			})
 		case tokenBraceC:
+			recover(p.Read())
 			return nil, diags.Append(&zcl.Diagnostic{
 				Severity: zcl.DiagError,
 				Summary:  "Mismatched brackets",
@@ -273,6 +345,7 @@ Token:
 		case tokenBrackC:
 			break Token
 		default:
+			recover(p.Read())
 			return nil, diags.Append(&zcl.Diagnostic{
 				Severity: zcl.DiagError,
 				Summary:  "Missing attribute seperator comma",

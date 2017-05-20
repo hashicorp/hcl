@@ -50,12 +50,18 @@ func TestParse(t *testing.T) {
 		},
 		{
 			`undefined`,
-			nil,
+			invalidVal{zcl.Range{
+				Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+				End:   zcl.Pos{Line: 1, Column: 10, Byte: 9},
+			}},
 			1,
 		},
 		{
 			`flase`,
-			nil,
+			invalidVal{zcl.Range{
+				Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+				End:   zcl.Pos{Line: 1, Column: 6, Byte: 5},
+			}},
 			1,
 		},
 		{
@@ -104,12 +110,18 @@ func TestParse(t *testing.T) {
 		},
 		{
 			`"hello`,
-			nil,
+			invalidVal{zcl.Range{
+				Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+				End:   zcl.Pos{Line: 1, Column: 7, Byte: 6},
+			}},
 			1,
 		},
 		{
 			`"he\llo"`,
-			nil,
+			invalidVal{zcl.Range{
+				Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+				End:   zcl.Pos{Line: 1, Column: 9, Byte: 8},
+			}},
 			1,
 		},
 		{
@@ -180,12 +192,18 @@ func TestParse(t *testing.T) {
 		},
 		{
 			`.1`,
-			nil,
+			invalidVal{zcl.Range{
+				Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+				End:   zcl.Pos{Line: 1, Column: 3, Byte: 2},
+			}},
 			1,
 		},
 		{
 			`+2`,
-			nil,
+			invalidVal{zcl.Range{
+				Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+				End:   zcl.Pos{Line: 1, Column: 3, Byte: 2},
+			}},
 			1,
 		},
 		{
@@ -292,22 +310,34 @@ func TestParse(t *testing.T) {
 		},
 		{
 			`{"hello":true`,
-			nil,
+			invalidVal{zcl.Range{
+				Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+				End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+			}},
 			1,
 		},
 		{
 			`{"hello":true]`,
-			nil,
+			invalidVal{zcl.Range{
+				Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+				End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+			}},
 			1,
 		},
 		{
 			`{"hello":true,}`,
-			nil,
+			invalidVal{zcl.Range{
+				Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+				End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+			}},
 			1,
 		},
 		{
 			`{true:false}`,
-			nil,
+			invalidVal{zcl.Range{
+				Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+				End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+			}},
 			1,
 		},
 		{
@@ -342,12 +372,18 @@ func TestParse(t *testing.T) {
 		},
 		{
 			`{"hello": true, "hello": true, "hello", true}`,
-			nil,
+			invalidVal{zcl.Range{
+				Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+				End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+			}},
 			2,
 		},
 		{
 			`{"hello", "world"}`,
-			nil,
+			invalidVal{zcl.Range{
+				Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+				End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+			}},
 			1,
 		},
 		{
@@ -447,37 +483,82 @@ func TestParse(t *testing.T) {
 		},
 		{
 			`[`,
-			nil,
-			1,
+			invalidVal{zcl.Range{
+				Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+				End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+			}},
+			2,
 		},
 		{
 			`[true`,
-			nil,
+			invalidVal{zcl.Range{
+				Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+				End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+			}},
 			1,
 		},
 		{
 			`]`,
-			nil,
+			invalidVal{zcl.Range{
+				Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+				End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+			}},
 			1,
 		},
 		{
 			`[true,]`,
-			nil,
+			invalidVal{zcl.Range{
+				Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+				End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+			}},
 			1,
 		},
 		{
 			`[[],]`,
-			nil,
+			invalidVal{zcl.Range{
+				Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+				End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+			}},
 			1,
 		},
 		{
 			`["hello":true]`,
-			nil,
+			invalidVal{zcl.Range{
+				Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+				End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+			}},
 			1,
 		},
 		{
 			`[true}`,
-			nil,
+			invalidVal{zcl.Range{
+				Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+				End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+			}},
+			1,
+		},
+		{
+			`{"wrong"=true}`,
+			invalidVal{zcl.Range{
+				Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+				End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+			}},
+			1,
+		},
+		{
+			`{"wrong" = true}`,
+			invalidVal{zcl.Range{
+				Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+				End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+			}},
+			1,
+		},
+		{
+			`{"wrong" true}`,
+			invalidVal{zcl.Range{
+				Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+				End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+			}},
 			1,
 		},
 	}

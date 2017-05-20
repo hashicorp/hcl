@@ -21,6 +21,7 @@ const (
 	tokenNumber  tokenType = 'N'
 	tokenEOF     tokenType = '␄'
 	tokenInvalid tokenType = 0
+	tokenEquals  tokenType = '=' // used only for reminding the user of JSON syntax
 )
 
 type token struct {
@@ -64,7 +65,7 @@ func scan(buf []byte, start pos) []token {
 
 		first := buf[0]
 		switch {
-		case first == '{' || first == '}' || first == '[' || first == ']' || first == ',' || first == ':':
+		case first == '{' || first == '}' || first == '[' || first == ']' || first == ',' || first == ':' || first == '=':
 			p.Pos.Column++
 			p.Pos.Byte++
 			tokens = append(tokens, token{

@@ -103,3 +103,18 @@ func (n *nullVal) Range() zcl.Range {
 func (n *nullVal) StartRange() zcl.Range {
 	return n.SrcRange
 }
+
+// invalidVal is used as a placeholder where a value is needed for a valid
+// parse tree but the input was invalid enough to prevent one from being
+// created.
+type invalidVal struct {
+	SrcRange zcl.Range
+}
+
+func (n invalidVal) Range() zcl.Range {
+	return n.SrcRange
+}
+
+func (n invalidVal) StartRange() zcl.Range {
+	return n.SrcRange
+}
