@@ -65,9 +65,11 @@ func (b *body) PartialContent(schema *zcl.BodySchema) (*zcl.BodyContent, zcl.Bod
 			continue
 		}
 		content.Attributes[attrS.Name] = &zcl.Attribute{
-			Name:  attrS.Name,
-			Expr:  &expression{src: jsonAttr.Value},
-			Range: zcl.RangeBetween(jsonAttr.NameRange, jsonAttr.Value.Range()),
+			Name:      attrS.Name,
+			Expr:      &expression{src: jsonAttr.Value},
+			Range:     zcl.RangeBetween(jsonAttr.NameRange, jsonAttr.Value.Range()),
+			NameRange: jsonAttr.NameRange,
+			ExprRange: jsonAttr.Value.Range(),
 		}
 		usedNames[attrS.Name] = struct{}{}
 	}
