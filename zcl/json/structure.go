@@ -226,7 +226,36 @@ func (b *body) unpackBlock(v node, typeName string, typeRange *zcl.Range, labels
 	return
 }
 
-func (e *expression) LiteralValue() (cty.Value, zcl.Diagnostics) {
-	// TODO: Implement
-	return cty.NilVal, nil
+func (e *expression) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
+	// TEMP: Since we've not yet implemented the zcl native template language
+	// parser, for the moment we'll support only literal values here.
+	// FIXME: Once the template language parser is implemented, parse string
+	// values as templates and evaluate them.
+
+	switch v := e.src.(type) {
+	case *stringVal:
+		return cty.StringVal(v.Value), nil
+	case *numberVal:
+		return cty.NumberVal(v.Value), nil
+	case *booleanVal:
+		return cty.BoolVal(v.Value), nil
+	case *arrayVal:
+		vals := []cty.Value{}
+		for _, jsonVal := range v.Values {
+			val, _ := (&expression{src: jsonVal}).Value(ctx)
+			vals = append(vals, val)
+		}
+		return cty.TupleVal(vals), nil
+	case *objectVal:
+		attrs := map[string]cty.Value{}
+		for name, jsonAttr := range v.Attrs {
+			val, _ := (&expression{src: jsonAttr.Value}).Value(ctx)
+			attrs[name] = val
+		}
+		return cty.ObjectVal(attrs), nil
+	default:
+		// Default to DynamicVal so that ASTs containing invalid nodes can
+		// still be partially-evaluated.
+		return cty.DynamicVal, nil
+	}
 }

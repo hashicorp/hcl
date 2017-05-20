@@ -82,8 +82,28 @@ type Attribute struct {
 // Expression is a literal value or an expression provided in the
 // configuration, which can be evaluated within a scope to produce a value.
 type Expression interface {
-	LiteralValue() (cty.Value, Diagnostics)
-	// TODO: evaluation of non-literal expressions
+	// Value returns the value resulting from evaluating the expression
+	// in the given evaluation context.
+	//
+	// The context may be nil, in which case the expression may contain
+	// only constants and diagnostics will be produced for any non-constant
+	// sub-expressions. (The exact definition of this depends on the source
+	// language.)
+	//
+	// The context may instead be set but have either its Variables or
+	// Functions maps set to nil, in which case only use of these features
+	// will return diagnostics.
+	//
+	// Different diagnostics are provided depending on whether the given
+	// context maps are nil or empty. In the former case, the message
+	// tells the user that variables/functions are not permitted at all,
+	// while in the latter case usage will produce a "not found" error for
+	// the specific symbol in question.
+	Value(ctx *EvalContext) (cty.Value, Diagnostics)
+
+	// TODO: A "Variables" method that returns a description of all of the
+	// variables used in the expression, so callers can populate the scope
+	// only with variables that are actually used.
 }
 
 // OfType filters the receiving block sequence by block type name,
