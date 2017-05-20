@@ -8,6 +8,11 @@ import (
 type File struct {
 	Body  Body
 	Bytes []byte
+
+	// Nav is used to integrate with the "zcled" editor integration package,
+	// and with diagnostic information formatters. It is not for direct use
+	// by a calling application.
+	Nav interface{}
 }
 
 // Block represents a nested block within a Body.

@@ -31,7 +31,7 @@ func TestDiagnosticTextWriter(t *testing.T) {
 			},
 			`Error: Splines not reticulated
 
-  on  line 1:
+  on  line 1, in hardcoded-context:
    1: foo = 1
 
 All splines must be pre-reticulated.
@@ -56,7 +56,7 @@ All splines must be pre-reticulated.
 			},
 			`Error: Unsupported attribute
 
-  on  line 3:
+  on  line 3, in hardcoded-context:
    3: baz = 3
 
 "baz" is not a supported top-level
@@ -94,7 +94,7 @@ attribute. Did you mean "bam"?
 			},
 			`Error: Unsupported attribute
 
-  on  line 5, in block "party":
+  on  line 5, in hardcoded-context:
    4: block "party" {
    5:   pizza = "cheese"
    6: }
@@ -106,14 +106,17 @@ Did you mean "pizzetta"?
 		},
 	}
 
-	sources := map[string][]byte{
-		"": []byte(testDiagnosticTextWriterSource),
+	files := map[string]*File{
+		"": &File{
+			Bytes: []byte(testDiagnosticTextWriterSource),
+			Nav:   &diagnosticTestNav{},
+		},
 	}
 
 	for i, test := range tests {
 		t.Run(fmt.Sprintf("%02d", i), func(t *testing.T) {
 			bwr := &bytes.Buffer{}
-			dwr := NewDiagnosticTextWriter(bwr, sources, 40, false)
+			dwr := NewDiagnosticTextWriter(bwr, files, 40, false)
 			err := dwr.WriteDiagnostic(test.Input)
 			if err != nil {
 				t.Fatalf("unexpected error: %s", err)
@@ -133,3 +136,10 @@ block "party" {
   pizza = "cheese"
 }
 `
+
+type diagnosticTestNav struct {
+}
+
+func (tn *diagnosticTestNav) ContextString(offset int) string {
+	return "hardcoded-context"
+}

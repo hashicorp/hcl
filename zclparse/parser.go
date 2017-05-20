@@ -65,3 +65,13 @@ func (p *Parser) Sources() map[string][]byte {
 	}
 	return ret
 }
+
+// Files returns a map from filenames to the File objects produced from them.
+// This is intended to be used, for example, to print diagnostics with
+// contextual information.
+//
+// The returned map and all of the objects it refers to directly or indirectly
+// must not be modified.
+func (p *Parser) Files() map[string]*zcl.File {
+	return p.files
+}

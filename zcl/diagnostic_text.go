@@ -6,16 +6,15 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"strings"
 
 	wordwrap "github.com/mitchellh/go-wordwrap"
 )
 
 type diagnosticTextWriter struct {
-	sources map[string][]byte
-	wr      io.Writer
-	width   uint
-	color   bool
+	files map[string]*File
+	wr    io.Writer
+	width uint
+	color bool
 }
 
 // NewDiagnosticTextWriter creates a DiagnosticWriter that writes diagnostics
@@ -30,12 +29,12 @@ type diagnosticTextWriter struct {
 // If color is set to true, the output will include VT100 escape sequences to
 // color-code the severity indicators. It is suggested to turn this off if
 // the target writer is not a terminal.
-func NewDiagnosticTextWriter(wr io.Writer, sources map[string][]byte, width uint, color bool) DiagnosticWriter {
+func NewDiagnosticTextWriter(wr io.Writer, files map[string]*File, width uint, color bool) DiagnosticWriter {
 	return &diagnosticTextWriter{
-		sources: sources,
-		wr:      wr,
-		width:   width,
-		color:   color,
+		files: files,
+		wr:    wr,
+		width: width,
+		color: color,
 	}
 }
 
@@ -70,14 +69,14 @@ func (w *diagnosticTextWriter) WriteDiagnostic(diag *Diagnostic) error {
 
 	if diag.Subject != nil {
 
-		src := w.sources[diag.Subject.Filename]
-		if src == nil {
+		file := w.files[diag.Subject.Filename]
+		if file == nil || file.Bytes == nil {
 			fmt.Fprintf(w.wr, "  on %s line %d:\n  (source code not available)\n\n", diag.Subject.Filename, diag.Subject.Start.Line)
 		} else {
+			src := file.Bytes
 			r := bytes.NewReader(src)
 			sc := bufio.NewScanner(r)
 			sc.Split(bufio.ScanLines)
-			contextLine := ""
 
 			var startLine, endLine int
 			if diag.Context != nil {
@@ -88,17 +87,18 @@ func (w *diagnosticTextWriter) WriteDiagnostic(diag *Diagnostic) error {
 				endLine = diag.Subject.End.Line
 			}
 
+			var contextLine string
+			if diag.Subject != nil {
+				contextLine = contextString(file, diag.Subject.Start.Byte)
+				if contextLine != "" {
+					contextLine = ", in " + contextLine
+				}
+			}
+
 			li := 1
 			var ls string
 			for sc.Scan() {
 				ls = sc.Text()
-				if len(ls) > 0 && strings.Contains(ls, "{") && ls[0] != ' ' && ls[0] != '\t' && ls[0] != '#' && ls[0] != '/' && ls[0] != '{' {
-					// Keep track of the latest non-space-prefixed line we've
-					// seen, to use as context. This is a pretty sloppy way
-					// to do this, but it works well enough for most normal
-					// files. (In particular though, it doesn't work for JSON sources.)
-					contextLine = fmt.Sprintf(", in %s", strings.Replace(ls, " {", "", 1))
-				}
 
 				if li == startLine {
 					break
@@ -149,4 +149,15 @@ func (w *diagnosticTextWriter) WriteDiagnostics(diags Diagnostics) error {
 		}
 	}
 	return nil
+}
+
+func contextString(file *File, offset int) string {
+	type contextStringer interface {
+		ContextString(offset int) string
+	}
+
+	if cser, ok := file.Nav.(contextStringer); ok {
+		return cser.ContextString(offset)
+	}
+	return ""
 }
