@@ -156,7 +156,16 @@ func (b *body) unpackBlock(v node, typeName string, typeRange *zcl.Range, labels
 			diags = diags.Append(&zcl.Diagnostic{
 				Severity: zcl.DiagError,
 				Summary:  "Incorrect JSON value type",
-				Detail:   fmt.Sprintf("A JSON object is required, whose keys represent the %q block's %s.", typeName, labelName),
+				Detail:   fmt.Sprintf("A JSON object is required, whose keys represent the %s block's %s.", typeName, labelName),
+				Subject:  v.StartRange().Ptr(),
+			})
+			return
+		}
+		if len(ov.Attrs) == 0 {
+			diags = diags.Append(&zcl.Diagnostic{
+				Severity: zcl.DiagError,
+				Summary:  "Missing block label",
+				Detail:   fmt.Sprintf("At least one object property is required, whose name represents the %s block's %s.", typeName, labelName),
 				Subject:  v.StartRange().Ptr(),
 			})
 			return
