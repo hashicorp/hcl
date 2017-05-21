@@ -2,6 +2,7 @@ package parser
 
 import (
 	"github.com/apparentlymart/go-zcl/zcl"
+	"github.com/apparentlymart/go-zcl/zcl/hclhil"
 	"github.com/apparentlymart/go-zcl/zcl/json"
 )
 
@@ -54,14 +55,26 @@ func (p *Parser) ParseJSONFile(filename string) (*zcl.File, zcl.Diagnostics) {
 // This HCL/HIL parser is a compatibility interface to ease migration for
 // apps that previously used HCL and HIL directly.
 func (p *Parser) ParseHCLHIL(src []byte, filename string) (*zcl.File, zcl.Diagnostics) {
-	return nil, nil
+	if existing := p.files[filename]; existing != nil {
+		return existing, nil
+	}
+
+	file, diags := hclhil.Parse(src, filename)
+	p.files[filename] = file
+	return file, diags
 }
 
 // ParseHCLHILFile reads the given filename and parses it as HCL/HIL, similarly
 // to ParseHCLHIL. An error diagnostic is returned if the given file cannot be
 // read.
 func (p *Parser) ParseHCLHILFile(filename string) (*zcl.File, zcl.Diagnostics) {
-	return nil, nil
+	if existing := p.files[filename]; existing != nil {
+		return existing, nil
+	}
+
+	file, diags := hclhil.ParseFile(filename)
+	p.files[filename] = file
+	return file, diags
 }
 
 // AddFile allows a caller to record in a parser a file that was parsed some
