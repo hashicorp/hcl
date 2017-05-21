@@ -128,6 +128,9 @@ func (b *body) PartialContent(schema *zcl.BodySchema) (*zcl.BodyContent, zcl.Bod
 func (b *body) JustAttributes() (map[string]*zcl.Attribute, zcl.Diagnostics) {
 	attrs := make(map[string]*zcl.Attribute)
 	for name, jsonAttr := range b.obj.Attrs {
+		if _, hidden := b.hiddenAttrs[name]; hidden {
+			continue
+		}
 		attrs[name] = &zcl.Attribute{
 			Name:      name,
 			Expr:      &expression{src: jsonAttr.Value},
