@@ -81,19 +81,6 @@ func TestBodyPartialContent(t *testing.T) {
 								Column: 8,
 							},
 						},
-						ExprRange: zcl.Range{
-							Filename: "test.json",
-							Start: zcl.Pos{
-								Byte:   8,
-								Line:   1,
-								Column: 9,
-							},
-							End: zcl.Pos{
-								Byte:   20,
-								Line:   1,
-								Column: 21,
-							},
-						},
 					},
 				},
 			},
@@ -159,19 +146,6 @@ func TestBodyPartialContent(t *testing.T) {
 								Byte:   7,
 								Line:   1,
 								Column: 8,
-							},
-						},
-						ExprRange: zcl.Range{
-							Filename: "test.json",
-							Start: zcl.Pos{
-								Byte:   8,
-								Line:   1,
-								Column: 9,
-							},
-							End: zcl.Pos{
-								Byte:   20,
-								Line:   1,
-								Column: 21,
 							},
 						},
 					},
@@ -633,11 +607,6 @@ func TestJustAttributes(t *testing.T) {
 						Filename: "test.json",
 						Start:    zcl.Pos{Byte: 1, Line: 1, Column: 2},
 						End:      zcl.Pos{Byte: 6, Line: 1, Column: 7},
-					},
-					ExprRange: zcl.Range{
-						Filename: "test.json",
-						Start:    zcl.Pos{Byte: 8, Line: 1, Column: 9},
-						End:      zcl.Pos{Byte: 12, Line: 1, Column: 13},
 					},
 				},
 			},

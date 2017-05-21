@@ -79,7 +79,6 @@ type Attribute struct {
 
 	Range     Range
 	NameRange Range
-	ExprRange Range
 }
 
 // Expression is a literal value or an expression provided in the
