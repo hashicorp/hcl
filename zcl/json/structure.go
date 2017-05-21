@@ -112,6 +112,7 @@ func (b *body) PartialContent(schema *zcl.BodySchema) (*zcl.BodyContent, zcl.Bod
 		}
 		v := jsonAttr.Value
 		diags = append(diags, b.unpackBlock(v, blockS.Type, &jsonAttr.NameRange, blockS.LabelNames, nil, nil, &content.Blocks)...)
+		usedNames[blockS.Type] = struct{}{}
 	}
 
 	unusedBody := &body{
