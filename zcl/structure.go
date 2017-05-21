@@ -29,6 +29,9 @@ type Block struct {
 // Blocks is a sequence of Block.
 type Blocks []*Block
 
+// Attributes is a set of attributes keyed by their names.
+type Attributes map[string]*Attribute
+
 // Body is a container for attributes and blocks. It serves as the primary
 // unit of heirarchical structure within configuration.
 //
@@ -65,7 +68,7 @@ type Body interface {
 
 // BodyContent is the result of applying a BodySchema to a Body.
 type BodyContent struct {
-	Attributes map[string]*Attribute
+	Attributes Attributes
 	Blocks     Blocks
 }
 
