@@ -1,6 +1,10 @@
 package gozcl
 
 import (
+	"fmt"
+
+	"github.com/apparentlymart/go-cty/cty/convert"
+	"github.com/apparentlymart/go-cty/cty/gocty"
 	"github.com/apparentlymart/go-zcl/zcl"
 )
 
@@ -40,6 +44,35 @@ func DecodeBody(body zcl.Body, ctx *zcl.EvalContext, val interface{}) zcl.Diagno
 // may still be accessed by a careful caller for static analysis and editor
 // integration use-cases.
 func DecodeExpression(expr zcl.Expression, ctx *zcl.EvalContext, val interface{}) zcl.Diagnostics {
-	// TODO: Implement
-	return nil
+	srcVal, diags := expr.Value(ctx)
+
+	convTy, err := gocty.ImpliedType(val)
+	if err != nil {
+		panic(fmt.Sprintf("unsuitable DecodeExpression target: %s", err))
+	}
+
+	srcVal, err = convert.Convert(srcVal, convTy)
+	if err != nil {
+		diags = append(diags, &zcl.Diagnostic{
+			Severity: zcl.DiagError,
+			Summary:  "Unsuitable value type",
+			Detail:   fmt.Sprintf("Incorrect value type: %s", err.Error()),
+			Subject:  expr.StartRange().Ptr(),
+			Context:  expr.Range().Ptr(),
+		})
+		return diags
+	}
+
+	err = gocty.FromCtyValue(srcVal, val)
+	if err != nil {
+		diags = append(diags, &zcl.Diagnostic{
+			Severity: zcl.DiagError,
+			Summary:  "Unsuitable value type",
+			Detail:   fmt.Sprintf("Incorrect value type: %s", err.Error()),
+			Subject:  expr.StartRange().Ptr(),
+			Context:  expr.Range().Ptr(),
+		})
+	}
+
+	return diags
 }
