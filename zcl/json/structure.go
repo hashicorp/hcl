@@ -259,3 +259,11 @@ func (e *expression) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
 		return cty.DynamicVal, nil
 	}
 }
+
+func (e *expression) Range() zcl.Range {
+	return e.src.Range()
+}
+
+func (e *expression) StartRange() zcl.Range {
+	return e.src.StartRange()
+}

@@ -101,6 +101,9 @@ type Expression interface {
 	// the specific symbol in question.
 	Value(ctx *EvalContext) (cty.Value, Diagnostics)
 
+	Range() Range
+	StartRange() Range
+
 	// TODO: A "Variables" method that returns a description of all of the
 	// variables used in the expression, so callers can populate the scope
 	// only with variables that are actually used.
