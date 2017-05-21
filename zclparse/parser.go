@@ -47,6 +47,23 @@ func (p *Parser) ParseJSONFile(filename string) (*zcl.File, zcl.Diagnostics) {
 	return file, diags
 }
 
+// ParseHCLHIL parses the given buffer (which is assumed to have been loaded
+// from the given filename) using the HCL and HIL parsers, and returns the
+// zcl.File object representing it.
+//
+// This HCL/HIL parser is a compatibility interface to ease migration for
+// apps that previously used HCL and HIL directly.
+func (p *Parser) ParseHCLHIL(src []byte, filename string) (*zcl.File, zcl.Diagnostics) {
+	return nil, nil
+}
+
+// ParseHCLHILFile reads the given filename and parses it as HCL/HIL, similarly
+// to ParseHCLHIL. An error diagnostic is returned if the given file cannot be
+// read.
+func (p *Parser) ParseHCLHILFile(filename string) (*zcl.File, zcl.Diagnostics) {
+	return nil, nil
+}
+
 // AddFile allows a caller to record in a parser a file that was parsed some
 // other way, thus allowing it to be included in the registry of sources.
 func (p *Parser) AddFile(filename string, file *zcl.File) {
