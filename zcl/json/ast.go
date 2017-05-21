@@ -12,9 +12,10 @@ type node interface {
 }
 
 type objectVal struct {
-	Attrs     map[string]*objectAttr
-	SrcRange  zcl.Range // range of the entire object, brace-to-brace
-	OpenRange zcl.Range // range of the opening brace
+	Attrs      map[string]*objectAttr
+	SrcRange   zcl.Range // range of the entire object, brace-to-brace
+	OpenRange  zcl.Range // range of the opening brace
+	CloseRange zcl.Range // range of the closing brace
 }
 
 func (n *objectVal) Range() zcl.Range {

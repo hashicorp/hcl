@@ -438,3 +438,9 @@ func (v *testMergedBodiesVictim) JustAttributes() (map[string]*Attribute, Diagno
 
 	return attrs, diags
 }
+
+func (v *testMergedBodiesVictim) MissingItemRange() Range {
+	return Range{
+		Filename: v.Name,
+	}
+}

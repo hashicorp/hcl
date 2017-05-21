@@ -64,6 +64,13 @@ type Body interface {
 	// Diagnostics may be produced for other reasons too, such as duplicate
 	// declarations of the same attribute.
 	JustAttributes() (map[string]*Attribute, Diagnostics)
+
+	// MissingItemRange returns a range that represents where a missing item
+	// might hypothetically be inserted. This is used when producing
+	// diagnostics about missing required attributes or blocks. Not all bodies
+	// will have an obvious single insertion point, so the result here may
+	// be rather arbitrary.
+	MissingItemRange() Range
 }
 
 // BodyContent is the result of applying a BodySchema to a Body.

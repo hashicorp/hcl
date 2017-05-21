@@ -246,6 +246,10 @@ func TestParse(t *testing.T) {
 					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
 					End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
 				},
+				CloseRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 15, Byte: 14},
+					End:   zcl.Pos{Line: 1, Column: 16, Byte: 15},
+				},
 			},
 			0,
 		},
@@ -290,6 +294,10 @@ func TestParse(t *testing.T) {
 					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
 					End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
 				},
+				CloseRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 29, Byte: 28},
+					End:   zcl.Pos{Line: 1, Column: 30, Byte: 29},
+				},
 			},
 			0,
 		},
@@ -304,6 +312,10 @@ func TestParse(t *testing.T) {
 				OpenRange: zcl.Range{
 					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
 					End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+				},
+				CloseRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 2, Byte: 1},
+					End:   zcl.Pos{Line: 1, Column: 3, Byte: 2},
 				},
 			},
 			0,
@@ -366,6 +378,10 @@ func TestParse(t *testing.T) {
 				OpenRange: zcl.Range{
 					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
 					End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+				},
+				CloseRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 30, Byte: 29},
+					End:   zcl.Pos{Line: 1, Column: 31, Byte: 30},
 				},
 			},
 			1,

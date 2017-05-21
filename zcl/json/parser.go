@@ -256,9 +256,10 @@ Token:
 
 	close := p.Read()
 	return &objectVal{
-		Attrs:     attrs,
-		SrcRange:  zcl.RangeBetween(open.Range, close.Range),
-		OpenRange: open.Range,
+		Attrs:      attrs,
+		SrcRange:   zcl.RangeBetween(open.Range, close.Range),
+		OpenRange:  open.Range,
+		CloseRange: close.Range,
 	}, diags
 }
 

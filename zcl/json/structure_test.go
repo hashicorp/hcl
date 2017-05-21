@@ -197,6 +197,19 @@ func TestBodyPartialContent(t *testing.T) {
 										Column: 14,
 									},
 								},
+								CloseRange: zcl.Range{
+									Filename: "test.json",
+									Start: zcl.Pos{
+										Byte:   13,
+										Line:   1,
+										Column: 14,
+									},
+									End: zcl.Pos{
+										Byte:   14,
+										Line:   1,
+										Column: 15,
+									},
+								},
 							},
 						},
 
@@ -276,6 +289,19 @@ func TestBodyPartialContent(t *testing.T) {
 										Column: 15,
 									},
 								},
+								CloseRange: zcl.Range{
+									Filename: "test.json",
+									Start: zcl.Pos{
+										Byte:   14,
+										Line:   1,
+										Column: 15,
+									},
+									End: zcl.Pos{
+										Byte:   15,
+										Line:   1,
+										Column: 16,
+									},
+								},
 							},
 						},
 
@@ -337,6 +363,19 @@ func TestBodyPartialContent(t *testing.T) {
 										Byte:   17,
 										Line:   1,
 										Column: 18,
+									},
+								},
+								CloseRange: zcl.Range{
+									Filename: "test.json",
+									Start: zcl.Pos{
+										Byte:   17,
+										Line:   1,
+										Column: 18,
+									},
+									End: zcl.Pos{
+										Byte:   18,
+										Line:   1,
+										Column: 19,
 									},
 								},
 							},
@@ -417,6 +456,19 @@ func TestBodyPartialContent(t *testing.T) {
 										Byte:   36,
 										Line:   1,
 										Column: 37,
+									},
+								},
+								CloseRange: zcl.Range{
+									Filename: "test.json",
+									Start: zcl.Pos{
+										Byte:   36,
+										Line:   1,
+										Column: 37,
+									},
+									End: zcl.Pos{
+										Byte:   37,
+										Line:   1,
+										Column: 38,
 									},
 								},
 							},

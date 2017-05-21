@@ -127,6 +127,18 @@ func (mb mergedBodies) JustAttributes() (map[string]*Attribute, Diagnostics) {
 	return attrs, diags
 }
 
+func (mb mergedBodies) MissingItemRange() Range {
+	if len(mb) == 0 {
+		// Nothing useful to return here, so we'll return some garbage.
+		return Range{
+			Filename: "<empty>",
+		}
+	}
+
+	// arbitrarily use the first body's missing item range
+	return mb[0].MissingItemRange()
+}
+
 func (mb mergedBodies) mergedContent(schema *BodySchema, partial bool) (*BodyContent, Body, Diagnostics) {
 	// We need to produce a new schema with none of the attributes marked as
 	// required, since _any one_ of our bodies can contribute an attribute value.

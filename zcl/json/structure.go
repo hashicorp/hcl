@@ -144,6 +144,10 @@ func (b *body) JustAttributes() (map[string]*zcl.Attribute, zcl.Diagnostics) {
 	return attrs, nil
 }
 
+func (b *body) MissingItemRange() zcl.Range {
+	return b.obj.CloseRange
+}
+
 func (b *body) unpackBlock(v node, typeName string, typeRange *zcl.Range, labelsLeft []string, labelsUsed []string, labelRanges []zcl.Range, blocks *zcl.Blocks) (diags zcl.Diagnostics) {
 	if len(labelsLeft) > 0 {
 		labelName := labelsLeft[0]
