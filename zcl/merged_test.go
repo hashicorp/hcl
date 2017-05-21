@@ -412,7 +412,7 @@ func (v *testMergedBodiesVictim) PartialContent(schema *BodySchema) (*BodyConten
 	return content, emptyBody, diags
 }
 
-func (v *testMergedBodiesVictim) JustAttributes() (map[string]*Attribute, Diagnostics) {
+func (v *testMergedBodiesVictim) JustAttributes() (Attributes, Diagnostics) {
 	attrs := make(map[string]*Attribute)
 
 	rng := Range{

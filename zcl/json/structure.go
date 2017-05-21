@@ -125,7 +125,7 @@ func (b *body) PartialContent(schema *zcl.BodySchema) (*zcl.BodyContent, zcl.Bod
 
 // JustAttributes for JSON bodies interprets all properties of the wrapped
 // JSON object as attributes and returns them.
-func (b *body) JustAttributes() (map[string]*zcl.Attribute, zcl.Diagnostics) {
+func (b *body) JustAttributes() (zcl.Attributes, zcl.Diagnostics) {
 	attrs := make(map[string]*zcl.Attribute)
 	for name, jsonAttr := range b.obj.Attrs {
 		if _, hidden := b.hiddenAttrs[name]; hidden {

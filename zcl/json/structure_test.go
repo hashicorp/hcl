@@ -629,7 +629,7 @@ func TestJustAttributes(t *testing.T) {
 	// this test focuses on the handling of extraneous attributes.
 	tests := []struct {
 		src  string
-		want map[string]*zcl.Attribute
+		want zcl.Attributes
 	}{
 		{
 			`{}`,

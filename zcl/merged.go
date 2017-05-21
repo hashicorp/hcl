@@ -93,7 +93,7 @@ func (mb mergedBodies) PartialContent(schema *BodySchema) (*BodyContent, Body, D
 	return mb.mergedContent(schema, true)
 }
 
-func (mb mergedBodies) JustAttributes() (map[string]*Attribute, Diagnostics) {
+func (mb mergedBodies) JustAttributes() (Attributes, Diagnostics) {
 	attrs := make(map[string]*Attribute)
 	var diags Diagnostics
 
