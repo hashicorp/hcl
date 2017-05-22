@@ -3,6 +3,6 @@
 // ZCL API.
 //
 // This is intended to help applications that previously used HCL/HIL to
-// gradually adopt hcl while remaining generally compatible with their
+// gradually adopt zcl while remaining generally compatible with their
 // previous configuration formats.
 package hclhil
