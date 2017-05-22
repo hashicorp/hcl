@@ -7,6 +7,7 @@ import (
 	"github.com/apparentlymart/go-cty/cty"
 	"github.com/apparentlymart/go-zcl/zcl"
 	hclast "github.com/hashicorp/hcl/hcl/ast"
+	hcltoken "github.com/hashicorp/hcl/hcl/token"
 )
 
 // body is our implementation of zcl.Body in terms of an HCL ObjectList
@@ -306,8 +307,7 @@ type expression struct {
 }
 
 func (e *expression) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
-	// TODO: Implement
-	return cty.NilVal, nil
+	return ctyValueFromHCLNode(e.src, ctx)
 }
 
 func (e *expression) Range() zcl.Range {
@@ -315,4 +315,72 @@ func (e *expression) Range() zcl.Range {
 }
 func (e *expression) StartRange() zcl.Range {
 	return rangeFromHCLPos(e.src.Pos())
+}
+
+func ctyValueFromHCLNode(node hclast.Node, ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
+
+	switch tn := node.(type) {
+	case *hclast.LiteralType:
+		tok := tn.Token
+		switch tok.Type {
+		case hcltoken.NUMBER: // means integer, in HCL land
+			val := tok.Value().(int64)
+			return cty.NumberIntVal(val), nil
+		case hcltoken.FLOAT:
+			val := tok.Value().(float64)
+			return cty.NumberFloatVal(val), nil
+		case hcltoken.STRING, hcltoken.HEREDOC:
+			val := tok.Value().(string)
+			// TODO: HIL parsing and evaluation, if ctx is non-nil.
+			return cty.StringVal(val), nil
+		case hcltoken.BOOL:
+			val := tok.Value().(bool)
+			return cty.BoolVal(val), nil
+		default:
+			// should never happen
+			panic(fmt.Sprintf("unsupported HCL literal type %s", tok.Type))
+		}
+	case *hclast.ObjectType:
+		list := tn.List
+		attrs, diags := (&body{oli: list}).JustAttributes()
+		if attrs == nil {
+			return cty.DynamicVal, diags
+		}
+		vals := map[string]cty.Value{}
+		for name, attr := range attrs {
+			val, valDiags := attr.Expr.Value(ctx)
+			if len(valDiags) > 0 {
+				diags = append(diags, valDiags...)
+			}
+			if val == cty.NilVal {
+				// If we skip one attribute then our return type will be
+				// inconsistent, so we'll prefer to return dynamic to prevent
+				// any weird downstream type errors.
+				return cty.DynamicVal, diags
+			}
+			vals[name] = val
+		}
+		return cty.ObjectVal(vals), diags
+	case *hclast.ListType:
+		nodes := tn.List
+		vals := make([]cty.Value, len(nodes))
+		var diags zcl.Diagnostics
+		for i, node := range nodes {
+			val, valDiags := ctyValueFromHCLNode(node, ctx)
+			if len(valDiags) > 0 {
+				diags = append(diags, valDiags...)
+			}
+			if val == cty.NilVal {
+				// If we skip one element then our return type will be
+				// inconsistent, so we'll prefer to return dynamic to prevent
+				// any weird downstream type errors.
+				return cty.DynamicVal, diags
+			}
+			vals[i] = val
+		}
+		return cty.TupleVal(vals), diags
+	default:
+		panic(fmt.Sprintf("unsupported HCL value type %T", tn))
+	}
+
 }

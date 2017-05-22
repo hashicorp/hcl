@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/apparentlymart/go-cty/cty"
 	"github.com/apparentlymart/go-zcl/zcl"
 	"github.com/davecgh/go-spew/spew"
 	hclast "github.com/hashicorp/hcl/hcl/ast"
@@ -376,4 +377,123 @@ func TestBodyJustAttributes(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestExpressionValue(t *testing.T) {
+	tests := []struct {
+		Source    string // HCL source assigning a value to attribute "v"
+		Want      cty.Value
+		DiagCount int
+	}{
+		{
+			`v = 1`,
+			cty.NumberIntVal(1),
+			0,
+		},
+		{
+			`v = 1.5`,
+			cty.NumberFloatVal(1.5),
+			0,
+		},
+		{
+			`v = "hello"`,
+			cty.StringVal("hello"),
+			0,
+		},
+		{
+			`v = <<EOT
+heredoc
+EOT
+`,
+			cty.StringVal("heredoc\n"),
+			0,
+		},
+		{
+			`v = true`,
+			cty.True,
+			0,
+		},
+		{
+			`v = false`,
+			cty.False,
+			0,
+		},
+		{
+			`v = []`,
+			cty.EmptyTupleVal,
+			0,
+		},
+		{
+			`v = ["hello", 5, true, 3.4]`,
+			cty.TupleVal([]cty.Value{
+				cty.StringVal("hello"),
+				cty.NumberIntVal(5),
+				cty.True,
+				cty.NumberFloatVal(3.4),
+			}),
+			0,
+		},
+		{
+			`v = {}`,
+			cty.EmptyObjectVal,
+			0,
+		},
+		{
+			`v = {
+				string = "hello"
+				int = 5
+				bool = true
+				float = 3.4
+				list = []
+				object = {}
+			}`,
+			cty.ObjectVal(map[string]cty.Value{
+				"string": cty.StringVal("hello"),
+				"int":    cty.NumberIntVal(5),
+				"bool":   cty.True,
+				"float":  cty.NumberFloatVal(3.4),
+				"list":   cty.EmptyTupleVal,
+				"object": cty.EmptyObjectVal,
+			}),
+			0,
+		},
+		{
+			`v {}`,
+			cty.EmptyObjectVal,
+			0, // warns about using block syntax during content extraction, but we ignore that here
+		},
+	}
+
+	for i, test := range tests {
+		t.Run(fmt.Sprintf("%02d", i), func(t *testing.T) {
+			file, diags := Parse([]byte(test.Source), "test.hcl")
+			if len(diags) != 0 {
+				t.Fatalf("diagnostics from parse: %s", diags.Error())
+			}
+
+			content, diags := file.Body.Content(&zcl.BodySchema{
+				Attributes: []zcl.AttributeSchema{
+					{
+						Name:     "v",
+						Required: true,
+					},
+				},
+			})
+
+			expr := content.Attributes["v"].Expr
+
+			got, diags := expr.Value(nil)
+			if len(diags) != test.DiagCount {
+				t.Errorf("wrong number of diagnostics %d; want %d", len(diags), test.DiagCount)
+				for _, diag := range diags {
+					t.Logf(" - %s", diag.Error())
+				}
+			}
+
+			if !got.RawEquals(test.Want) {
+				t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.Want)
+			}
+		})
+	}
+
 }
