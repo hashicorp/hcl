@@ -5,6 +5,7 @@ import (
 
 	"github.com/apparentlymart/go-cty/cty"
 	"github.com/apparentlymart/go-zcl/zcl"
+	"github.com/apparentlymart/go-zcl/zcl/hclhil"
 )
 
 // body is the implementation of "Body" used for files processed with the JSON
@@ -16,12 +17,19 @@ type body struct {
 	// be treated as non-existing. This is used when Body.PartialContent is
 	// called, to produce the "remaining content" Body.
 	hiddenAttrs map[string]struct{}
+
+	// If set, string values are turned into expressions using HIL's template
+	// language, rather than the native zcl language. This is intended to
+	// allow applications moving from HCL to zcl to continue to parse the
+	// JSON variant of their config that HCL handled previously.
+	useHIL bool
 }
 
 // expression is the implementation of "Expression" used for files processed
 // with the JSON parser.
 type expression struct {
-	src node
+	src    node
+	useHIL bool
 }
 
 func (b *body) Content(schema *zcl.BodySchema) (*zcl.BodyContent, zcl.Diagnostics) {
@@ -96,7 +104,7 @@ func (b *body) PartialContent(schema *zcl.BodySchema) (*zcl.BodyContent, zcl.Bod
 		}
 		content.Attributes[attrS.Name] = &zcl.Attribute{
 			Name:      attrS.Name,
-			Expr:      &expression{src: jsonAttr.Value},
+			Expr:      &expression{src: jsonAttr.Value, useHIL: b.useHIL},
 			Range:     zcl.RangeBetween(jsonAttr.NameRange, jsonAttr.Value.Range()),
 			NameRange: jsonAttr.NameRange,
 		}
@@ -118,6 +126,7 @@ func (b *body) PartialContent(schema *zcl.BodySchema) (*zcl.BodyContent, zcl.Bod
 	unusedBody := &body{
 		obj:         b.obj,
 		hiddenAttrs: usedNames,
+		useHIL:      b.useHIL,
 	}
 
 	return content, unusedBody, diags
@@ -133,7 +142,7 @@ func (b *body) JustAttributes() (zcl.Attributes, zcl.Diagnostics) {
 		}
 		attrs[name] = &zcl.Attribute{
 			Name:      name,
-			Expr:      &expression{src: jsonAttr.Value},
+			Expr:      &expression{src: jsonAttr.Value, useHIL: b.useHIL},
 			Range:     zcl.RangeBetween(jsonAttr.NameRange, jsonAttr.Value.Range()),
 			NameRange: jsonAttr.NameRange,
 		}
@@ -197,7 +206,8 @@ func (b *body) unpackBlock(v node, typeName string, typeRange *zcl.Range, labels
 			Type:   typeName,
 			Labels: labels,
 			Body: &body{
-				obj: tv,
+				obj:    tv,
+				useHIL: b.useHIL,
 			},
 
 			DefRange:    tv.OpenRange,
@@ -222,7 +232,8 @@ func (b *body) unpackBlock(v node, typeName string, typeRange *zcl.Range, labels
 				Type:   typeName,
 				Labels: labels,
 				Body: &body{
-					obj: ov,
+					obj:    ov,
+					useHIL: b.useHIL,
 				},
 
 				DefRange:    tv.OpenRange,
@@ -244,11 +255,32 @@ func (b *body) unpackBlock(v node, typeName string, typeRange *zcl.Range, labels
 func (e *expression) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
 	// TEMP: Since we've not yet implemented the zcl native template language
 	// parser, for the moment we'll support only literal values here.
-	// FIXME: Once the template language parser is implemented, parse string
-	// values as templates and evaluate them.
 
 	switch v := e.src.(type) {
 	case *stringVal:
+		if e.useHIL && ctx != nil {
+			// Legacy interface to parse HCL-style JSON with HIL expressions.
+			templateSrc := v.Value
+			hilExpr, diags := hclhil.ParseTemplateEmbedded(
+				[]byte(templateSrc),
+				v.SrcRange.Filename,
+				zcl.Pos{
+					// skip over the opening quote mark
+					Byte:   v.SrcRange.Start.Byte + 1,
+					Line:   v.SrcRange.Start.Line,
+					Column: v.SrcRange.Start.Column,
+				},
+			)
+			if hilExpr == nil {
+				return cty.DynamicVal, diags
+			}
+			val, evalDiags := hilExpr.Value(ctx)
+			diags = append(diags, evalDiags...)
+			return val, diags
+		}
+
+		// FIXME: Once the native zcl template language parser is implemented,
+		// parse string values as templates and evaluate them.
 		return cty.StringVal(v.Value), nil
 	case *numberVal:
 		return cty.NumberVal(v.Value), nil
@@ -257,14 +289,14 @@ func (e *expression) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
 	case *arrayVal:
 		vals := []cty.Value{}
 		for _, jsonVal := range v.Values {
-			val, _ := (&expression{src: jsonVal}).Value(ctx)
+			val, _ := (&expression{src: jsonVal, useHIL: e.useHIL}).Value(ctx)
 			vals = append(vals, val)
 		}
 		return cty.TupleVal(vals), nil
 	case *objectVal:
 		attrs := map[string]cty.Value{}
 		for name, jsonAttr := range v.Attrs {
-			val, _ := (&expression{src: jsonAttr.Value}).Value(ctx)
+			val, _ := (&expression{src: jsonAttr.Value, useHIL: e.useHIL}).Value(ctx)
 			attrs[name] = val
 		}
 		return cty.ObjectVal(attrs), nil

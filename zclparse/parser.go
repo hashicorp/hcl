@@ -36,6 +36,20 @@ func (p *Parser) ParseJSON(src []byte, filename string) (*zcl.File, zcl.Diagnost
 	return file, diags
 }
 
+// ParseJSONWithHIL parses the given JSON buffer (which is assumed to have been
+// loaded from the given filename) and returns the zcl.File object representing
+// it. Unlike ParseJSON, the strings within the file will be interpreted as
+// HIL templates rather than native zcl templates.
+func (p *Parser) ParseJSONWithHIL(src []byte, filename string) (*zcl.File, zcl.Diagnostics) {
+	if existing := p.files[filename]; existing != nil {
+		return existing, nil
+	}
+
+	file, diags := json.ParseWithHIL(src, filename)
+	p.files[filename] = file
+	return file, diags
+}
+
 // ParseJSONFile reads the given filename and parses it as JSON, similarly to
 // ParseJSON. An error diagnostic is returned if the given file cannot be read.
 func (p *Parser) ParseJSONFile(filename string) (*zcl.File, zcl.Diagnostics) {
@@ -44,6 +58,18 @@ func (p *Parser) ParseJSONFile(filename string) (*zcl.File, zcl.Diagnostics) {
 	}
 
 	file, diags := json.ParseFile(filename)
+	p.files[filename] = file
+	return file, diags
+}
+
+// ParseJSONFileWithHIL reads the given filename and parses it as JSON, similarly to
+// ParseJSONWithHIL. An error diagnostic is returned if the given file cannot be read.
+func (p *Parser) ParseJSONFileWithHIL(filename string) (*zcl.File, zcl.Diagnostics) {
+	if existing := p.files[filename]; existing != nil {
+		return existing, nil
+	}
+
+	file, diags := json.ParseFileWithHIL(filename)
 	p.files[filename] = file
 	return file, diags
 }
