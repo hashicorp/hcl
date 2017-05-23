@@ -1,4 +1,4 @@
-package parser
+package zclparse
 
 import (
 	"github.com/apparentlymart/go-zcl/zcl"
