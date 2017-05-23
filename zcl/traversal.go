@@ -345,3 +345,14 @@ func (tn TraverseIndex) TraversalStep(val cty.Value) (cty.Value, Diagnostics) {
 		}
 	}
 }
+
+// TraverseSplat applies the splat operation to its initial value.
+type TraverseSplat struct {
+	isTraverser
+	Each     Traversal
+	SrcRange Range
+}
+
+func (tn TraverseSplat) TraversalStep(val cty.Value) (cty.Value, Diagnostics) {
+	panic("TraverseSplat not yet implemented")
+}
