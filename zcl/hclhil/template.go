@@ -3,6 +3,7 @@ package hclhil
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/apparentlymart/go-cty/cty"
 	"github.com/apparentlymart/go-cty/cty/function"
@@ -43,6 +44,58 @@ type templateExpression struct {
 func (e *templateExpression) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
 	cfg := hilEvalConfig(ctx)
 	return ctyValueFromHILNode(e.node, cfg)
+}
+
+func (e *templateExpression) Variables() []zcl.Traversal {
+	var vars []zcl.Traversal
+	e.node.Accept(func(n hilast.Node) hilast.Node {
+		vn, ok := n.(*hilast.VariableAccess)
+		if !ok {
+			return n
+		}
+
+		rawName := vn.Name
+		parts := strings.Split(rawName, ".")
+		if len(parts) == 0 {
+			return n
+		}
+
+		tr := make(zcl.Traversal, 0, len(parts))
+		tr = append(tr, zcl.TraverseRoot{
+			Name:     parts[0],
+			SrcRange: rangeFromHILPos(n.Pos()),
+		})
+
+		for _, name := range parts {
+			if nv, err := strconv.Atoi(name); err == nil {
+				// Turn this into a sequence index in zcl land, to save
+				// callers from having to understand both HIL-style numeric
+				// attributes and zcl-style indices.
+				tr = append(tr, zcl.TraverseIndex{
+					Key:      cty.NumberIntVal(int64(nv)),
+					SrcRange: rangeFromHILPos(n.Pos()),
+				})
+				continue
+			}
+
+			if name == "*" {
+				// TODO: support splat traversals, but that requires some
+				// more work here because we need to then accumulate the
+				// rest of the parts into the splat's own "Each" traversal.
+				continue
+			}
+
+			tr = append(tr, zcl.TraverseAttr{
+				Name:     name,
+				SrcRange: rangeFromHILPos(n.Pos()),
+			})
+		}
+
+		vars = append(vars, tr)
+
+		return n
+	})
+	return vars
 }
 
 func (e *templateExpression) Range() zcl.Range {

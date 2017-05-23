@@ -310,6 +310,34 @@ func (e *expression) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
 	return ctyValueFromHCLNode(e.src, ctx)
 }
 
+func (e *expression) Variables() []zcl.Traversal {
+	node := e.src
+	var vars []zcl.Traversal
+
+	switch tn := node.(type) {
+	case *hclast.LiteralType:
+		tok := tn.Token
+		switch tok.Type {
+		case hcltoken.STRING, hcltoken.HEREDOC:
+			// TODO: HIL parsing and evaluation, if ctx is non-nil.
+		}
+	case *hclast.ObjectType:
+		list := tn.List
+		attrs, _ := (&body{oli: list}).JustAttributes()
+		if attrs != nil {
+			for _, attr := range attrs {
+				vars = append(vars, attr.Expr.Variables()...)
+			}
+		}
+	case *hclast.ListType:
+		nodes := tn.List
+		for _, node := range nodes {
+			vars = append(vars, (&expression{src: node}).Variables()...)
+		}
+	}
+	return vars
+}
+
 func (e *expression) Range() zcl.Range {
 	return rangeFromHCLPos(e.src.Pos())
 }

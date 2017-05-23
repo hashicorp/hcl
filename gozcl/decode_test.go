@@ -571,3 +571,7 @@ func (e *fixedExpression) Range() (r zcl.Range) {
 func (e *fixedExpression) StartRange() (r zcl.Range) {
 	return
 }
+
+func (e *fixedExpression) Variables() []zcl.Traversal {
+	return nil
+}

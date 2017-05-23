@@ -110,12 +110,15 @@ type Expression interface {
 	// the specific symbol in question.
 	Value(ctx *EvalContext) (cty.Value, Diagnostics)
 
+	// Variables returns a list of variables referenced in the receiving
+	// expression. These are expressed as absolute Traversals, so may include
+	// additional information about how the variable is used, such as
+	// attribute lookups, which the calling application can potentially use
+	// to only selectively populate the scope.
+	Variables() []Traversal
+
 	Range() Range
 	StartRange() Range
-
-	// TODO: A "Variables" method that returns a description of all of the
-	// variables used in the expression, so callers can populate the scope
-	// only with variables that are actually used.
 }
 
 // OfType filters the receiving block sequence by block type name,

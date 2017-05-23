@@ -307,6 +307,45 @@ func (e *expression) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
 	}
 }
 
+func (e *expression) Variables() []zcl.Traversal {
+	var vars []zcl.Traversal
+
+	switch v := e.src.(type) {
+	case *stringVal:
+		if e.useHIL {
+			// Legacy interface to parse HCL-style JSON with HIL expressions.
+			templateSrc := v.Value
+			hilExpr, _ := hclhil.ParseTemplateEmbedded(
+				[]byte(templateSrc),
+				v.SrcRange.Filename,
+				zcl.Pos{
+					// skip over the opening quote mark
+					Byte:   v.SrcRange.Start.Byte + 1,
+					Line:   v.SrcRange.Start.Line,
+					Column: v.SrcRange.Start.Column,
+				},
+			)
+			if hilExpr != nil {
+				vars = append(vars, hilExpr.Variables()...)
+			}
+		}
+
+		// FIXME: Once the native zcl template language parser is implemented,
+		// parse with that and look for variables in there too,
+
+	case *arrayVal:
+		for _, jsonVal := range v.Values {
+			vars = append(vars, (&expression{src: jsonVal, useHIL: e.useHIL}).Variables()...)
+		}
+	case *objectVal:
+		for _, jsonAttr := range v.Attrs {
+			vars = append(vars, (&expression{src: jsonAttr.Value, useHIL: e.useHIL}).Variables()...)
+		}
+	}
+
+	return vars
+}
+
 func (e *expression) Range() zcl.Range {
 	return e.src.Range()
 }
