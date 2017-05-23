@@ -243,3 +243,105 @@ func (tn TraverseAttr) TraversalStep(val cty.Value) (cty.Value, Diagnostics) {
 		}
 	}
 }
+
+// TraverseIndex applies the index operation to its initial value.
+type TraverseIndex struct {
+	isTraverser
+	Key      cty.Value
+	SrcRange Range
+}
+
+func (tn TraverseIndex) TraversalStep(val cty.Value) (cty.Value, Diagnostics) {
+	if val.IsNull() {
+		return cty.DynamicVal, Diagnostics{
+			{
+				Severity: DiagError,
+				Summary:  "Attempt to index null value",
+				Detail:   "This value is null, so it does not have any indices.",
+				Subject:  &tn.SrcRange,
+			},
+		}
+	}
+	if tn.Key.IsNull() {
+		return cty.DynamicVal, Diagnostics{
+			{
+				Severity: DiagError,
+				Summary:  "Invalid index",
+				Detail:   "Can't use a null value as an index.",
+				Subject:  &tn.SrcRange,
+			},
+		}
+	}
+	ty := val.Type()
+	kty := tn.Key.Type()
+	if kty == cty.DynamicPseudoType {
+		return cty.DynamicVal, nil
+	}
+
+	switch {
+	case ty.IsListType() || ty.IsTupleType() || ty.IsMapType():
+		has := val.HasIndex(tn.Key)
+		if !has.IsKnown() {
+			if ty.IsTupleType() {
+				return cty.DynamicVal, nil
+			} else {
+				return cty.UnknownVal(ty.ElementType()), nil
+			}
+		}
+		if has.False() {
+			return cty.DynamicVal, Diagnostics{
+				{
+					Severity: DiagError,
+					Summary:  "Invalid index",
+					Detail:   "The given index value does not identify an element in this collection value.",
+					Subject:  &tn.SrcRange,
+				},
+			}
+		}
+
+		return val.Index(tn.Key), nil
+	case ty.IsObjectType():
+		if kty != cty.String {
+			return cty.DynamicVal, Diagnostics{
+				{
+					Severity: DiagError,
+					Summary:  "Invalid index",
+					Detail:   "The given index value does not identify an element in this collection value.",
+					Subject:  &tn.SrcRange,
+				},
+			}
+		}
+		if !val.IsKnown() {
+			return cty.DynamicVal, nil
+		}
+		if !tn.Key.IsKnown() {
+			return cty.DynamicVal, nil
+		}
+
+		attrName := tn.Key.AsString()
+
+		if !ty.HasAttribute(attrName) {
+			return cty.DynamicVal, Diagnostics{
+				{
+					Severity: DiagError,
+					Summary:  "Invalid index",
+					Detail:   "The given index value does not identify an element in this collection value.",
+					Subject:  &tn.SrcRange,
+				},
+			}
+		}
+
+		return val.GetAttr(attrName), nil
+	case ty == cty.DynamicPseudoType:
+		return cty.DynamicVal, nil
+	default:
+		return cty.DynamicVal, Diagnostics{
+			{
+				Severity: DiagError,
+				Summary:  "Invalid index",
+				Detail:   "This value does not have any indices.",
+				Subject:  &tn.SrcRange,
+			},
+		}
+	}
+}
