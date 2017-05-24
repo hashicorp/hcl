@@ -25,8 +25,6 @@ var assertExprImplExpr zcl.Expression = Expression(nil)
 type LiteralValueExpr struct {
 	Val      cty.Value
 	SrcRange zcl.Range
-
-	hasNoVariables
 }
 
 func (e *LiteralValueExpr) walkChildNodes(w internalWalkFunc) {
@@ -41,11 +39,37 @@ func (e *LiteralValueExpr) Range() zcl.Range {
 	return e.SrcRange
 }
 
-// Embed this in an expression struct to get a default implementation of
-// Variables that returns no variables.
-type hasNoVariables struct {
+func (e *LiteralValueExpr) StartRange() zcl.Range {
+	return e.SrcRange
 }
 
-func (e hasNoVariables) Variables() []zcl.Traversal {
-	return nil
+func (e *LiteralValueExpr) Variables() []zcl.Traversal {
+	return Variables(e)
+}
+
+// ScopeTraversalExpr is an Expression that retrieves a value from the scope
+// using a traversal.
+type ScopeTraversalExpr struct {
+	Traversal zcl.Traversal
+	SrcRange  zcl.Range
+}
+
+func (e *ScopeTraversalExpr) walkChildNodes(w internalWalkFunc) {
+	// Scope traversals have no child nodes
+}
+
+func (e *ScopeTraversalExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
+	panic("ScopeTraversalExpr.Value not yet implemented")
+}
+
+func (e *ScopeTraversalExpr) Range() zcl.Range {
+	return e.SrcRange
+}
+
+func (e *ScopeTraversalExpr) StartRange() zcl.Range {
+	return e.SrcRange
+}
+
+func (e *ScopeTraversalExpr) Variables() []zcl.Traversal {
+	return Variables(e)
 }
