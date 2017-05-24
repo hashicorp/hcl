@@ -65,3 +65,32 @@ func (e *ScopeTraversalExpr) Range() zcl.Range {
 func (e *ScopeTraversalExpr) StartRange() zcl.Range {
 	return e.SrcRange
 }
+
+// FunctionCallExpr is an Expression that calls a function from the EvalContext
+// and returns its result.
+type FunctionCallExpr struct {
+	Name string
+	Args []Expression
+
+	NameRange       zcl.Range
+	OpenParenRange  zcl.Range
+	CloseParenRange zcl.Range
+}
+
+func (e *FunctionCallExpr) walkChildNodes(w internalWalkFunc) {
+	for i, arg := range e.Args {
+		e.Args[i] = w(arg).(Expression)
+	}
+}
+
+func (e *FunctionCallExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
+	panic("FunctionCallExpr.Value not yet implemented")
+}
+
+func (e *FunctionCallExpr) Range() zcl.Range {
+	return zcl.RangeBetween(e.NameRange, e.CloseParenRange)
+}
+
+func (e *FunctionCallExpr) StartRange() zcl.Range {
+	return zcl.RangeBetween(e.NameRange, e.OpenParenRange)
+}

@@ -7,6 +7,10 @@ import (
 	"github.com/apparentlymart/go-zcl/zcl"
 )
 
+func (e *FunctionCallExpr) Variables() []zcl.Traversal {
+	return Variables(e)
+}
+
 func (e *LiteralValueExpr) Variables() []zcl.Traversal {
 	return Variables(e)
 }
