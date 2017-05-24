@@ -43,10 +43,6 @@ func (e *LiteralValueExpr) StartRange() zcl.Range {
 	return e.SrcRange
 }
 
-func (e *LiteralValueExpr) Variables() []zcl.Traversal {
-	return Variables(e)
-}
-
 // ScopeTraversalExpr is an Expression that retrieves a value from the scope
 // using a traversal.
 type ScopeTraversalExpr struct {
@@ -68,8 +64,4 @@ func (e *ScopeTraversalExpr) Range() zcl.Range {
 
 func (e *ScopeTraversalExpr) StartRange() zcl.Range {
 	return e.SrcRange
-}
-
-func (e *ScopeTraversalExpr) Variables() []zcl.Traversal {
-	return Variables(e)
 }
