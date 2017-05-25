@@ -1,7 +1,11 @@
 package zclsyntax
 
 import (
+	"fmt"
+
 	"github.com/apparentlymart/go-cty/cty"
+	"github.com/apparentlymart/go-cty/cty/convert"
+	"github.com/apparentlymart/go-cty/cty/function"
 	"github.com/apparentlymart/go-zcl/zcl"
 )
 
@@ -84,7 +88,151 @@ func (e *FunctionCallExpr) walkChildNodes(w internalWalkFunc) {
 }
 
 func (e *FunctionCallExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
-	panic("FunctionCallExpr.Value not yet implemented")
+	var diags zcl.Diagnostics
+
+	f, exists := ctx.Functions[e.Name]
+	if !exists {
+		avail := make([]string, 0, len(ctx.Functions))
+		for name := range ctx.Functions {
+			avail = append(avail, name)
+		}
+		suggestion := nameSuggestion(e.Name, avail)
+		if suggestion != "" {
+			suggestion = fmt.Sprintf(" Did you mean %q?", suggestion)
+		}
+
+		return cty.DynamicVal, zcl.Diagnostics{
+			{
+				Severity: zcl.DiagError,
+				Summary:  "Call to unknown function",
+				Detail:   fmt.Sprintf("There is no function named %q.%s", e.Name, suggestion),
+				Subject:  &e.NameRange,
+				Context:  e.Range().Ptr(),
+			},
+		}
+	}
+
+	params := f.Params()
+	varParam := f.VarParam()
+
+	if len(e.Args) < len(params) {
+		missing := params[len(e.Args)]
+		qual := ""
+		if varParam != nil {
+			qual = " at least"
+		}
+		return cty.DynamicVal, zcl.Diagnostics{
+			{
+				Severity: zcl.DiagError,
+				Summary:  "Not enough function arguments",
+				Detail: fmt.Sprintf(
+					"Function %q expects%s %d argument(s). Missing value for %q.",
+					e.Name, qual, len(params), missing.Name,
+				),
+				Subject: &e.CloseParenRange,
+				Context: e.Range().Ptr(),
+			},
+		}
+	}
+
+	if varParam == nil && len(e.Args) > len(params) {
+		return cty.DynamicVal, zcl.Diagnostics{
+			{
+				Severity: zcl.DiagError,
+				Summary:  "Too many function arguments",
+				Detail: fmt.Sprintf(
+					"Function %q expects only %d argument(s).",
+					e.Name, len(params),
+				),
+				Subject: e.Args[len(params)].StartRange().Ptr(),
+				Context: e.Range().Ptr(),
+			},
+		}
+	}
+
+	argVals := make([]cty.Value, len(e.Args))
+
+	for i, argExpr := range e.Args {
+		var param *function.Parameter
+		if i < len(params) {
+			param = &params[i]
+		} else {
+			param = varParam
+		}
+
+		val, argDiags := argExpr.Value(ctx)
+		if len(argDiags) > 0 {
+			diags = append(diags, argDiags...)
+		}
+
+		// Try to convert our value to the parameter type
+		val, err := convert.Convert(val, param.Type)
+		if err != nil {
+			diags = append(diags, &zcl.Diagnostic{
+				Severity: zcl.DiagError,
+				Summary:  "Invalid function argument",
+				Detail: fmt.Sprintf(
+					"Invalid value for %q parameter: %s.",
+					param.Name, err,
+				),
+				Subject: argExpr.StartRange().Ptr(),
+				Context: e.Range().Ptr(),
+			})
+		}
+
+		argVals[i] = val
+	}
+
+	if diags.HasErrors() {
+		// Don't try to execute the function if we already have errors with
+		// the arguments, because the result will probably be a confusing
+		// error message.
+		return cty.DynamicVal, diags
+	}
+
+	resultVal, err := f.Call(argVals)
+	if err != nil {
+		switch terr := err.(type) {
+		case function.ArgError:
+			i := terr.Index
+			var param *function.Parameter
+			if i < len(params) {
+				param = &params[i]
+			} else {
+				param = varParam
+			}
+			argExpr := e.Args[i]
+
+			// TODO: we should also unpick a PathError here and show the
+			// path to the deep value where the error was detected.
+			diags = append(diags, &zcl.Diagnostic{
+				Severity: zcl.DiagError,
+				Summary:  "Invalid function argument",
+				Detail: fmt.Sprintf(
+					"Invalid value for %q parameter: %s.",
+					param.Name, err,
+				),
+				Subject: argExpr.StartRange().Ptr(),
+				Context: e.Range().Ptr(),
+			})
+
+		default:
+			diags = append(diags, &zcl.Diagnostic{
+				Severity: zcl.DiagError,
+				Summary:  "Error in function call",
+				Detail: fmt.Sprintf(
+					"Call to function %q failed: %s.",
+					e.Name, err,
+				),
+				Subject: e.StartRange().Ptr(),
+				Context: e.Range().Ptr(),
+			})
+		}
+
+		return cty.DynamicVal, diags
+	}
+
+	return resultVal, diags
 }
 
 func (e *FunctionCallExpr) Range() zcl.Range {
