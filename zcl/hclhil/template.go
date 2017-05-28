@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/apparentlymart/go-cty/cty"
-	"github.com/apparentlymart/go-cty/cty/function"
+	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-cty/cty/function"
 	"github.com/zclconf/go-zcl/zcl"
 	"github.com/hashicorp/hil"
 	hilast "github.com/hashicorp/hil/ast"

@@ -3,9 +3,9 @@ package zclsyntax
 import (
 	"fmt"
 
-	"github.com/apparentlymart/go-cty/cty"
-	"github.com/apparentlymart/go-cty/cty/convert"
-	"github.com/apparentlymart/go-cty/cty/function"
+	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-cty/cty/convert"
+	"github.com/zclconf/go-cty/cty/function"
 	"github.com/zclconf/go-zcl/zcl"
 )
 

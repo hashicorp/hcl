@@ -3,7 +3,7 @@ package zcl
 import (
 	"fmt"
 
-	"github.com/apparentlymart/go-cty/cty"
+	"github.com/zclconf/go-cty/cty"
 )
 
 // A Traversal is a description of traversing through a value through a

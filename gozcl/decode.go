@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/apparentlymart/go-cty/cty/convert"
-	"github.com/apparentlymart/go-cty/cty/gocty"
+	"github.com/zclconf/go-cty/cty/convert"
+	"github.com/zclconf/go-cty/cty/gocty"
 	"github.com/zclconf/go-zcl/zcl"
 )
 

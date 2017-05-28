@@ -1,8 +1,8 @@
 package zcl
 
 import (
-	"github.com/apparentlymart/go-cty/cty"
-	"github.com/apparentlymart/go-cty/cty/function"
+	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-cty/cty/function"
 )
 
 // An EvalContext provides the variables and functions that should be used

@@ -1,7 +1,7 @@
 package zcl
 
 import (
-	"github.com/apparentlymart/go-cty/cty"
+	"github.com/zclconf/go-cty/cty"
 )
 
 // File is the top-level node that results from parsing a ZCL file.

@@ -3,9 +3,9 @@ package zclsyntax
 import (
 	"testing"
 
-	"github.com/apparentlymart/go-cty/cty"
-	"github.com/apparentlymart/go-cty/cty/function"
-	"github.com/apparentlymart/go-cty/cty/function/stdlib"
+	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-cty/cty/function"
+	"github.com/zclconf/go-cty/cty/function/stdlib"
 	"github.com/zclconf/go-zcl/zcl"
 )
 

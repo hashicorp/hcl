@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/apparentlymart/go-cty/cty"
+	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-zcl/zcl"
 	zclJSON "github.com/zclconf/go-zcl/zcl/json"
 	"github.com/davecgh/go-spew/spew"

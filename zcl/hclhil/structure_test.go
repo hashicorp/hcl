@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/apparentlymart/go-cty/cty"
+	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-zcl/zcl"
 	"github.com/davecgh/go-spew/spew"
 	hclast "github.com/hashicorp/hcl/hcl/ast"

@@ -3,7 +3,7 @@ package json
 import (
 	"fmt"
 
-	"github.com/apparentlymart/go-cty/cty"
+	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-zcl/zcl"
 	"github.com/zclconf/go-zcl/zcl/hclhil"
 )
