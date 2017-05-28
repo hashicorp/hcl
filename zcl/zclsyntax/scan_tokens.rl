@@ -34,6 +34,9 @@ func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
         NumberLit = digit (digit|'.'|('e'|'E') ('+'|'-')? digit)*;
         Ident = ID_Start ID_Continue*;
 
+        # Symbols that just represent themselves are handled as a single rule.
+        SelfToken = "{" | "}" | "[" | "]" | "(" | ")" | "." | "*" | "/" | "+" | "-" | "=" | "<" | ">" | "!" | "?" | ":" | "\n" | "&" | "|" | "~" | "^" | ";" | "`";
+
         # Tabs are not valid, but we accept them in the scanner and mark them
         # as tokens so that we can produce diagnostics advising the user to
         # use spaces instead.
@@ -45,6 +48,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
             Spaces           => {};
             NumberLit        => { token(TokenNumberLit) };
             Ident            => { token(TokenIdent) };
+            SelfToken        => { selfToken() };
             Tabs             => { token(TokenTabs) };
             AnyUTF8          => { token(TokenInvalid) };
             BrokenUTF8       => { token(TokenBadUTF8) };
@@ -69,6 +73,14 @@ func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
 
     token := func (ty TokenType) {
         f.emitToken(ty, ts, te)
+    }
+    selfToken := func () {
+        b := data[ts:te]
+        if len(b) != 1 {
+            // should never happen
+            panic("selfToken only works for single-character tokens")
+        }
+        f.emitToken(TokenType(b[0]), ts, te)
     }
 
     %%{
