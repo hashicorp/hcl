@@ -53,6 +53,7 @@ const (
 
 	TokenTemplateInterp  TokenType = '∫'
 	TokenTemplateControl TokenType = 'λ'
+	TokenTemplateSeqEnd  TokenType = '∎'
 
 	TokenStringLit TokenType = 'S'
 	TokenHeredoc   TokenType = 'H'
