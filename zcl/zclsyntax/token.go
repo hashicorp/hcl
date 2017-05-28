@@ -79,13 +79,14 @@ const (
 	TokenBadUTF8    TokenType = '💩'
 )
 
-type tokenFactory struct {
+type tokenAccum struct {
 	Filename string
 	Bytes    []byte
 	Start    zcl.Pos
+	Tokens   []Token
 }
 
-func (f tokenFactory) makeToken(ty TokenType, startOfs int, endOfs int) (Token, []byte) {
+func (f *tokenAccum) emitToken(ty TokenType, startOfs int, endOfs int) {
 	// Walk through our buffer to figure out how much we need to adjust
 	// the start pos to get our end pos.
 
@@ -107,7 +108,7 @@ func (f tokenFactory) makeToken(ty TokenType, startOfs int, endOfs int) (Token, 
 		b = b[advance:]
 	}
 
-	return Token{
+	f.Tokens = append(f.Tokens, Token{
 		Type:  ty,
 		Bytes: f.Bytes[startOfs:endOfs],
 		Range: zcl.Range{
@@ -115,5 +116,5 @@ func (f tokenFactory) makeToken(ty TokenType, startOfs int, endOfs int) (Token, 
 			Start:    start,
 			End:      end,
 		},
-	}, f.Bytes[endOfs:]
+	})
 }

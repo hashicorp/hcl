@@ -1,13 +1,13 @@
-// line 1 "scan_token.rl"
+// line 1 "scan_tokens.rl"
 package zclsyntax
 
 import (
 	"github.com/zclconf/go-zcl/zcl"
 )
 
-// This file is generated from scan_token.rl. DO NOT EDIT.
+// This file is generated from scan_tokens.rl. DO NOT EDIT.
 
-// line 12 "scan_token.go"
+// line 12 "scan_tokens.go"
 var _zcltok_actions []byte = []byte{
 	0, 1, 0, 1, 1, 1, 2, 1, 3,
 	1, 4, 1, 5, 1, 6, 1, 7,
@@ -66,18 +66,18 @@ const zcltok_error int = 0
 const zcltok_en_token int = 4
 const zcltok_en_main int = 3
 
-// line 13 "scan_token.rl"
+// line 13 "scan_tokens.rl"
 
-func nextToken(data []byte, filename string, start zcl.Pos) (Token, []byte) {
+func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
 	offset := 0
 
-	f := tokenFactory{
+	f := &tokenAccum{
 		Filename: filename,
 		Bytes:    data,
 		Start:    start,
 	}
 
-	// line 69 "scan_token.rl"
+	// line 69 "scan_tokens.rl"
 
 	// Ragel state
 	cs := 0         // Current State
@@ -94,7 +94,7 @@ func nextToken(data []byte, filename string, start zcl.Pos) (Token, []byte) {
 	_ = act
 	_ = eof
 
-	// line 104 "scan_token.go"
+	// line 104 "scan_tokens.go"
 	{
 		cs = zcltok_start
 		ts = 0
@@ -102,7 +102,7 @@ func nextToken(data []byte, filename string, start zcl.Pos) (Token, []byte) {
 		act = 0
 	}
 
-	// line 112 "scan_token.go"
+	// line 112 "scan_tokens.go"
 	{
 		var _klen int
 		var _trans int
@@ -127,7 +127,7 @@ func nextToken(data []byte, filename string, start zcl.Pos) (Token, []byte) {
 
 				ts = p
 
-				// line 136 "scan_token.go"
+				// line 136 "scan_tokens.go"
 			}
 		}
 
@@ -198,7 +198,7 @@ func nextToken(data []byte, filename string, start zcl.Pos) (Token, []byte) {
 			_acts++
 			switch _zcltok_actions[_acts-1] {
 			case 0:
-				// line 25 "scan_token.rl"
+				// line 25 "scan_tokens.rl"
 
 				offset = p
 				cs = 4
@@ -210,35 +210,35 @@ func nextToken(data []byte, filename string, start zcl.Pos) (Token, []byte) {
 				te = p + 1
 
 			case 4:
-				// line 30 "scan_token.rl"
+				// line 30 "scan_tokens.rl"
 
 				te = p + 1
 				{
-					return f.makeToken(TokenInvalid, offset, p+1)
+					f.emitToken(TokenInvalid, offset, p+1)
 				}
 			case 5:
-				// line 34 "scan_token.rl"
+				// line 34 "scan_tokens.rl"
 
 				te = p + 1
 				{
-					return f.makeToken(TokenBadUTF8, offset, p+1)
+					f.emitToken(TokenBadUTF8, offset, p+1)
 				}
 			case 6:
-				// line 34 "scan_token.rl"
+				// line 34 "scan_tokens.rl"
 
 				te = p
 				p--
 				{
-					return f.makeToken(TokenBadUTF8, offset, p+1)
+					f.emitToken(TokenBadUTF8, offset, p+1)
 				}
 			case 7:
-				// line 34 "scan_token.rl"
+				// line 34 "scan_tokens.rl"
 
 				p = (te) - 1
 				{
-					return f.makeToken(TokenBadUTF8, offset, p+1)
+					f.emitToken(TokenBadUTF8, offset, p+1)
 				}
-				// line 248 "scan_token.go"
+				// line 248 "scan_tokens.go"
 			}
 		}
 
@@ -254,7 +254,7 @@ func nextToken(data []byte, filename string, start zcl.Pos) (Token, []byte) {
 
 				ts = 0
 
-				// line 263 "scan_token.go"
+				// line 263 "scan_tokens.go"
 			}
 		}
 
@@ -280,9 +280,14 @@ func nextToken(data []byte, filename string, start zcl.Pos) (Token, []byte) {
 		}
 	}
 
-	// line 89 "scan_token.rl"
+	// line 89 "scan_tokens.rl"
 
-	// If we fall out here then we'll just classify the remainder of the
-	// file as invalid.
-	return f.makeToken(TokenInvalid, 0, len(data))
+	// If we fall out here without being in a final state then we've
+	// encountered something that the scanner can't match, which we'll
+	// deal with as an invalid.
+	if cs < zcltok_first_final {
+		f.emitToken(TokenInvalid, p, len(data))
+	}
+
+	return f.Tokens
 }

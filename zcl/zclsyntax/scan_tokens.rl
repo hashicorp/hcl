@@ -4,18 +4,18 @@ import (
     "github.com/zclconf/go-zcl/zcl"
 )
 
-// This file is generated from scan_token.rl. DO NOT EDIT.
+// This file is generated from scan_tokens.rl. DO NOT EDIT.
 %%{
-  # (except you are actually in scan_token.rl here, so edit away!)
+  # (except you are actually in scan_tokens.rl here, so edit away!)
 
   machine zcltok;
   write data;
 }%%
 
-func nextToken(data []byte, filename string, start zcl.Pos) (Token, []byte) {
+func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
     offset := 0
 
-    f := tokenFactory{
+    f := &tokenAccum{
         Filename: filename,
         Bytes:    data,
         Start:    start,
@@ -28,15 +28,15 @@ func nextToken(data []byte, filename string, start zcl.Pos) (Token, []byte) {
         }
 
         action EmitInvalid {
-            return f.makeToken(TokenInvalid, offset, p+1)
+            f.emitToken(TokenInvalid, offset, p+1)
         }
 
         action EmitBadUTF8 {
-            return f.makeToken(TokenBadUTF8, offset, p+1)
+            f.emitToken(TokenBadUTF8, offset, p+1)
         }
 
         action EmitEOF {
-            return f.makeToken(TokenEOF, offset, offset)
+            f.emitToken(TokenEOF, offset, offset)
         }
 
         UTF8Cont = 0x80 .. 0xBF;
@@ -88,7 +88,12 @@ func nextToken(data []byte, filename string, start zcl.Pos) (Token, []byte) {
         write exec;
     }%%
 
-    // If we fall out here then we'll just classify the remainder of the
-    // file as invalid.
-    return f.makeToken(TokenInvalid, 0, len(data))
+    // If we fall out here without being in a final state then we've
+    // encountered something that the scanner can't match, which we'll
+    // deal with as an invalid.
+    if cs < zcltok_first_final {
+        f.emitToken(TokenInvalid, p, len(data))
+    }
+
+    return f.Tokens
 }
