@@ -89,6 +89,13 @@ func (t TokenType) GoString() string {
 	return fmt.Sprintf("zclsyntax.%s", t.String())
 }
 
+type scanMode int
+
+const (
+	scanNormal scanMode = iota
+	scanTemplate
+)
+
 type tokenAccum struct {
 	Filename string
 	Bytes    []byte

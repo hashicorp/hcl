@@ -12,7 +12,7 @@ import (
   write data;
 }%%
 
-func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
+func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []Token {
     f := &tokenAccum{
         Filename: filename,
         Bytes:    data,
@@ -156,7 +156,6 @@ func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
     }%%
 
     // Ragel state
-	cs := 0 // Current State
 	p := 0  // "Pointer" into data
 	pe := len(data) // End-of-data "pointer"
     ts := 0
@@ -165,6 +164,18 @@ func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
     eof := pe
     var stack []int
     var top int
+
+    var cs int // current state
+    switch mode {
+    case scanNormal:
+        cs = zcltok_en_main
+    case scanTemplate:
+        // scanTemplate is a variant of heredoc scanning, so will
+        // be implemented once that is implemented.
+        panic("scanTemplate not yet implemented")
+    default:
+        panic("invalid scanMode")
+    }
 
     braces := 0
     var retBraces []int // stack of brace levels that cause us to use fret
@@ -197,7 +208,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
     }
 
     %%{
-        write init;
+        write init nocs;
         write exec;
     }%%
 

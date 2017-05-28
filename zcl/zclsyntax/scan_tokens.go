@@ -100,7 +100,7 @@ var _zcltok_key_offsets []int16 = []int16{
 var _zcltok_trans_keys []byte = []byte{
 	43, 45, 48, 57, 48, 57, 170, 181,
 	183, 186, 128, 150, 152, 182, 184, 255,
-	192, 255, 0, 127, 173, 130, 133, 146,
+	192, 255, 128, 255, 173, 130, 133, 146,
 	159, 165, 171, 175, 255, 181, 190, 184,
 	185, 192, 255, 140, 134, 138, 142, 161,
 	163, 255, 182, 130, 136, 137, 176, 151,
@@ -821,7 +821,7 @@ var _zcltok_index_offsets []int16 = []int16{
 var _zcltok_indicies []int16 = []int16{
 	1, 1, 2, 0, 2, 0, 4, 4,
 	4, 4, 3, 4, 4, 4, 3, 4,
-	3, 4, 3, 4, 3, 3, 3, 3,
+	3, 4, 4, 3, 3, 3, 3, 3,
 	3, 4, 3, 3, 3, 3, 4, 4,
 	4, 4, 4, 3, 3, 4, 3, 3,
 	4, 3, 4, 3, 3, 4, 3, 3,
@@ -1605,7 +1605,7 @@ const zcltok_en_main int = 521
 
 // line 13 "scan_tokens.rl"
 
-func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
+func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []Token {
 	f := &tokenAccum{
 		Filename: filename,
 		Bytes:    data,
@@ -1615,7 +1615,6 @@ func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
 	// line 156 "scan_tokens.rl"
 
 	// Ragel state
-	cs := 0         // Current State
 	p := 0          // "Pointer" into data
 	pe := len(data) // End-of-data "pointer"
 	ts := 0
@@ -1625,10 +1624,22 @@ func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
 	var stack []int
 	var top int
 
+	var cs int // current state
+	switch mode {
+	case scanNormal:
+		cs = zcltok_en_main
+	case scanTemplate:
+		// scanTemplate is a variant of heredoc scanning, so will
+		// be implemented once that is implemented.
+		panic("scanTemplate not yet implemented")
+	default:
+		panic("invalid scanMode")
+	}
+
 	braces := 0
 	var retBraces []int // stack of brace levels that cause us to use fret
 
-	// line 179 "scan_tokens.rl"
+	// line 190 "scan_tokens.rl"
 
 	// Make Go compiler happy
 	_ = ts
@@ -1648,16 +1659,15 @@ func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
 		f.emitToken(TokenType(b[0]), ts, te)
 	}
 
-	// line 1660 "scan_tokens.go"
+	// line 1671 "scan_tokens.go"
 	{
-		cs = zcltok_start
 		top = 0
 		ts = 0
 		te = 0
 		act = 0
 	}
 
-	// line 1669 "scan_tokens.go"
+	// line 1679 "scan_tokens.go"
 	{
 		var _klen int
 		var _trans int
@@ -1679,7 +1689,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
 
 				ts = p
 
-				// line 1690 "scan_tokens.go"
+				// line 1700 "scan_tokens.go"
 			}
 		}
 
@@ -2100,7 +2110,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
 					}
 				}
 
-				// line 2042 "scan_tokens.go"
+				// line 2052 "scan_tokens.go"
 			}
 		}
 
@@ -2116,7 +2126,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
 
 				ts = 0
 
-				// line 2057 "scan_tokens.go"
+				// line 2067 "scan_tokens.go"
 			}
 		}
 
@@ -2136,7 +2146,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
 
 	}
 
-	// line 202 "scan_tokens.rl"
+	// line 213 "scan_tokens.rl"
 
 	// If we fall out here without being in a final state then we've
 	// encountered something that the scanner can't match, which we'll
