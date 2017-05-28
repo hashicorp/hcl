@@ -35,7 +35,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
         Ident = ID_Start ID_Continue*;
 
         # Symbols that just represent themselves are handled as a single rule.
-        SelfToken = "{" | "}" | "[" | "]" | "(" | ")" | "." | "*" | "/" | "+" | "-" | "=" | "<" | ">" | "!" | "?" | ":" | "\n" | "&" | "|" | "~" | "^" | ";" | "`";
+        SelfToken = "[" | "]" | "(" | ")" | "." | "*" | "/" | "+" | "-" | "=" | "<" | ">" | "!" | "?" | ":" | "\n" | "&" | "|" | "~" | "^" | ";" | "`";
 
         NotEqual = "!=";
         GreaterThanEqual = ">=";
@@ -43,12 +43,89 @@ func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
         LogicalAnd = "&&";
         LogicalOr = "||";
 
+        Newline = '\r' ? '\n';
+
+        BeginStringTmpl = '"';
+
         # Tabs are not valid, but we accept them in the scanner and mark them
         # as tokens so that we can produce diagnostics advising the user to
         # use spaces instead.
         Tabs = 0x09+;
 
         Spaces = ' '+;
+
+        action beginStringTemplate {
+            token(TokenOQuote);
+            fcall stringTemplate;
+        }
+
+        action endStringTemplate {
+            token(TokenCQuote);
+            fret;
+        }
+
+        action beginTemplateInterp {
+            token(TokenTemplateInterp);
+            braces++;
+            retBraces = append(retBraces, braces);
+            fcall main;
+        }
+
+        action beginTemplateControl {
+            token(TokenTemplateControl);
+            braces++;
+            retBraces = append(retBraces, braces);
+            fcall main;
+        }
+
+        action openBrace {
+            token(TokenOBrace);
+            braces++;
+        }
+
+        action closeBrace {
+            if len(retBraces) > 0 && retBraces[len(retBraces)-1] == braces {
+                token(TokenTemplateSeqEnd);
+                braces--;
+                retBraces = retBraces[0:len(retBraces)-1]
+                fret;
+            } else {
+                token(TokenCBrace);
+                braces--;
+            }
+        }
+
+        action closeTemplateSeqEatWhitespace {
+            token(TokenTemplateSeqEnd);
+            braces--;
+
+            // Only consume from the retBraces stack and return if we are at
+            // a suitable brace nesting level, otherwise things will get
+            // confused. (Not entering this branch indicates a syntax error,
+            // which we will catch in the parser.)
+            if len(retBraces) > 0 && retBraces[len(retBraces)-1] == braces {
+                retBraces = retBraces[0:len(retBraces)-1]
+                fret;
+            }
+        }
+
+        TemplateInterp = "${" ("~")?;
+        TemplateControl = "!{" ("~")?;
+        EndStringTmpl = '"';
+        TemplateStringLiteral = (
+            ('$' ^'{') |
+            ('!' ^'{') |
+            ('\\' AnyUTF8) |
+            (AnyUTF8 - ("$" | "!" | '"'))
+        )+;
+
+        stringTemplate := |*
+            TemplateInterp        => beginTemplateInterp;
+            TemplateControl       => beginTemplateControl;
+            EndStringTmpl         => endStringTemplate;
+            TemplateStringLiteral => { token(TokenStringLit); };
+            BrokenUTF8            => { token(TokenBadUTF8); };
+        *|;
 
         main := |*
             Spaces           => {};
@@ -61,6 +138,13 @@ func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
             LogicalAnd       => { token(TokenAnd); };
             LogicalOr        => { token(TokenOr); };
             SelfToken        => { selfToken() };
+
+            "{"              => openBrace;
+            "}"              => closeBrace;
+
+            "~}"             => closeTemplateSeqEatWhitespace;
+
+            BeginStringTmpl  => beginStringTemplate;
 
             Tabs             => { token(TokenTabs) };
             AnyUTF8          => { token(TokenInvalid) };
@@ -77,6 +161,20 @@ func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
     te := 0
     act := 0
     eof := pe
+    var stack []int
+    var top int
+
+    braces := 0
+    var retBraces []int // stack of brace levels that cause us to use fret
+
+    %%{
+        prepush {
+            stack = append(stack, 0);
+        }
+        postpop {
+            stack = stack[:len(stack)-1];
+        }
+    }%%
 
     // Make Go compiler happy
     _ = ts

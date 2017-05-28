@@ -213,6 +213,482 @@ func TestScanTokens(t *testing.T) {
 			},
 		},
 
+		// Literal-only Templates (string literals, effectively)
+		{
+			`""`,
+			[]Token{
+				{
+					Type:  TokenOQuote,
+					Bytes: []byte(`"`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   zcl.Pos{Byte: 1, Line: 1, Column: 2},
+					},
+				},
+				{
+					Type:  TokenCQuote,
+					Bytes: []byte(`"`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 1, Line: 1, Column: 2},
+						End:   zcl.Pos{Byte: 2, Line: 1, Column: 3},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 2, Line: 1, Column: 3},
+						End:   zcl.Pos{Byte: 2, Line: 1, Column: 3},
+					},
+				},
+			},
+		},
+		{
+			`"hello"`,
+			[]Token{
+				{
+					Type:  TokenOQuote,
+					Bytes: []byte(`"`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   zcl.Pos{Byte: 1, Line: 1, Column: 2},
+					},
+				},
+				{
+					Type:  TokenStringLit,
+					Bytes: []byte(`hello`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 1, Line: 1, Column: 2},
+						End:   zcl.Pos{Byte: 6, Line: 1, Column: 7},
+					},
+				},
+				{
+					Type:  TokenCQuote,
+					Bytes: []byte(`"`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 6, Line: 1, Column: 7},
+						End:   zcl.Pos{Byte: 7, Line: 1, Column: 8},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 7, Line: 1, Column: 8},
+						End:   zcl.Pos{Byte: 7, Line: 1, Column: 8},
+					},
+				},
+			},
+		},
+
+		// Templates with interpolations and control sequences
+		{
+			`"${1}"`,
+			[]Token{
+				{
+					Type:  TokenOQuote,
+					Bytes: []byte(`"`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   zcl.Pos{Byte: 1, Line: 1, Column: 2},
+					},
+				},
+				{
+					Type:  TokenTemplateInterp,
+					Bytes: []byte(`${`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 1, Line: 1, Column: 2},
+						End:   zcl.Pos{Byte: 3, Line: 1, Column: 4},
+					},
+				},
+				{
+					Type:  TokenNumberLit,
+					Bytes: []byte(`1`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 3, Line: 1, Column: 4},
+						End:   zcl.Pos{Byte: 4, Line: 1, Column: 5},
+					},
+				},
+				{
+					Type:  TokenTemplateSeqEnd,
+					Bytes: []byte(`}`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 4, Line: 1, Column: 5},
+						End:   zcl.Pos{Byte: 5, Line: 1, Column: 6},
+					},
+				},
+				{
+					Type:  TokenCQuote,
+					Bytes: []byte(`"`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 5, Line: 1, Column: 6},
+						End:   zcl.Pos{Byte: 6, Line: 1, Column: 7},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 6, Line: 1, Column: 7},
+						End:   zcl.Pos{Byte: 6, Line: 1, Column: 7},
+					},
+				},
+			},
+		},
+		{
+			`"!{a}"`,
+			[]Token{
+				{
+					Type:  TokenOQuote,
+					Bytes: []byte(`"`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   zcl.Pos{Byte: 1, Line: 1, Column: 2},
+					},
+				},
+				{
+					Type:  TokenTemplateControl,
+					Bytes: []byte(`!{`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 1, Line: 1, Column: 2},
+						End:   zcl.Pos{Byte: 3, Line: 1, Column: 4},
+					},
+				},
+				{
+					Type:  TokenIdent,
+					Bytes: []byte(`a`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 3, Line: 1, Column: 4},
+						End:   zcl.Pos{Byte: 4, Line: 1, Column: 5},
+					},
+				},
+				{
+					Type:  TokenTemplateSeqEnd,
+					Bytes: []byte(`}`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 4, Line: 1, Column: 5},
+						End:   zcl.Pos{Byte: 5, Line: 1, Column: 6},
+					},
+				},
+				{
+					Type:  TokenCQuote,
+					Bytes: []byte(`"`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 5, Line: 1, Column: 6},
+						End:   zcl.Pos{Byte: 6, Line: 1, Column: 7},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 6, Line: 1, Column: 7},
+						End:   zcl.Pos{Byte: 6, Line: 1, Column: 7},
+					},
+				},
+			},
+		},
+		{
+			`"${{}}"`,
+			[]Token{
+				{
+					Type:  TokenOQuote,
+					Bytes: []byte(`"`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   zcl.Pos{Byte: 1, Line: 1, Column: 2},
+					},
+				},
+				{
+					Type:  TokenTemplateInterp,
+					Bytes: []byte(`${`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 1, Line: 1, Column: 2},
+						End:   zcl.Pos{Byte: 3, Line: 1, Column: 4},
+					},
+				},
+				{
+					Type:  TokenOBrace,
+					Bytes: []byte(`{`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 3, Line: 1, Column: 4},
+						End:   zcl.Pos{Byte: 4, Line: 1, Column: 5},
+					},
+				},
+				{
+					Type:  TokenCBrace,
+					Bytes: []byte(`}`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 4, Line: 1, Column: 5},
+						End:   zcl.Pos{Byte: 5, Line: 1, Column: 6},
+					},
+				},
+				{
+					Type:  TokenTemplateSeqEnd,
+					Bytes: []byte(`}`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 5, Line: 1, Column: 6},
+						End:   zcl.Pos{Byte: 6, Line: 1, Column: 7},
+					},
+				},
+				{
+					Type:  TokenCQuote,
+					Bytes: []byte(`"`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 6, Line: 1, Column: 7},
+						End:   zcl.Pos{Byte: 7, Line: 1, Column: 8},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 7, Line: 1, Column: 8},
+						End:   zcl.Pos{Byte: 7, Line: 1, Column: 8},
+					},
+				},
+			},
+		},
+		{
+			`"${""}"`,
+			[]Token{
+				{
+					Type:  TokenOQuote,
+					Bytes: []byte(`"`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   zcl.Pos{Byte: 1, Line: 1, Column: 2},
+					},
+				},
+				{
+					Type:  TokenTemplateInterp,
+					Bytes: []byte(`${`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 1, Line: 1, Column: 2},
+						End:   zcl.Pos{Byte: 3, Line: 1, Column: 4},
+					},
+				},
+				{
+					Type:  TokenOQuote,
+					Bytes: []byte(`"`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 3, Line: 1, Column: 4},
+						End:   zcl.Pos{Byte: 4, Line: 1, Column: 5},
+					},
+				},
+				{
+					Type:  TokenCQuote,
+					Bytes: []byte(`"`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 4, Line: 1, Column: 5},
+						End:   zcl.Pos{Byte: 5, Line: 1, Column: 6},
+					},
+				},
+				{
+					Type:  TokenTemplateSeqEnd,
+					Bytes: []byte(`}`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 5, Line: 1, Column: 6},
+						End:   zcl.Pos{Byte: 6, Line: 1, Column: 7},
+					},
+				},
+				{
+					Type:  TokenCQuote,
+					Bytes: []byte(`"`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 6, Line: 1, Column: 7},
+						End:   zcl.Pos{Byte: 7, Line: 1, Column: 8},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 7, Line: 1, Column: 8},
+						End:   zcl.Pos{Byte: 7, Line: 1, Column: 8},
+					},
+				},
+			},
+		},
+		{
+			`"${"${a}"}"`,
+			[]Token{
+				{
+					Type:  TokenOQuote,
+					Bytes: []byte(`"`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   zcl.Pos{Byte: 1, Line: 1, Column: 2},
+					},
+				},
+				{
+					Type:  TokenTemplateInterp,
+					Bytes: []byte(`${`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 1, Line: 1, Column: 2},
+						End:   zcl.Pos{Byte: 3, Line: 1, Column: 4},
+					},
+				},
+				{
+					Type:  TokenOQuote,
+					Bytes: []byte(`"`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 3, Line: 1, Column: 4},
+						End:   zcl.Pos{Byte: 4, Line: 1, Column: 5},
+					},
+				},
+				{
+					Type:  TokenTemplateInterp,
+					Bytes: []byte(`${`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 4, Line: 1, Column: 5},
+						End:   zcl.Pos{Byte: 6, Line: 1, Column: 7},
+					},
+				},
+				{
+					Type:  TokenIdent,
+					Bytes: []byte(`a`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 6, Line: 1, Column: 7},
+						End:   zcl.Pos{Byte: 7, Line: 1, Column: 8},
+					},
+				},
+				{
+					Type:  TokenTemplateSeqEnd,
+					Bytes: []byte(`}`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 7, Line: 1, Column: 8},
+						End:   zcl.Pos{Byte: 8, Line: 1, Column: 9},
+					},
+				},
+				{
+					Type:  TokenCQuote,
+					Bytes: []byte(`"`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 8, Line: 1, Column: 9},
+						End:   zcl.Pos{Byte: 9, Line: 1, Column: 10},
+					},
+				},
+				{
+					Type:  TokenTemplateSeqEnd,
+					Bytes: []byte(`}`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 9, Line: 1, Column: 10},
+						End:   zcl.Pos{Byte: 10, Line: 1, Column: 11},
+					},
+				},
+				{
+					Type:  TokenCQuote,
+					Bytes: []byte(`"`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 10, Line: 1, Column: 11},
+						End:   zcl.Pos{Byte: 11, Line: 1, Column: 12},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 11, Line: 1, Column: 12},
+						End:   zcl.Pos{Byte: 11, Line: 1, Column: 12},
+					},
+				},
+			},
+		},
+		{
+			`"${"${a} foo"}"`,
+			[]Token{
+				{
+					Type:  TokenOQuote,
+					Bytes: []byte(`"`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   zcl.Pos{Byte: 1, Line: 1, Column: 2},
+					},
+				},
+				{
+					Type:  TokenTemplateInterp,
+					Bytes: []byte(`${`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 1, Line: 1, Column: 2},
+						End:   zcl.Pos{Byte: 3, Line: 1, Column: 4},
+					},
+				},
+				{
+					Type:  TokenOQuote,
+					Bytes: []byte(`"`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 3, Line: 1, Column: 4},
+						End:   zcl.Pos{Byte: 4, Line: 1, Column: 5},
+					},
+				},
+				{
+					Type:  TokenTemplateInterp,
+					Bytes: []byte(`${`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 4, Line: 1, Column: 5},
+						End:   zcl.Pos{Byte: 6, Line: 1, Column: 7},
+					},
+				},
+				{
+					Type:  TokenIdent,
+					Bytes: []byte(`a`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 6, Line: 1, Column: 7},
+						End:   zcl.Pos{Byte: 7, Line: 1, Column: 8},
+					},
+				},
+				{
+					Type:  TokenTemplateSeqEnd,
+					Bytes: []byte(`}`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 7, Line: 1, Column: 8},
+						End:   zcl.Pos{Byte: 8, Line: 1, Column: 9},
+					},
+				},
+				{
+					Type:  TokenStringLit,
+					Bytes: []byte(` foo`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 8, Line: 1, Column: 9},
+						End:   zcl.Pos{Byte: 12, Line: 1, Column: 13},
+					},
+				},
+				{
+					Type:  TokenCQuote,
+					Bytes: []byte(`"`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 12, Line: 1, Column: 13},
+						End:   zcl.Pos{Byte: 13, Line: 1, Column: 14},
+					},
+				},
+				{
+					Type:  TokenTemplateSeqEnd,
+					Bytes: []byte(`}`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 13, Line: 1, Column: 14},
+						End:   zcl.Pos{Byte: 14, Line: 1, Column: 15},
+					},
+				},
+				{
+					Type:  TokenCQuote,
+					Bytes: []byte(`"`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 14, Line: 1, Column: 15},
+						End:   zcl.Pos{Byte: 15, Line: 1, Column: 16},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 15, Line: 1, Column: 16},
+						End:   zcl.Pos{Byte: 15, Line: 1, Column: 16},
+					},
+				},
+			},
+		},
+
 		// Combinations
 		{
 			` (1 + 2) * 3 `,
