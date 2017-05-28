@@ -79,7 +79,7 @@ const (
 	TokenStarStar   TokenType = '➚'
 	TokenBacktick   TokenType = '`'
 	TokenSemicolon  TokenType = ';'
-	TokenTab        TokenType = '␉'
+	TokenTabs       TokenType = '␉'
 	TokenInvalid    TokenType = '�'
 	TokenBadUTF8    TokenType = '💩'
 )
@@ -91,21 +91,21 @@ func (t TokenType) GoString() string {
 type tokenAccum struct {
 	Filename string
 	Bytes    []byte
-	Start    zcl.Pos
+	Pos      zcl.Pos
 	Tokens   []Token
 }
 
-func (f *tokenAccum) emitToken(ty TokenType, startOfs int, endOfs int) {
+func (f *tokenAccum) emitToken(ty TokenType, startOfs, endOfs int) {
 	// Walk through our buffer to figure out how much we need to adjust
 	// the start pos to get our end pos.
 
-	start := f.Start
-	start.Byte += startOfs
-	start.Column += startOfs // Safe because only ASCII spaces can be in the offset
+	start := f.Pos
+	start.Column += startOfs - f.Pos.Byte // Safe because only ASCII spaces can be in the offset
+	start.Byte = startOfs
 
 	end := start
-	end.Byte = f.Start.Byte + endOfs
-	b := f.Bytes
+	end.Byte = endOfs
+	b := f.Bytes[startOfs:endOfs]
 	for len(b) > 0 {
 		advance, seq, _ := textseg.ScanGraphemeClusters(b, true)
 		if len(seq) == 1 && seq[0] == '\n' {
@@ -116,6 +116,8 @@ func (f *tokenAccum) emitToken(ty TokenType, startOfs int, endOfs int) {
 		}
 		b = b[advance:]
 	}
+
+	f.Pos = end
 
 	f.Tokens = append(f.Tokens, Token{
 		Type:  ty,

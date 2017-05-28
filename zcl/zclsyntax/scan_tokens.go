@@ -11,73 +11,73 @@ import (
 var _zcltok_actions []byte = []byte{
 	0, 1, 0, 1, 1, 1, 2, 1, 3,
 	1, 4, 1, 5, 1, 6, 1, 7,
+	1, 8,
 }
 
 var _zcltok_key_offsets []byte = []byte{
-	0, 0, 2, 4, 5, 15, 17, 19,
+	0, 2, 4, 16, 17, 18, 20, 22,
 }
 
 var _zcltok_trans_keys []byte = []byte{
-	128, 191, 128, 191, 32, 128, 191, 192,
-	223, 224, 239, 240, 247, 248, 255, 128,
-	191, 128, 191, 128, 191,
+	128, 191, 128, 191, 9, 32, 128, 191,
+	192, 223, 224, 239, 240, 247, 248, 255,
+	9, 32, 128, 191, 128, 191, 128, 191,
 }
 
 var _zcltok_single_lengths []byte = []byte{
-	0, 0, 0, 1, 0, 0, 0, 0,
+	0, 0, 2, 1, 1, 0, 0, 0,
 }
 
 var _zcltok_range_lengths []byte = []byte{
-	0, 1, 1, 0, 5, 1, 1, 1,
+	1, 1, 5, 0, 0, 1, 1, 1,
 }
 
 var _zcltok_index_offsets []byte = []byte{
-	0, 0, 2, 4, 6, 12, 14, 16,
+	0, 2, 4, 12, 14, 16, 18, 20,
 }
 
 var _zcltok_trans_targs []byte = []byte{
-	4, 4, 1, 4, 3, 0, 4, 5,
-	6, 7, 4, 4, 4, 4, 1, 4,
-	2, 4, 4, 4, 4, 4, 4,
+	2, 2, 0, 2, 3, 4, 2, 5,
+	6, 7, 2, 2, 3, 2, 4, 2,
+	2, 2, 0, 2, 1, 2, 2, 2,
+	2, 2, 2, 2, 2,
 }
 
 var _zcltok_trans_actions []byte = []byte{
-	9, 15, 0, 15, 1, 0, 11, 0,
-	7, 7, 11, 9, 9, 13, 0, 13,
-	0, 13, 15, 15, 13, 13, 13,
+	7, 17, 0, 17, 0, 0, 9, 0,
+	5, 5, 9, 7, 0, 13, 0, 11,
+	7, 15, 0, 15, 0, 15, 17, 17,
+	13, 11, 15, 15, 15,
 }
 
 var _zcltok_to_state_actions []byte = []byte{
-	0, 0, 0, 3, 3, 0, 0, 0,
+	0, 0, 1, 0, 0, 0, 0, 0,
 }
 
 var _zcltok_from_state_actions []byte = []byte{
-	0, 0, 0, 0, 5, 0, 0, 0,
+	0, 0, 3, 0, 0, 0, 0, 0,
 }
 
 var _zcltok_eof_trans []byte = []byte{
-	0, 20, 20, 0, 0, 23, 23, 23,
+	24, 24, 0, 25, 26, 29, 29, 29,
 }
 
-const zcltok_start int = 3
-const zcltok_first_final int = 3
-const zcltok_error int = 0
+const zcltok_start int = 2
+const zcltok_first_final int = 2
+const zcltok_error int = -1
 
-const zcltok_en_token int = 4
-const zcltok_en_main int = 3
+const zcltok_en_main int = 2
 
 // line 13 "scan_tokens.rl"
 
 func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
-	offset := 0
-
 	f := &tokenAccum{
 		Filename: filename,
 		Bytes:    data,
-		Start:    start,
+		Pos:      start,
 	}
 
-	// line 69 "scan_tokens.rl"
+	// line 47 "scan_tokens.rl"
 
 	// Ragel state
 	cs := 0         // Current State
@@ -94,7 +94,11 @@ func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
 	_ = act
 	_ = eof
 
-	// line 104 "scan_tokens.go"
+	token := func(ty TokenType) {
+		f.emitToken(ty, ts, te)
+	}
+
+	// line 109 "scan_tokens.go"
 	{
 		cs = zcltok_start
 		ts = 0
@@ -102,7 +106,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
 		act = 0
 	}
 
-	// line 112 "scan_tokens.go"
+	// line 117 "scan_tokens.go"
 	{
 		var _klen int
 		var _trans int
@@ -112,9 +116,6 @@ func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
 		if p == pe {
 			goto _test_eof
 		}
-		if cs == 0 {
-			goto _out
-		}
 	_resume:
 		_acts = int(_zcltok_from_state_actions[cs])
 		_nacts = uint(_zcltok_actions[_acts])
@@ -122,12 +123,12 @@ func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
 		for ; _nacts > 0; _nacts-- {
 			_acts++
 			switch _zcltok_actions[_acts-1] {
-			case 2:
+			case 1:
 				// line 1 "NONE"
 
 				ts = p
 
-				// line 136 "scan_tokens.go"
+				// line 138 "scan_tokens.go"
 			}
 		}
 
@@ -197,48 +198,55 @@ func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
 		for ; _nacts > 0; _nacts-- {
 			_acts++
 			switch _zcltok_actions[_acts-1] {
-			case 0:
-				// line 25 "scan_tokens.rl"
-
-				offset = p
-				cs = 4
-				goto _again
-
-			case 3:
+			case 2:
 				// line 1 "NONE"
 
 				te = p + 1
 
-			case 4:
-				// line 30 "scan_tokens.rl"
+			case 3:
+				// line 43 "scan_tokens.rl"
 
 				te = p + 1
 				{
-					f.emitToken(TokenInvalid, offset, p+1)
+					token(TokenInvalid)
+				}
+			case 4:
+				// line 44 "scan_tokens.rl"
+
+				te = p + 1
+				{
+					token(TokenBadUTF8)
 				}
 			case 5:
-				// line 34 "scan_tokens.rl"
+				// line 41 "scan_tokens.rl"
 
-				te = p + 1
-				{
-					f.emitToken(TokenBadUTF8, offset, p+1)
-				}
+				te = p
+				p--
+
 			case 6:
-				// line 34 "scan_tokens.rl"
+				// line 42 "scan_tokens.rl"
 
 				te = p
 				p--
 				{
-					f.emitToken(TokenBadUTF8, offset, p+1)
+					token(TokenTabs)
 				}
 			case 7:
-				// line 34 "scan_tokens.rl"
+				// line 44 "scan_tokens.rl"
+
+				te = p
+				p--
+				{
+					token(TokenBadUTF8)
+				}
+			case 8:
+				// line 44 "scan_tokens.rl"
 
 				p = (te) - 1
 				{
-					f.emitToken(TokenBadUTF8, offset, p+1)
+					token(TokenBadUTF8)
 				}
-				// line 248 "scan_tokens.go"
+				// line 245 "scan_tokens.go"
 			}
 		}
 
@@ -249,18 +257,15 @@ func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
 		for ; _nacts > 0; _nacts-- {
 			_acts++
 			switch _zcltok_actions[_acts-1] {
-			case 1:
+			case 0:
 				// line 1 "NONE"
 
 				ts = 0
 
-				// line 263 "scan_tokens.go"
+				// line 260 "scan_tokens.go"
 			}
 		}
 
-		if cs == 0 {
-			goto _out
-		}
 		p++
 		if p != pe {
 			goto _resume
@@ -275,12 +280,9 @@ func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
 			}
 		}
 
-	_out:
-		{
-		}
 	}
 
-	// line 89 "scan_tokens.rl"
+	// line 71 "scan_tokens.rl"
 
 	// If we fall out here without being in a final state then we've
 	// encountered something that the scanner can't match, which we'll
@@ -288,6 +290,10 @@ func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
 	if cs < zcltok_first_final {
 		f.emitToken(TokenInvalid, p, len(data))
 	}
+
+	// We always emit a synthetic EOF token at the end, since it gives the
+	// parser position information for an "unexpected EOF" diagnostic.
+	f.emitToken(TokenEOF, len(data), len(data))
 
 	return f.Tokens
 }

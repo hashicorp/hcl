@@ -4,7 +4,7 @@ package zclsyntax
 
 import "fmt"
 
-const _TokenType_name = "TokenNewlineTokenBangTokenBitwiseAndTokenOParenTokenCParenTokenStarTokenPlusTokenMinusTokenDotTokenSlashTokenColonTokenSemicolonTokenLessThanTokenEqualTokenGreaterThanTokenQuestionTokenHeredocTokenIdentTokenNumberLitTokenStringLitTokenOBrackTokenCBrackTokenBitwiseXorTokenBacktickTokenOBraceTokenBitwiseOrTokenCBraceTokenBitwiseNotTokenOQuoteTokenCQuoteTokenTemplateControlTokenTemplateSeqEndTokenAndTokenOrTokenTemplateInterpTokenNotEqualTokenLessThanEqTokenGreaterThanEqTokenEOFTokenTabTokenStarStarTokenInvalidTokenBadUTF8"
+const _TokenType_name = "TokenNewlineTokenBangTokenBitwiseAndTokenOParenTokenCParenTokenStarTokenPlusTokenMinusTokenDotTokenSlashTokenColonTokenSemicolonTokenLessThanTokenEqualTokenGreaterThanTokenQuestionTokenHeredocTokenIdentTokenNumberLitTokenStringLitTokenOBrackTokenCBrackTokenBitwiseXorTokenBacktickTokenOBraceTokenBitwiseOrTokenCBraceTokenBitwiseNotTokenOQuoteTokenCQuoteTokenTemplateControlTokenTemplateSeqEndTokenAndTokenOrTokenTemplateInterpTokenNotEqualTokenLessThanEqTokenGreaterThanEqTokenEOFTokenTabsTokenStarStarTokenInvalidTokenBadUTF8"
 
 var _TokenType_map = map[TokenType]string{
 	10:     _TokenType_name[0:12],
@@ -46,10 +46,10 @@ var _TokenType_map = map[TokenType]string{
 	8804:   _TokenType_name[439:454],
 	8805:   _TokenType_name[454:472],
 	9220:   _TokenType_name[472:480],
-	9225:   _TokenType_name[480:488],
-	10138:  _TokenType_name[488:501],
-	65533:  _TokenType_name[501:513],
-	128169: _TokenType_name[513:525],
+	9225:   _TokenType_name[480:489],
+	10138:  _TokenType_name[489:502],
+	65533:  _TokenType_name[502:514],
+	128169: _TokenType_name[514:526],
 }
 
 func (i TokenType) String() string {

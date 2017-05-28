@@ -13,31 +13,13 @@ import (
 }%%
 
 func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
-    offset := 0
-
     f := &tokenAccum{
         Filename: filename,
         Bytes:    data,
-        Start:    start,
+        Pos:      start,
     }
 
     %%{
-        action start {
-            offset = p
-            fgoto token;
-        }
-
-        action EmitInvalid {
-            f.emitToken(TokenInvalid, offset, p+1)
-        }
-
-        action EmitBadUTF8 {
-            f.emitToken(TokenBadUTF8, offset, p+1)
-        }
-
-        action EmitEOF {
-            f.emitToken(TokenEOF, offset, offset)
-        }
 
         UTF8Cont = 0x80 .. 0xBF;
         AnyUTF8 = (
@@ -46,25 +28,21 @@ func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
             0xE0..0xEF . UTF8Cont . UTF8Cont |
             0xF0..0xF7 . UTF8Cont . UTF8Cont . UTF8Cont
         );
-
-        AnyUTF8Tok = AnyUTF8 >start;
         BrokenUTF8 = any - AnyUTF8;
-        EmptyTok = "";
 
         # Tabs are not valid, but we accept them in the scanner and mark them
         # as tokens so that we can produce diagnostics advising the user to
         # use spaces instead.
-        TabTok = 0x09 >start;
+        Tabs = 0x09+;
 
-        token := |*
-            AnyUTF8    => EmitInvalid;
-            BrokenUTF8 => EmitBadUTF8;
-            EmptyTok   => EmitEOF;
+        Spaces = ' '+;
+
+        main := |*
+            Spaces     => {};
+            Tabs       => { token(TokenTabs) };
+            AnyUTF8    => { token(TokenInvalid) };
+            BrokenUTF8 => { token(TokenBadUTF8) };
         *|;
-
-        Spaces = ' '*;
-
-        main := Spaces @start;
 
     }%%
 
@@ -83,6 +61,10 @@ func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
     _ = act
     _ = eof
 
+    token := func (ty TokenType) {
+        f.emitToken(ty, ts, te)
+    }
+
     %%{
         write init;
         write exec;
@@ -94,6 +76,10 @@ func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
     if cs < zcltok_first_final {
         f.emitToken(TokenInvalid, p, len(data))
     }
+
+    // We always emit a synthetic EOF token at the end, since it gives the
+    // parser position information for an "unexpected EOF" diagnostic.
+    f.emitToken(TokenEOF, len(data), len(data))
 
     return f.Tokens
 }
