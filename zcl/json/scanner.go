@@ -3,6 +3,7 @@ package json
 import (
 	"fmt"
 
+	"github.com/apparentlymart/go-textseg/textseg"
 	"github.com/apparentlymart/go-zcl/zcl"
 )
 
@@ -213,15 +214,14 @@ Byte:
 		case b < 32:
 			break Byte
 		default:
-			// TODO: Use Unicode Text Segmentation spec to advance
-			// Column only once per grapheme cluster, rather than once per
-			// byte.
-			// Consume one or more UTF-8 codepoints that together form
-			// a single grapheme cluster.
+			// Advance by one grapheme cluster, so that we consider each
+			// grapheme to be a "column".
+			// Ignoring error because this scanner cannot produce errors.
+			advance, _, _ := textseg.ScanGraphemeClusters(buf[i:], true)
 
-			p.Pos.Byte++
+			p.Pos.Byte += advance
 			p.Pos.Column++
-			i++
+			i += advance
 
 			escaping = false
 		}

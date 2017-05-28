@@ -738,6 +738,78 @@ func TestScan(t *testing.T) {
 				},
 			},
 		},
+		{
+			`"🇬🇧"`,
+			[]token{
+				{
+					Type:  tokenString,
+					Bytes: []byte(`"🇬🇧"`),
+					Range: zcl.Range{
+						Start: zcl.Pos{
+							Byte:   0,
+							Line:   1,
+							Column: 1,
+						},
+						End: zcl.Pos{
+							Byte:   10,
+							Line:   1,
+							Column: 4,
+						},
+					},
+				},
+				{
+					Type: tokenEOF,
+					Range: zcl.Range{
+						Start: zcl.Pos{
+							Byte:   10,
+							Line:   1,
+							Column: 4,
+						},
+						End: zcl.Pos{
+							Byte:   10,
+							Line:   1,
+							Column: 4,
+						},
+					},
+				},
+			},
+		},
+		{
+			`"á́́́́́́́"`,
+			[]token{
+				{
+					Type:  tokenString,
+					Bytes: []byte(`"á́́́́́́́"`),
+					Range: zcl.Range{
+						Start: zcl.Pos{
+							Byte:   0,
+							Line:   1,
+							Column: 1,
+						},
+						End: zcl.Pos{
+							Byte:   19,
+							Line:   1,
+							Column: 4,
+						},
+					},
+				},
+				{
+					Type: tokenEOF,
+					Range: zcl.Range{
+						Start: zcl.Pos{
+							Byte:   19,
+							Line:   1,
+							Column: 4,
+						},
+						End: zcl.Pos{
+							Byte:   19,
+							Line:   1,
+							Column: 4,
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
