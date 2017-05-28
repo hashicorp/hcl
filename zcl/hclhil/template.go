@@ -7,7 +7,7 @@ import (
 
 	"github.com/apparentlymart/go-cty/cty"
 	"github.com/apparentlymart/go-cty/cty/function"
-	"github.com/apparentlymart/go-zcl/zcl"
+	"github.com/zclconf/go-zcl/zcl"
 	"github.com/hashicorp/hil"
 	hilast "github.com/hashicorp/hil/ast"
 )

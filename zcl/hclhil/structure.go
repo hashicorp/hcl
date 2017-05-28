@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/apparentlymart/go-cty/cty"
-	"github.com/apparentlymart/go-zcl/zcl"
+	"github.com/zclconf/go-zcl/zcl"
 	hclast "github.com/hashicorp/hcl/hcl/ast"
 	hcltoken "github.com/hashicorp/hcl/hcl/token"
 )

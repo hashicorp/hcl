@@ -89,7 +89,7 @@ const outputPreamble = `package zclsyntax
 // Run 'go generate' on this package to update the set of functions here.
 
 import (
-	"github.com/apparentlymart/go-zcl/zcl"
+	"github.com/zclconf/go-zcl/zcl"
 )`
 
 const outputMethodFmt = `

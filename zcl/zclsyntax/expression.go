@@ -6,7 +6,7 @@ import (
 	"github.com/apparentlymart/go-cty/cty"
 	"github.com/apparentlymart/go-cty/cty/convert"
 	"github.com/apparentlymart/go-cty/cty/function"
-	"github.com/apparentlymart/go-zcl/zcl"
+	"github.com/zclconf/go-zcl/zcl"
 )
 
 // Expression is the abstract type for nodes that behave as zcl expressions.

@@ -1,7 +1,7 @@
 package hclhil
 
 import (
-	"github.com/apparentlymart/go-zcl/zcl"
+	"github.com/zclconf/go-zcl/zcl"
 	hclparser "github.com/hashicorp/hcl/hcl/parser"
 	hcltoken "github.com/hashicorp/hcl/hcl/token"
 	hilast "github.com/hashicorp/hil/ast"

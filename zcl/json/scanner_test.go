@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/apparentlymart/go-zcl/zcl"
+	"github.com/zclconf/go-zcl/zcl"
 )
 
 func TestScan(t *testing.T) {

@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/apparentlymart/go-cty/cty"
-	"github.com/apparentlymart/go-zcl/zcl"
+	"github.com/zclconf/go-zcl/zcl"
 	"github.com/davecgh/go-spew/spew"
 	hclast "github.com/hashicorp/hcl/hcl/ast"
 	hcltoken "github.com/hashicorp/hcl/hcl/token"

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/apparentlymart/go-cty/cty"
-	"github.com/apparentlymart/go-zcl/zcl"
+	"github.com/zclconf/go-zcl/zcl"
 )
 
 func TestParse_nonObject(t *testing.T) {

@@ -1,9 +1,9 @@
 package zclparse
 
 import (
-	"github.com/apparentlymart/go-zcl/zcl"
-	"github.com/apparentlymart/go-zcl/zcl/hclhil"
-	"github.com/apparentlymart/go-zcl/zcl/json"
+	"github.com/zclconf/go-zcl/zcl"
+	"github.com/zclconf/go-zcl/zcl/hclhil"
+	"github.com/zclconf/go-zcl/zcl/json"
 )
 
 // NOTE: This is the public interface for parsing. The actual parsers are

@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/apparentlymart/go-cty/cty"
-	"github.com/apparentlymart/go-zcl/zcl"
-	"github.com/apparentlymart/go-zcl/zcl/hclhil"
+	"github.com/zclconf/go-zcl/zcl"
+	"github.com/zclconf/go-zcl/zcl/hclhil"
 )
 
 // body is the implementation of "Body" used for files processed with the JSON

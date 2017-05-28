@@ -1,6 +1,6 @@
 package zclsyntax
 
-import "github.com/apparentlymart/go-zcl/zcl"
+import "github.com/zclconf/go-zcl/zcl"
 
 // File is the top-level object resulting from parsing a configuration file.
 type File struct {

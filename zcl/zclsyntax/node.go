@@ -1,7 +1,7 @@
 package zclsyntax
 
 import (
-	"github.com/apparentlymart/go-zcl/zcl"
+	"github.com/zclconf/go-zcl/zcl"
 )
 
 // Node is the abstract type that every AST node implements.

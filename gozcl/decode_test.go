@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/apparentlymart/go-cty/cty"
-	"github.com/apparentlymart/go-zcl/zcl"
-	zclJSON "github.com/apparentlymart/go-zcl/zcl/json"
+	"github.com/zclconf/go-zcl/zcl"
+	zclJSON "github.com/zclconf/go-zcl/zcl/json"
 	"github.com/davecgh/go-spew/spew"
 )
 

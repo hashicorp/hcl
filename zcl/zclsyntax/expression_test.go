@@ -6,7 +6,7 @@ import (
 	"github.com/apparentlymart/go-cty/cty"
 	"github.com/apparentlymart/go-cty/cty/function"
 	"github.com/apparentlymart/go-cty/cty/function/stdlib"
-	"github.com/apparentlymart/go-zcl/zcl"
+	"github.com/zclconf/go-zcl/zcl"
 )
 
 func TestFunctionCallExprValue(t *testing.T) {

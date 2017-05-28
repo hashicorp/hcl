@@ -6,7 +6,7 @@ import (
 
 	"github.com/apparentlymart/go-cty/cty/convert"
 	"github.com/apparentlymart/go-cty/cty/gocty"
-	"github.com/apparentlymart/go-zcl/zcl"
+	"github.com/zclconf/go-zcl/zcl"
 )
 
 // DecodeBody extracts the configuration within the given body into the given
