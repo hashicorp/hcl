@@ -148,6 +148,71 @@ func TestScanTokens(t *testing.T) {
 			},
 		},
 
+		// TokenIdent
+		{
+			`hello`,
+			[]Token{
+				{
+					Type:  TokenIdent,
+					Bytes: []byte(`hello`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   zcl.Pos{Byte: 5, Line: 1, Column: 6},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 5, Line: 1, Column: 6},
+						End:   zcl.Pos{Byte: 5, Line: 1, Column: 6},
+					},
+				},
+			},
+		},
+		{
+			`h3ll0`,
+			[]Token{
+				{
+					Type:  TokenIdent,
+					Bytes: []byte(`h3ll0`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   zcl.Pos{Byte: 5, Line: 1, Column: 6},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 5, Line: 1, Column: 6},
+						End:   zcl.Pos{Byte: 5, Line: 1, Column: 6},
+					},
+				},
+			},
+		},
+		{
+			`héllo`, // combining acute accent
+			[]Token{
+				{
+					Type:  TokenIdent,
+					Bytes: []byte(`héllo`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   zcl.Pos{Byte: 7, Line: 1, Column: 6},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 7, Line: 1, Column: 6},
+						End:   zcl.Pos{Byte: 7, Line: 1, Column: 6},
+					},
+				},
+			},
+		},
+
 		// Invalid things
 		{
 			`|`,

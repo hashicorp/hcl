@@ -20,6 +20,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
     }
 
     %%{
+        include UnicodeDerived "unicode_derived.rl";
 
         UTF8Cont = 0x80 .. 0xBF;
         AnyUTF8 = (
@@ -31,6 +32,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
         BrokenUTF8 = any - AnyUTF8;
 
         NumberLit = digit (digit|'.'|('e'|'E') ('+'|'-')? digit)*;
+        Ident = ID_Start ID_Continue*;
 
         # Tabs are not valid, but we accept them in the scanner and mark them
         # as tokens so that we can produce diagnostics advising the user to
@@ -42,6 +44,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
         main := |*
             Spaces           => {};
             NumberLit        => { token(TokenNumberLit) };
+            Ident            => { token(TokenIdent) };
             Tabs             => { token(TokenTabs) };
             AnyUTF8          => { token(TokenInvalid) };
             BrokenUTF8       => { token(TokenBadUTF8) };
