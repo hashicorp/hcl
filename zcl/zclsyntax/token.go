@@ -26,14 +26,16 @@ const (
 	// are otherwise arbitrary and just intended to be mnemonic for humans
 	// who might see them in debug output.
 
-	TokenOBrace TokenType = '{'
-	TokenCBrace TokenType = '}'
-	TokenOBrack TokenType = '['
-	TokenCBrack TokenType = ']'
-	TokenOParen TokenType = '('
-	TokenCParen TokenType = ')'
-	TokenOQuote TokenType = '«'
-	TokenCQuote TokenType = '»'
+	TokenOBrace   TokenType = '{'
+	TokenCBrace   TokenType = '}'
+	TokenOBrack   TokenType = '['
+	TokenCBrack   TokenType = ']'
+	TokenOParen   TokenType = '('
+	TokenCParen   TokenType = ')'
+	TokenOQuote   TokenType = '«'
+	TokenCQuote   TokenType = '»'
+	TokenOHeredoc TokenType = 'H'
+	TokenCHeredoc TokenType = 'h'
 
 	TokenDot   TokenType = '.'
 	TokenStar  TokenType = '*'
@@ -60,7 +62,6 @@ const (
 	TokenTemplateSeqEnd  TokenType = '∎'
 
 	TokenStringLit TokenType = 'S'
-	TokenHeredoc   TokenType = 'H'
 	TokenNumberLit TokenType = 'N'
 	TokenIdent     TokenType = 'I'
 
