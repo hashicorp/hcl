@@ -30,6 +30,8 @@ func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
         );
         BrokenUTF8 = any - AnyUTF8;
 
+        NumberLit = digit (digit|'.'|('e'|'E') ('+'|'-')? digit)*;
+
         # Tabs are not valid, but we accept them in the scanner and mark them
         # as tokens so that we can produce diagnostics advising the user to
         # use spaces instead.
@@ -38,10 +40,11 @@ func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
         Spaces = ' '+;
 
         main := |*
-            Spaces     => {};
-            Tabs       => { token(TokenTabs) };
-            AnyUTF8    => { token(TokenInvalid) };
-            BrokenUTF8 => { token(TokenBadUTF8) };
+            Spaces           => {};
+            NumberLit        => { token(TokenNumberLit) };
+            Tabs             => { token(TokenTabs) };
+            AnyUTF8          => { token(TokenInvalid) };
+            BrokenUTF8       => { token(TokenBadUTF8) };
         *|;
 
     }%%

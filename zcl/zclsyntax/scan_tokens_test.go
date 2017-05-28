@@ -13,6 +13,7 @@ func TestScanTokens(t *testing.T) {
 		input string
 		want  []Token
 	}{
+		// Empty input
 		{
 			``,
 			[]Token{
@@ -39,6 +40,115 @@ func TestScanTokens(t *testing.T) {
 				},
 			},
 		},
+
+		// TokenNumberLit
+		{
+			`1`,
+			[]Token{
+				{
+					Type:  TokenNumberLit,
+					Bytes: []byte(`1`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   zcl.Pos{Byte: 1, Line: 1, Column: 2},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 1, Line: 1, Column: 2},
+						End:   zcl.Pos{Byte: 1, Line: 1, Column: 2},
+					},
+				},
+			},
+		},
+		{
+			`12`,
+			[]Token{
+				{
+					Type:  TokenNumberLit,
+					Bytes: []byte(`12`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   zcl.Pos{Byte: 2, Line: 1, Column: 3},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 2, Line: 1, Column: 3},
+						End:   zcl.Pos{Byte: 2, Line: 1, Column: 3},
+					},
+				},
+			},
+		},
+		{
+			`12.3`,
+			[]Token{
+				{
+					Type:  TokenNumberLit,
+					Bytes: []byte(`12.3`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   zcl.Pos{Byte: 4, Line: 1, Column: 5},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 4, Line: 1, Column: 5},
+						End:   zcl.Pos{Byte: 4, Line: 1, Column: 5},
+					},
+				},
+			},
+		},
+		{
+			`1e2`,
+			[]Token{
+				{
+					Type:  TokenNumberLit,
+					Bytes: []byte(`1e2`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   zcl.Pos{Byte: 3, Line: 1, Column: 4},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 3, Line: 1, Column: 4},
+						End:   zcl.Pos{Byte: 3, Line: 1, Column: 4},
+					},
+				},
+			},
+		},
+		{
+			`1e+2`,
+			[]Token{
+				{
+					Type:  TokenNumberLit,
+					Bytes: []byte(`1e+2`),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   zcl.Pos{Byte: 4, Line: 1, Column: 5},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 4, Line: 1, Column: 5},
+						End:   zcl.Pos{Byte: 4, Line: 1, Column: 5},
+					},
+				},
+			},
+		},
+
+		// Invalid things
 		{
 			`|`,
 			[]Token{
