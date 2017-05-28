@@ -112,11 +112,12 @@ func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
         TemplateInterp = "${" ("~")?;
         TemplateControl = "!{" ("~")?;
         EndStringTmpl = '"';
+        StringLiteralChars = (AnyUTF8 - ("\r"|"\n"));
         TemplateStringLiteral = (
             ('$' ^'{') |
             ('!' ^'{') |
-            ('\\' AnyUTF8) |
-            (AnyUTF8 - ("$" | "!" | '"'))
+            ('\\' StringLiteralChars) |
+            (StringLiteralChars - ("$" | "!" | '"'))
         )+;
 
         stringTemplate := |*
@@ -124,6 +125,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
             TemplateControl       => beginTemplateControl;
             EndStringTmpl         => endStringTemplate;
             TemplateStringLiteral => { token(TokenStringLit); };
+            AnyUTF8               => { token(TokenInvalid); };
             BrokenUTF8            => { token(TokenBadUTF8); };
         *|;
 
