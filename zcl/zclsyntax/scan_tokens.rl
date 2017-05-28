@@ -37,6 +37,12 @@ func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
         # Symbols that just represent themselves are handled as a single rule.
         SelfToken = "{" | "}" | "[" | "]" | "(" | ")" | "." | "*" | "/" | "+" | "-" | "=" | "<" | ">" | "!" | "?" | ":" | "\n" | "&" | "|" | "~" | "^" | ";" | "`";
 
+        NotEqual = "!=";
+        GreaterThanEqual = ">=";
+        LessThanEqual = "<=";
+        LogicalAnd = "&&";
+        LogicalOr = "||";
+
         # Tabs are not valid, but we accept them in the scanner and mark them
         # as tokens so that we can produce diagnostics advising the user to
         # use spaces instead.
@@ -48,7 +54,14 @@ func scanTokens(data []byte, filename string, start zcl.Pos) []Token {
             Spaces           => {};
             NumberLit        => { token(TokenNumberLit) };
             Ident            => { token(TokenIdent) };
+
+            NotEqual         => { token(TokenNotEqual); };
+            GreaterThanEqual => { token(TokenGreaterThanEq); };
+            LessThanEqual    => { token(TokenLessThanEq); };
+            LogicalAnd       => { token(TokenAnd); };
+            LogicalOr        => { token(TokenOr); };
             SelfToken        => { selfToken() };
+
             Tabs             => { token(TokenTabs) };
             AnyUTF8          => { token(TokenInvalid) };
             BrokenUTF8       => { token(TokenBadUTF8) };
