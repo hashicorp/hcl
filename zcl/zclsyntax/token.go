@@ -1,6 +1,8 @@
 package zclsyntax
 
 import (
+	"fmt"
+
 	"github.com/apparentlymart/go-textseg/textseg"
 	"github.com/zclconf/go-zcl/zcl"
 )
@@ -15,6 +17,8 @@ type Token struct {
 
 // TokenType is an enumeration used for the Type field on Token.
 type TokenType rune
+
+//go:generate stringer -type TokenType -output token_type_string.go
 
 const (
 	// Single-character tokens are represented by their own character, for
@@ -79,6 +83,10 @@ const (
 	TokenInvalid    TokenType = '�'
 	TokenBadUTF8    TokenType = '💩'
 )
+
+func (t TokenType) GoString() string {
+	return fmt.Sprintf("zclsyntax.%s", t.String())
+}
 
 type tokenAccum struct {
 	Filename string
