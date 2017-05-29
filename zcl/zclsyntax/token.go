@@ -15,6 +15,9 @@ type Token struct {
 	Range zcl.Range
 }
 
+// Tokens is a slice of Token.
+type Tokens []Token
+
 // TokenType is an enumeration used for the Type field on Token.
 type TokenType rune
 
