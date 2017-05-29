@@ -8,7 +8,7 @@ import (
 	"github.com/zclconf/go-zcl/zcl"
 )
 
-func TestScanTokens(t *testing.T) {
+func TestScanTokens_normal(t *testing.T) {
 	tests := []struct {
 		input string
 		want  []Token
@@ -1293,6 +1293,102 @@ EOF
 	for _, test := range tests {
 		t.Run(test.input, func(t *testing.T) {
 			got := scanTokens([]byte(test.input), "", zcl.Pos{Byte: 0, Line: 1, Column: 1}, scanNormal)
+
+			if !reflect.DeepEqual(got, test.want) {
+				diff := prettyConfig.Compare(test.want, got)
+				t.Errorf(
+					"wrong result\ninput: %s\ndiff:  %s",
+					test.input, diff,
+				)
+			}
+		})
+	}
+}
+
+func TestScanTokens_template(t *testing.T) {
+	tests := []struct {
+		input string
+		want  []Token
+	}{
+		// Empty input
+		{
+			``,
+			[]Token{
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   zcl.Pos{Byte: 0, Line: 1, Column: 1},
+					},
+				},
+			},
+		},
+
+		// Simple literals
+		{
+			` hello `,
+			[]Token{
+				{
+					Type:  TokenStringLit,
+					Bytes: []byte(` hello `),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   zcl.Pos{Byte: 7, Line: 1, Column: 8},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 7, Line: 1, Column: 8},
+						End:   zcl.Pos{Byte: 7, Line: 1, Column: 8},
+					},
+				},
+			},
+		},
+		{
+			"\nhello\n",
+			[]Token{
+				{
+					Type:  TokenStringLit,
+					Bytes: []byte("\n"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   zcl.Pos{Byte: 1, Line: 2, Column: 1},
+					},
+				},
+				{
+					Type:  TokenStringLit,
+					Bytes: []byte("hello\n"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 1, Line: 2, Column: 1},
+						End:   zcl.Pos{Byte: 7, Line: 3, Column: 1},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 7, Line: 3, Column: 1},
+						End:   zcl.Pos{Byte: 7, Line: 3, Column: 1},
+					},
+				},
+			},
+		},
+
+		// TODO: also test interpolation sequences
+	}
+
+	prettyConfig := &pretty.Config{
+		Diffable:          true,
+		IncludeUnexported: true,
+		PrintStringers:    true,
+	}
+
+	for _, test := range tests {
+		t.Run(test.input, func(t *testing.T) {
+			got := scanTokens([]byte(test.input), "", zcl.Pos{Byte: 0, Line: 1, Column: 1}, scanTemplate)
 
 			if !reflect.DeepEqual(got, test.want) {
 				diff := prettyConfig.Compare(test.want, got)

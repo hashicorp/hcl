@@ -123,6 +123,10 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
             token(TokenStringLit);
         }
 
+        action bareTemplateLiteral {
+            token(TokenStringLit);
+        }
+
         action beginTemplateInterp {
             token(TokenTemplateInterp);
             braces++;
@@ -189,6 +193,11 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
             ('!' ^'{') |
             (StringLiteralChars - ("$" | "!"))
         )*;
+        BareStringLiteral = (
+            ('$' ^'{') |
+            ('!' ^'{') |
+            (StringLiteralChars - ("$" | "!"))
+        )* Newline?;
 
         stringTemplate := |*
             TemplateInterp        => beginTemplateInterp;
@@ -204,6 +213,13 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
             TemplateControl       => beginTemplateControl;
             HeredocStringLiteral EndOfLine => heredocLiteralEOL;
             HeredocStringLiteral  => heredocLiteralMidline;
+            BrokenUTF8            => { token(TokenBadUTF8); };
+        *|;
+
+        bareTemplate := |*
+            TemplateInterp        => beginTemplateInterp;
+            TemplateControl       => beginTemplateControl;
+            BareStringLiteral     => bareTemplateLiteral;
             BrokenUTF8            => { token(TokenBadUTF8); };
         *|;
 
@@ -252,9 +268,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
     case scanNormal:
         cs = zcltok_en_main
     case scanTemplate:
-        // scanTemplate is a variant of heredoc scanning, so will
-        // be implemented once that is implemented.
-        panic("scanTemplate not yet implemented")
+        cs = zcltok_en_bareTemplate
     default:
         panic("invalid scanMode")
     }
