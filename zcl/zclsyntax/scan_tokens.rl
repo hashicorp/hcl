@@ -213,6 +213,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
             Ident            => { token(TokenIdent) };
 
             Comment          => { token(TokenComment) };
+            Newline          => { token(TokenNewline) };
 
             NotEqual         => { token(TokenNotEqual); };
             GreaterThanEqual => { token(TokenGreaterThanEq); };

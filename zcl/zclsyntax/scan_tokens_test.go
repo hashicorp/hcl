@@ -40,6 +40,35 @@ func TestScanTokens(t *testing.T) {
 				},
 			},
 		},
+		{
+			"\n\n",
+			[]Token{
+				{
+					Type:  TokenNewline,
+					Bytes: []byte("\n"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   zcl.Pos{Byte: 1, Line: 2, Column: 1},
+					},
+				},
+				{
+					Type:  TokenNewline,
+					Bytes: []byte("\n"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 1, Line: 2, Column: 1},
+						End:   zcl.Pos{Byte: 2, Line: 3, Column: 1},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 2, Line: 3, Column: 1},
+						End:   zcl.Pos{Byte: 2, Line: 3, Column: 1},
+					},
+				},
+			},
+		},
 
 		// TokenNumberLit
 		{
@@ -1016,6 +1045,59 @@ EOF
 					Range: zcl.Range{
 						Start: zcl.Pos{Byte: 13, Line: 1, Column: 14},
 						End:   zcl.Pos{Byte: 13, Line: 1, Column: 14},
+					},
+				},
+			},
+		},
+		{
+			"\na = 1\n",
+			[]Token{
+				{
+					Type:  TokenNewline,
+					Bytes: []byte("\n"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   zcl.Pos{Byte: 1, Line: 2, Column: 1},
+					},
+				},
+				{
+					Type:  TokenIdent,
+					Bytes: []byte("a"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 1, Line: 2, Column: 1},
+						End:   zcl.Pos{Byte: 2, Line: 2, Column: 2},
+					},
+				},
+				{
+					Type:  TokenEqual,
+					Bytes: []byte("="),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 3, Line: 2, Column: 3},
+						End:   zcl.Pos{Byte: 4, Line: 2, Column: 4},
+					},
+				},
+				{
+					Type:  TokenNumberLit,
+					Bytes: []byte("1"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 5, Line: 2, Column: 5},
+						End:   zcl.Pos{Byte: 6, Line: 2, Column: 6},
+					},
+				},
+				{
+					Type:  TokenNewline,
+					Bytes: []byte("\n"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 6, Line: 2, Column: 6},
+						End:   zcl.Pos{Byte: 7, Line: 3, Column: 1},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 7, Line: 3, Column: 1},
+						End:   zcl.Pos{Byte: 7, Line: 3, Column: 1},
 					},
 				},
 			},
