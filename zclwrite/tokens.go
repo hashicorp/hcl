@@ -24,7 +24,7 @@ type Token struct {
 	// reproduce the exact layout of the original file when we're making
 	// surgical changes in-place. When _new_ code is created it will always
 	// be in the canonical style, but we preserve layout of existing code.
-	SpaceBefore int
+	SpacesBefore int
 }
 
 // Tokens is a flat list of tokens.

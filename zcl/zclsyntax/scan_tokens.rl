@@ -62,6 +62,9 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
         # use spaces instead.
         Tabs = 0x09+;
 
+        # Note: zclwrite assumes that only ASCII spaces appear between tokens,
+        # and uses this assumption to recreate the spaces between tokens by
+        # looking at byte offset differences.
         Spaces = ' '+;
 
         action beginStringTemplate {
