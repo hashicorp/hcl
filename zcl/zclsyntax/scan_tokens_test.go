@@ -1021,6 +1021,71 @@ EOF
 			},
 		},
 
+		// Comments
+		{
+			"# hello\n",
+			[]Token{
+				{
+					Type:  TokenComment,
+					Bytes: []byte("# hello\n"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   zcl.Pos{Byte: 8, Line: 2, Column: 1},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 8, Line: 2, Column: 1},
+						End:   zcl.Pos{Byte: 8, Line: 2, Column: 1},
+					},
+				},
+			},
+		},
+		{
+			"// hello\n",
+			[]Token{
+				{
+					Type:  TokenComment,
+					Bytes: []byte("// hello\n"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   zcl.Pos{Byte: 9, Line: 2, Column: 1},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 9, Line: 2, Column: 1},
+						End:   zcl.Pos{Byte: 9, Line: 2, Column: 1},
+					},
+				},
+			},
+		},
+		{
+			"/* hello */",
+			[]Token{
+				{
+					Type:  TokenComment,
+					Bytes: []byte("/* hello */"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   zcl.Pos{Byte: 11, Line: 1, Column: 12},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 11, Line: 1, Column: 12},
+						End:   zcl.Pos{Byte: 11, Line: 1, Column: 12},
+					},
+				},
+			},
+		},
+
 		// Invalid things
 		{
 			`🌻`,

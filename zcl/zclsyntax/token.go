@@ -65,6 +65,8 @@ const (
 	TokenNumberLit TokenType = 'N'
 	TokenIdent     TokenType = 'I'
 
+	TokenComment TokenType = 'C'
+
 	TokenNewline TokenType = '\n'
 	TokenEOF     TokenType = '␄'
 

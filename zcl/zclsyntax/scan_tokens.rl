@@ -46,9 +46,16 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
         LogicalOr = "||";
 
         Newline = '\r' ? '\n';
+        EndOfLine = Newline;
 
         BeginStringTmpl = '"';
         BeginHeredocTmpl = '<<' ('-')? Ident Newline;
+
+        Comment = (
+            ("#" any* EndOfLine) |
+            ("//" any* EndOfLine) |
+            ("/*" any* "*/")
+        );
 
         # Tabs are not valid, but we accept them in the scanner and mark them
         # as tokens so that we can produce diagnostics advising the user to
@@ -195,7 +202,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
         heredocTemplate := |*
             TemplateInterp        => beginTemplateInterp;
             TemplateControl       => beginTemplateControl;
-            HeredocStringLiteral Newline => heredocLiteralEOL;
+            HeredocStringLiteral EndOfLine => heredocLiteralEOL;
             HeredocStringLiteral  => heredocLiteralMidline;
             BrokenUTF8            => { token(TokenBadUTF8); };
         *|;
@@ -204,6 +211,8 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
             Spaces           => {};
             NumberLit        => { token(TokenNumberLit) };
             Ident            => { token(TokenIdent) };
+
+            Comment          => { token(TokenComment) };
 
             NotEqual         => { token(TokenNotEqual); };
             GreaterThanEqual => { token(TokenGreaterThanEq); };
