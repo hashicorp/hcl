@@ -137,3 +137,8 @@ func (f *tokenAccum) emitToken(ty TokenType, startOfs, endOfs int) {
 		},
 	})
 }
+
+type heredocInProgress struct {
+	Marker      []byte
+	StartOfLine bool
+}

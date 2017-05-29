@@ -1,6 +1,8 @@
 package zclsyntax
 
 import (
+    "bytes"
+
     "github.com/zclconf/go-zcl/zcl"
 )
 
@@ -46,6 +48,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
         Newline = '\r' ? '\n';
 
         BeginStringTmpl = '"';
+        BeginHeredocTmpl = '<<' ('-')? Ident Newline;
 
         # Tabs are not valid, but we accept them in the scanner and mark them
         # as tokens so that we can produce diagnostics advising the user to
@@ -64,10 +67,62 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
             fret;
         }
 
+        action beginHeredocTemplate {
+            token(TokenOHeredoc);
+            // the token is currently the whole heredoc introducer, like
+            // <<EOT or <<-EOT, followed by a newline. We want to extract
+            // just the "EOT" portion that we'll use as the closing marker.
+
+            marker := data[ts+2:te-1]
+            if marker[0] == '-' {
+                marker = marker[1:]
+            }
+            if marker[len(marker)-1] == '\r' {
+                marker = marker[:len(marker)-1]
+            }
+
+            heredocs = append(heredocs, heredocInProgress{
+                Marker:      marker,
+                StartOfLine: true,
+            })
+
+            fcall heredocTemplate;
+        }
+
+        action heredocLiteralEOL {
+            // This action is called specificially when a heredoc literal
+            // ends with a newline character.
+
+            // This might actually be our end marker.
+            topdoc := &heredocs[len(heredocs)-1]
+            if topdoc.StartOfLine {
+                maybeMarker := bytes.TrimSpace(data[ts:te])
+                if bytes.Equal(maybeMarker, topdoc.Marker) {
+                    token(TokenCHeredoc);
+                    heredocs = heredocs[:len(heredocs)-1]
+                    fret;
+                }
+            }
+
+            topdoc.StartOfLine = true;
+            token(TokenStringLit);
+        }
+
+        action heredocLiteralMidline {
+            // This action is called when a heredoc literal _doesn't_ end
+            // with a newline character, e.g. because we're about to enter
+            // an interpolation sequence.
+            heredocs[len(heredocs)-1].StartOfLine = false;
+            token(TokenStringLit);
+        }
+
         action beginTemplateInterp {
             token(TokenTemplateInterp);
             braces++;
             retBraces = append(retBraces, braces);
+            if len(heredocs) > 0 {
+                heredocs[len(heredocs)-1].StartOfLine = false;
+            }
             fcall main;
         }
 
@@ -75,6 +130,9 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
             token(TokenTemplateControl);
             braces++;
             retBraces = append(retBraces, braces);
+            if len(heredocs) > 0 {
+                heredocs[len(heredocs)-1].StartOfLine = false;
+            }
             fcall main;
         }
 
@@ -119,6 +177,11 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
             ('\\' StringLiteralChars) |
             (StringLiteralChars - ("$" | "!" | '"'))
         )+;
+        HeredocStringLiteral = (
+            ('$' ^'{') |
+            ('!' ^'{') |
+            (StringLiteralChars - ("$" | "!"))
+        )*;
 
         stringTemplate := |*
             TemplateInterp        => beginTemplateInterp;
@@ -126,6 +189,14 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
             EndStringTmpl         => endStringTemplate;
             TemplateStringLiteral => { token(TokenStringLit); };
             AnyUTF8               => { token(TokenInvalid); };
+            BrokenUTF8            => { token(TokenBadUTF8); };
+        *|;
+
+        heredocTemplate := |*
+            TemplateInterp        => beginTemplateInterp;
+            TemplateControl       => beginTemplateControl;
+            HeredocStringLiteral Newline => heredocLiteralEOL;
+            HeredocStringLiteral  => heredocLiteralMidline;
             BrokenUTF8            => { token(TokenBadUTF8); };
         *|;
 
@@ -147,6 +218,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
             "~}"             => closeTemplateSeqEatWhitespace;
 
             BeginStringTmpl  => beginStringTemplate;
+            BeginHeredocTmpl => beginHeredocTemplate;
 
             Tabs             => { token(TokenTabs) };
             AnyUTF8          => { token(TokenInvalid) };
@@ -179,6 +251,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 
     braces := 0
     var retBraces []int // stack of brace levels that cause us to use fret
+    var heredocs []heredocInProgress // stack of heredocs we're currently processing
 
     %%{
         prepush {

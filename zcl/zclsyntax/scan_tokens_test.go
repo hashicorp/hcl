@@ -689,6 +689,267 @@ func TestScanTokens(t *testing.T) {
 			},
 		},
 
+		// Heredoc Templates
+		{
+			`<<EOT
+hello world
+EOT
+`,
+			[]Token{
+				{
+					Type:  TokenOHeredoc,
+					Bytes: []byte("<<EOT\n"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   zcl.Pos{Byte: 6, Line: 2, Column: 1},
+					},
+				},
+				{
+					Type:  TokenStringLit,
+					Bytes: []byte("hello world\n"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 6, Line: 2, Column: 1},
+						End:   zcl.Pos{Byte: 18, Line: 3, Column: 1},
+					},
+				},
+				{
+					Type:  TokenCHeredoc,
+					Bytes: []byte("EOT\n"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 18, Line: 3, Column: 1},
+						End:   zcl.Pos{Byte: 22, Line: 4, Column: 1},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 22, Line: 4, Column: 1},
+						End:   zcl.Pos{Byte: 22, Line: 4, Column: 1},
+					},
+				},
+			},
+		},
+		{
+			`<<EOT
+hello ${name}
+EOT
+`,
+			[]Token{
+				{
+					Type:  TokenOHeredoc,
+					Bytes: []byte("<<EOT\n"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   zcl.Pos{Byte: 6, Line: 2, Column: 1},
+					},
+				},
+				{
+					Type:  TokenStringLit,
+					Bytes: []byte("hello "),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 6, Line: 2, Column: 1},
+						End:   zcl.Pos{Byte: 12, Line: 2, Column: 7},
+					},
+				},
+				{
+					Type:  TokenTemplateInterp,
+					Bytes: []byte("${"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 12, Line: 2, Column: 7},
+						End:   zcl.Pos{Byte: 14, Line: 2, Column: 9},
+					},
+				},
+				{
+					Type:  TokenIdent,
+					Bytes: []byte("name"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 14, Line: 2, Column: 9},
+						End:   zcl.Pos{Byte: 18, Line: 2, Column: 13},
+					},
+				},
+				{
+					Type:  TokenTemplateSeqEnd,
+					Bytes: []byte("}"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 18, Line: 2, Column: 13},
+						End:   zcl.Pos{Byte: 19, Line: 2, Column: 14},
+					},
+				},
+				{
+					Type:  TokenStringLit,
+					Bytes: []byte("\n"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 19, Line: 2, Column: 14},
+						End:   zcl.Pos{Byte: 20, Line: 3, Column: 1},
+					},
+				},
+				{
+					Type:  TokenCHeredoc,
+					Bytes: []byte("EOT\n"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 20, Line: 3, Column: 1},
+						End:   zcl.Pos{Byte: 24, Line: 4, Column: 1},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 24, Line: 4, Column: 1},
+						End:   zcl.Pos{Byte: 24, Line: 4, Column: 1},
+					},
+				},
+			},
+		},
+		{
+			`<<EOT
+${name}EOT
+EOT
+`,
+			[]Token{
+				{
+					Type:  TokenOHeredoc,
+					Bytes: []byte("<<EOT\n"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   zcl.Pos{Byte: 6, Line: 2, Column: 1},
+					},
+				},
+				{
+					Type:  TokenTemplateInterp,
+					Bytes: []byte("${"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 6, Line: 2, Column: 1},
+						End:   zcl.Pos{Byte: 8, Line: 2, Column: 3},
+					},
+				},
+				{
+					Type:  TokenIdent,
+					Bytes: []byte("name"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 8, Line: 2, Column: 3},
+						End:   zcl.Pos{Byte: 12, Line: 2, Column: 7},
+					},
+				},
+				{
+					Type:  TokenTemplateSeqEnd,
+					Bytes: []byte("}"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 12, Line: 2, Column: 7},
+						End:   zcl.Pos{Byte: 13, Line: 2, Column: 8},
+					},
+				},
+				{
+					Type:  TokenStringLit,
+					Bytes: []byte("EOT\n"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 13, Line: 2, Column: 8},
+						End:   zcl.Pos{Byte: 17, Line: 3, Column: 1},
+					},
+				},
+				{
+					Type:  TokenCHeredoc,
+					Bytes: []byte("EOT\n"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 17, Line: 3, Column: 1},
+						End:   zcl.Pos{Byte: 21, Line: 4, Column: 1},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 21, Line: 4, Column: 1},
+						End:   zcl.Pos{Byte: 21, Line: 4, Column: 1},
+					},
+				},
+			},
+		},
+		{
+			`<<EOF
+${<<-EOF
+hello
+EOF
+}
+EOF
+`,
+			[]Token{
+				{
+					Type:  TokenOHeredoc,
+					Bytes: []byte("<<EOF\n"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   zcl.Pos{Byte: 6, Line: 2, Column: 1},
+					},
+				},
+				{
+					Type:  TokenTemplateInterp,
+					Bytes: []byte("${"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 6, Line: 2, Column: 1},
+						End:   zcl.Pos{Byte: 8, Line: 2, Column: 3},
+					},
+				},
+				{
+					Type:  TokenOHeredoc,
+					Bytes: []byte("<<-EOF\n"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 8, Line: 2, Column: 3},
+						End:   zcl.Pos{Byte: 15, Line: 3, Column: 1},
+					},
+				},
+				{
+					Type:  TokenStringLit,
+					Bytes: []byte("hello\n"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 15, Line: 3, Column: 1},
+						End:   zcl.Pos{Byte: 21, Line: 4, Column: 1},
+					},
+				},
+				{
+					Type:  TokenCHeredoc,
+					Bytes: []byte("EOF\n"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 21, Line: 4, Column: 1},
+						End:   zcl.Pos{Byte: 25, Line: 5, Column: 1},
+					},
+				},
+				{
+					Type:  TokenTemplateSeqEnd,
+					Bytes: []byte("}"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 25, Line: 5, Column: 1},
+						End:   zcl.Pos{Byte: 26, Line: 5, Column: 2},
+					},
+				},
+				{
+					Type:  TokenStringLit,
+					Bytes: []byte("\n"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 26, Line: 5, Column: 2},
+						End:   zcl.Pos{Byte: 27, Line: 6, Column: 1},
+					},
+				},
+				{
+					Type:  TokenCHeredoc,
+					Bytes: []byte("EOF\n"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 27, Line: 6, Column: 1},
+						End:   zcl.Pos{Byte: 31, Line: 7, Column: 1},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 31, Line: 7, Column: 1},
+						End:   zcl.Pos{Byte: 31, Line: 7, Column: 1},
+					},
+				},
+			},
+		},
+
 		// Combinations
 		{
 			` (1 + 2) * 3 `,
