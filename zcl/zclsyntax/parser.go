@@ -1,6 +1,7 @@
 package zclsyntax
 
 import (
+	"bytes"
 	"fmt"
 
 	"github.com/zclconf/go-zcl/zcl"
@@ -101,6 +102,86 @@ Token:
 
 func (p *parser) ParseBodyItem() (Node, zcl.Diagnostics) {
 	return nil, nil
+}
+
+// parseQuotedStringLiteral is a helper for parsing quoted strings that
+// aren't allowed to contain any interpolations, such as block labels.
+func (p *parser) parseQuotedStringLiteral() (string, zcl.Range, zcl.Diagnostics) {
+	oQuote := p.Read()
+	if oQuote.Type != TokenOQuote {
+		return "", oQuote.Range, zcl.Diagnostics{
+			{
+				Severity: zcl.DiagError,
+				Summary:  "Invalid string literal",
+				Detail:   "A quoted string is required here.",
+				Subject:  &oQuote.Range,
+			},
+		}
+	}
+
+	var diags zcl.Diagnostics
+	ret := &bytes.Buffer{}
+	var cQuote Token
+
+Token:
+	for {
+		tok := p.Read()
+		switch tok.Type {
+
+		case TokenCQuote:
+			cQuote = tok
+			break Token
+
+		case TokenStringLit:
+			// TODO: Remove any escape sequences from the string, once we
+			// have a function with which to do that.
+			ret.Write(tok.Bytes)
+
+		case TokenTemplateControl, TokenTemplateInterp:
+			which := "$"
+			if tok.Type == TokenTemplateControl {
+				which = "!"
+			}
+
+			diags = append(diags, &zcl.Diagnostic{
+				Severity: zcl.DiagError,
+				Summary:  "Invalid string literal",
+				Detail: fmt.Sprintf(
+					"Template sequences are not allowed in this string. To include a literal %q, double it (as \"%s%s\") to escape it.",
+					which, which, which,
+				),
+				Subject: &tok.Range,
+				Context: zcl.RangeBetween(oQuote.Range, tok.Range).Ptr(),
+			})
+			p.recover(TokenTemplateSeqEnd)
+
+		case TokenEOF:
+			diags = append(diags, &zcl.Diagnostic{
+				Severity: zcl.DiagError,
+				Summary:  "Unterminated string literal",
+				Detail:   "Unable to find the closing quote mark before the end of the file.",
+				Subject:  &tok.Range,
+				Context:  zcl.RangeBetween(oQuote.Range, tok.Range).Ptr(),
+			})
+			break Token
+
+		default:
+			// Should never happen, as long as the scanner is behaving itself
+			diags = append(diags, &zcl.Diagnostic{
+				Severity: zcl.DiagError,
+				Summary:  "Invalid string literal",
+				Detail:   "This item is not valid in a string literal.",
+				Subject:  &tok.Range,
+				Context:  zcl.RangeBetween(oQuote.Range, tok.Range).Ptr(),
+			})
+			p.recover(TokenOQuote)
+			break Token
+
+		}
+
+	}
+
+	return ret.String(), zcl.RangeBetween(oQuote.Range, cQuote.Range), diags
 }
 
 // recover seeks forward in the token stream until it finds TokenType "end",
