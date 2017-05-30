@@ -9,6 +9,12 @@ import (
 
 type parser struct {
 	*peeker
+
+	// set to true if any recovery is attempted. The parser can use this
+	// to attempt to reduce error noise by suppressing "bad token" errors
+	// in recovery mode, assuming that the recovery heuristics have failed
+	// in this case and left the peeker in a wrong place.
+	recovery bool
 }
 
 func (p *parser) ParseBody(end TokenType) (*Body, zcl.Diagnostics) {
@@ -194,6 +200,7 @@ Token:
 // unpredictable results on input with bad bracketer nesting.
 func (p *parser) recover(end TokenType) {
 	start := p.oppositeBracket(end)
+	p.recovery = true
 
 	nest := 0
 	for {

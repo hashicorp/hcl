@@ -11,7 +11,7 @@ import (
 func ParseConfig(src []byte, filename string, start zcl.Pos) (*Body, zcl.Diagnostics) {
 	tokens := LexConfig(src, filename, start)
 	peeker := newPeeker(tokens, false)
-	parser := &parser{peeker}
+	parser := &parser{peeker: peeker}
 	return parser.ParseBody(TokenEOF)
 }
 
