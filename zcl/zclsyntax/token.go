@@ -88,6 +88,11 @@ const (
 	TokenTabs       TokenType = '␉'
 	TokenInvalid    TokenType = '�'
 	TokenBadUTF8    TokenType = '💩'
+
+	// TokenNil is a placeholder for when a token is required but none is
+	// available, e.g. when reporting errors. The scanner will never produce
+	// this as part of a token stream.
+	TokenNil TokenType = '\x00'
 )
 
 func (t TokenType) GoString() string {
