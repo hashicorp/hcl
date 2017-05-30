@@ -1,5 +1,9 @@
 package zclsyntax
 
+import (
+	"github.com/zclconf/go-zcl/zcl"
+)
+
 type peeker struct {
 	Tokens    Tokens
 	NextIndex int
@@ -26,6 +30,18 @@ func (p *peeker) Read() Token {
 	ret, nextIdx := p.nextToken()
 	p.NextIndex = nextIdx
 	return ret
+}
+
+func (p *peeker) NextRange() zcl.Range {
+	return p.Peek().Range
+}
+
+func (p *peeker) PrevRange() zcl.Range {
+	if p.NextIndex == 0 {
+		return p.NextRange()
+	}
+
+	return p.Tokens[p.NextIndex-1].Range
 }
 
 func (p *peeker) nextToken() (Token, int) {
