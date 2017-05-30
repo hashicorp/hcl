@@ -22,7 +22,7 @@ func (p *parser) ParseBody(end TokenType) (*Body, zcl.Diagnostics) {
 	blocks := Blocks{}
 	var diags zcl.Diagnostics
 
-	startRange := p.NextRange()
+	startRange := p.PrevRange()
 	var endRange zcl.Range
 
 Token:
@@ -86,7 +86,7 @@ Token:
 					Subject:  &bad.Range,
 				})
 			}
-			endRange = p.NextRange() // arbitrary, but somewhere inside the body means better diagnostics
+			endRange = p.PrevRange() // arbitrary, but somewhere inside the body means better diagnostics
 
 			p.recover(end) // attempt to recover to the token after the end of this body
 			break Token
@@ -107,7 +107,130 @@ Token:
 }
 
 func (p *parser) ParseBodyItem() (Node, zcl.Diagnostics) {
+	ident := p.Read()
+	if ident.Type != TokenIdent {
+		p.recoverAfterBodyItem()
+		return nil, zcl.Diagnostics{
+			{
+				Severity: zcl.DiagError,
+				Summary:  "Attribute or block definition required",
+				Detail:   "An attribute or block definition is required here.",
+				Subject:  &ident.Range,
+			},
+		}
+	}
+
+	next := p.Peek()
+
+	switch next.Type {
+	case TokenEqual:
+		return p.finishParsingBodyAttribute(ident)
+	case TokenOQuote, TokenOBrace:
+		return p.finishParsingBodyBlock(ident)
+	default:
+		p.recoverAfterBodyItem()
+		return nil, zcl.Diagnostics{
+			{
+				Severity: zcl.DiagError,
+				Summary:  "Attribute or block definition required",
+				Detail:   "An attribute or block definition is required here. To define an attribute, use the equals sign \"=\" to introduce the attribute value.",
+				Subject:  &ident.Range,
+			},
+		}
+	}
+
 	return nil, nil
+}
+
+func (p *parser) finishParsingBodyAttribute(ident Token) (Node, zcl.Diagnostics) {
+	panic("attribute parsing not yet implemented")
+}
+
+func (p *parser) finishParsingBodyBlock(ident Token) (Node, zcl.Diagnostics) {
+	var blockType = string(ident.Bytes)
+	var diags zcl.Diagnostics
+	var labels []string
+	var labelRanges []zcl.Range
+
+	var oBrace Token
+
+Token:
+	for {
+		tok := p.Peek()
+
+		switch tok.Type {
+
+		case TokenOBrace:
+			oBrace = p.Read()
+			break Token
+
+		case TokenOQuote:
+			label, labelRange, labelDiags := p.parseQuotedStringLiteral()
+			diags = append(diags, labelDiags...)
+			labels = append(labels, label)
+			labelRanges = append(labelRanges, labelRange)
+
+		default:
+			switch tok.Type {
+			case TokenEqual:
+				diags = append(diags, &zcl.Diagnostic{
+					Severity: zcl.DiagError,
+					Summary:  "Invalid block definition",
+					Detail:   "The equals sign \"=\" indicates an attribute definition, and must not be used when defining a block.",
+					Subject:  &tok.Range,
+					Context:  zcl.RangeBetween(ident.Range, tok.Range).Ptr(),
+				})
+			case TokenNewline:
+				diags = append(diags, &zcl.Diagnostic{
+					Severity: zcl.DiagError,
+					Summary:  "Invalid block definition",
+					Detail:   "A block definition must have block content delimited by \"{\" and \"}\", starting on the same line as the block header.",
+					Subject:  &tok.Range,
+					Context:  zcl.RangeBetween(ident.Range, tok.Range).Ptr(),
+				})
+			default:
+				if !p.recovery {
+					diags = append(diags, &zcl.Diagnostic{
+						Severity: zcl.DiagError,
+						Summary:  "Invalid block definition",
+						Detail:   "Either a quoted string block label or an opening brace (\"{\") is expected here.",
+						Subject:  &tok.Range,
+						Context:  zcl.RangeBetween(ident.Range, tok.Range).Ptr(),
+					})
+				}
+			}
+
+			p.recoverAfterBodyItem()
+
+			return &Block{
+				Type:   blockType,
+				Labels: labels,
+				Body:   nil,
+
+				TypeRange:       ident.Range,
+				LabelRanges:     labelRanges,
+				OpenBraceRange:  ident.Range, // placeholder
+				CloseBraceRange: ident.Range, // placeholder
+			}, diags
+		}
+	}
+
+	// Once we fall out here, the peeker is pointed just after our opening
+	// brace, so we can begin our nested body parsing.
+	body, bodyDiags := p.ParseBody(TokenCBrace)
+	diags = append(diags, bodyDiags...)
+	cBraceRange := p.PrevRange()
+
+	return &Block{
+		Type:   blockType,
+		Labels: labels,
+		Body:   body,
+
+		TypeRange:       ident.Range,
+		LabelRanges:     labelRanges,
+		OpenBraceRange:  oBrace.Range,
+		CloseBraceRange: cBraceRange,
+	}, diags
 }
 
 // parseQuotedStringLiteral is a helper for parsing quoted strings that
@@ -205,7 +328,16 @@ func (p *parser) recover(end TokenType) {
 	nest := 0
 	for {
 		tok := p.Read()
-		switch tok.Type {
+		ty := tok.Type
+		if end == TokenTemplateSeqEnd && ty == TokenTemplateControl {
+			// normalize so that our matching behavior can work, since
+			// TokenTemplateControl/TokenTemplateInterp are asymmetrical
+			// with TokenTemplateSeqEnd and thus we need to count both
+			// openers if that's the closer we're looking for.
+			ty = TokenTemplateInterp
+		}
+
+		switch ty {
 		case start:
 			nest++
 		case end:
@@ -216,6 +348,40 @@ func (p *parser) recover(end TokenType) {
 			nest--
 		}
 	}
+}
+
+// recoverOver seeks forward in the token stream until it finds a block
+// starting with TokenType "start", then finds the corresponding end token,
+// leaving the peeker pointed at the token after that end token.
+//
+// The given token type _must_ be a bracketer. For example, if the given
+// start token is TokenOBrace then the parser will be left at the _end_ of
+// the next brace-delimited block encountered, or at EOF if no such block
+// is found or it is unclosed.
+func (p *parser) recoverOver(start TokenType) {
+	end := p.oppositeBracket(start)
+
+	// find the opening bracket first
+Token:
+	for {
+		tok := p.Read()
+		switch tok.Type {
+		case start:
+			break Token
+		}
+	}
+
+	// Now use our existing recover function to locate the _end_ of the
+	// container we've found.
+	p.recover(end)
+}
+
+func (p *parser) recoverAfterBodyItem() {
+	// TODO: Seek forward until we find a newline that isn't inside any
+	// bracketer, and return with the peeker placed after it so we're
+	// ready to try to parse another body item.
+	p.recovery = true
+
 }
 
 // oppositeBracket finds the bracket that opposes the given bracketer, or
@@ -247,6 +413,15 @@ func (p *parser) oppositeBracket(ty TokenType) TokenType {
 		return TokenOQuote
 	case TokenCHeredoc:
 		return TokenOHeredoc
+
+	case TokenTemplateControl:
+		return TokenTemplateSeqEnd
+	case TokenTemplateInterp:
+		return TokenTemplateSeqEnd
+	case TokenTemplateSeqEnd:
+		// This is ambigous, but we return Interp here because that's
+		// what's assumed by the "recover" method.
+		return TokenTemplateInterp
 
 	default:
 		return TokenNil

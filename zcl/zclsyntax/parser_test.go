@@ -30,6 +30,109 @@ func TestParseConfig(t *testing.T) {
 				},
 			},
 		},
+
+		{
+			`block {}`,
+			0,
+			&Body{
+				Attributes: Attributes{},
+				Blocks: Blocks{
+					&Block{
+						Type:   "block",
+						Labels: nil,
+						Body: &Body{
+							Attributes: Attributes{},
+							Blocks:     Blocks{},
+
+							SrcRange: zcl.Range{
+								Start: zcl.Pos{Line: 1, Column: 7, Byte: 6},
+								End:   zcl.Pos{Line: 1, Column: 9, Byte: 8},
+							},
+							EndRange: zcl.Range{
+								Start: zcl.Pos{Line: 1, Column: 9, Byte: 8},
+								End:   zcl.Pos{Line: 1, Column: 9, Byte: 8},
+							},
+						},
+
+						TypeRange: zcl.Range{
+							Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   zcl.Pos{Line: 1, Column: 6, Byte: 5},
+						},
+						LabelRanges: nil,
+						OpenBraceRange: zcl.Range{
+							Start: zcl.Pos{Line: 1, Column: 7, Byte: 6},
+							End:   zcl.Pos{Line: 1, Column: 8, Byte: 7},
+						},
+						CloseBraceRange: zcl.Range{
+							Start: zcl.Pos{Line: 1, Column: 8, Byte: 7},
+							End:   zcl.Pos{Line: 1, Column: 9, Byte: 8},
+						},
+					},
+				},
+				SrcRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   zcl.Pos{Line: 1, Column: 9, Byte: 8},
+				},
+				EndRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 9, Byte: 8},
+					End:   zcl.Pos{Line: 1, Column: 9, Byte: 8},
+				},
+			},
+		},
+
+		{
+			`block "foo" {}`,
+			0,
+			&Body{
+				Attributes: Attributes{},
+				Blocks: Blocks{
+					&Block{
+						Type:   "block",
+						Labels: []string{"foo"},
+						Body: &Body{
+							Attributes: Attributes{},
+							Blocks:     Blocks{},
+
+							SrcRange: zcl.Range{
+								Start: zcl.Pos{Line: 1, Column: 13, Byte: 12},
+								End:   zcl.Pos{Line: 1, Column: 15, Byte: 14},
+							},
+							EndRange: zcl.Range{
+								Start: zcl.Pos{Line: 1, Column: 15, Byte: 14},
+								End:   zcl.Pos{Line: 1, Column: 15, Byte: 14},
+							},
+						},
+
+						TypeRange: zcl.Range{
+							Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   zcl.Pos{Line: 1, Column: 6, Byte: 5},
+						},
+						LabelRanges: []zcl.Range{
+							{
+								Start: zcl.Pos{Line: 1, Column: 7, Byte: 6},
+								End:   zcl.Pos{Line: 1, Column: 12, Byte: 11},
+							},
+						},
+						OpenBraceRange: zcl.Range{
+							Start: zcl.Pos{Line: 1, Column: 13, Byte: 12},
+							End:   zcl.Pos{Line: 1, Column: 14, Byte: 13},
+						},
+						CloseBraceRange: zcl.Range{
+							Start: zcl.Pos{Line: 1, Column: 14, Byte: 13},
+							End:   zcl.Pos{Line: 1, Column: 15, Byte: 14},
+						},
+					},
+				},
+				SrcRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   zcl.Pos{Line: 1, Column: 15, Byte: 14},
+				},
+				EndRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 15, Byte: 14},
+					End:   zcl.Pos{Line: 1, Column: 15, Byte: 14},
+				},
+			},
+		},
 	}
 
 	prettyConfig := &pretty.Config{
