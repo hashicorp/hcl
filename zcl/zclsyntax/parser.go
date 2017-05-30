@@ -31,7 +31,7 @@ Token:
 		case TokenNewline:
 			p.Read()
 			continue
-		case TokenIdent, TokenOQuote:
+		case TokenIdent:
 			item, itemDiags := p.ParseBodyItem()
 			diags = append(diags, itemDiags...)
 			switch titem := item.(type) {
@@ -64,12 +64,21 @@ Token:
 			}
 		default:
 			bad := p.Read()
-			diags = append(diags, &zcl.Diagnostic{
-				Severity: zcl.DiagError,
-				Summary:  "Attribute or block definition required",
-				Detail:   "An attribute or block definition is required here.",
-				Subject:  &bad.Range,
-			})
+			if bad.Type == TokenOQuote {
+				diags = append(diags, &zcl.Diagnostic{
+					Severity: zcl.DiagError,
+					Summary:  "Invalid attribute name",
+					Detail:   "Attribute names must not be quoted.",
+					Subject:  &bad.Range,
+				})
+			} else {
+				diags = append(diags, &zcl.Diagnostic{
+					Severity: zcl.DiagError,
+					Summary:  "Attribute or block definition required",
+					Detail:   "An attribute or block definition is required here.",
+					Subject:  &bad.Range,
+				})
+			}
 			endRange = p.NextRange() // arbitrary, but somewhere inside the body means better diagnostics
 
 			p.recover(end) // attempt to recover to the token after the end of this body
