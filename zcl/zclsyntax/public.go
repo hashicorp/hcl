@@ -4,6 +4,26 @@ import (
 	"github.com/zclconf/go-zcl/zcl"
 )
 
+// ParseConfig parses the given buffer as a whole zcl config file, returning
+// a Body representing its contents. If HasErrors called on the returned
+// diagnostics returns true, the returned body is likely to be incomplete
+// and should therefore be used with care.
+func ParseConfig(src []byte, filename string, start zcl.Pos) Body {
+	panic("ParseConfig is not yet implemented")
+}
+
+// ParseExpression parses the given buffer as a standalone zcl expression,
+// returning it as an instance of Expression.
+func ParseExpression(src []byte, filename string, start zcl.Pos) Expression {
+	panic("ParseExpression is not yet implemented")
+}
+
+// ParseTemplate parses the given buffer as a standalone zcl template,
+// returning it as an instance of Expression.
+func ParseTemplate(src []byte, filename string, start zcl.Pos) Expression {
+	panic("ParseTemplate is not yet implemented")
+}
+
 // LexConfig performs lexical analysis on the given buffer, treating it as a
 // whole zcl config file, and returns the resulting tokens.
 func LexConfig(src []byte, filename string, start zcl.Pos) Tokens {
