@@ -1,9 +1,13 @@
 package zclparse
 
 import (
+	"fmt"
+	"io/ioutil"
+
 	"github.com/zclconf/go-zcl/zcl"
 	"github.com/zclconf/go-zcl/zcl/hclhil"
 	"github.com/zclconf/go-zcl/zcl/json"
+	"github.com/zclconf/go-zcl/zcl/zclsyntax"
 )
 
 // NOTE: This is the public interface for parsing. The actual parsers are
@@ -22,6 +26,39 @@ import (
 // multiple times would create a confusing result.
 type Parser struct {
 	files map[string]*zcl.File
+}
+
+// ParseZCL parses the given buffer (which is assumed to have been loaded from
+// the given filename) as a native-syntax configuration file and returns the
+// zcl.File object representing it.
+func (p *Parser) ParseZCL(src []byte, filename string) (*zcl.File, zcl.Diagnostics) {
+	if existing := p.files[filename]; existing != nil {
+		return existing, nil
+	}
+
+	return zclsyntax.ParseConfig(src, filename, zcl.Pos{Byte: 0, Line: 1, Column: 1})
+}
+
+// ParseZCLFile reads the given filename and parses it as a native-syntax zcl
+// configuration file. An error diagnostic is returned if the given file
+// cannot be read.
+func (p *Parser) ParseZCLFile(filename string) (*zcl.File, zcl.Diagnostics) {
+	if existing := p.files[filename]; existing != nil {
+		return existing, nil
+	}
+
+	src, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, zcl.Diagnostics{
+			{
+				Severity: zcl.DiagError,
+				Summary:  "Failed to read file",
+				Detail:   fmt.Sprintf("The configuration file %q could not be read.", filename),
+			},
+		}
+	}
+
+	return p.ParseZCL(src, filename)
 }
 
 // ParseJSON parses the given JSON buffer (which is assumed to have been loaded

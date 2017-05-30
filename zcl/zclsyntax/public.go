@@ -5,14 +5,24 @@ import (
 )
 
 // ParseConfig parses the given buffer as a whole zcl config file, returning
-// a Body representing its contents. If HasErrors called on the returned
+// a *zcl.File representing its contents. If HasErrors called on the returned
 // diagnostics returns true, the returned body is likely to be incomplete
 // and should therefore be used with care.
-func ParseConfig(src []byte, filename string, start zcl.Pos) (*Body, zcl.Diagnostics) {
+//
+// The body in the returned file has dynamic type *zclsyntax.Body, so callers
+// may freely type-assert this to get access to the full zclsyntax API in
+// situations where detailed access is required. However, most common use-cases
+// should be served using the zcl.Body interface to ensure compatibility with
+// other configurationg syntaxes, such as JSON.
+func ParseConfig(src []byte, filename string, start zcl.Pos) (*zcl.File, zcl.Diagnostics) {
 	tokens := LexConfig(src, filename, start)
 	peeker := newPeeker(tokens, false)
 	parser := &parser{peeker: peeker}
-	return parser.ParseBody(TokenEOF)
+	body, diags := parser.ParseBody(TokenEOF)
+	return &zcl.File{
+		Body:  body,
+		Bytes: src,
+	}, diags
 }
 
 // ParseExpression parses the given buffer as a standalone zcl expression,

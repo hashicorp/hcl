@@ -143,13 +143,15 @@ func TestParseConfig(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.input, func(t *testing.T) {
-			got, diags := ParseConfig([]byte(test.input), "", zcl.Pos{Byte: 0, Line: 1, Column: 1})
+			file, diags := ParseConfig([]byte(test.input), "", zcl.Pos{Byte: 0, Line: 1, Column: 1})
 			if len(diags) != test.diagCount {
 				t.Errorf("wrong number of diagnostics %d; want %d", len(diags), test.diagCount)
 				for _, diag := range diags {
 					t.Logf(" - %s", diag.Error())
 				}
 			}
+
+			got := file.Body
 
 			if !reflect.DeepEqual(got, test.want) {
 				diff := prettyConfig.Compare(test.want, got)
