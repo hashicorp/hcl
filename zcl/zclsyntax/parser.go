@@ -250,6 +250,75 @@ Token:
 	}, diags
 }
 
+func (p *parser) ParseExpression() (Expression, zcl.Diagnostics) {
+	return p.parseTernaryConditional()
+}
+
+func (p *parser) parseTernaryConditional() (Expression, zcl.Diagnostics) {
+	// The ternary conditional operator (.. ? .. : ..) behaves somewhat
+	// like a binary operator except that the "symbol" is itself
+	// an expression enclosed in two punctuation characters.
+	// The middle expression is parsed as if the ? and : symbols
+	// were parentheses. The "rhs" (the "false expression") is then
+	// treated right-associatively so it behaves similarly to the
+	// middle in terms of precedence.
+
+	startRange := p.NextRange()
+	var condExpr, trueExpr, falseExpr Expression
+	var diags zcl.Diagnostics
+
+	condExpr, condDiags := p.parseBinaryOps(binaryOps)
+	diags = append(diags, condDiags...)
+	if p.recovery && condDiags.HasErrors() {
+		return condExpr, diags
+	}
+
+	questionMark := p.Peek()
+	if questionMark.Type != TokenQuestion {
+		return condExpr, diags
+	}
+
+	p.Read() // eat question mark
+
+	trueExpr, trueDiags := p.ParseExpression()
+	diags = append(diags, trueDiags...)
+	if p.recovery && trueDiags.HasErrors() {
+		return condExpr, diags
+	}
+
+	colon := p.Peek()
+	if colon.Type != TokenColon {
+		diags = append(diags, &zcl.Diagnostic{
+			Severity: zcl.DiagError,
+			Summary:  "Missing false expression in conditional",
+			Detail:   "The conditional operator (...?...:...) requires a false expression, delimited by a colon.",
+			Subject:  &colon.Range,
+			Context:  zcl.RangeBetween(startRange, colon.Range).Ptr(),
+		})
+		return condExpr, diags
+	}
+
+	p.Read() // eat colon
+
+	falseExpr, falseDiags := p.ParseExpression()
+	diags = append(diags, falseDiags...)
+	if p.recovery && falseDiags.HasErrors() {
+		return condExpr, diags
+	}
+
+	return &ConditionalExpr{
+		Condition:   condExpr,
+		TrueResult:  trueExpr,
+		FalseResult: falseExpr,
+
+		SrcRange: zcl.RangeBetween(startRange, falseExpr.Range()),
+	}, diags
+}
+
+func (p *parser) parseBinaryOps(ops []map[TokenType]Operation) (Expression, zcl.Diagnostics) {
+	panic("parseBinaryOps not yet implemented")
+}
+
 // parseQuotedStringLiteral is a helper for parsing quoted strings that
 // aren't allowed to contain any interpolations, such as block labels.
 func (p *parser) parseQuotedStringLiteral() (string, zcl.Range, zcl.Diagnostics) {

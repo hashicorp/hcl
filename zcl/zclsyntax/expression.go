@@ -242,3 +242,112 @@ func (e *FunctionCallExpr) Range() zcl.Range {
 func (e *FunctionCallExpr) StartRange() zcl.Range {
 	return zcl.RangeBetween(e.NameRange, e.OpenParenRange)
 }
+
+type ConditionalExpr struct {
+	Condition   Expression
+	TrueResult  Expression
+	FalseResult Expression
+
+	SrcRange zcl.Range
+}
+
+func (e *ConditionalExpr) walkChildNodes(w internalWalkFunc) {
+	e.Condition = w(e.Condition).(Expression)
+	e.TrueResult = w(e.TrueResult).(Expression)
+	e.FalseResult = w(e.FalseResult).(Expression)
+}
+
+func (e *ConditionalExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
+	trueResult, trueDiags := e.TrueResult.Value(ctx)
+	falseResult, falseDiags := e.FalseResult.Value(ctx)
+	var diags zcl.Diagnostics
+
+	// Try to find a type that both results can be converted to.
+	resultType, convs := convert.UnifyUnsafe([]cty.Type{trueResult.Type(), falseResult.Type()})
+	if resultType == cty.NilType {
+		return cty.DynamicVal, zcl.Diagnostics{
+			{
+				Severity: zcl.DiagError,
+				Summary:  "Inconsistent conditional result types",
+				Detail: fmt.Sprintf(
+					// FIXME: Need a helper function for showing natural-language type diffs,
+					// since this will generate some useless messages in some cases, like
+					// "These expressions are object and object respectively" if the
+					// object types don't exactly match.
+					"The true and false result expressions must have consistent types. The given expressions are %s and %s, respectively.",
+					trueResult.Type(), falseResult.Type(),
+				),
+				Subject: zcl.RangeBetween(e.TrueResult.Range(), e.FalseResult.Range()).Ptr(),
+				Context: &e.SrcRange,
+			},
+		}
+	}
+
+	condResult, condDiags := e.Condition.Value(ctx)
+	diags = append(diags, condDiags...)
+	if condResult.IsNull() {
+		diags = append(diags, &zcl.Diagnostic{
+			Severity: zcl.DiagError,
+			Summary:  "Null condition",
+			Detail:   "The condition value is null. Conditions must either be true or false.",
+			Subject:  e.Condition.Range().Ptr(),
+			Context:  &e.SrcRange,
+		})
+		return cty.UnknownVal(resultType), diags
+	}
+	if !condResult.IsKnown() {
+		return cty.UnknownVal(resultType), diags
+	}
+
+	if condResult.True() {
+		diags = append(diags, trueDiags...)
+		if convs[0] != nil {
+			var err error
+			trueResult, err = convs[0](trueResult)
+			if err != nil {
+				// Unsafe conversion failed with the concrete result value
+				diags = append(diags, &zcl.Diagnostic{
+					Severity: zcl.DiagError,
+					Summary:  "Inconsistent conditional result types",
+					Detail: fmt.Sprintf(
+						"The true result value has the wrong type: %s.",
+						err.Error(),
+					),
+					Subject: e.TrueResult.Range().Ptr(),
+					Context: &e.SrcRange,
+				})
+				trueResult = cty.UnknownVal(resultType)
+			}
+		}
+		return trueResult, diags
+	} else {
+		diags = append(diags, falseDiags...)
+		if convs[1] != nil {
+			var err error
+			falseResult, err = convs[1](falseResult)
+			if err != nil {
+				// Unsafe conversion failed with the concrete result value
+				diags = append(diags, &zcl.Diagnostic{
+					Severity: zcl.DiagError,
+					Summary:  "Inconsistent conditional result types",
+					Detail: fmt.Sprintf(
+						"The false result value has the wrong type: %s.",
+						err.Error(),
+					),
+					Subject: e.TrueResult.Range().Ptr(),
+					Context: &e.SrcRange,
+				})
+				falseResult = cty.UnknownVal(resultType)
+			}
+		}
+		return falseResult, diags
+	}
+}
+
+func (e *ConditionalExpr) Range() zcl.Range {
+	return e.SrcRange
+}
+
+func (e *ConditionalExpr) StartRange() zcl.Range {
+	return e.Condition.StartRange()
+}

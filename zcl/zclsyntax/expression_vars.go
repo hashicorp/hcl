@@ -7,6 +7,10 @@ import (
 	"github.com/zclconf/go-zcl/zcl"
 )
 
+func (e *ConditionalExpr) Variables() []zcl.Traversal {
+	return Variables(e)
+}
+
 func (e *FunctionCallExpr) Variables() []zcl.Traversal {
 	return Variables(e)
 }
