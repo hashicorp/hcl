@@ -71,20 +71,22 @@ Token:
 			}
 		default:
 			bad := p.Read()
-			if bad.Type == TokenOQuote {
-				diags = append(diags, &zcl.Diagnostic{
-					Severity: zcl.DiagError,
-					Summary:  "Invalid attribute name",
-					Detail:   "Attribute names must not be quoted.",
-					Subject:  &bad.Range,
-				})
-			} else {
-				diags = append(diags, &zcl.Diagnostic{
-					Severity: zcl.DiagError,
-					Summary:  "Attribute or block definition required",
-					Detail:   "An attribute or block definition is required here.",
-					Subject:  &bad.Range,
-				})
+			if !p.recovery {
+				if bad.Type == TokenOQuote {
+					diags = append(diags, &zcl.Diagnostic{
+						Severity: zcl.DiagError,
+						Summary:  "Invalid attribute name",
+						Detail:   "Attribute names must not be quoted.",
+						Subject:  &bad.Range,
+					})
+				} else {
+					diags = append(diags, &zcl.Diagnostic{
+						Severity: zcl.DiagError,
+						Summary:  "Attribute or block definition required",
+						Detail:   "An attribute or block definition is required here.",
+						Subject:  &bad.Range,
+					})
+				}
 			}
 			endRange = p.PrevRange() // arbitrary, but somewhere inside the body means better diagnostics
 
@@ -169,6 +171,19 @@ Token:
 			diags = append(diags, labelDiags...)
 			labels = append(labels, label)
 			labelRanges = append(labelRanges, labelRange)
+			if labelDiags.HasErrors() {
+				p.recoverAfterBodyItem()
+				return &Block{
+					Type:   blockType,
+					Labels: labels,
+					Body:   nil,
+
+					TypeRange:       ident.Range,
+					LabelRanges:     labelRanges,
+					OpenBraceRange:  ident.Range, // placeholder
+					CloseBraceRange: ident.Range, // placeholder
+				}, diags
+			}
 
 		default:
 			switch tok.Type {
@@ -346,6 +361,8 @@ func (p *parser) recover(end TokenType) {
 			}
 
 			nest--
+		case TokenEOF:
+			return
 		}
 	}
 }
@@ -366,7 +383,7 @@ Token:
 	for {
 		tok := p.Read()
 		switch tok.Type {
-		case start:
+		case start, TokenEOF:
 			break Token
 		}
 	}
