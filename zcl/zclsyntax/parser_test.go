@@ -221,7 +221,7 @@ block "valid" {}
 		},
 		{
 			`block "f\o" {}`,
-			1, // \o is not a valid escape sequence
+			1, // "\o" is not a valid escape sequence
 			&Body{
 				Attributes: Attributes{},
 				Blocks: Blocks{

@@ -279,7 +279,7 @@ Token:
 			break Token
 
 		case TokenQuotedLit:
-			s, sDiags := p.decodeQuotedLit(tok)
+			s, sDiags := p.decodeStringLit(tok)
 			diags = append(diags, sDiags...)
 			ret.WriteString(s)
 
@@ -330,45 +330,93 @@ Token:
 	return ret.String(), zcl.RangeBetween(oQuote.Range, cQuote.Range), diags
 }
 
-// decodeQuotedLit processes the given TokenQuotedLit token as if it were
-// a string literal appearing in quotes, returning the string resulting from
+// decodeStringLit processes the given token, which must be either a
+// TokenQuotedLit or a TokenStringLit, returning the string resulting from
 // resolving any escape sequences.
 //
 // If any error diagnostics are returned, the returned string may be incomplete
 // or otherwise invalid.
-func (p *parser) decodeQuotedLit(tok Token) (string, zcl.Diagnostics) {
-	if tok.Type != TokenQuotedLit {
-		panic("decodeQuotedLit can only be used with TokenQuotedLit tokens")
+func (p *parser) decodeStringLit(tok Token) (string, zcl.Diagnostics) {
+	var quoted bool
+	switch tok.Type {
+	case TokenQuotedLit:
+		quoted = true
+	case TokenStringLit:
+		quoted = false
+	default:
+		panic("decodeQuotedLit can only be used with TokenStringLit and TokenQuotedLit tokens")
 	}
 	var diags zcl.Diagnostics
 
 	ret := make([]byte, 0, len(tok.Bytes))
+	var esc []byte
 
 	sc := bufio.NewScanner(bytes.NewReader(tok.Bytes))
 	sc.Split(textseg.ScanGraphemeClusters)
 
-	escaping := rune(0)
 	pos := tok.Range.Start
+	newPos := pos
+Character:
 	for sc.Scan() {
-		switch escaping {
-		case '\\':
-			escaping = 0
-			ty := sc.Text()
-			switch ty {
-			case "n":
-				ret = append(ret, 10)
-			case "r":
-				ret = append(ret, 13)
-			case "t":
-				ret = append(ret, 9)
+		pos = newPos
+		ch := sc.Bytes()
 
-			// TODO: numeric character escapes with \uXXXX
+		// Adjust position based on our new character.
+		// \r\n is considered to be a single character in text segmentation,
+		if (len(ch) == 1 && ch[0] == '\n') || (len(ch) == 2 && ch[1] == '\n') {
+			newPos.Line++
+			newPos.Column = 0
+		} else {
+			newPos.Column++
+		}
+		newPos.Byte += len(ch)
 
-			default:
+		if len(esc) > 0 {
+			switch esc[0] {
+			case '\\':
+				if len(ch) == 1 {
+					switch ch[0] {
+
+					// TODO: numeric character escapes with \uXXXX
+
+					case 'n':
+						ret = append(ret, '\n')
+						esc = esc[:0]
+						continue Character
+					case 'r':
+						ret = append(ret, '\r')
+						esc = esc[:0]
+						continue Character
+					case 't':
+						ret = append(ret, '\t')
+						esc = esc[:0]
+						continue Character
+					case '"':
+						ret = append(ret, '"')
+						esc = esc[:0]
+						continue Character
+					case '\\':
+						ret = append(ret, '\\')
+						esc = esc[:0]
+						continue Character
+					}
+				}
+
+				var detail string
+				switch {
+				case len(ch) == 1 && (ch[0] == '$' || ch[0] == '!'):
+					detail = fmt.Sprintf(
+						"The characters \"\\%s\" do not form a recognized escape sequence. To escape a \"%s{\" template sequence, use \"%s%s{\".",
+						ch, ch, ch, ch,
+					)
+				default:
+					detail = fmt.Sprintf("The characters \"\\%s\" do not form a recognized escape sequence.", ch)
+				}
+
 				diags = append(diags, &zcl.Diagnostic{
 					Severity: zcl.DiagError,
 					Summary:  "Invalid escape sequence",
-					Detail:   fmt.Sprintf("The sequence \"\\%s\" is not a recognized escape sequence.", ty),
+					Detail:   detail,
 					Subject: &zcl.Range{
 						Filename: tok.Range.Filename,
 						Start: zcl.Pos{
@@ -379,35 +427,61 @@ func (p *parser) decodeQuotedLit(tok Token) (string, zcl.Diagnostics) {
 						End: zcl.Pos{
 							Line:   pos.Line,
 							Column: pos.Column + 1, // safe because we know the previous character must be a backslash
-							Byte:   pos.Byte + len(ty),
+							Byte:   pos.Byte + len(ch),
 						},
 					},
 				})
-				ret = append(ret, sc.Bytes()...)
-			}
-		case '$', '!':
-			bytes := sc.Bytes()
-			if len(bytes) != 1 || bytes[0] == byte(escaping) {
-				ret = append(ret, byte(escaping))
-			}
-			ret = append(ret, bytes...)
-		default:
-			switch sc.Text() {
-			case "\\":
-				escaping = '\\'
-			case "$":
-				escaping = '$'
-			case "!":
-				escaping = '!'
-			default:
-				ret = append(ret, sc.Bytes()...)
-			}
-		}
+				ret = append(ret, ch...)
+				esc = esc[:0]
+				continue Character
 
-		// Literal newlines cannot appear in quoted literals, so it's safe
-		// to just increment Column and Byte in our position.
-		pos.Column++
-		pos.Byte += len(sc.Bytes())
+			case '$', '!':
+				switch len(esc) {
+				case 1:
+					if len(ch) == 1 && ch[0] == esc[0] {
+						esc = append(esc, ch[0])
+						continue Character
+					}
+
+					// Any other character means this wasn't an escape sequence
+					// after all.
+					ret = append(ret, esc...)
+					ret = append(ret, ch...)
+					esc = esc[:0]
+				case 2:
+					if len(ch) == 1 && ch[0] == '{' {
+						// successful escape sequence
+						ret = append(ret, esc[0])
+					} else {
+						// not an escape sequence, so just output literal
+						ret = append(ret, esc...)
+					}
+					ret = append(ret, ch...)
+					esc = esc[:0]
+				default:
+					// should never happen
+					panic("have invalid escape sequence >2 characters")
+				}
+
+			}
+		} else {
+			if len(ch) == 1 {
+				switch ch[0] {
+				case '\\':
+					if quoted { // ignore backslashes in unquoted mode
+						esc = append(esc, '\\')
+						continue Character
+					}
+				case '$':
+					esc = append(esc, '$')
+					continue Character
+				case '!':
+					esc = append(esc, '!')
+					continue Character
+				}
+			}
+			ret = append(ret, ch...)
+		}
 	}
 
 	return string(ret), diags
