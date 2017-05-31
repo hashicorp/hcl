@@ -64,7 +64,8 @@ const (
 	TokenTemplateControl TokenType = 'λ'
 	TokenTemplateSeqEnd  TokenType = '∎'
 
-	TokenStringLit TokenType = 'S'
+	TokenQuotedLit TokenType = 'Q' // might contain backslash escapes
+	TokenStringLit TokenType = 'S' // cannot contain backslash escapes
 	TokenNumberLit TokenType = 'N'
 	TokenIdent     TokenType = 'I'
 

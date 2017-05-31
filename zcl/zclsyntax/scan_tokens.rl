@@ -206,7 +206,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
             TemplateInterp        => beginTemplateInterp;
             TemplateControl       => beginTemplateControl;
             EndStringTmpl         => endStringTemplate;
-            TemplateStringLiteral => { token(TokenStringLit); };
+            TemplateStringLiteral => { token(TokenQuotedLit); };
             AnyUTF8               => { token(TokenInvalid); };
             BrokenUTF8            => { token(TokenBadUTF8); };
         *|;

@@ -284,7 +284,7 @@ func TestScanTokens_normal(t *testing.T) {
 					},
 				},
 				{
-					Type:  TokenStringLit,
+					Type:  TokenQuotedLit,
 					Bytes: []byte(`hello`),
 					Range: zcl.Range{
 						Start: zcl.Pos{Byte: 1, Line: 1, Column: 2},
@@ -676,7 +676,7 @@ func TestScanTokens_normal(t *testing.T) {
 					},
 				},
 				{
-					Type:  TokenStringLit,
+					Type:  TokenQuotedLit,
 					Bytes: []byte(` foo`),
 					Range: zcl.Range{
 						Start: zcl.Pos{Byte: 8, Line: 1, Column: 9},

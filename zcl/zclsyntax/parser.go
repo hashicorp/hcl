@@ -276,7 +276,7 @@ Token:
 			cQuote = tok
 			break Token
 
-		case TokenStringLit:
+		case TokenQuotedLit:
 			// TODO: Remove any escape sequences from the string, once we
 			// have a function with which to do that.
 			ret.Write(tok.Bytes)

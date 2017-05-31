@@ -56,7 +56,7 @@ foo "bar" "baz" {
 					SpacesBefore: 1,
 				},
 				{
-					Type:         zclsyntax.TokenStringLit,
+					Type:         zclsyntax.TokenQuotedLit,
 					Bytes:        []byte(`bar`),
 					SpacesBefore: 0,
 				},
@@ -71,7 +71,7 @@ foo "bar" "baz" {
 					SpacesBefore: 1,
 				},
 				{
-					Type:         zclsyntax.TokenStringLit,
+					Type:         zclsyntax.TokenQuotedLit,
 					Bytes:        []byte(`baz`),
 					SpacesBefore: 0,
 				},
@@ -106,7 +106,7 @@ foo "bar" "baz" {
 					SpacesBefore: 1,
 				},
 				{
-					Type:         zclsyntax.TokenStringLit,
+					Type:         zclsyntax.TokenQuotedLit,
 					Bytes:        []byte(` cheese `),
 					SpacesBefore: 0,
 				},
