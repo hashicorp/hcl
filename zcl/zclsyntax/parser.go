@@ -1,9 +1,11 @@
 package zclsyntax
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 
+	"github.com/apparentlymart/go-textseg/textseg"
 	"github.com/zclconf/go-zcl/zcl"
 )
 
@@ -277,9 +279,9 @@ Token:
 			break Token
 
 		case TokenQuotedLit:
-			// TODO: Remove any escape sequences from the string, once we
-			// have a function with which to do that.
-			ret.Write(tok.Bytes)
+			s, sDiags := p.decodeQuotedLit(tok)
+			diags = append(diags, sDiags...)
+			ret.WriteString(s)
 
 		case TokenTemplateControl, TokenTemplateInterp:
 			which := "$"
@@ -326,6 +328,89 @@ Token:
 	}
 
 	return ret.String(), zcl.RangeBetween(oQuote.Range, cQuote.Range), diags
+}
+
+// decodeQuotedLit processes the given TokenQuotedLit token as if it were
+// a string literal appearing in quotes, returning the string resulting from
+// resolving any escape sequences.
+//
+// If any error diagnostics are returned, the returned string may be incomplete
+// or otherwise invalid.
+func (p *parser) decodeQuotedLit(tok Token) (string, zcl.Diagnostics) {
+	if tok.Type != TokenQuotedLit {
+		panic("decodeQuotedLit can only be used with TokenQuotedLit tokens")
+	}
+	var diags zcl.Diagnostics
+
+	ret := make([]byte, 0, len(tok.Bytes))
+
+	sc := bufio.NewScanner(bytes.NewReader(tok.Bytes))
+	sc.Split(textseg.ScanGraphemeClusters)
+
+	escaping := rune(0)
+	pos := tok.Range.Start
+	for sc.Scan() {
+		switch escaping {
+		case '\\':
+			escaping = 0
+			ty := sc.Text()
+			switch ty {
+			case "n":
+				ret = append(ret, 10)
+			case "r":
+				ret = append(ret, 13)
+			case "t":
+				ret = append(ret, 9)
+
+			// TODO: numeric character escapes with \uXXXX
+
+			default:
+				diags = append(diags, &zcl.Diagnostic{
+					Severity: zcl.DiagError,
+					Summary:  "Invalid escape sequence",
+					Detail:   fmt.Sprintf("The sequence \"\\%s\" is not a recognized escape sequence.", ty),
+					Subject: &zcl.Range{
+						Filename: tok.Range.Filename,
+						Start: zcl.Pos{
+							Line:   pos.Line,
+							Column: pos.Column - 1, // safe because we know the previous character must be a backslash
+							Byte:   pos.Byte - 1,
+						},
+						End: zcl.Pos{
+							Line:   pos.Line,
+							Column: pos.Column + 1, // safe because we know the previous character must be a backslash
+							Byte:   pos.Byte + len(ty),
+						},
+					},
+				})
+				ret = append(ret, sc.Bytes()...)
+			}
+		case '$', '!':
+			bytes := sc.Bytes()
+			if len(bytes) != 1 || bytes[0] == byte(escaping) {
+				ret = append(ret, byte(escaping))
+			}
+			ret = append(ret, bytes...)
+		default:
+			switch sc.Text() {
+			case "\\":
+				escaping = '\\'
+			case "$":
+				escaping = '$'
+			case "!":
+				escaping = '!'
+			default:
+				ret = append(ret, sc.Bytes()...)
+			}
+		}
+
+		// Literal newlines cannot appear in quoted literals, so it's safe
+		// to just increment Column and Byte in our position.
+		pos.Column++
+		pos.Byte += len(sc.Bytes())
+	}
+
+	return string(ret), diags
 }
 
 // recover seeks forward in the token stream until it finds TokenType "end",

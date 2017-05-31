@@ -219,6 +219,100 @@ block "valid" {}
 				},
 			},
 		},
+		{
+			`block "f\o" {}`,
+			1, // \o is not a valid escape sequence
+			&Body{
+				Attributes: Attributes{},
+				Blocks: Blocks{
+					&Block{
+						Type:   "block",
+						Labels: []string{"fo"},
+						Body:   nil,
+
+						TypeRange: zcl.Range{
+							Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   zcl.Pos{Line: 1, Column: 6, Byte: 5},
+						},
+						LabelRanges: []zcl.Range{
+							{
+								Start: zcl.Pos{Line: 1, Column: 7, Byte: 6},
+								End:   zcl.Pos{Line: 1, Column: 12, Byte: 11},
+							},
+						},
+						OpenBraceRange: zcl.Range{
+							Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   zcl.Pos{Line: 1, Column: 6, Byte: 5},
+						},
+						CloseBraceRange: zcl.Range{
+							Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   zcl.Pos{Line: 1, Column: 6, Byte: 5},
+						},
+					},
+				},
+				SrcRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   zcl.Pos{Line: 1, Column: 15, Byte: 14},
+				},
+				EndRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 15, Byte: 14},
+					End:   zcl.Pos{Line: 1, Column: 15, Byte: 14},
+				},
+			},
+		},
+		{
+			`block "f\n" {}`,
+			0,
+			&Body{
+				Attributes: Attributes{},
+				Blocks: Blocks{
+					&Block{
+						Type:   "block",
+						Labels: []string{"f\n"},
+						Body: &Body{
+							Attributes: Attributes{},
+							Blocks:     Blocks{},
+
+							SrcRange: zcl.Range{
+								Start: zcl.Pos{Line: 1, Column: 13, Byte: 12},
+								End:   zcl.Pos{Line: 1, Column: 15, Byte: 14},
+							},
+							EndRange: zcl.Range{
+								Start: zcl.Pos{Line: 1, Column: 15, Byte: 14},
+								End:   zcl.Pos{Line: 1, Column: 15, Byte: 14},
+							},
+						},
+
+						TypeRange: zcl.Range{
+							Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   zcl.Pos{Line: 1, Column: 6, Byte: 5},
+						},
+						LabelRanges: []zcl.Range{
+							{
+								Start: zcl.Pos{Line: 1, Column: 7, Byte: 6},
+								End:   zcl.Pos{Line: 1, Column: 12, Byte: 11},
+							},
+						},
+						OpenBraceRange: zcl.Range{
+							Start: zcl.Pos{Line: 1, Column: 13, Byte: 12},
+							End:   zcl.Pos{Line: 1, Column: 14, Byte: 13},
+						},
+						CloseBraceRange: zcl.Range{
+							Start: zcl.Pos{Line: 1, Column: 14, Byte: 13},
+							End:   zcl.Pos{Line: 1, Column: 15, Byte: 14},
+						},
+					},
+				},
+				SrcRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   zcl.Pos{Line: 1, Column: 15, Byte: 14},
+				},
+				EndRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 15, Byte: 14},
+					End:   zcl.Pos{Line: 1, Column: 15, Byte: 14},
+				},
+			},
+		},
 	}
 
 	prettyConfig := &pretty.Config{
