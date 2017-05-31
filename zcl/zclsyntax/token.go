@@ -40,11 +40,11 @@ const (
 	TokenOHeredoc TokenType = 'H'
 	TokenCHeredoc TokenType = 'h'
 
-	TokenDot   TokenType = '.'
-	TokenStar  TokenType = '*'
-	TokenSlash TokenType = '/'
-	TokenPlus  TokenType = '+'
-	TokenMinus TokenType = '-'
+	TokenStar    TokenType = '*'
+	TokenSlash   TokenType = '/'
+	TokenPlus    TokenType = '+'
+	TokenMinus   TokenType = '-'
+	TokenPercent TokenType = '%'
 
 	TokenEqual         TokenType = '='
 	TokenNotEqual      TokenType = '≠'
@@ -56,6 +56,8 @@ const (
 	TokenAnd  TokenType = '∧'
 	TokenOr   TokenType = '∨'
 	TokenBang TokenType = '!'
+
+	TokenDot TokenType = '.'
 
 	TokenQuestion TokenType = '?'
 	TokenColon    TokenType = ':'
