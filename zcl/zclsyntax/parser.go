@@ -377,11 +377,45 @@ Token:
 }
 
 func (p *parser) recoverAfterBodyItem() {
-	// TODO: Seek forward until we find a newline that isn't inside any
-	// bracketer, and return with the peeker placed after it so we're
-	// ready to try to parse another body item.
 	p.recovery = true
+	var open []TokenType
 
+Token:
+	for {
+		tok := p.Read()
+
+		switch tok.Type {
+
+		case TokenNewline:
+			if len(open) == 0 {
+				break Token
+			}
+
+		case TokenEOF:
+			break Token
+
+		case TokenOBrace, TokenOBrack, TokenOParen, TokenOQuote, TokenOHeredoc, TokenTemplateInterp, TokenTemplateControl:
+			open = append(open, tok.Type)
+
+		case TokenCBrace, TokenCBrack, TokenCParen, TokenCQuote, TokenCHeredoc:
+			opener := p.oppositeBracket(tok.Type)
+			for len(open) > 0 && open[len(open)-1] != opener {
+				open = open[:len(open)-1]
+			}
+			if len(open) > 0 {
+				open = open[:len(open)-1]
+			}
+
+		case TokenTemplateSeqEnd:
+			for len(open) > 0 && open[len(open)-1] != TokenTemplateInterp && open[len(open)-1] != TokenTemplateControl {
+				open = open[:len(open)-1]
+			}
+			if len(open) > 0 {
+				open = open[:len(open)-1]
+			}
+
+		}
+	}
 }
 
 // oppositeBracket finds the bracket that opposes the given bracketer, or
