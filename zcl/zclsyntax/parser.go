@@ -412,7 +412,7 @@ func (p *parser) parseExpressionTerm() (Expression, zcl.Diagnostics) {
 			diags = append(diags, &zcl.Diagnostic{
 				Severity: zcl.DiagError,
 				Summary:  "Unbalanced parentheses",
-				Detail:   "Expected a closing parentheses to terminate the expression.",
+				Detail:   "Expected a closing parenthesis to terminate the expression.",
 				Subject:  &close.Range,
 				Context:  zcl.RangeBetween(start.Range, close.Range).Ptr(),
 			})
