@@ -48,8 +48,11 @@ func ParseExpression(src []byte, filename string, start zcl.Pos) (Expression, zc
 
 // ParseTemplate parses the given buffer as a standalone zcl template,
 // returning it as an instance of Expression.
-func ParseTemplate(src []byte, filename string, start zcl.Pos) (*Expression, zcl.Diagnostics) {
-	panic("ParseTemplate is not yet implemented")
+func ParseTemplate(src []byte, filename string, start zcl.Pos) (Expression, zcl.Diagnostics) {
+	tokens := LexTemplate(src, filename, start)
+	peeker := newPeeker(tokens, false)
+	parser := &parser{peeker: peeker}
+	return parser.ParseTemplate(TokenEOF)
 }
 
 // LexConfig performs lexical analysis on the given buffer, treating it as a
