@@ -298,6 +298,17 @@ func (e *ConditionalExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostic
 	if !condResult.IsKnown() {
 		return cty.UnknownVal(resultType), diags
 	}
+	condResult, err := convert.Convert(condResult, cty.Bool)
+	if err != nil {
+		diags = append(diags, &zcl.Diagnostic{
+			Severity: zcl.DiagError,
+			Summary:  "Incorrect condition type",
+			Detail:   fmt.Sprintf("The condition expression must be of type bool."),
+			Subject:  e.Condition.Range().Ptr(),
+			Context:  &e.SrcRange,
+		})
+		return cty.UnknownVal(resultType), diags
+	}
 
 	if condResult.True() {
 		diags = append(diags, trueDiags...)
