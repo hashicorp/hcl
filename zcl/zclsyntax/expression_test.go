@@ -36,6 +36,30 @@ func TestExpressionParseAndValue(t *testing.T) {
 			cty.NumberIntVal(1),
 			1, // Unbalanced parentheses
 		},
+		{
+			`true`,
+			nil,
+			cty.True,
+			0,
+		},
+		{
+			`false`,
+			nil,
+			cty.False,
+			0,
+		},
+		{
+			`null`,
+			nil,
+			cty.NullVal(cty.DynamicPseudoType),
+			0,
+		},
+		{
+			`true true`,
+			nil,
+			cty.True,
+			1, // extra characters after expression
+		},
 	}
 
 	for _, test := range tests {

@@ -453,6 +453,38 @@ func (p *parser) parseExpressionTerm() (Expression, zcl.Diagnostics) {
 			SrcRange: tok.Range,
 		}, nil
 
+	case TokenIdent:
+		tok := p.Read() // eat identifier token
+
+		name := string(tok.Bytes)
+		switch name {
+		case "true":
+			return &LiteralValueExpr{
+				Val:      cty.True,
+				SrcRange: tok.Range,
+			}, nil
+		case "false":
+			return &LiteralValueExpr{
+				Val:      cty.False,
+				SrcRange: tok.Range,
+			}, nil
+		case "null":
+			return &LiteralValueExpr{
+				Val:      cty.NullVal(cty.DynamicPseudoType),
+				SrcRange: tok.Range,
+			}, nil
+		default:
+			return &ScopeTraversalExpr{
+				Traversal: zcl.Traversal{
+					zcl.TraverseRoot{
+						Name:     name,
+						SrcRange: tok.Range,
+					},
+				},
+				SrcRange: tok.Range,
+			}, nil
+		}
+
 	default:
 		var diags zcl.Diagnostics
 		if !p.recovery {
