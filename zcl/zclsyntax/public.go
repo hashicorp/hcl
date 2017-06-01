@@ -27,8 +27,23 @@ func ParseConfig(src []byte, filename string, start zcl.Pos) (*zcl.File, zcl.Dia
 
 // ParseExpression parses the given buffer as a standalone zcl expression,
 // returning it as an instance of Expression.
-func ParseExpression(src []byte, filename string, start zcl.Pos) (*Expression, zcl.Diagnostics) {
-	panic("ParseExpression is not yet implemented")
+func ParseExpression(src []byte, filename string, start zcl.Pos) (Expression, zcl.Diagnostics) {
+	tokens := LexExpression(src, filename, start)
+	peeker := newPeeker(tokens, false)
+	parser := &parser{peeker: peeker}
+	expr, diags := parser.ParseExpression()
+
+	next := parser.Peek()
+	if next.Type != TokenEOF {
+		diags = append(diags, &zcl.Diagnostic{
+			Severity: zcl.DiagError,
+			Summary:  "Extra characters after expression",
+			Detail:   "An expression was successfully parsed, but extra characters were found after it.",
+			Subject:  &next.Range,
+		})
+	}
+
+	return expr, diags
 }
 
 // ParseTemplate parses the given buffer as a standalone zcl template,

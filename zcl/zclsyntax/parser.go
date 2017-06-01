@@ -7,6 +7,7 @@ import (
 
 	"github.com/apparentlymart/go-textseg/textseg"
 	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-cty/cty/convert"
 	"github.com/zclconf/go-zcl/zcl"
 )
 
@@ -418,7 +419,39 @@ func (p *parser) parseExpressionTerm() (Expression, zcl.Diagnostics) {
 			p.setRecovery()
 		}
 
+		p.Read() // eat closing paren
+
 		return expr, diags
+
+	case TokenNumberLit:
+		tok := p.Read() // eat number token
+
+		// We'll lean on the cty converter to do the conversion, to ensure that
+		// the behavior is the same as what would happen if converting a
+		// non-literal string to a number.
+		numStrVal := cty.StringVal(string(tok.Bytes))
+		numVal, err := convert.Convert(numStrVal, cty.Number)
+		if err != nil {
+			ret := &LiteralValueExpr{
+				Val:      cty.UnknownVal(cty.Number),
+				SrcRange: tok.Range,
+			}
+			return ret, zcl.Diagnostics{
+				{
+					Severity: zcl.DiagError,
+					Summary:  "Invalid number literal",
+					// FIXME: not a very good error message, but convert only
+					// gives us "a number is required", so not much help either.
+					Detail:  "Failed to recognize the value of this number literal.",
+					Subject: &ret.SrcRange,
+				},
+			}
+		}
+
+		return &LiteralValueExpr{
+			Val:      numVal,
+			SrcRange: tok.Range,
+		}, nil
 
 	default:
 		var diags zcl.Diagnostics

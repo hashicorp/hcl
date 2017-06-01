@@ -9,6 +9,61 @@ import (
 	"github.com/zclconf/go-zcl/zcl"
 )
 
+func TestExpressionParseAndValue(t *testing.T) {
+	// This is a combo test that exercises both the parser and the Value
+	// method, with the focus on the latter but indirectly testing the former.
+	tests := []struct {
+		input     string
+		ctx       *zcl.EvalContext
+		want      cty.Value
+		diagCount int
+	}{
+		{
+			`1`,
+			nil,
+			cty.NumberIntVal(1),
+			0,
+		},
+		{
+			`(1)`,
+			nil,
+			cty.NumberIntVal(1),
+			0,
+		},
+		{
+			`(1`,
+			nil,
+			cty.NumberIntVal(1),
+			1, // Unbalanced parentheses
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.input, func(t *testing.T) {
+			expr, parseDiags := ParseExpression([]byte(test.input), "", zcl.Pos{Line: 1, Column: 1, Byte: 0})
+
+			got, valDiags := expr.Value(test.ctx)
+
+			diagCount := len(parseDiags) + len(valDiags)
+
+			if diagCount != test.diagCount {
+				t.Errorf("wrong number of diagnostics %d; want %d", diagCount, test.diagCount)
+				for _, diag := range parseDiags {
+					t.Logf(" - %s", diag.Error())
+				}
+				for _, diag := range valDiags {
+					t.Logf(" - %s", diag.Error())
+				}
+			}
+
+			if !got.RawEquals(test.want) {
+				t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.want)
+			}
+		})
+	}
+
+}
+
 func TestFunctionCallExprValue(t *testing.T) {
 	funcs := map[string]function.Function{
 		"length":     stdlib.StrlenFunc,
