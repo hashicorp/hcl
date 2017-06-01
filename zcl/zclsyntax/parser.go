@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/apparentlymart/go-textseg/textseg"
+	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-zcl/zcl"
 )
 
@@ -391,7 +392,53 @@ func (p *parser) parseBinaryOps(ops []map[TokenType]Operation) (Expression, zcl.
 }
 
 func (p *parser) parseExpressionTerm() (Expression, zcl.Diagnostics) {
-	panic("parseExpressionTerm not yet implemented")
+	start := p.Peek()
+
+	switch start.Type {
+	case TokenOParen:
+		p.Read() // eat open paren
+		expr, diags := p.ParseExpression()
+		if diags.HasErrors() {
+			// attempt to place the peeker after our closing paren
+			// before we return, so that the next parser has some
+			// chance of finding a valid expression.
+			p.recover(TokenCParen)
+			return expr, diags
+		}
+
+		close := p.Peek()
+		if close.Type != TokenCParen {
+			diags = append(diags, &zcl.Diagnostic{
+				Severity: zcl.DiagError,
+				Summary:  "Unbalanced parentheses",
+				Detail:   "Expected a closing parentheses to terminate the expression.",
+				Subject:  &close.Range,
+				Context:  zcl.RangeBetween(start.Range, close.Range).Ptr(),
+			})
+			p.setRecovery()
+		}
+
+		return expr, diags
+
+	default:
+		var diags zcl.Diagnostics
+		if !p.recovery {
+			diags = append(diags, &zcl.Diagnostic{
+				Severity: zcl.DiagError,
+				Summary:  "Invalid expression",
+				Detail:   "Expected the start of an expression, but found an invalid expression token.",
+				Subject:  &start.Range,
+			})
+		}
+		p.setRecovery()
+
+		// Return a placeholder so that the AST is still structurally sound
+		// even in the presence of parse errors.
+		return &LiteralValueExpr{
+			Val:      cty.DynamicVal,
+			SrcRange: start.Range,
+		}, diags
+	}
 }
 
 // parseQuotedStringLiteral is a helper for parsing quoted strings that
@@ -629,6 +676,13 @@ Character:
 	}
 
 	return string(ret), diags
+}
+
+// setRecovery turns on recovery mode without actually doing any recovery.
+// This can be used when a parser knowingly leaves the peeker in a useless
+// place and wants to suppress errors that might result from that decision.
+func (p *parser) setRecovery() {
+	p.recovery = true
 }
 
 // recover seeks forward in the token stream until it finds TokenType "end",
