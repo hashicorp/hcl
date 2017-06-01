@@ -90,3 +90,27 @@ func (e *BinaryOpExpr) Range() zcl.Range {
 func (e *BinaryOpExpr) StartRange() zcl.Range {
 	return e.LHS.StartRange()
 }
+
+type UnaryOpExpr struct {
+	Op  Operation
+	Val Expression
+
+	SrcRange    zcl.Range
+	SymbolRange zcl.Range
+}
+
+func (e *UnaryOpExpr) walkChildNodes(w internalWalkFunc) {
+	e.Val = w(e.Val).(Expression)
+}
+
+func (e *UnaryOpExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
+	panic("UnaryOpExpr.Value not yet implemented")
+}
+
+func (e *UnaryOpExpr) Range() zcl.Range {
+	return e.SrcRange
+}
+
+func (e *UnaryOpExpr) StartRange() zcl.Range {
+	return e.SymbolRange
+}

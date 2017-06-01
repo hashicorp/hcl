@@ -485,6 +485,37 @@ func (p *parser) parseExpressionTerm() (Expression, zcl.Diagnostics) {
 			}, nil
 		}
 
+	case TokenMinus:
+		tok := p.Read() // eat minus token
+
+		// Important to use parseExpressionTerm rather than parseExpression
+		// here, otherwise we can capture a following binary expression into
+		// our negation.
+		// e.g. -46+5 should parse as (-46)+5, not -(46+5)
+		operand, diags := p.parseExpressionTerm()
+		return &UnaryOpExpr{
+			Op:  OpNegate,
+			Val: operand,
+
+			SrcRange:    zcl.RangeBetween(tok.Range, operand.Range()),
+			SymbolRange: tok.Range,
+		}, diags
+
+	case TokenBang:
+		tok := p.Read() // eat bang token
+
+		// Important to use parseExpressionTerm rather than parseExpression
+		// here, otherwise we can capture a following binary expression into
+		// our negation.
+		operand, diags := p.parseExpressionTerm()
+		return &UnaryOpExpr{
+			Op:  OpLogicalNot,
+			Val: operand,
+
+			SrcRange:    zcl.RangeBetween(tok.Range, operand.Range()),
+			SymbolRange: tok.Range,
+		}, diags
+
 	default:
 		var diags zcl.Diagnostics
 		if !p.recovery {
