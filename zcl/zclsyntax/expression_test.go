@@ -60,6 +60,60 @@ func TestExpressionParseAndValue(t *testing.T) {
 			cty.True,
 			1, // extra characters after expression
 		},
+		{
+			`"hello"`,
+			nil,
+			cty.StringVal("hello"),
+			0,
+		},
+		{
+			`"hello\nworld"`,
+			nil,
+			cty.StringVal("hello\nworld"),
+			0,
+		},
+		{
+			`"unclosed`,
+			nil,
+			cty.StringVal("unclosed"),
+			1, // Unterminated template string
+		},
+		{
+			`"hello ${"world"}"`,
+			nil,
+			cty.StringVal("hello world"),
+			0,
+		},
+		{
+			`"hello ${12.5}"`,
+			nil,
+			cty.StringVal("hello 12.5"),
+			0,
+		},
+		{
+			`"silly ${"${"nesting"}"}"`,
+			nil,
+			cty.StringVal("silly nesting"),
+			0,
+		},
+		{
+			`"silly ${"${true}"}"`,
+			nil,
+			cty.StringVal("silly true"),
+			0,
+		},
+		{
+			`"hello $${escaped}"`,
+			nil,
+			cty.StringVal("hello ${escaped}"),
+			0,
+		},
+		{
+			`"hello $$nonescape"`,
+			nil,
+			cty.StringVal("hello $$nonescape"),
+			0,
+		},
 	}
 
 	for _, test := range tests {

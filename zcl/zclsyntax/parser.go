@@ -485,6 +485,11 @@ func (p *parser) parseExpressionTerm() (Expression, zcl.Diagnostics) {
 			}, nil
 		}
 
+	case TokenOQuote, TokenOHeredoc:
+		open := p.Read() // eat opening marker
+		closer := p.oppositeBracket(open.Type)
+		return p.ParseTemplate(closer)
+
 	case TokenMinus:
 		tok := p.Read() // eat minus token
 
@@ -535,6 +540,89 @@ func (p *parser) parseExpressionTerm() (Expression, zcl.Diagnostics) {
 			SrcRange: start.Range,
 		}, diags
 	}
+}
+
+func (p *parser) ParseTemplate(end TokenType) (Expression, zcl.Diagnostics) {
+	var parts []Expression
+	var diags zcl.Diagnostics
+
+	startRange := p.NextRange()
+
+Token:
+	for {
+		next := p.Read()
+		if next.Type == end {
+			// all done!
+			break
+		}
+
+		switch next.Type {
+		case TokenStringLit, TokenQuotedLit:
+			str, strDiags := p.decodeStringLit(next)
+			diags = append(diags, strDiags...)
+			parts = append(parts, &LiteralValueExpr{
+				Val:      cty.StringVal(str),
+				SrcRange: next.Range,
+			})
+		case TokenTemplateInterp:
+			// TODO: if opener has ~ mark, eat trailing spaces in the previous
+			// literal.
+			expr, exprDiags := p.ParseExpression()
+			diags = append(diags, exprDiags...)
+			close := p.Peek()
+			if close.Type != TokenTemplateSeqEnd {
+				p.recover(TokenTemplateSeqEnd)
+			} else {
+				p.Read() // eat closing brace
+				// TODO: if closer has ~ mark, remember to eat leading spaces
+				// in the following literal.
+			}
+			parts = append(parts, expr)
+		case TokenTemplateControl:
+			panic("template control sequences not yet supported")
+
+		default:
+			if !p.recovery {
+				diags = append(diags, &zcl.Diagnostic{
+					Severity: zcl.DiagError,
+					Summary:  "Unterminated template string",
+					Detail:   "No closing marker was found for the string.",
+					Subject:  &next.Range,
+					Context:  zcl.RangeBetween(startRange, next.Range).Ptr(),
+				})
+			}
+			p.recover(end)
+			break Token
+		}
+	}
+
+	if len(parts) == 0 {
+		// If a sequence has no content, we'll treat it as if it had an
+		// empty string in it because that's what the user probably means
+		// if they write "" in configuration.
+		return &LiteralValueExpr{
+			Val: cty.StringVal(""),
+			SrcRange: zcl.Range{
+				Filename: startRange.Filename,
+				Start:    startRange.Start,
+				End:      startRange.Start,
+			},
+		}, diags
+	}
+
+	if len(parts) == 1 {
+		// If a sequence only has one part then as a special case we return
+		// that part alone. This allows the use of single-part templates to
+		// represent general expressions in syntaxes such as JSON where
+		// un-quoted expressions are not possible.
+		return parts[0], diags
+	}
+
+	return &TemplateExpr{
+		Parts: parts,
+
+		SrcRange: zcl.RangeBetween(parts[0].Range(), parts[len(parts)-1].Range()),
+	}, diags
 }
 
 // parseQuotedStringLiteral is a helper for parsing quoted strings that
