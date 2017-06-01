@@ -90,6 +90,44 @@ hello world
 			cty.True, // any single expression is unwrapped without stringification
 			0,
 		},
+		{
+			`trim ${~ "trim"}`,
+			nil,
+			cty.StringVal("trimtrim"),
+			0,
+		},
+		{
+			`${"trim" ~} trim`,
+			nil,
+			cty.StringVal("trimtrim"),
+			0,
+		},
+		{
+			`trim
+${~"trim"~}
+trim`,
+			nil,
+			cty.StringVal("trimtrimtrim"),
+			0,
+		},
+		{
+			` ${~ true ~} `,
+			nil,
+			cty.StringVal("true"), // can't trim space to reduce to a single expression
+			0,
+		},
+		{
+			`${"hello "}${~"trim"~}${" hello"}`,
+			nil,
+			cty.StringVal("hello trim hello"), // trimming can't reach into a neighboring interpolation
+			0,
+		},
+		{
+			`${true}${~"trim"~}${true}`,
+			nil,
+			cty.StringVal("truetrimtrue"), // trimming is no-op of neighbors aren't literal strings
+			0,
+		},
 	}
 
 	for _, test := range tests {

@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"strings"
+	"unicode"
 
 	"github.com/apparentlymart/go-textseg/textseg"
 	"github.com/zclconf/go-cty/cty"
@@ -547,6 +549,8 @@ func (p *parser) ParseTemplate(end TokenType) (Expression, zcl.Diagnostics) {
 	var diags zcl.Diagnostics
 
 	startRange := p.NextRange()
+	ltrimNext := false
+	nextCanTrimPrev := false
 
 Token:
 	for {
@@ -556,26 +560,65 @@ Token:
 			break
 		}
 
+		ltrim := ltrimNext
+		ltrimNext = false
+		canTrimPrev := nextCanTrimPrev
+		nextCanTrimPrev = false
+
 		switch next.Type {
 		case TokenStringLit, TokenQuotedLit:
 			str, strDiags := p.decodeStringLit(next)
 			diags = append(diags, strDiags...)
+
+			if ltrim {
+				str = strings.TrimLeftFunc(str, unicode.IsSpace)
+			}
+
 			parts = append(parts, &LiteralValueExpr{
 				Val:      cty.StringVal(str),
 				SrcRange: next.Range,
 			})
+			nextCanTrimPrev = true
+
 		case TokenTemplateInterp:
-			// TODO: if opener has ~ mark, eat trailing spaces in the previous
-			// literal.
+			// if the opener is ${~ then we want to eat any trailing whitespace
+			// in the preceding literal token, assuming it is indeed a literal
+			// token.
+			if canTrimPrev && len(next.Bytes) == 3 && next.Bytes[2] == '~' && len(parts) > 0 {
+				prevExpr := parts[len(parts)-1]
+				if lexpr, ok := prevExpr.(*LiteralValueExpr); ok {
+					val := lexpr.Val
+					if val.Type() == cty.String && val.IsKnown() && !val.IsNull() {
+						str := val.AsString()
+						str = strings.TrimRightFunc(str, unicode.IsSpace)
+						lexpr.Val = cty.StringVal(str)
+					}
+				}
+			}
+
 			expr, exprDiags := p.ParseExpression()
 			diags = append(diags, exprDiags...)
 			close := p.Peek()
 			if close.Type != TokenTemplateSeqEnd {
+				if !p.recovery {
+					diags = append(diags, &zcl.Diagnostic{
+						Severity: zcl.DiagError,
+						Summary:  "Extra characters after interpolation expression",
+						Detail:   "Expected a closing brace to end the interpolation expression, but found extra characters.",
+						Subject:  &close.Range,
+						Context:  zcl.RangeBetween(startRange, close.Range).Ptr(),
+					})
+				}
 				p.recover(TokenTemplateSeqEnd)
 			} else {
 				p.Read() // eat closing brace
-				// TODO: if closer has ~ mark, remember to eat leading spaces
-				// in the following literal.
+
+				// If the closer is ~} then we want to eat any leading
+				// whitespace on the next token, if it turns out to be a
+				// literal token.
+				if len(close.Bytes) == 2 && close.Bytes[0] == '~' {
+					ltrimNext = true
+				}
 			}
 			parts = append(parts, expr)
 		case TokenTemplateControl:
