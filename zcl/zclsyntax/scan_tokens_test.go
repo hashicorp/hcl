@@ -1376,8 +1376,112 @@ func TestScanTokens_template(t *testing.T) {
 				},
 			},
 		},
-
-		// TODO: also test interpolation sequences
+		{
+			"hello ${foo} hello",
+			[]Token{
+				{
+					Type:  TokenStringLit,
+					Bytes: []byte("hello "),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   zcl.Pos{Byte: 6, Line: 1, Column: 7},
+					},
+				},
+				{
+					Type:  TokenTemplateInterp,
+					Bytes: []byte("${"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 6, Line: 1, Column: 7},
+						End:   zcl.Pos{Byte: 8, Line: 1, Column: 9},
+					},
+				},
+				{
+					Type:  TokenIdent,
+					Bytes: []byte("foo"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 8, Line: 1, Column: 9},
+						End:   zcl.Pos{Byte: 11, Line: 1, Column: 12},
+					},
+				},
+				{
+					Type:  TokenTemplateSeqEnd,
+					Bytes: []byte("}"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 11, Line: 1, Column: 12},
+						End:   zcl.Pos{Byte: 12, Line: 1, Column: 13},
+					},
+				},
+				{
+					Type:  TokenStringLit,
+					Bytes: []byte(" hello"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 12, Line: 1, Column: 13},
+						End:   zcl.Pos{Byte: 18, Line: 1, Column: 19},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 18, Line: 1, Column: 19},
+						End:   zcl.Pos{Byte: 18, Line: 1, Column: 19},
+					},
+				},
+			},
+		},
+		{
+			"hello ${~foo~} hello",
+			[]Token{
+				{
+					Type:  TokenStringLit,
+					Bytes: []byte("hello "),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   zcl.Pos{Byte: 6, Line: 1, Column: 7},
+					},
+				},
+				{
+					Type:  TokenTemplateInterp,
+					Bytes: []byte("${~"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 6, Line: 1, Column: 7},
+						End:   zcl.Pos{Byte: 9, Line: 1, Column: 10},
+					},
+				},
+				{
+					Type:  TokenIdent,
+					Bytes: []byte("foo"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 9, Line: 1, Column: 10},
+						End:   zcl.Pos{Byte: 12, Line: 1, Column: 13},
+					},
+				},
+				{
+					Type:  TokenTemplateSeqEnd,
+					Bytes: []byte("~}"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 12, Line: 1, Column: 13},
+						End:   zcl.Pos{Byte: 14, Line: 1, Column: 15},
+					},
+				},
+				{
+					Type:  TokenStringLit,
+					Bytes: []byte(" hello"),
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 14, Line: 1, Column: 15},
+						End:   zcl.Pos{Byte: 20, Line: 1, Column: 21},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: zcl.Range{
+						Start: zcl.Pos{Byte: 20, Line: 1, Column: 21},
+						End:   zcl.Pos{Byte: 20, Line: 1, Column: 21},
+					},
+				},
+			},
+		},
 	}
 
 	prettyConfig := &pretty.Config{

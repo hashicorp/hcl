@@ -184,7 +184,7 @@ var _zcltok_trans_keys []byte = []byte{
 	233, 234, 237, 239, 240, 243, 48, 57,
 	65, 90, 97, 122, 196, 218, 229, 236,
 	10, 170, 181, 183, 186, 128, 150, 152,
-	182, 184, 255, 192, 255, 128, 255, 173,
+	182, 184, 255, 192, 255, 0, 127, 173,
 	130, 133, 146, 159, 165, 171, 175, 255,
 	181, 190, 184, 185, 192, 255, 140, 134,
 	138, 142, 161, 163, 255, 182, 130, 136,
@@ -1410,7 +1410,7 @@ var _zcltok_indicies []int16 = []int16{
 	61, 62, 37, 39, 63, 41, 64, 65,
 	66, 11, 11, 11, 14, 38, 9, 44,
 	9, 11, 11, 11, 11, 9, 11, 11,
-	11, 9, 11, 9, 11, 11, 9, 9,
+	11, 9, 11, 9, 11, 9, 11, 9,
 	9, 9, 9, 9, 11, 9, 9, 9,
 	9, 11, 11, 11, 11, 11, 9, 9,
 	11, 9, 9, 11, 9, 11, 9, 9,
@@ -2752,7 +2752,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 		Pos:      start,
 	}
 
-	// line 257 "scan_tokens.rl"
+	// line 264 "scan_tokens.rl"
 
 	// Ragel state
 	p := 0          // "Pointer" into data
@@ -2778,7 +2778,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 	var retBraces []int              // stack of brace levels that cause us to use fret
 	var heredocs []heredocInProgress // stack of heredocs we're currently processing
 
-	// line 290 "scan_tokens.rl"
+	// line 297 "scan_tokens.rl"
 
 	// Make Go compiler happy
 	_ = ts
@@ -2960,14 +2960,14 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 
 				}
 			case 7:
-				// line 210 "scan_tokens.rl"
+				// line 217 "scan_tokens.rl"
 
 				te = p + 1
 				{
 					token(TokenInvalid)
 				}
 			case 8:
-				// line 211 "scan_tokens.rl"
+				// line 218 "scan_tokens.rl"
 
 				te = p + 1
 				{
@@ -3014,7 +3014,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 					}
 				}
 			case 11:
-				// line 209 "scan_tokens.rl"
+				// line 216 "scan_tokens.rl"
 
 				te = p
 				p--
@@ -3022,7 +3022,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 					token(TokenQuotedLit)
 				}
 			case 12:
-				// line 210 "scan_tokens.rl"
+				// line 217 "scan_tokens.rl"
 
 				te = p
 				p--
@@ -3030,7 +3030,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 					token(TokenInvalid)
 				}
 			case 13:
-				// line 211 "scan_tokens.rl"
+				// line 218 "scan_tokens.rl"
 
 				te = p
 				p--
@@ -3038,14 +3038,14 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 					token(TokenBadUTF8)
 				}
 			case 14:
-				// line 209 "scan_tokens.rl"
+				// line 216 "scan_tokens.rl"
 
 				p = (te) - 1
 				{
 					token(TokenQuotedLit)
 				}
 			case 15:
-				// line 211 "scan_tokens.rl"
+				// line 218 "scan_tokens.rl"
 
 				p = (te) - 1
 				{
@@ -3056,7 +3056,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 
 				act = 10
 			case 17:
-				// line 219 "scan_tokens.rl"
+				// line 226 "scan_tokens.rl"
 
 				act = 11
 			case 18:
@@ -3126,7 +3126,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 					token(TokenStringLit)
 				}
 			case 21:
-				// line 219 "scan_tokens.rl"
+				// line 226 "scan_tokens.rl"
 
 				te = p + 1
 				{
@@ -3185,7 +3185,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 					token(TokenStringLit)
 				}
 			case 25:
-				// line 219 "scan_tokens.rl"
+				// line 226 "scan_tokens.rl"
 
 				te = p
 				p--
@@ -3234,7 +3234,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 
 				act = 14
 			case 29:
-				// line 226 "scan_tokens.rl"
+				// line 233 "scan_tokens.rl"
 
 				act = 15
 			case 30:
@@ -3283,7 +3283,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 					token(TokenStringLit)
 				}
 			case 33:
-				// line 226 "scan_tokens.rl"
+				// line 233 "scan_tokens.rl"
 
 				te = p + 1
 				{
@@ -3338,7 +3338,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 					token(TokenStringLit)
 				}
 			case 37:
-				// line 226 "scan_tokens.rl"
+				// line 233 "scan_tokens.rl"
 
 				te = p
 				p--
@@ -3375,69 +3375,69 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 				}
 
 			case 40:
-				// line 232 "scan_tokens.rl"
+				// line 239 "scan_tokens.rl"
 
 				act = 18
 			case 41:
-				// line 234 "scan_tokens.rl"
+				// line 241 "scan_tokens.rl"
 
 				act = 19
 			case 42:
-				// line 242 "scan_tokens.rl"
+				// line 249 "scan_tokens.rl"
 
 				act = 26
 			case 43:
-				// line 253 "scan_tokens.rl"
+				// line 260 "scan_tokens.rl"
 
 				act = 33
 			case 44:
-				// line 254 "scan_tokens.rl"
+				// line 261 "scan_tokens.rl"
 
 				act = 34
 			case 45:
-				// line 235 "scan_tokens.rl"
+				// line 242 "scan_tokens.rl"
 
 				te = p + 1
 				{
 					token(TokenNewline)
 				}
 			case 46:
-				// line 237 "scan_tokens.rl"
+				// line 244 "scan_tokens.rl"
 
 				te = p + 1
 				{
 					token(TokenNotEqual)
 				}
 			case 47:
-				// line 238 "scan_tokens.rl"
+				// line 245 "scan_tokens.rl"
 
 				te = p + 1
 				{
 					token(TokenGreaterThanEq)
 				}
 			case 48:
-				// line 239 "scan_tokens.rl"
+				// line 246 "scan_tokens.rl"
 
 				te = p + 1
 				{
 					token(TokenLessThanEq)
 				}
 			case 49:
-				// line 240 "scan_tokens.rl"
+				// line 247 "scan_tokens.rl"
 
 				te = p + 1
 				{
 					token(TokenAnd)
 				}
 			case 50:
-				// line 241 "scan_tokens.rl"
+				// line 248 "scan_tokens.rl"
 
 				te = p + 1
 				{
 					token(TokenOr)
 				}
 			case 51:
-				// line 242 "scan_tokens.rl"
+				// line 249 "scan_tokens.rl"
 
 				te = p + 1
 				{
@@ -3477,14 +3477,13 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 
 				te = p + 1
 				{
-					token(TokenTemplateSeqEnd)
-					braces--
-
 					// Only consume from the retBraces stack and return if we are at
 					// a suitable brace nesting level, otherwise things will get
 					// confused. (Not entering this branch indicates a syntax error,
 					// which we will catch in the parser.)
 					if len(retBraces) > 0 && retBraces[len(retBraces)-1] == braces {
+						token(TokenTemplateSeqEnd)
+						braces--
 						retBraces = retBraces[0 : len(retBraces)-1]
 						top--
 						cs = stack[top]
@@ -3493,6 +3492,14 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 						}
 						goto _again
 
+					} else {
+						// We intentionally generate a TokenTemplateSeqEnd here,
+						// even though the user apparently wanted a brace, because
+						// we want to allow the parser to catch the incorrect use
+						// of a ~} to balance a generic opening brace, rather than
+						// a template sequence.
+						token(TokenTemplateSeqEnd)
+						braces--
 					}
 				}
 			case 55:
@@ -3541,27 +3548,27 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 					}
 				}
 			case 57:
-				// line 253 "scan_tokens.rl"
+				// line 260 "scan_tokens.rl"
 
 				te = p + 1
 				{
 					token(TokenInvalid)
 				}
 			case 58:
-				// line 254 "scan_tokens.rl"
+				// line 261 "scan_tokens.rl"
 
 				te = p + 1
 				{
 					token(TokenBadUTF8)
 				}
 			case 59:
-				// line 230 "scan_tokens.rl"
+				// line 237 "scan_tokens.rl"
 
 				te = p
 				p--
 
 			case 60:
-				// line 231 "scan_tokens.rl"
+				// line 238 "scan_tokens.rl"
 
 				te = p
 				p--
@@ -3569,7 +3576,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 					token(TokenNumberLit)
 				}
 			case 61:
-				// line 232 "scan_tokens.rl"
+				// line 239 "scan_tokens.rl"
 
 				te = p
 				p--
@@ -3577,7 +3584,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 					token(TokenIdent)
 				}
 			case 62:
-				// line 234 "scan_tokens.rl"
+				// line 241 "scan_tokens.rl"
 
 				te = p
 				p--
@@ -3585,7 +3592,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 					token(TokenComment)
 				}
 			case 63:
-				// line 242 "scan_tokens.rl"
+				// line 249 "scan_tokens.rl"
 
 				te = p
 				p--
@@ -3593,7 +3600,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 					selfToken()
 				}
 			case 64:
-				// line 252 "scan_tokens.rl"
+				// line 259 "scan_tokens.rl"
 
 				te = p
 				p--
@@ -3601,7 +3608,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 					token(TokenTabs)
 				}
 			case 65:
-				// line 253 "scan_tokens.rl"
+				// line 260 "scan_tokens.rl"
 
 				te = p
 				p--
@@ -3609,7 +3616,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 					token(TokenInvalid)
 				}
 			case 66:
-				// line 254 "scan_tokens.rl"
+				// line 261 "scan_tokens.rl"
 
 				te = p
 				p--
@@ -3617,28 +3624,28 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 					token(TokenBadUTF8)
 				}
 			case 67:
-				// line 231 "scan_tokens.rl"
+				// line 238 "scan_tokens.rl"
 
 				p = (te) - 1
 				{
 					token(TokenNumberLit)
 				}
 			case 68:
-				// line 232 "scan_tokens.rl"
+				// line 239 "scan_tokens.rl"
 
 				p = (te) - 1
 				{
 					token(TokenIdent)
 				}
 			case 69:
-				// line 242 "scan_tokens.rl"
+				// line 249 "scan_tokens.rl"
 
 				p = (te) - 1
 				{
 					selfToken()
 				}
 			case 70:
-				// line 254 "scan_tokens.rl"
+				// line 261 "scan_tokens.rl"
 
 				p = (te) - 1
 				{
@@ -3675,7 +3682,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 					}
 				}
 
-				// line 3559 "scan_tokens.go"
+				// line 3566 "scan_tokens.go"
 			}
 		}
 
@@ -3696,7 +3703,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 
 				act = 0
 
-				// line 3579 "scan_tokens.go"
+				// line 3586 "scan_tokens.go"
 			}
 		}
 
@@ -3722,7 +3729,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 		}
 	}
 
-	// line 313 "scan_tokens.rl"
+	// line 320 "scan_tokens.rl"
 
 	// If we fall out here without being in a final state then we've
 	// encountered something that the scanner can't match, which we'll

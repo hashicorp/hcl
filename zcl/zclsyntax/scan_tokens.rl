@@ -168,16 +168,23 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
         }
 
         action closeTemplateSeqEatWhitespace {
-            token(TokenTemplateSeqEnd);
-            braces--;
-
             // Only consume from the retBraces stack and return if we are at
             // a suitable brace nesting level, otherwise things will get
             // confused. (Not entering this branch indicates a syntax error,
             // which we will catch in the parser.)
             if len(retBraces) > 0 && retBraces[len(retBraces)-1] == braces {
+                token(TokenTemplateSeqEnd);
+                braces--;
                 retBraces = retBraces[0:len(retBraces)-1]
                 fret;
+            } else {
+                // We intentionally generate a TokenTemplateSeqEnd here,
+                // even though the user apparently wanted a brace, because
+                // we want to allow the parser to catch the incorrect use
+                // of a ~} to balance a generic opening brace, rather than
+                // a template sequence.
+                token(TokenTemplateSeqEnd);
+                braces--;
             }
         }
 
