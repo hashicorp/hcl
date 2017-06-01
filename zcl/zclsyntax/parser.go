@@ -315,8 +315,83 @@ func (p *parser) parseTernaryConditional() (Expression, zcl.Diagnostics) {
 	}, diags
 }
 
+// parseBinaryOps calls itself recursively to work through all of the
+// operator precedence groups, and then eventually calls parseExpressionTerm
+// for each operand.
 func (p *parser) parseBinaryOps(ops []map[TokenType]Operation) (Expression, zcl.Diagnostics) {
-	panic("parseBinaryOps not yet implemented")
+	if len(ops) == 0 {
+		// We've run out of operators, so now we'll just try to parse a term.
+		return p.parseExpressionTerm()
+	}
+
+	thisLevel := ops[0]
+	remaining := ops[1:]
+
+	var lhs, rhs Expression
+	operation := OpNil
+	var diags zcl.Diagnostics
+
+	// Parse a term that might be the first operand of a binary
+	// operation or it might just be a standalone term.
+	// We won't know until we've parsed it and can look ahead
+	// to see if there's an operator token for this level.
+	lhs, lhsDiags := p.parseBinaryOps(remaining)
+	diags = append(diags, lhsDiags...)
+	if p.recovery && lhsDiags.HasErrors() {
+		return lhs, diags
+	}
+
+	// We'll keep eating up operators until we run out, so that operators
+	// with the same precedence will combine in a left-associative manner:
+	// a+b+c => (a+b)+c, not a+(b+c)
+	//
+	// Should we later want to have right-associative operators, a way
+	// to achieve that would be to call back up to ParseExpression here
+	// instead of iteratively parsing only the remaining operators.
+	for {
+		next := p.Peek()
+		var newOp Operation
+		var ok bool
+		if newOp, ok = thisLevel[next.Type]; !ok {
+			break
+		}
+
+		// Are we extending an expression started on the previous iteration?
+		if operation != OpNil {
+			lhs = &BinaryOpExpr{
+				LHS: lhs,
+				Op:  operation,
+				RHS: rhs,
+
+				SrcRange: zcl.RangeBetween(lhs.Range(), rhs.Range()),
+			}
+		}
+
+		operation = newOp
+		p.Read() // eat operator token
+		var rhsDiags zcl.Diagnostics
+		rhs, rhsDiags = p.parseBinaryOps(remaining)
+		diags = append(diags, rhsDiags...)
+		if p.recovery && rhsDiags.HasErrors() {
+			return lhs, diags
+		}
+	}
+
+	if operation == OpNil {
+		return lhs, diags
+	}
+
+	return &BinaryOpExpr{
+		LHS: lhs,
+		Op:  operation,
+		RHS: rhs,
+
+		SrcRange: zcl.RangeBetween(lhs.Range(), rhs.Range()),
+	}, diags
+}
+
+func (p *parser) parseExpressionTerm() (Expression, zcl.Diagnostics) {
+	panic("parseExpressionTerm not yet implemented")
 }
 
 // parseQuotedStringLiteral is a helper for parsing quoted strings that

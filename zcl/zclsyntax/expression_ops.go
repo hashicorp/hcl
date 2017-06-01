@@ -1,5 +1,10 @@
 package zclsyntax
 
+import (
+	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-zcl/zcl"
+)
+
 type Operation rune
 
 const (
@@ -59,4 +64,29 @@ func init() {
 			TokenPercent: OpModulo,
 		},
 	}
+}
+
+type BinaryOpExpr struct {
+	LHS Expression
+	Op  Operation
+	RHS Expression
+
+	SrcRange zcl.Range
+}
+
+func (e *BinaryOpExpr) walkChildNodes(w internalWalkFunc) {
+	e.LHS = w(e.LHS).(Expression)
+	e.RHS = w(e.LHS).(Expression)
+}
+
+func (e *BinaryOpExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
+	panic("BinaryOpExpr.Value not yet implemented")
+}
+
+func (e *BinaryOpExpr) Range() zcl.Range {
+	return e.SrcRange
+}
+
+func (e *BinaryOpExpr) StartRange() zcl.Range {
+	return e.LHS.StartRange()
 }
