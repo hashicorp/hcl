@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/kylelemons/godebug/pretty"
+	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-zcl/zcl"
 )
 
@@ -310,6 +311,48 @@ block "valid" {}
 				EndRange: zcl.Range{
 					Start: zcl.Pos{Line: 1, Column: 15, Byte: 14},
 					End:   zcl.Pos{Line: 1, Column: 15, Byte: 14},
+				},
+			},
+		},
+
+		{
+			`a = 1`,
+			0,
+			&Body{
+				Attributes: Attributes{
+					"a": {
+						Name: "a",
+						Expr: &LiteralValueExpr{
+							Val: cty.NumberIntVal(1),
+
+							SrcRange: zcl.Range{
+								Start: zcl.Pos{Line: 1, Column: 5, Byte: 4},
+								End:   zcl.Pos{Line: 1, Column: 6, Byte: 5},
+							},
+						},
+
+						SrcRange: zcl.Range{
+							Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   zcl.Pos{Line: 1, Column: 6, Byte: 5},
+						},
+						NameRange: zcl.Range{
+							Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+						},
+						EqualsRange: zcl.Range{
+							Start: zcl.Pos{Line: 1, Column: 3, Byte: 2},
+							End:   zcl.Pos{Line: 1, Column: 4, Byte: 3},
+						},
+					},
+				},
+				Blocks: Blocks{},
+				SrcRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   zcl.Pos{Line: 1, Column: 6, Byte: 5},
+				},
+				EndRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 6, Byte: 5},
+					End:   zcl.Pos{Line: 1, Column: 6, Byte: 5},
 				},
 			},
 		},

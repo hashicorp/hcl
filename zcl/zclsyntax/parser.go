@@ -151,7 +151,46 @@ func (p *parser) ParseBodyItem() (Node, zcl.Diagnostics) {
 }
 
 func (p *parser) finishParsingBodyAttribute(ident Token) (Node, zcl.Diagnostics) {
-	panic("attribute parsing not yet implemented")
+	eqTok := p.Read() // eat equals token
+	if eqTok.Type != TokenEqual {
+		// should never happen if caller behaves
+		panic("finishParsingBodyAttribute called with next not equals")
+	}
+
+	expr, diags := p.ParseExpression()
+	if p.recovery && diags.HasErrors() {
+		// recovery within expressions tends to be tricky, so we've probably
+		// landed somewhere weird. We'll try to reset to the start of a body
+		// item so parsing can continue.
+		p.recoverAfterBodyItem()
+	} else {
+		end := p.Peek()
+		if end.Type != TokenNewline && end.Type != TokenEOF {
+			if !p.recovery {
+				diags = append(diags, &zcl.Diagnostic{
+					Severity: zcl.DiagError,
+					Summary:  "Missing newline in attribute definition",
+					Detail:   "An attribute definition must end with a newline.",
+					Subject:  &end.Range,
+					Context:  zcl.RangeBetween(ident.Range, end.Range).Ptr(),
+				})
+			}
+			p.recoverAfterBodyItem()
+		} else {
+			p.Read() // eat newline
+		}
+	}
+
+	endRange := p.PrevRange()
+
+	return &Attribute{
+		Name: string(ident.Bytes),
+		Expr: expr,
+
+		SrcRange:    zcl.RangeBetween(ident.Range, endRange),
+		NameRange:   ident.Range,
+		EqualsRange: eqTok.Range,
+	}, diags
 }
 
 func (p *parser) finishParsingBodyBlock(ident Token) (Node, zcl.Diagnostics) {

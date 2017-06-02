@@ -92,6 +92,7 @@ type Attribute struct {
 	Name string
 	Expr Expression
 
+	SrcRange    zcl.Range
 	NameRange   zcl.Range
 	EqualsRange zcl.Range
 }
@@ -101,7 +102,7 @@ func (a *Attribute) walkChildNodes(w internalWalkFunc) {
 }
 
 func (a *Attribute) Range() zcl.Range {
-	return zcl.RangeBetween(a.NameRange, a.Expr.Range())
+	return a.SrcRange
 }
 
 // Blocks is the list of nested blocks within a body.
