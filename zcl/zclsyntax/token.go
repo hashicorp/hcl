@@ -57,7 +57,8 @@ const (
 	TokenOr   TokenType = '∨'
 	TokenBang TokenType = '!'
 
-	TokenDot TokenType = '.'
+	TokenDot   TokenType = '.'
+	TokenComma TokenType = ','
 
 	TokenQuestion TokenType = '?'
 	TokenColon    TokenType = ':'
