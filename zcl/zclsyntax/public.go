@@ -31,10 +31,15 @@ func ParseExpression(src []byte, filename string, start zcl.Pos) (Expression, zc
 	tokens := LexExpression(src, filename, start)
 	peeker := newPeeker(tokens, false)
 	parser := &parser{peeker: peeker}
+
+	// Bare expressions are always parsed in  "ignore newlines" mode, as if
+	// they were wrapped in parentheses.
+	parser.PushIncludeNewlines(false)
+
 	expr, diags := parser.ParseExpression()
 
 	next := parser.Peek()
-	if next.Type != TokenEOF {
+	if next.Type != TokenEOF && !parser.recovery {
 		diags = append(diags, &zcl.Diagnostic{
 			Severity: zcl.DiagError,
 			Summary:  "Extra characters after expression",

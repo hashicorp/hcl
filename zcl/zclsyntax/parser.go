@@ -400,12 +400,16 @@ func (p *parser) parseExpressionTerm() (Expression, zcl.Diagnostics) {
 	switch start.Type {
 	case TokenOParen:
 		p.Read() // eat open paren
+
+		p.PushIncludeNewlines(false)
+
 		expr, diags := p.ParseExpression()
 		if diags.HasErrors() {
 			// attempt to place the peeker after our closing paren
 			// before we return, so that the next parser has some
 			// chance of finding a valid expression.
 			p.recover(TokenCParen)
+			p.PopIncludeNewlines()
 			return expr, diags
 		}
 
@@ -422,6 +426,7 @@ func (p *parser) parseExpressionTerm() (Expression, zcl.Diagnostics) {
 		}
 
 		p.Read() // eat closing paren
+		p.PopIncludeNewlines()
 
 		return expr, diags
 

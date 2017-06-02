@@ -31,6 +31,14 @@ func TestExpressionParseAndValue(t *testing.T) {
 			0,
 		},
 		{
+			`(
+    1
+)`,
+			nil,
+			cty.NumberIntVal(1),
+			0,
+		},
+		{
 			`(1`,
 			nil,
 			cty.NumberIntVal(1),
