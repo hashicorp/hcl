@@ -122,6 +122,30 @@ func TestExpressionParseAndValue(t *testing.T) {
 			cty.StringVal("hello $$nonescape"),
 			0,
 		},
+		{
+			`upper("foo")`,
+			&zcl.EvalContext{
+				Functions: map[string]function.Function{
+					"upper": stdlib.UpperFunc,
+				},
+			},
+			cty.StringVal("FOO"),
+			0,
+		},
+		{
+			`
+upper(
+    "foo"
+)
+`,
+			&zcl.EvalContext{
+				Functions: map[string]function.Function{
+					"upper": stdlib.UpperFunc,
+				},
+			},
+			cty.StringVal("FOO"),
+			0,
+		},
 	}
 
 	for _, test := range tests {

@@ -463,6 +463,10 @@ func (p *parser) parseExpressionTerm() (Expression, zcl.Diagnostics) {
 	case TokenIdent:
 		tok := p.Read() // eat identifier token
 
+		if p.Peek().Type == TokenOParen {
+			return p.finishParsingFunctionCall(tok)
+		}
+
 		name := string(tok.Bytes)
 		switch name {
 		case "true":
@@ -547,6 +551,81 @@ func (p *parser) parseExpressionTerm() (Expression, zcl.Diagnostics) {
 			SrcRange: start.Range,
 		}, diags
 	}
+}
+
+// finishParsingFunctionCall parses a function call assuming that the function
+// name was already read, and so the peeker should be pointing at the opening
+// parenthesis after the name.
+func (p *parser) finishParsingFunctionCall(name Token) (Expression, zcl.Diagnostics) {
+	openTok := p.Read()
+	if openTok.Type != TokenOParen {
+		// should never happen if callers behave
+		panic("finishParsingFunctionCall called with non-parenthesis as next token")
+	}
+
+	var args []Expression
+	var diags zcl.Diagnostics
+	var closeTok Token
+
+	// Arbitrary newlines are allowed inside the function call parentheses.
+	p.PushIncludeNewlines(false)
+
+Token:
+	for {
+		tok := p.Peek()
+
+		if tok.Type == TokenCParen {
+			closeTok = p.Read() // eat closing paren
+			break Token
+		}
+
+		arg, argDiags := p.ParseExpression()
+		args = append(args, arg)
+		diags = append(diags, argDiags...)
+		if p.recovery && argDiags.HasErrors() {
+			// if there was a parse error in the argument then we've
+			// probably been left in a weird place in the token stream,
+			// so we'll bail out with a partial argument list.
+			p.recover(TokenCParen)
+			break Token
+		}
+
+		sep := p.Read()
+		if sep.Type == TokenCParen {
+			closeTok = sep
+			break Token
+		}
+
+		if sep.Type != TokenComma {
+			diags = append(diags, &zcl.Diagnostic{
+				Severity: zcl.DiagError,
+				Summary:  "Missing argument separator",
+				Detail:   "A comma is required to separate each function argument from the next.",
+				Subject:  &sep.Range,
+				Context:  zcl.RangeBetween(name.Range, sep.Range).Ptr(),
+			})
+			p.recover(TokenCParen)
+			break Token
+		}
+
+		if p.Peek().Type == TokenCParen {
+			// A trailing comma after the last argument gets us in here.
+			closeTok = p.Read() // eat closing paren
+			break Token
+		}
+
+	}
+
+	p.PopIncludeNewlines()
+
+	return &FunctionCallExpr{
+		Name: string(name.Bytes),
+		Args: args,
+
+		NameRange:       name.Range,
+		OpenParenRange:  openTok.Range,
+		CloseParenRange: closeTok.Range,
+	}, diags
 }
 
 func (p *parser) ParseTemplate(end TokenType) (Expression, zcl.Diagnostics) {
