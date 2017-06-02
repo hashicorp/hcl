@@ -81,6 +81,54 @@ func TestParseConfig(t *testing.T) {
 			},
 		},
 		{
+			`block {}block {}`,
+			1, // missing newline after block definition
+			&Body{
+				Attributes: Attributes{},
+				Blocks: Blocks{
+					&Block{
+						Type:   "block",
+						Labels: nil,
+						Body: &Body{
+							Attributes: Attributes{},
+							Blocks:     Blocks{},
+
+							SrcRange: zcl.Range{
+								Start: zcl.Pos{Line: 1, Column: 7, Byte: 6},
+								End:   zcl.Pos{Line: 1, Column: 9, Byte: 8},
+							},
+							EndRange: zcl.Range{
+								Start: zcl.Pos{Line: 1, Column: 9, Byte: 8},
+								End:   zcl.Pos{Line: 1, Column: 9, Byte: 8},
+							},
+						},
+
+						TypeRange: zcl.Range{
+							Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   zcl.Pos{Line: 1, Column: 6, Byte: 5},
+						},
+						LabelRanges: nil,
+						OpenBraceRange: zcl.Range{
+							Start: zcl.Pos{Line: 1, Column: 7, Byte: 6},
+							End:   zcl.Pos{Line: 1, Column: 8, Byte: 7},
+						},
+						CloseBraceRange: zcl.Range{
+							Start: zcl.Pos{Line: 1, Column: 8, Byte: 7},
+							End:   zcl.Pos{Line: 1, Column: 9, Byte: 8},
+						},
+					},
+				},
+				SrcRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   zcl.Pos{Line: 1, Column: 17, Byte: 16},
+				},
+				EndRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 17, Byte: 16},
+					End:   zcl.Pos{Line: 1, Column: 17, Byte: 16},
+				},
+			},
+		},
+		{
 			`block "foo" {}`,
 			0,
 			&Body{

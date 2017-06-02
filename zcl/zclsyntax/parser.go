@@ -169,7 +169,7 @@ func (p *parser) finishParsingBodyAttribute(ident Token) (Node, zcl.Diagnostics)
 			if !p.recovery {
 				diags = append(diags, &zcl.Diagnostic{
 					Severity: zcl.DiagError,
-					Summary:  "Missing newline in attribute definition",
+					Summary:  "Missing newline after attribute definition",
 					Detail:   "An attribute definition must end with a newline.",
 					Subject:  &end.Range,
 					Context:  zcl.RangeBetween(ident.Range, end.Range).Ptr(),
@@ -280,6 +280,22 @@ Token:
 	body, bodyDiags := p.ParseBody(TokenCBrace)
 	diags = append(diags, bodyDiags...)
 	cBraceRange := p.PrevRange()
+
+	eol := p.Peek()
+	if eol.Type == TokenNewline || eol.Type == TokenEOF {
+		p.Read() // eat newline
+	} else {
+		if !p.recovery {
+			diags = append(diags, &zcl.Diagnostic{
+				Severity: zcl.DiagError,
+				Summary:  "Missing newline after block definition",
+				Detail:   "A block definition must end with a newline.",
+				Subject:  &eol.Range,
+				Context:  zcl.RangeBetween(ident.Range, eol.Range).Ptr(),
+			})
+		}
+		p.recoverAfterBodyItem()
+	}
 
 	return &Block{
 		Type:   blockType,
