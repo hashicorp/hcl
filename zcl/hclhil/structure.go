@@ -211,6 +211,8 @@ func (b *body) content(schema *zcl.BodySchema, partial bool) (*zcl.BodyContent, 
 	return &zcl.BodyContent{
 		Attributes: attrs,
 		Blocks:     blocks,
+
+		MissingItemRange: b.MissingItemRange(),
 	}, leftovers, diags
 }
 

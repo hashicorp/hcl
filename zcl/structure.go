@@ -77,6 +77,8 @@ type Body interface {
 type BodyContent struct {
 	Attributes Attributes
 	Blocks     Blocks
+
+	MissingItemRange Range
 }
 
 // Attribute represents an attribute from within a body.

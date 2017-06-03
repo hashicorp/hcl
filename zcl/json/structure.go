@@ -86,6 +86,8 @@ func (b *body) PartialContent(schema *zcl.BodySchema) (*zcl.BodyContent, zcl.Bod
 	content := &zcl.BodyContent{
 		Attributes: map[string]*zcl.Attribute{},
 		Blocks:     nil,
+
+		MissingItemRange: b.MissingItemRange(),
 	}
 
 	for _, attrS := range schema.Attributes {

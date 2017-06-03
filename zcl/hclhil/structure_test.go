@@ -5,11 +5,11 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/zclconf/go-cty/cty"
-	"github.com/zclconf/go-zcl/zcl"
 	"github.com/davecgh/go-spew/spew"
 	hclast "github.com/hashicorp/hcl/hcl/ast"
 	hcltoken "github.com/hashicorp/hcl/hcl/token"
+	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-zcl/zcl"
 )
 
 func TestBodyPartialContent(t *testing.T) {
@@ -24,6 +24,9 @@ func TestBodyPartialContent(t *testing.T) {
 			&zcl.BodySchema{},
 			&zcl.BodyContent{
 				Attributes: zcl.Attributes{},
+				MissingItemRange: zcl.Range{
+					Filename: "<unknown>",
+				},
 			},
 			0,
 		},
@@ -32,6 +35,10 @@ func TestBodyPartialContent(t *testing.T) {
 			&zcl.BodySchema{},
 			&zcl.BodyContent{
 				Attributes: zcl.Attributes{},
+				MissingItemRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+				},
 			},
 			0,
 		},
@@ -72,6 +79,10 @@ func TestBodyPartialContent(t *testing.T) {
 						},
 					},
 				},
+				MissingItemRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+				},
 			},
 			0,
 		},
@@ -87,6 +98,9 @@ func TestBodyPartialContent(t *testing.T) {
 			},
 			&zcl.BodyContent{
 				Attributes: zcl.Attributes{},
+				MissingItemRange: zcl.Range{
+					Filename: "<unknown>",
+				},
 			},
 			1, // missing required attribute
 		},
@@ -117,6 +131,10 @@ func TestBodyPartialContent(t *testing.T) {
 						},
 					},
 				},
+				MissingItemRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+				},
 			},
 			0,
 		},
@@ -131,6 +149,10 @@ func TestBodyPartialContent(t *testing.T) {
 			},
 			&zcl.BodyContent{
 				Attributes: zcl.Attributes{},
+				MissingItemRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+				},
 			},
 			1, // no labels are expected
 		},
@@ -146,6 +168,10 @@ func TestBodyPartialContent(t *testing.T) {
 			},
 			&zcl.BodyContent{
 				Attributes: zcl.Attributes{},
+				MissingItemRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+				},
 			},
 			1, // missing name
 		},
@@ -183,6 +209,10 @@ func TestBodyPartialContent(t *testing.T) {
 							},
 						},
 					},
+				},
+				MissingItemRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
 				},
 			},
 			0,

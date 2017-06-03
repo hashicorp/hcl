@@ -238,6 +238,8 @@ func (b *Body) PartialContent(schema *zcl.BodySchema) (*zcl.BodyContent, zcl.Bod
 	return &zcl.BodyContent{
 		Attributes: attrs,
 		Blocks:     blocks,
+
+		MissingItemRange: b.MissingItemRange(),
 	}, remain, diags
 }
 

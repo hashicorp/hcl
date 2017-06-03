@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/zclconf/go-zcl/zcl"
 	"github.com/davecgh/go-spew/spew"
+	"github.com/zclconf/go-zcl/zcl"
 )
 
 func TestBodyPartialContent(t *testing.T) {
@@ -21,6 +21,11 @@ func TestBodyPartialContent(t *testing.T) {
 			&zcl.BodySchema{},
 			&zcl.BodyContent{
 				Attributes: map[string]*zcl.Attribute{},
+				MissingItemRange: zcl.Range{
+					Filename: "test.json",
+					Start:    zcl.Pos{Line: 1, Column: 2, Byte: 1},
+					End:      zcl.Pos{Line: 1, Column: 3, Byte: 2},
+				},
 			},
 			0,
 		},
@@ -82,6 +87,11 @@ func TestBodyPartialContent(t *testing.T) {
 							},
 						},
 					},
+				},
+				MissingItemRange: zcl.Range{
+					Filename: "test.json",
+					Start:    zcl.Pos{Line: 1, Column: 21, Byte: 20},
+					End:      zcl.Pos{Line: 1, Column: 22, Byte: 21},
 				},
 			},
 			0,
@@ -149,6 +159,11 @@ func TestBodyPartialContent(t *testing.T) {
 							},
 						},
 					},
+				},
+				MissingItemRange: zcl.Range{
+					Filename: "test.json",
+					Start:    zcl.Pos{Line: 1, Column: 21, Byte: 20},
+					End:      zcl.Pos{Line: 1, Column: 22, Byte: 21},
 				},
 			},
 			1,
@@ -241,6 +256,11 @@ func TestBodyPartialContent(t *testing.T) {
 						},
 						LabelRanges: []zcl.Range{},
 					},
+				},
+				MissingItemRange: zcl.Range{
+					Filename: "test.json",
+					Start:    zcl.Pos{Line: 1, Column: 15, Byte: 14},
+					End:      zcl.Pos{Line: 1, Column: 16, Byte: 15},
 				},
 			},
 			0,
@@ -410,6 +430,11 @@ func TestBodyPartialContent(t *testing.T) {
 						LabelRanges: []zcl.Range{},
 					},
 				},
+				MissingItemRange: zcl.Range{
+					Filename: "test.json",
+					Start:    zcl.Pos{Line: 1, Column: 20, Byte: 19},
+					End:      zcl.Pos{Line: 1, Column: 21, Byte: 20},
+				},
 			},
 			0,
 		},
@@ -530,6 +555,11 @@ func TestBodyPartialContent(t *testing.T) {
 						},
 					},
 				},
+				MissingItemRange: zcl.Range{
+					Filename: "test.json",
+					Start:    zcl.Pos{Line: 1, Column: 40, Byte: 39},
+					End:      zcl.Pos{Line: 1, Column: 41, Byte: 40},
+				},
 			},
 			0,
 		},
@@ -544,6 +574,11 @@ func TestBodyPartialContent(t *testing.T) {
 			},
 			&zcl.BodyContent{
 				Attributes: map[string]*zcl.Attribute{},
+				MissingItemRange: zcl.Range{
+					Filename: "test.json",
+					Start:    zcl.Pos{Line: 1, Column: 21, Byte: 20},
+					End:      zcl.Pos{Line: 1, Column: 22, Byte: 21},
+				},
 			},
 			1,
 		},
