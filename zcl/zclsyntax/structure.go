@@ -1,6 +1,8 @@
 package zclsyntax
 
 import (
+	"fmt"
+
 	"github.com/zclconf/go-zcl/zcl"
 )
 
@@ -27,6 +29,11 @@ type Body struct {
 	Attributes Attributes
 	Blocks     Blocks
 
+	// These are used with PartialContent to produce a "remaining items"
+	// body to return. They are nil on all bodies fresh out of the parser.
+	hiddenAttrs  map[string]struct{}
+	hiddenBlocks map[string]struct{}
+
 	SrcRange zcl.Range
 	EndRange zcl.Range // Final token of the body, for reporting missing items
 }
@@ -52,7 +59,34 @@ func (b *Body) PartialContent(schema *zcl.BodySchema) (*zcl.BodyContent, zcl.Bod
 }
 
 func (b *Body) JustAttributes() (zcl.Attributes, zcl.Diagnostics) {
-	panic("Body.JustAttributes not yet implemented")
+	attrs := make(zcl.Attributes)
+	var diags zcl.Diagnostics
+
+	if len(b.Blocks) > 0 {
+		example := b.Blocks[0]
+		diags = append(diags, &zcl.Diagnostic{
+			Severity: zcl.DiagError,
+			Summary:  fmt.Sprintf("Unexpected %s block", example.Type),
+			Detail:   "Blocks are not allowed here.",
+			Context:  &example.TypeRange,
+		})
+		// we will continue processing anyway, and return the attributes
+		// we are able to find so that certain analyses can still be done
+		// in the face of errors.
+	}
+
+	if b.Attributes == nil {
+		return attrs, diags
+	}
+
+	for name, attr := range b.Attributes {
+		if _, hidden := b.hiddenAttrs[name]; hidden {
+			continue
+		}
+		attrs[name] = attr.AsZCLAttribute()
+	}
+
+	return attrs, diags
 }
 
 func (b *Body) MissingItemRange() zcl.Range {
@@ -103,6 +137,17 @@ func (a *Attribute) walkChildNodes(w internalWalkFunc) {
 
 func (a *Attribute) Range() zcl.Range {
 	return a.SrcRange
+}
+
+// AsZCLAttribute returns the block data expressed as a *zcl.Attribute.
+func (a *Attribute) AsZCLAttribute() *zcl.Attribute {
+	return &zcl.Attribute{
+		Name: a.Name,
+		Expr: a.Expr,
+
+		Range:     a.SrcRange,
+		NameRange: a.NameRange,
+	}
 }
 
 // Blocks is the list of nested blocks within a body.
