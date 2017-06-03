@@ -735,6 +735,7 @@ Token:
 				}
 			}
 
+			p.PushIncludeNewlines(false)
 			expr, exprDiags := p.ParseExpression()
 			diags = append(diags, exprDiags...)
 			close := p.Peek()
@@ -759,6 +760,7 @@ Token:
 					ltrimNext = true
 				}
 			}
+			p.PopIncludeNewlines()
 			parts = append(parts, expr)
 		case TokenTemplateControl:
 			panic("template control sequences not yet supported")
