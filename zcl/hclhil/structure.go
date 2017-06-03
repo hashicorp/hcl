@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/zclconf/go-cty/cty"
-	"github.com/zclconf/go-zcl/zcl"
 	hclast "github.com/hashicorp/hcl/hcl/ast"
 	hcltoken "github.com/hashicorp/hcl/hcl/token"
+	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-zcl/zcl"
 )
 
 // body is our implementation of zcl.Body in terms of an HCL ObjectList
@@ -48,7 +48,7 @@ func (b *body) content(schema *zcl.BodySchema, partial bool) (*zcl.BodyContent, 
 				Severity: zcl.DiagError,
 				Summary:  "Invalid item",
 				Detail:   "Somehow we have an HCL item with no keys. This should never happen.",
-				Context:  rangeFromHCLPos(item.Pos()).Ptr(),
+				Subject:  rangeFromHCLPos(item.Pos()).Ptr(),
 			})
 			continue
 		}
@@ -64,7 +64,7 @@ func (b *body) content(schema *zcl.BodySchema, partial bool) (*zcl.BodyContent, 
 					Severity: zcl.DiagError,
 					Summary:  "Unsupported block type",
 					Detail:   fmt.Sprintf("Blocks of type %q are not expected here. Did you mean to define an attribute named %q?", name, name),
-					Context:  rangeFromHCLPos(item.Pos()).Ptr(),
+					Subject:  rangeFromHCLPos(item.Pos()).Ptr(),
 				})
 				continue
 			}
@@ -78,7 +78,7 @@ func (b *body) content(schema *zcl.BodySchema, partial bool) (*zcl.BodyContent, 
 					Severity: zcl.DiagError,
 					Summary:  "Unsupported attribute",
 					Detail:   fmt.Sprintf("An attribute named %q is not expected here. Did you mean to define a block of type %q?", name, name),
-					Context:  rangeFromHCLPos(item.Pos()).Ptr(),
+					Subject:  rangeFromHCLPos(item.Pos()).Ptr(),
 				})
 				continue
 			}
@@ -88,7 +88,7 @@ func (b *body) content(schema *zcl.BodySchema, partial bool) (*zcl.BodyContent, 
 					Severity: zcl.DiagWarning,
 					Summary:  "Attribute syntax used for block",
 					Detail:   fmt.Sprintf("Block %q is defined using attribute syntax, which is deprecated. The equals sign is not used to define a block.", name),
-					Context:  rangeFromHCLPos(item.Pos()).Ptr(),
+					Subject:  rangeFromHCLPos(item.Pos()).Ptr(),
 				})
 			}
 
@@ -100,19 +100,19 @@ func (b *body) content(schema *zcl.BodySchema, partial bool) (*zcl.BodyContent, 
 						Severity: zcl.DiagError,
 						Summary:  fmt.Sprintf("Extraneous label for %s", name),
 						Detail: fmt.Sprintf(
-							"No labels are expected for %s blocks", name,
+							"No labels are expected for %s blocks.", name,
 						),
-						Context: rangeFromHCLPos(labelKeys[len(blockS.LabelNames)].Pos()).Ptr(),
+						Subject: rangeFromHCLPos(labelKeys[len(blockS.LabelNames)].Pos()).Ptr(),
 					})
 				} else {
 					diags = append(diags, &zcl.Diagnostic{
 						Severity: zcl.DiagError,
 						Summary:  fmt.Sprintf("Extraneous label for %s", name),
 						Detail: fmt.Sprintf(
-							"Only %d labels (%s) are expected for %s blocks",
+							"Only %d labels (%s) are expected for %s blocks.",
 							len(blockS.LabelNames), strings.Join(blockS.LabelNames, ", "), name,
 						),
-						Context: rangeFromHCLPos(labelKeys[len(blockS.LabelNames)].Pos()).Ptr(),
+						Subject: rangeFromHCLPos(labelKeys[len(blockS.LabelNames)].Pos()).Ptr(),
 					})
 				}
 				continue
@@ -125,7 +125,7 @@ func (b *body) content(schema *zcl.BodySchema, partial bool) (*zcl.BodyContent, 
 						"All %s blocks must have %d labels (%s).",
 						name, len(blockS.LabelNames), strings.Join(blockS.LabelNames, ", "),
 					),
-					Context: rangeFromHCLPos(obj.Pos()).Ptr(),
+					Subject: rangeFromHCLPos(obj.Pos()).Ptr(),
 				})
 				continue
 			}
@@ -161,14 +161,14 @@ func (b *body) content(schema *zcl.BodySchema, partial bool) (*zcl.BodyContent, 
 						Severity: zcl.DiagError,
 						Summary:  "Unsupported block type",
 						Detail:   fmt.Sprintf("Blocks of type %q are not expected here.", name),
-						Context:  rangeFromHCLPos(item.Pos()).Ptr(),
+						Subject:  rangeFromHCLPos(item.Pos()).Ptr(),
 					})
 				} else {
 					diags = append(diags, &zcl.Diagnostic{
 						Severity: zcl.DiagError,
 						Summary:  "Unsupported attribute",
 						Detail:   fmt.Sprintf("An attribute named %q is not expected here.", name),
-						Context:  rangeFromHCLPos(item.Pos()).Ptr(),
+						Subject:  rangeFromHCLPos(item.Pos()).Ptr(),
 					})
 				}
 			}
@@ -226,7 +226,7 @@ func (b *body) JustAttributes() (zcl.Attributes, zcl.Diagnostics) {
 				Severity: zcl.DiagError,
 				Summary:  "Invalid item",
 				Detail:   "Somehow we have an HCL item with no keys. This should never happen.",
-				Context:  rangeFromHCLPos(item.Pos()).Ptr(),
+				Subject:  rangeFromHCLPos(item.Pos()).Ptr(),
 			})
 			continue
 		}
@@ -242,7 +242,7 @@ func (b *body) JustAttributes() (zcl.Attributes, zcl.Diagnostics) {
 				Severity: zcl.DiagError,
 				Summary:  fmt.Sprintf("Unexpected %s block", name),
 				Detail:   "Blocks are not allowed here.",
-				Context:  rangeFromHCLPos(item.Pos()).Ptr(),
+				Subject:  rangeFromHCLPos(item.Pos()).Ptr(),
 			})
 			continue
 		}
@@ -262,7 +262,7 @@ func insertAttr(attrs zcl.Attributes, item *hclast.ObjectItem) zcl.Diagnostics {
 			Severity: zcl.DiagWarning,
 			Summary:  "Block syntax used for attribute",
 			Detail:   fmt.Sprintf("Attribute %q is defined using block syntax, which is deprecated. Use an equals sign after the attribute name instead.", name),
-			Context:  rangeFromHCLPos(item.Pos()).Ptr(),
+			Subject:  rangeFromHCLPos(item.Pos()).Ptr(),
 		})
 	}
 
@@ -274,7 +274,7 @@ func insertAttr(attrs zcl.Attributes, item *hclast.ObjectItem) zcl.Diagnostics {
 				"Attribute %q was previously defined at %s",
 				name, attrs[name].NameRange.String(),
 			),
-			Context: rangeFromHCLPos(item.Pos()).Ptr(),
+			Subject: rangeFromHCLPos(item.Pos()).Ptr(),
 		})
 		return diags
 	}
