@@ -28,6 +28,13 @@ type Parser struct {
 	files map[string]*zcl.File
 }
 
+// NewParser creates a new parser, ready to parse configuration files.
+func NewParser() *Parser {
+	return &Parser{
+		files: map[string]*zcl.File{},
+	}
+}
+
 // ParseZCL parses the given buffer (which is assumed to have been loaded from
 // the given filename) as a native-syntax configuration file and returns the
 // zcl.File object representing it.
