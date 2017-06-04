@@ -184,6 +184,15 @@ func (s *BlockSpec) visitSameBodyChildren(cb visitFunc) {
 	// leaf node ("Nested" does not use the same body)
 }
 
+// blockSpec implementation
+func (s *BlockSpec) blockHeaderSchemata() []zcl.BlockHeaderSchema {
+	return []zcl.BlockHeaderSchema{
+		{
+			Type: s.TypeName,
+		},
+	}
+}
+
 func (s *BlockSpec) decode(content *zcl.BodyContent, block *zcl.Block, ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
 	var diags zcl.Diagnostics
 
@@ -223,6 +232,9 @@ func (s *BlockSpec) decode(content *zcl.BodyContent, block *zcl.Block, ctx *zcl.
 		return cty.NullVal(cty.DynamicPseudoType), diags
 	}
 
+	if s.Nested == nil {
+		panic("BlockSpec with no Nested Spec")
+	}
 	val, _, childDiags := decode(childBlock.Body, childBlock, ctx, s.Nested, false)
 	diags = append(diags, childDiags...)
 	return val, diags

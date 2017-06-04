@@ -55,6 +55,76 @@ func TestDecode(t *testing.T) {
 			cty.NumberIntVal(1),
 			0,
 		},
+		{
+			``,
+			&AttrSpec{
+				Name:     "a",
+				Type:     cty.Number,
+				Required: true,
+			},
+			nil,
+			cty.DynamicVal,
+			1, // attribute "a" is required
+		},
+
+		{
+			`
+b {
+}
+`,
+			&BlockSpec{
+				TypeName: "b",
+				Nested:   ObjectSpec{},
+			},
+			nil,
+			cty.EmptyObjectVal,
+			0,
+		},
+		{
+			``,
+			&BlockSpec{
+				TypeName: "b",
+				Nested:   ObjectSpec{},
+			},
+			nil,
+			cty.NullVal(cty.DynamicPseudoType),
+			0,
+		},
+		{
+			`a {}`,
+			&BlockSpec{
+				TypeName: "b",
+				Nested:   ObjectSpec{},
+			},
+			nil,
+			cty.NullVal(cty.DynamicPseudoType),
+			1, // blocks of type "a" are not supported
+		},
+		{
+			``,
+			&BlockSpec{
+				TypeName: "b",
+				Nested:   ObjectSpec{},
+				Required: true,
+			},
+			nil,
+			cty.NullVal(cty.DynamicPseudoType),
+			1, // a block of type "b" is required
+		},
+		{
+			`
+b {}
+b {}
+`,
+			&BlockSpec{
+				TypeName: "b",
+				Nested:   ObjectSpec{},
+				Required: true,
+			},
+			nil,
+			cty.EmptyObjectVal,
+			1, // only one "b" block is allowed
+		},
 	}
 
 	for i, test := range tests {
