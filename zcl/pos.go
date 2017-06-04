@@ -62,7 +62,7 @@ func RangeBetween(start, end Range) Range {
 
 // ContainsOffset returns true if and only if the given byte offset is within
 // the receiving Range.
-func (r *Range) ContainsOffset(offset int) bool {
+func (r Range) ContainsOffset(offset int) bool {
 	return offset >= r.Start.Byte && offset < r.End.Byte
 }
 
