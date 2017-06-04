@@ -57,6 +57,26 @@ func TestDecode(t *testing.T) {
 			0,
 		},
 		{
+			`a = "1"`,
+			&AttrSpec{
+				Name: "a",
+				Type: cty.Number,
+			},
+			nil,
+			cty.NumberIntVal(1),
+			0,
+		},
+		{
+			`a = true`,
+			&AttrSpec{
+				Name: "a",
+				Type: cty.Number,
+			},
+			nil,
+			cty.UnknownVal(cty.Number),
+			1, // incorrect type - number required.
+		},
+		{
 			``,
 			&AttrSpec{
 				Name:     "a",

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-cty/cty/convert"
 	"github.com/zclconf/go-zcl/zcl"
 )
 
@@ -168,8 +169,28 @@ func (s *AttrSpec) decode(content *zcl.BodyContent, block *zcl.Block, ctx *zcl.E
 		return cty.NullVal(s.Type), nil
 	}
 
-	// TODO: Also try to convert the result value to s.Type
-	return attr.Expr.Value(ctx)
+	val, diags := attr.Expr.Value(ctx)
+
+	convVal, err := convert.Convert(val, s.Type)
+	if err != nil {
+		diags = append(diags, &zcl.Diagnostic{
+			Severity: zcl.DiagError,
+			Summary:  "Incorrect attribute value type",
+			Detail: fmt.Sprintf(
+				"Inappropriate value for attribute %q: %s.",
+				s.Name, err.Error(),
+			),
+			Subject: attr.Expr.StartRange().Ptr(),
+			Context: zcl.RangeBetween(attr.NameRange, attr.Expr.StartRange()).Ptr(),
+		})
+		// We'll return an unknown value of the _correct_ type so that the
+		// incomplete result can still be used for some analysis use-cases.
+		val = cty.UnknownVal(s.Type)
+	} else {
+		val = convVal
+	}
+
+	return val, diags
 }
 
 // A LiteralSpec is a Spec that produces the given literal value, ignoring
