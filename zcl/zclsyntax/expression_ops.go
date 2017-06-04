@@ -45,7 +45,7 @@ func init() {
 			TokenAnd: OpLogicalAnd,
 		},
 		{
-			TokenEqual:    OpEqual,
+			TokenEqualOp:  OpEqual,
 			TokenNotEqual: OpNotEqual,
 		},
 		{

@@ -39,6 +39,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
         # Symbols that just represent themselves are handled as a single rule.
         SelfToken = "[" | "]" | "(" | ")" | "." | "," | "*" | "/" | "+" | "-" | "=" | "<" | ">" | "!" | "?" | ":" | "\n" | "&" | "|" | "~" | "^" | ";" | "`";
 
+        EqualOp = "==";
         NotEqual = "!=";
         GreaterThanEqual = ">=";
         LessThanEqual = "<=";
@@ -241,6 +242,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
             Comment          => { token(TokenComment) };
             Newline          => { token(TokenNewline) };
 
+            EqualOp          => { token(TokenEqualOp); };
             NotEqual         => { token(TokenNotEqual); };
             GreaterThanEqual => { token(TokenGreaterThanEq); };
             LessThanEqual    => { token(TokenLessThanEq); };
