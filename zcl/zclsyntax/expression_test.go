@@ -179,6 +179,99 @@ upper(
 			cty.TupleVal([]cty.Value{cty.NumberIntVal(1), cty.True}),
 			0,
 		},
+		{
+			`{}`,
+			nil,
+			cty.EmptyObjectVal,
+			0,
+		},
+		{
+			`{"hello": "world"}`,
+			nil,
+			cty.ObjectVal(map[string]cty.Value{
+				"hello": cty.StringVal("world"),
+			}),
+			0,
+		},
+		{
+			`{"hello" = "world"}`,
+			nil,
+			cty.ObjectVal(map[string]cty.Value{
+				"hello": cty.StringVal("world"),
+			}),
+			0,
+		},
+		{
+			`{hello = "world"}`,
+			nil,
+			cty.ObjectVal(map[string]cty.Value{
+				"hello": cty.StringVal("world"),
+			}),
+			0,
+		},
+		{
+			`{hello: "world"}`,
+			nil,
+			cty.ObjectVal(map[string]cty.Value{
+				"hello": cty.StringVal("world"),
+			}),
+			0,
+		},
+		{
+			`{"hello" = "world", "goodbye" = "cruel world"}`,
+			nil,
+			cty.ObjectVal(map[string]cty.Value{
+				"hello":   cty.StringVal("world"),
+				"goodbye": cty.StringVal("cruel world"),
+			}),
+			0,
+		},
+		{
+			`{
+  "hello" = "world"
+}`,
+			nil,
+			cty.ObjectVal(map[string]cty.Value{
+				"hello": cty.StringVal("world"),
+			}),
+			0,
+		},
+		{
+			`{
+  "hello" = "world"
+  "goodbye" = "cruel world"
+}`,
+			nil,
+			cty.ObjectVal(map[string]cty.Value{
+				"hello":   cty.StringVal("world"),
+				"goodbye": cty.StringVal("cruel world"),
+			}),
+			0,
+		},
+		{
+			`{
+  "hello" = "world",
+  "goodbye" = "cruel world"
+}`,
+			nil,
+			cty.ObjectVal(map[string]cty.Value{
+				"hello":   cty.StringVal("world"),
+				"goodbye": cty.StringVal("cruel world"),
+			}),
+			0,
+		},
+		{
+			`{
+  "hello" = "world",
+  "goodbye" = "cruel world",
+}`,
+			nil,
+			cty.ObjectVal(map[string]cty.Value{
+				"hello":   cty.StringVal("world"),
+				"goodbye": cty.StringVal("cruel world"),
+			}),
+			0,
+		},
 	}
 
 	for _, test := range tests {

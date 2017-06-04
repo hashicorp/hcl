@@ -590,6 +590,9 @@ func (p *parser) parseExpressionTerm() (Expression, zcl.Diagnostics) {
 	case TokenOBrack:
 		return p.parseTupleCons()
 
+	case TokenOBrace:
+		return p.parseObjectCons()
+
 	default:
 		var diags zcl.Diagnostics
 		if !p.recovery {
@@ -746,6 +749,135 @@ func (p *parser) parseTupleCons() (Expression, zcl.Diagnostics) {
 
 	return &TupleConsExpr{
 		Exprs: exprs,
+
+		SrcRange:  zcl.RangeBetween(open.Range, close.Range),
+		OpenRange: open.Range,
+	}, diags
+}
+
+func (p *parser) parseObjectCons() (Expression, zcl.Diagnostics) {
+	open := p.Read()
+	if open.Type != TokenOBrace {
+		// Should never happen if callers are behaving
+		panic("parseObjectCons called without peeker pointing to open brace")
+	}
+
+	var close Token
+
+	var diags zcl.Diagnostics
+	var items []ObjectConsItem
+
+	p.PushIncludeNewlines(true)
+	defer p.PopIncludeNewlines()
+
+	for {
+		next := p.Peek()
+		if next.Type == TokenNewline {
+			p.Read() // eat newline
+			continue
+		}
+
+		if next.Type == TokenCBrace {
+			close = p.Read() // eat closer
+			break
+		}
+
+		// As a special case, we allow the key to be a literal identifier.
+		// This means that a variable reference or function call can't appear
+		// directly as key expression, and must instead be wrapped in some
+		// disambiguation punctuation, like (var.a) = "b" or "${var.a}" = "b".
+		var key Expression
+		var keyDiags zcl.Diagnostics
+		if p.Peek().Type == TokenIdent {
+			nameTok := p.Read()
+			key = &LiteralValueExpr{
+				Val: cty.StringVal(string(nameTok.Bytes)),
+
+				SrcRange: nameTok.Range,
+			}
+		} else {
+			key, keyDiags = p.ParseExpression()
+		}
+
+		diags = append(diags, keyDiags...)
+
+		if p.recovery && keyDiags.HasErrors() {
+			// If expression parsing failed then we are probably in a strange
+			// place in the token stream, so we'll bail out and try to reset
+			// to after our closing brace to allow parsing to continue.
+			close = p.recover(TokenCBrace)
+			break
+		}
+
+		next = p.Peek()
+		if next.Type != TokenEqual && next.Type != TokenColon {
+			if !p.recovery {
+				if next.Type == TokenNewline || next.Type == TokenComma {
+					diags = append(diags, &zcl.Diagnostic{
+						Severity: zcl.DiagError,
+						Summary:  "Missing item value",
+						Detail:   "Expected an item value, introduced by an equals sign (\"=\").",
+						Subject:  &next.Range,
+						Context:  zcl.RangeBetween(open.Range, next.Range).Ptr(),
+					})
+				} else {
+					diags = append(diags, &zcl.Diagnostic{
+						Severity: zcl.DiagError,
+						Summary:  "Missing key/value separator",
+						Detail:   "Expected an equals sign (\"=\") to mark the beginning of the item value.",
+						Subject:  &next.Range,
+						Context:  zcl.RangeBetween(open.Range, next.Range).Ptr(),
+					})
+				}
+			}
+			close = p.recover(TokenCBrace)
+			break
+		}
+
+		p.Read() // eat equals sign or colon
+
+		value, valueDiags := p.ParseExpression()
+		diags = append(diags, valueDiags...)
+
+		if p.recovery && valueDiags.HasErrors() {
+			// If expression parsing failed then we are probably in a strange
+			// place in the token stream, so we'll bail out and try to reset
+			// to after our closing brace to allow parsing to continue.
+			close = p.recover(TokenCBrace)
+			break
+		}
+
+		items = append(items, ObjectConsItem{
+			KeyExpr:   key,
+			ValueExpr: value,
+		})
+
+		next = p.Peek()
+		if next.Type == TokenCBrace {
+			close = p.Read() // eat closer
+			break
+		}
+
+		if next.Type != TokenComma && next.Type != TokenNewline {
+			if !p.recovery {
+				diags = append(diags, &zcl.Diagnostic{
+					Severity: zcl.DiagError,
+					Summary:  "Missing item separator",
+					Detail:   "Expected a newline or comma to mark the beginning of the next item.",
+					Subject:  &next.Range,
+					Context:  zcl.RangeBetween(open.Range, next.Range).Ptr(),
+				})
+			}
+			close = p.recover(TokenCBrace)
+			break
+		}
+
+		p.Read() // eat comma or newline
+
+	}
+
+	return &ObjectConsExpr{
+		Items: items,
 
 		SrcRange:  zcl.RangeBetween(open.Range, close.Range),
 		OpenRange: open.Range,

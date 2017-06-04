@@ -23,6 +23,10 @@ func (e *LiteralValueExpr) Variables() []zcl.Traversal {
 	return Variables(e)
 }
 
+func (e *ObjectConsExpr) Variables() []zcl.Traversal {
+	return Variables(e)
+}
+
 func (e *ScopeTraversalExpr) Variables() []zcl.Traversal {
 	return Variables(e)
 }

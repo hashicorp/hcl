@@ -397,3 +397,98 @@ func (e *TupleConsExpr) Range() zcl.Range {
 func (e *TupleConsExpr) StartRange() zcl.Range {
 	return e.OpenRange
 }
+
+type ObjectConsExpr struct {
+	Items []ObjectConsItem
+
+	SrcRange  zcl.Range
+	OpenRange zcl.Range
+}
+
+type ObjectConsItem struct {
+	KeyExpr   Expression
+	ValueExpr Expression
+}
+
+func (e *ObjectConsExpr) walkChildNodes(w internalWalkFunc) {
+	for i, item := range e.Items {
+		e.Items[i].KeyExpr = w(item.KeyExpr).(Expression)
+		e.Items[i].ValueExpr = w(item.ValueExpr).(Expression)
+	}
+}
+
+func (e *ObjectConsExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
+	var vals map[string]cty.Value
+	var diags zcl.Diagnostics
+
+	// This will get set to true if we fail to produce any of our keys,
+	// either because they are actually unknown or if the evaluation produces
+	// errors. In all of these case we must return DynamicPseudoType because
+	// we're unable to know the full set of keys our object has, and thus
+	// we can't produce a complete value of the intended type.
+	//
+	// We still evaluate all of the item keys and values to make sure that we
+	// get as complete as possible a set of diagnostics.
+	known := true
+
+	vals = make(map[string]cty.Value, len(e.Items))
+	for _, item := range e.Items {
+		key, keyDiags := item.KeyExpr.Value(ctx)
+		diags = append(diags, keyDiags...)
+
+		val, valDiags := item.ValueExpr.Value(ctx)
+		diags = append(diags, valDiags...)
+
+		if keyDiags.HasErrors() {
+			known = false
+			continue
+		}
+
+		if key.IsNull() {
+			diags = append(diags, &zcl.Diagnostic{
+				Severity: zcl.DiagError,
+				Summary:  "Null value as key",
+				Detail:   "Can't use a null value as a key.",
+				Subject:  item.ValueExpr.Range().Ptr(),
+			})
+			known = false
+			continue
+		}
+
+		var err error
+		key, err = convert.Convert(key, cty.String)
+		if err != nil {
+			diags = append(diags, &zcl.Diagnostic{
+				Severity: zcl.DiagError,
+				Summary:  "Incorrect key type",
+				Detail:   fmt.Sprintf("Can't use this value as a key: %s.", err.Error()),
+				Subject:  item.ValueExpr.Range().Ptr(),
+			})
+			known = false
+			continue
+		}
+
+		if !key.IsKnown() {
+			known = false
+			continue
+		}
+
+		keyStr := key.AsString()
+
+		vals[keyStr] = val
+	}
+
+	if !known {
+		return cty.DynamicVal, diags
+	}
+
+	return cty.ObjectVal(vals), diags
+}
+
+func (e *ObjectConsExpr) Range() zcl.Range {
+	return e.SrcRange
+}
+
+func (e *ObjectConsExpr) StartRange() zcl.Range {
+	return e.OpenRange
+}
