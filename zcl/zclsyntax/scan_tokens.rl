@@ -37,7 +37,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
         Ident = ID_Start ID_Continue*;
 
         # Symbols that just represent themselves are handled as a single rule.
-        SelfToken = "[" | "]" | "(" | ")" | "." | "*" | "/" | "+" | "-" | "=" | "<" | ">" | "!" | "?" | ":" | "\n" | "&" | "|" | "~" | "^" | ";" | "`";
+        SelfToken = "[" | "]" | "(" | ")" | "." | "," | "*" | "/" | "+" | "-" | "=" | "<" | ">" | "!" | "?" | ":" | "\n" | "&" | "|" | "~" | "^" | ";" | "`";
 
         NotEqual = "!=";
         GreaterThanEqual = ">=";
