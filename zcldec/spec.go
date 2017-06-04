@@ -242,6 +242,25 @@ func (s *BlockSpec) blockHeaderSchemata() []zcl.BlockHeaderSchema {
 	}
 }
 
+// specNeedingVariables implementation
+func (s *BlockSpec) variablesNeeded(content *zcl.BodyContent) []zcl.Traversal {
+	var childBlock *zcl.Block
+	for _, candidate := range content.Blocks {
+		if candidate.Type != s.TypeName {
+			continue
+		}
+
+		childBlock = candidate
+		break
+	}
+
+	if childBlock == nil {
+		return nil
+	}
+
+	return Variables(childBlock.Body, s.Nested)
+}
+
 func (s *BlockSpec) decode(content *zcl.BodyContent, block *zcl.Block, ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
 	var diags zcl.Diagnostics
 
