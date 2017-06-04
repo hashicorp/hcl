@@ -257,8 +257,8 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
             BeginHeredocTmpl => beginHeredocTemplate;
 
             Tabs             => { token(TokenTabs) };
-            AnyUTF8          => { token(TokenInvalid) };
             BrokenUTF8       => { token(TokenBadUTF8) };
+            AnyUTF8          => { token(TokenInvalid) };
         *|;
 
     }%%

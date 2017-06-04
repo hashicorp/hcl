@@ -15,10 +15,11 @@ import (
 // should be served using the zcl.Body interface to ensure compatibility with
 // other configurationg syntaxes, such as JSON.
 func ParseConfig(src []byte, filename string, start zcl.Pos) (*zcl.File, zcl.Diagnostics) {
-	tokens := LexConfig(src, filename, start)
+	tokens, diags := LexConfig(src, filename, start)
 	peeker := newPeeker(tokens, false)
 	parser := &parser{peeker: peeker}
-	body, diags := parser.ParseBody(TokenEOF)
+	body, parseDiags := parser.ParseBody(TokenEOF)
+	diags = append(diags, parseDiags...)
 	return &zcl.File{
 		Body:  body,
 		Bytes: src,
@@ -28,7 +29,7 @@ func ParseConfig(src []byte, filename string, start zcl.Pos) (*zcl.File, zcl.Dia
 // ParseExpression parses the given buffer as a standalone zcl expression,
 // returning it as an instance of Expression.
 func ParseExpression(src []byte, filename string, start zcl.Pos) (Expression, zcl.Diagnostics) {
-	tokens := LexExpression(src, filename, start)
+	tokens, diags := LexExpression(src, filename, start)
 	peeker := newPeeker(tokens, false)
 	parser := &parser{peeker: peeker}
 
@@ -36,7 +37,8 @@ func ParseExpression(src []byte, filename string, start zcl.Pos) (Expression, zc
 	// they were wrapped in parentheses.
 	parser.PushIncludeNewlines(false)
 
-	expr, diags := parser.ParseExpression()
+	expr, parseDiags := parser.ParseExpression()
+	diags = append(diags, parseDiags...)
 
 	next := parser.Peek()
 	if next.Type != TokenEOF && !parser.recovery {
@@ -54,28 +56,51 @@ func ParseExpression(src []byte, filename string, start zcl.Pos) (Expression, zc
 // ParseTemplate parses the given buffer as a standalone zcl template,
 // returning it as an instance of Expression.
 func ParseTemplate(src []byte, filename string, start zcl.Pos) (Expression, zcl.Diagnostics) {
-	tokens := LexTemplate(src, filename, start)
+	tokens, diags := LexTemplate(src, filename, start)
 	peeker := newPeeker(tokens, false)
 	parser := &parser{peeker: peeker}
-	return parser.ParseTemplate(TokenEOF)
+	expr, parseDiags := parser.ParseTemplate(TokenEOF)
+	diags = append(diags, parseDiags...)
+	return expr, diags
 }
 
 // LexConfig performs lexical analysis on the given buffer, treating it as a
 // whole zcl config file, and returns the resulting tokens.
-func LexConfig(src []byte, filename string, start zcl.Pos) Tokens {
-	return scanTokens(src, filename, start, scanNormal)
+//
+// Only minimal validation is done during lexical analysis, so the returned
+// diagnostics may include errors about lexical issues such as bad character
+// encodings or unrecognized characters, but full parsing is required to
+// detect _all_ syntax errors.
+func LexConfig(src []byte, filename string, start zcl.Pos) (Tokens, zcl.Diagnostics) {
+	tokens := scanTokens(src, filename, start, scanNormal)
+	diags := checkInvalidTokens(tokens)
+	return tokens, diags
 }
 
 // LexExpression performs lexical analysis on the given buffer, treating it as
 // a standalone zcl expression, and returns the resulting tokens.
-func LexExpression(src []byte, filename string, start zcl.Pos) Tokens {
+//
+// Only minimal validation is done during lexical analysis, so the returned
+// diagnostics may include errors about lexical issues such as bad character
+// encodings or unrecognized characters, but full parsing is required to
+// detect _all_ syntax errors.
+func LexExpression(src []byte, filename string, start zcl.Pos) (Tokens, zcl.Diagnostics) {
 	// This is actually just the same thing as LexConfig, since configs
 	// and expressions lex in the same way.
-	return scanTokens(src, filename, start, scanNormal)
+	tokens := scanTokens(src, filename, start, scanNormal)
+	diags := checkInvalidTokens(tokens)
+	return tokens, diags
 }
 
 // LexTemplate performs lexical analysis on the given buffer, treating it as a
 // standalone zcl template, and returns the resulting tokens.
-func LexTemplate(src []byte, filename string, start zcl.Pos) Tokens {
-	return scanTokens(src, filename, start, scanTemplate)
+//
+// Only minimal validation is done during lexical analysis, so the returned
+// diagnostics may include errors about lexical issues such as bad character
+// encodings or unrecognized characters, but full parsing is required to
+// detect _all_ syntax errors.
+func LexTemplate(src []byte, filename string, start zcl.Pos) (Tokens, zcl.Diagnostics) {
+	tokens := scanTokens(src, filename, start, scanTemplate)
+	diags := checkInvalidTokens(tokens)
+	return tokens, diags
 }

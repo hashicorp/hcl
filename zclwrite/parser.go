@@ -8,7 +8,7 @@ import (
 // lexConfig uses the zclsyntax scanner to get a token stream and then
 // rewrites it into this package's token model.
 func lexConfig(src []byte) Tokens {
-	mainTokens := zclsyntax.LexConfig(src, "", zcl.Pos{Byte: 0, Line: 1, Column: 1})
+	mainTokens, _ := zclsyntax.LexConfig(src, "", zcl.Pos{Byte: 0, Line: 1, Column: 1})
 	ret := make(Tokens, len(mainTokens))
 	var lastByteOffset int
 	for i, mainToken := range mainTokens {

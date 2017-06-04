@@ -2284,7 +2284,7 @@ var _zcltok_trans_actions []byte = []byte{
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 121, 95, 0, 0,
+	0, 0, 0, 0, 121, 97, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
@@ -2300,18 +2300,18 @@ var _zcltok_trans_actions []byte = []byte{
 	0, 29, 0, 49, 35, 47, 128, 0,
 	0, 0, 0, 69, 55, 67, 134, 0,
 	0, 0, 0, 0, 71, 0, 0, 0,
-	91, 149, 0, 83, 146, 5, 0, 85,
-	0, 87, 0, 97, 0, 0, 0, 0,
+	91, 152, 0, 83, 146, 5, 0, 85,
+	0, 87, 0, 95, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 5, 5, 5, 152, 152, 152,
-	152, 152, 152, 5, 5, 152, 5, 109,
-	111, 99, 107, 73, 79, 105, 101, 0,
+	0, 0, 5, 5, 5, 149, 149, 149,
+	149, 149, 149, 5, 5, 149, 5, 109,
+	113, 99, 107, 73, 79, 105, 101, 0,
 	0, 77, 75, 103, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 81,
-	89, 113, 0, 0, 0, 0, 0, 0,
+	89, 111, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
@@ -3552,14 +3552,14 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 
 				te = p + 1
 				{
-					token(TokenInvalid)
+					token(TokenBadUTF8)
 				}
 			case 58:
 				// line 261 "scan_tokens.rl"
 
 				te = p + 1
 				{
-					token(TokenBadUTF8)
+					token(TokenInvalid)
 				}
 			case 59:
 				// line 237 "scan_tokens.rl"
@@ -3613,7 +3613,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 				te = p
 				p--
 				{
-					token(TokenInvalid)
+					token(TokenBadUTF8)
 				}
 			case 66:
 				// line 261 "scan_tokens.rl"
@@ -3621,7 +3621,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 				te = p
 				p--
 				{
-					token(TokenBadUTF8)
+					token(TokenInvalid)
 				}
 			case 67:
 				// line 238 "scan_tokens.rl"
@@ -3645,7 +3645,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 					selfToken()
 				}
 			case 70:
-				// line 261 "scan_tokens.rl"
+				// line 260 "scan_tokens.rl"
 
 				p = (te) - 1
 				{
@@ -3673,12 +3673,12 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 				case 33:
 					{
 						p = (te) - 1
-						token(TokenInvalid)
+						token(TokenBadUTF8)
 					}
 				case 34:
 					{
 						p = (te) - 1
-						token(TokenBadUTF8)
+						token(TokenInvalid)
 					}
 				}
 

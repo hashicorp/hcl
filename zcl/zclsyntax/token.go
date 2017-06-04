@@ -156,3 +156,114 @@ type heredocInProgress struct {
 	Marker      []byte
 	StartOfLine bool
 }
+
+// checkInvalidTokens does a simple pass across the given tokens and generates
+// diagnostics for tokens that should _never_ appear in ZCL source. This
+// is intended to avoid the need for the parser to have special support
+// for them all over.
+//
+// Returns a diagnostics with no errors if everything seems acceptable.
+// Otherwise, returns zero or more error diagnostics, though tries to limit
+// repetition of the same information.
+func checkInvalidTokens(tokens Tokens) zcl.Diagnostics {
+	var diags zcl.Diagnostics
+
+	toldBitwise := 0
+	toldExponent := 0
+	toldBacktick := 0
+	toldSemicolon := 0
+	toldTabs := 0
+	toldBadUTF8 := 0
+
+	for _, tok := range tokens {
+		switch tok.Type {
+		case TokenBitwiseAnd, TokenBitwiseOr, TokenBitwiseXor, TokenBitwiseNot:
+			if toldBitwise < 4 {
+				var suggestion string
+				switch tok.Type {
+				case TokenBitwiseAnd:
+					suggestion = " Did you mean boolean AND (\"&&\")?"
+				case TokenBitwiseOr:
+					suggestion = " Did you mean boolean OR (\"&&\")?"
+				case TokenBitwiseNot:
+					suggestion = " Did you mean boolean NOT (\"!\")?"
+				}
+
+				diags = append(diags, &zcl.Diagnostic{
+					Severity: zcl.DiagError,
+					Summary:  "Unsupported operator",
+					Detail:   fmt.Sprintf("Bitwise operators are not supported.%s", suggestion),
+					Subject:  &tok.Range,
+				})
+				toldBitwise++
+			}
+		case TokenStarStar:
+			if toldExponent < 1 {
+				diags = append(diags, &zcl.Diagnostic{
+					Severity: zcl.DiagError,
+					Summary:  "Unsupported operator",
+					Detail:   "\"**\" is not a supported operator. Exponentiation is not supported as an operator.",
+					Subject:  &tok.Range,
+				})
+
+				toldExponent++
+			}
+		case TokenBacktick:
+			// Only report for alternating (even) backticks, so we won't report both start and ends of the same
+			// backtick-quoted string.
+			if toldExponent < 4 && (toldExponent%2) == 0 {
+				diags = append(diags, &zcl.Diagnostic{
+					Severity: zcl.DiagError,
+					Summary:  "Invalid character",
+					Detail:   "The \"`\" character is not valid. To create a multi-line string, use the \"heredoc\" syntax, like \"<<EOT\".",
+					Subject:  &tok.Range,
+				})
+
+				toldBacktick++
+			}
+		case TokenSemicolon:
+			if toldSemicolon < 1 {
+				diags = append(diags, &zcl.Diagnostic{
+					Severity: zcl.DiagError,
+					Summary:  "Invalid character",
+					Detail:   "The \";\" character is not valid. Use newlines to separate attributes and blocks, and commas to separate items in collection values.",
+					Subject:  &tok.Range,
+				})
+
+				toldSemicolon++
+			}
+		case TokenTabs:
+			if toldTabs < 1 {
+				diags = append(diags, &zcl.Diagnostic{
+					Severity: zcl.DiagError,
+					Summary:  "Invalid character",
+					Detail:   "Tab characters may not be used. The recommended indentation style is two spaces per indent.",
+					Subject:  &tok.Range,
+				})
+
+				toldTabs++
+			}
+		case TokenBadUTF8:
+			if toldBadUTF8 < 1 {
+				diags = append(diags, &zcl.Diagnostic{
+					Severity: zcl.DiagError,
+					Summary:  "Invalid character encoding",
+					Detail:   "All input files must be UTF-8 encoded. Ensure that UTF-8 encoding is selected in your editor.",
+					Subject:  &tok.Range,
+				})
+
+				toldBadUTF8++
+			}
+		case TokenInvalid:
+			diags = append(diags, &zcl.Diagnostic{
+				Severity: zcl.DiagError,
+				Summary:  "Invalid character",
+				Detail:   "This character is not used within the language.",
+				Subject:  &tok.Range,
+			})
+
+			toldTabs++
+		}
+	}
+	return diags
+}

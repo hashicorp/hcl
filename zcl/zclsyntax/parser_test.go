@@ -404,6 +404,39 @@ block "valid" {}
 				},
 			},
 		},
+
+		{
+			`	`,
+			2, // tabs not allowed, and body item is required here
+			&Body{
+				Attributes: Attributes{},
+				Blocks:     Blocks{},
+				SrcRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+				},
+				EndRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 2, Byte: 1},
+					End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+				},
+			},
+		},
+		{
+			`\x81`,
+			2, // invalid UTF-8, and body item is required here
+			&Body{
+				Attributes: Attributes{},
+				Blocks:     Blocks{},
+				SrcRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+				},
+				EndRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 2, Byte: 1},
+					End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+				},
+			},
+		},
 	}
 
 	prettyConfig := &pretty.Config{
