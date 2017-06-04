@@ -43,7 +43,9 @@ func (p *Parser) ParseZCL(src []byte, filename string) (*zcl.File, zcl.Diagnosti
 		return existing, nil
 	}
 
-	return zclsyntax.ParseConfig(src, filename, zcl.Pos{Byte: 0, Line: 1, Column: 1})
+	file, diags := zclsyntax.ParseConfig(src, filename, zcl.Pos{Byte: 0, Line: 1, Column: 1})
+	p.files[filename] = file
+	return file, diags
 }
 
 // ParseZCLFile reads the given filename and parses it as a native-syntax zcl
