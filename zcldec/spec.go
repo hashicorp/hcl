@@ -165,7 +165,7 @@ func (s *AttrSpec) decode(content *zcl.BodyContent, block *zcl.Block, ctx *zcl.E
 	if !exists {
 		// We don't need to check required and emit a diagnostic here, because
 		// that would already have happened when building "content".
-		return cty.DynamicVal, nil
+		return cty.NullVal(s.Type), nil
 	}
 
 	// TODO: Also try to convert the result value to s.Type

@@ -64,7 +64,7 @@ func TestDecode(t *testing.T) {
 				Required: true,
 			},
 			nil,
-			cty.DynamicVal,
+			cty.NullVal(cty.Number),
 			1, // attribute "a" is required
 		},
 
