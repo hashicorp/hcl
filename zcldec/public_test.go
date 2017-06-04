@@ -2,6 +2,7 @@ package zcldec
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/zclconf/go-cty/cty"
@@ -149,4 +150,80 @@ b {}
 			}
 		})
 	}
+}
+
+func TestSourceRange(t *testing.T) {
+	tests := []struct {
+		config string
+		spec   Spec
+		want   zcl.Range
+	}{
+		{
+			`a = 1`,
+			&AttrSpec{
+				Name: "a",
+			},
+			zcl.Range{
+				Start: zcl.Pos{Line: 1, Column: 5, Byte: 4},
+				End:   zcl.Pos{Line: 1, Column: 6, Byte: 5},
+			},
+		},
+		{
+			`
+b {
+  a = 1
+}`,
+			&BlockSpec{
+				TypeName: "b",
+				Nested: &AttrSpec{
+					Name: "a",
+				},
+			},
+			zcl.Range{
+				Start: zcl.Pos{Line: 3, Column: 7, Byte: 11},
+				End:   zcl.Pos{Line: 3, Column: 8, Byte: 12},
+			},
+		},
+		{
+			`
+b {
+  c {
+    a = 1
+  }
+}`,
+			&BlockSpec{
+				TypeName: "b",
+				Nested: &BlockSpec{
+					TypeName: "c",
+					Nested: &AttrSpec{
+						Name: "a",
+					},
+				},
+			},
+			zcl.Range{
+				Start: zcl.Pos{Line: 4, Column: 9, Byte: 19},
+				End:   zcl.Pos{Line: 4, Column: 10, Byte: 20},
+			},
+		},
+	}
+
+	for i, test := range tests {
+		t.Run(fmt.Sprintf("%02d-%s", i, test.config), func(t *testing.T) {
+			file, diags := zclsyntax.ParseConfig([]byte(test.config), "", zcl.Pos{Line: 1, Column: 1, Byte: 0})
+			if len(diags) != 0 {
+				t.Errorf("wrong number of diagnostics %d; want %d", len(diags), 0)
+				for _, diag := range diags {
+					t.Logf(" - %s", diag.Error())
+				}
+			}
+			body := file.Body
+
+			got := SourceRange(body, test.spec)
+
+			if !reflect.DeepEqual(got, test.want) {
+				t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.want)
+			}
+		})
+	}
+
 }

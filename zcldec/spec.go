@@ -24,6 +24,12 @@ type Spec interface {
 	// get decoded with the same body and block as the receiver. This should
 	// not descend into the nested specs used when decoding blocks.
 	visitSameBodyChildren(cb visitFunc)
+
+	// Determine the source range of the value that would be returned for the
+	// spec in the given content, in the context of the given block
+	// (which might be null). If the corresponding item is missing, return
+	// a place where it might be inserted.
+	sourceRange(content *zcl.BodyContent, block *zcl.Block) zcl.Range
 }
 
 type visitFunc func(spec Spec)
@@ -67,6 +73,17 @@ func (s ObjectSpec) decode(content *zcl.BodyContent, block *zcl.Block, ctx *zcl.
 	return cty.ObjectVal(vals), diags
 }
 
+func (s ObjectSpec) sourceRange(content *zcl.BodyContent, block *zcl.Block) zcl.Range {
+	if block != nil {
+		return block.DefRange
+	}
+
+	// This is not great, but the best we can do. In practice, it's rather
+	// strange to ask for the source range of an entire top-level body, since
+	// that's already readily available to the caller.
+	return content.MissingItemRange
+}
+
 // A TupleSpec is a Spec that produces a cty.Value of a tuple type whose
 // elements correspond to the elements of the spec slice.
 type TupleSpec []Spec
@@ -88,6 +105,17 @@ func (s TupleSpec) decode(content *zcl.BodyContent, block *zcl.Block, ctx *zcl.E
 	}
 
 	return cty.TupleVal(vals), diags
+}
+
+func (s TupleSpec) sourceRange(content *zcl.BodyContent, block *zcl.Block) zcl.Range {
+	if block != nil {
+		return block.DefRange
+	}
+
+	// This is not great, but the best we can do. In practice, it's rather
+	// strange to ask for the source range of an entire top-level body, since
+	// that's already readily available to the caller.
+	return content.MissingItemRange
 }
 
 // An AttrSpec is a Spec that evaluates a particular attribute expression in
@@ -123,6 +151,15 @@ func (s *AttrSpec) attrSchemata() []zcl.AttributeSchema {
 	}
 }
 
+func (s *AttrSpec) sourceRange(content *zcl.BodyContent, block *zcl.Block) zcl.Range {
+	attr, exists := content.Attributes[s.Name]
+	if !exists {
+		return content.MissingItemRange
+	}
+
+	return attr.Expr.Range()
+}
+
 func (s *AttrSpec) decode(content *zcl.BodyContent, block *zcl.Block, ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
 	attr, exists := content.Attributes[s.Name]
 	if !exists {
@@ -149,6 +186,14 @@ func (s *LiteralSpec) decode(content *zcl.BodyContent, block *zcl.Block, ctx *zc
 	return s.Value, nil
 }
 
+func (s *LiteralSpec) sourceRange(content *zcl.BodyContent, block *zcl.Block) zcl.Range {
+	// No sensible range to return for a literal, so the caller had better
+	// ensure it doesn't cause any diagnostics.
+	return zcl.Range{
+		Filename: "<unknown>",
+	}
+}
+
 // An ExprSpec is a Spec that evaluates the given expression, ignoring the
 // given body.
 type ExprSpec struct {
@@ -166,6 +211,10 @@ func (s *ExprSpec) variablesNeeded(content *zcl.BodyContent) []zcl.Traversal {
 
 func (s *ExprSpec) decode(content *zcl.BodyContent, block *zcl.Block, ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
 	return s.Expr.Value(ctx)
+}
+
+func (s *ExprSpec) sourceRange(content *zcl.BodyContent, block *zcl.Block) zcl.Range {
+	return s.Expr.Range()
 }
 
 // A BlockSpec is a Spec that produces a cty.Value by decoding the contents
@@ -238,6 +287,24 @@ func (s *BlockSpec) decode(content *zcl.BodyContent, block *zcl.Block, ctx *zcl.
 	val, _, childDiags := decode(childBlock.Body, childBlock, ctx, s.Nested, false)
 	diags = append(diags, childDiags...)
 	return val, diags
+}
+
+func (s *BlockSpec) sourceRange(content *zcl.BodyContent, block *zcl.Block) zcl.Range {
+	var childBlock *zcl.Block
+	for _, candidate := range content.Blocks {
+		if candidate.Type != s.TypeName {
+			continue
+		}
+
+		childBlock = candidate
+		break
+	}
+
+	if childBlock == nil {
+		return content.MissingItemRange
+	}
+
+	return sourceRange(childBlock.Body, childBlock, s.Nested)
 }
 
 // A BlockListSpec is a Spec that produces a cty list of the results of

@@ -25,3 +25,23 @@ func Decode(body zcl.Body, spec Spec, ctx *zcl.EvalContext) (cty.Value, zcl.Diag
 func PartialDecode(body zcl.Body, spec Spec, ctx *zcl.EvalContext) (cty.Value, zcl.Body, zcl.Diagnostics) {
 	return decode(body, nil, ctx, spec, true)
 }
+
+// SourceRange interprets the given body using the given specification and
+// then returns the source range of the value that would be used to
+// fulfill the spec.
+//
+// This can be used if application-level validation detects value errors, to
+// obtain a reasonable SourceRange to use for generated diagnostics. It works
+// best when applied to specific body items (e.g. using AttrSpec, BlockSpec, ...)
+// as opposed to entire bodies using ObjectSpec, TupleSpec. The result will
+// be less useful the broader the specification, so e.g. a spec that returns
+// the entirety of all of the blocks of a given type is likely to be
+// _particularly_ arbitrary and useless.
+//
+// If the given body is not valid per the given spec, the result is best-effort
+// and may not actually be something ideal. It's expected that an application
+// will already have used Decode or PartialDecode earlier and thus had an
+// opportunity to detect and report spec violations.
+func SourceRange(body zcl.Body, spec Spec) zcl.Range {
+	return sourceRange(body, nil, spec)
+}

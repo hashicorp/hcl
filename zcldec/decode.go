@@ -23,3 +23,10 @@ func decode(body zcl.Body, block *zcl.Block, ctx *zcl.EvalContext, spec Spec, pa
 
 	return val, leftovers, diags
 }
+
+func sourceRange(body zcl.Body, block *zcl.Block, spec Spec) zcl.Range {
+	schema := ImpliedSchema(spec)
+	content, _, _ := body.PartialContent(schema)
+
+	return spec.sourceRange(content, block)
+}
