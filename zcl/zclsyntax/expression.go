@@ -362,3 +362,38 @@ func (e *ConditionalExpr) Range() zcl.Range {
 func (e *ConditionalExpr) StartRange() zcl.Range {
 	return e.Condition.StartRange()
 }
+
+type TupleConsExpr struct {
+	Exprs []Expression
+
+	SrcRange  zcl.Range
+	OpenRange zcl.Range
+}
+
+func (e *TupleConsExpr) walkChildNodes(w internalWalkFunc) {
+	for i, expr := range e.Exprs {
+		e.Exprs[i] = w(expr).(Expression)
+	}
+}
+
+func (e *TupleConsExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
+	var vals []cty.Value
+	var diags zcl.Diagnostics
+
+	vals = make([]cty.Value, len(e.Exprs))
+	for i, expr := range e.Exprs {
+		val, valDiags := expr.Value(ctx)
+		vals[i] = val
+		diags = append(diags, valDiags...)
+	}
+
+	return cty.TupleVal(vals), diags
+}
+
+func (e *TupleConsExpr) Range() zcl.Range {
+	return e.SrcRange
+}
+
+func (e *TupleConsExpr) StartRange() zcl.Range {
+	return e.OpenRange
+}

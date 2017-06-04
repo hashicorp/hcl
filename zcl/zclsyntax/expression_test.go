@@ -146,6 +146,39 @@ upper(
 			cty.StringVal("FOO"),
 			0,
 		},
+		{
+			`[]`,
+			nil,
+			cty.EmptyTupleVal,
+			0,
+		},
+		{
+			`[1]`,
+			nil,
+			cty.TupleVal([]cty.Value{cty.NumberIntVal(1)}),
+			0,
+		},
+		{
+			`[1,]`,
+			nil,
+			cty.TupleVal([]cty.Value{cty.NumberIntVal(1)}),
+			0,
+		},
+		{
+			`[1,true]`,
+			nil,
+			cty.TupleVal([]cty.Value{cty.NumberIntVal(1), cty.True}),
+			0,
+		},
+		{
+			`[
+  1,
+  true
+]`,
+			nil,
+			cty.TupleVal([]cty.Value{cty.NumberIntVal(1), cty.True}),
+			0,
+		},
 	}
 
 	for _, test := range tests {

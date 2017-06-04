@@ -31,6 +31,10 @@ func (e *TemplateExpr) Variables() []zcl.Traversal {
 	return Variables(e)
 }
 
+func (e *TupleConsExpr) Variables() []zcl.Traversal {
+	return Variables(e)
+}
+
 func (e *UnaryOpExpr) Variables() []zcl.Traversal {
 	return Variables(e)
 }

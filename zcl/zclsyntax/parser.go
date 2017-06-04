@@ -587,6 +587,9 @@ func (p *parser) parseExpressionTerm() (Expression, zcl.Diagnostics) {
 			SymbolRange: tok.Range,
 		}, diags
 
+	case TokenOBrack:
+		return p.parseTupleCons()
+
 	default:
 		var diags zcl.Diagnostics
 		if !p.recovery {
@@ -680,6 +683,72 @@ Token:
 		NameRange:       name.Range,
 		OpenParenRange:  openTok.Range,
 		CloseParenRange: closeTok.Range,
+	}, diags
+}
+
+func (p *parser) parseTupleCons() (Expression, zcl.Diagnostics) {
+	open := p.Read()
+	if open.Type != TokenOBrack {
+		// Should never happen if callers are behaving
+		panic("parseTupleCons called without peeker pointing to open bracket")
+	}
+
+	var close Token
+
+	p.PushIncludeNewlines(false)
+	defer p.PopIncludeNewlines()
+
+	var diags zcl.Diagnostics
+	var exprs []Expression
+
+	for {
+		next := p.Peek()
+		if next.Type == TokenCBrack {
+			close = p.Read() // eat closer
+			break
+		}
+
+		expr, exprDiags := p.ParseExpression()
+		exprs = append(exprs, expr)
+		diags = append(diags, exprDiags...)
+
+		if p.recovery && exprDiags.HasErrors() {
+			// If expression parsing failed then we are probably in a strange
+			// place in the token stream, so we'll bail out and try to reset
+			// to after our closing bracket to allow parsing to continue.
+			close = p.recover(TokenCBrack)
+			break
+		}
+
+		next = p.Peek()
+		if next.Type == TokenCBrack {
+			close = p.Read() // eat closer
+			break
+		}
+
+		if next.Type != TokenComma {
+			if !p.recovery {
+				diags = append(diags, &zcl.Diagnostic{
+					Severity: zcl.DiagError,
+					Summary:  "Missing item separator",
+					Detail:   "Expected a comma to mark the beginning of the next item.",
+					Subject:  &next.Range,
+					Context:  zcl.RangeBetween(open.Range, next.Range).Ptr(),
+				})
+			}
+			close = p.recover(TokenCBrack)
+			break
+		}
+
+		p.Read() // eat comma
+
+	}
+
+	return &TupleConsExpr{
+		Exprs: exprs,
+
+		SrcRange:  zcl.RangeBetween(open.Range, close.Range),
+		OpenRange: open.Range,
 	}, diags
 }
 
@@ -1061,7 +1130,7 @@ func (p *parser) setRecovery() {
 // the end of the _current_ instance of that bracketer, skipping over any
 // nested instances. This is a best-effort operation and may have
 // unpredictable results on input with bad bracketer nesting.
-func (p *parser) recover(end TokenType) {
+func (p *parser) recover(end TokenType) Token {
 	start := p.oppositeBracket(end)
 	p.recovery = true
 
@@ -1082,12 +1151,12 @@ func (p *parser) recover(end TokenType) {
 			nest++
 		case end:
 			if nest < 1 {
-				return
+				return tok
 			}
 
 			nest--
 		case TokenEOF:
-			return
+			return tok
 		}
 	}
 }
