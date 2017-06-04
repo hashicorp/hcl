@@ -23,6 +23,10 @@ func ParseConfig(src []byte, filename string, start zcl.Pos) (*zcl.File, zcl.Dia
 	return &zcl.File{
 		Body:  body,
 		Bytes: src,
+
+		Nav: navigation{
+			root: body,
+		},
 	}, diags
 }
 
