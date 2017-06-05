@@ -21,8 +21,6 @@ type Tokens []Token
 // TokenType is an enumeration used for the Type field on Token.
 type TokenType rune
 
-//go:generate stringer -type TokenType -output token_type_string.go
-
 const (
 	// Single-character tokens are represented by their own character, for
 	// convenience in producing these within the scanner. However, the values
