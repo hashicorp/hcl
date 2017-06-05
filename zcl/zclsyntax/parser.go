@@ -380,7 +380,7 @@ func (p *parser) parseTernaryConditional() (Expression, zcl.Diagnostics) {
 func (p *parser) parseBinaryOps(ops []map[TokenType]Operation) (Expression, zcl.Diagnostics) {
 	if len(ops) == 0 {
 		// We've run out of operators, so now we'll just try to parse a term.
-		return p.parseExpressionTerm()
+		return p.parseExpressionWithTraversals()
 	}
 
 	thisLevel := ops[0]
@@ -447,6 +447,82 @@ func (p *parser) parseBinaryOps(ops []map[TokenType]Operation) (Expression, zcl.
 
 		SrcRange: zcl.RangeBetween(lhs.Range(), rhs.Range()),
 	}, diags
+}
+
+func (p *parser) parseExpressionWithTraversals() (Expression, zcl.Diagnostics) {
+	term, diags := p.parseExpressionTerm()
+	ret := term
+
+Traversal:
+	for {
+		next := p.Peek()
+
+		switch next.Type {
+		case TokenDot:
+			// Attribute access or splat
+			dot := p.Read()
+			attrTok := p.Read()
+
+			switch attrTok.Type {
+			case TokenIdent:
+				name := string(attrTok.Bytes)
+				rng := zcl.RangeBetween(dot.Range, attrTok.Range)
+				step := zcl.TraverseAttr{
+					Name:     name,
+					SrcRange: rng,
+				}
+
+				ret = makeRelativeTraversal(ret, step, rng)
+
+			// TODO: TokenStar, for splats
+
+			default:
+				diags = append(diags, &zcl.Diagnostic{
+					Severity: zcl.DiagError,
+					Summary:  "Invalid attribute name",
+					Detail:   "An attribute name is required after a dot.",
+					Subject:  &attrTok.Range,
+				})
+				// This leaves the peeker in a bad place, so following items
+				// will probably be misparsed until we hit something that
+				// allows us to re-sync.
+				//
+				// We will probably need to do something better here eventually
+				// in order to support autocomplete triggered by typing a
+				// period.
+				p.setRecovery()
+				break Traversal
+			}
+
+		default:
+			break Traversal
+		}
+	}
+
+	return ret, diags
+}
+
+// makeRelativeTraversal takes an expression and a traverser and returns
+// a traversal expression that combines the two. If the given expression
+// is already a traversal, it is extended in place (mutating it) and
+// returned. If it isn't, a new RelativeTraversalExpr is created and returned.
+func makeRelativeTraversal(expr Expression, next zcl.Traverser, rng zcl.Range) Expression {
+	switch texpr := expr.(type) {
+	case *ScopeTraversalExpr:
+		texpr.Traversal = append(texpr.Traversal, next)
+		texpr.SrcRange = zcl.RangeBetween(texpr.SrcRange, rng)
+		return texpr
+	case *RelativeTraversalExpr:
+		texpr.Traversal = append(texpr.Traversal, next)
+		texpr.SrcRange = zcl.RangeBetween(texpr.SrcRange, rng)
+		return texpr
+	default:
+		return &RelativeTraversalExpr{
+			Source:    expr,
+			Traversal: zcl.Traversal{next},
+			SrcRange:  rng,
+		}
+	}
 }
 
 func (p *parser) parseExpressionTerm() (Expression, zcl.Diagnostics) {
@@ -559,11 +635,11 @@ func (p *parser) parseExpressionTerm() (Expression, zcl.Diagnostics) {
 	case TokenMinus:
 		tok := p.Read() // eat minus token
 
-		// Important to use parseExpressionTerm rather than parseExpression
+		// Important to use parseExpressionWithTraversals rather than parseExpression
 		// here, otherwise we can capture a following binary expression into
 		// our negation.
 		// e.g. -46+5 should parse as (-46)+5, not -(46+5)
-		operand, diags := p.parseExpressionTerm()
+		operand, diags := p.parseExpressionWithTraversals()
 		return &UnaryOpExpr{
 			Op:  OpNegate,
 			Val: operand,
@@ -575,10 +651,10 @@ func (p *parser) parseExpressionTerm() (Expression, zcl.Diagnostics) {
 	case TokenBang:
 		tok := p.Read() // eat bang token
 
-		// Important to use parseExpressionTerm rather than parseExpression
+		// Important to use parseExpressionWithTraversals rather than parseExpression
 		// here, otherwise we can capture a following binary expression into
 		// our negation.
-		operand, diags := p.parseExpressionTerm()
+		operand, diags := p.parseExpressionWithTraversals()
 		return &UnaryOpExpr{
 			Op:  OpLogicalNot,
 			Val: operand,

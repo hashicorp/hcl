@@ -404,6 +404,64 @@ block "valid" {}
 				},
 			},
 		},
+		{
+			`a = foo.bar`,
+			0,
+			&Body{
+				Attributes: Attributes{
+					"a": {
+						Name: "a",
+						Expr: &ScopeTraversalExpr{
+							Traversal: zcl.Traversal{
+								zcl.TraverseRoot{
+									Name: "foo",
+
+									SrcRange: zcl.Range{
+										Start: zcl.Pos{Line: 1, Column: 5, Byte: 4},
+										End:   zcl.Pos{Line: 1, Column: 8, Byte: 7},
+									},
+								},
+								zcl.TraverseAttr{
+									Name: "bar",
+
+									SrcRange: zcl.Range{
+										Start: zcl.Pos{Line: 1, Column: 8, Byte: 7},
+										End:   zcl.Pos{Line: 1, Column: 12, Byte: 11},
+									},
+								},
+							},
+
+							SrcRange: zcl.Range{
+								Start: zcl.Pos{Line: 1, Column: 5, Byte: 4},
+								End:   zcl.Pos{Line: 1, Column: 12, Byte: 11},
+							},
+						},
+
+						SrcRange: zcl.Range{
+							Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   zcl.Pos{Line: 1, Column: 12, Byte: 11},
+						},
+						NameRange: zcl.Range{
+							Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+						},
+						EqualsRange: zcl.Range{
+							Start: zcl.Pos{Line: 1, Column: 3, Byte: 2},
+							End:   zcl.Pos{Line: 1, Column: 4, Byte: 3},
+						},
+					},
+				},
+				Blocks: Blocks{},
+				SrcRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   zcl.Pos{Line: 1, Column: 12, Byte: 11},
+				},
+				EndRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 12, Byte: 11},
+					End:   zcl.Pos{Line: 1, Column: 12, Byte: 11},
+				},
+			},
+		},
 
 		{
 			`	`,
