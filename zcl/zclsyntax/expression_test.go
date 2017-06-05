@@ -311,6 +311,113 @@ upper(
 			cty.StringVal("hello"),
 			0,
 		},
+
+		{
+			`foo`,
+			&zcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"foo": cty.StringVal("hello"),
+				},
+			},
+			cty.StringVal("hello"),
+			0,
+		},
+		{
+			`bar`,
+			&zcl.EvalContext{},
+			cty.DynamicVal,
+			1, // variables not allowed here
+		},
+		{
+			`foo.bar`,
+			&zcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"foo": cty.StringVal("hello"),
+				},
+			},
+			cty.DynamicVal,
+			1, // foo does not have attributes
+		},
+		{
+			`foo.baz`,
+			&zcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"foo": cty.ObjectVal(map[string]cty.Value{
+						"baz": cty.StringVal("hello"),
+					}),
+				},
+			},
+			cty.StringVal("hello"),
+			0,
+		},
+		{
+			`foo["baz"]`,
+			&zcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"foo": cty.ObjectVal(map[string]cty.Value{
+						"baz": cty.StringVal("hello"),
+					}),
+				},
+			},
+			cty.StringVal("hello"),
+			0,
+		},
+		{
+			`foo[true]`, // key is converted to string
+			&zcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"foo": cty.ObjectVal(map[string]cty.Value{
+						"true": cty.StringVal("hello"),
+					}),
+				},
+			},
+			cty.StringVal("hello"),
+			0,
+		},
+		{
+			`foo[0].baz`,
+			&zcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"foo": cty.ListVal([]cty.Value{
+						cty.ObjectVal(map[string]cty.Value{
+							"baz": cty.StringVal("hello"),
+						}),
+					}),
+				},
+			},
+			cty.StringVal("hello"),
+			0,
+		},
+		{
+			`unk["baz"]`,
+			&zcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unk": cty.UnknownVal(cty.String),
+				},
+			},
+			cty.DynamicVal,
+			1, // value does not have indices (because we know it's a string)
+		},
+		{
+			`unk["boop"]`,
+			&zcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unk": cty.UnknownVal(cty.Map(cty.String)),
+				},
+			},
+			cty.UnknownVal(cty.String), // we know it's a map of string
+			0,
+		},
+		{
+			`dyn["boop"]`,
+			&zcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"dyn": cty.DynamicVal,
+				},
+			},
+			cty.DynamicVal, // don't know what it is yet
+			0,
+		},
 	}
 
 	for _, test := range tests {

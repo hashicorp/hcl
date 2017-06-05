@@ -59,7 +59,7 @@ func (e *ScopeTraversalExpr) walkChildNodes(w internalWalkFunc) {
 }
 
 func (e *ScopeTraversalExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
-	panic("ScopeTraversalExpr.Value not yet implemented")
+	return e.Traversal.TraverseAbs(ctx)
 }
 
 func (e *ScopeTraversalExpr) Range() zcl.Range {
