@@ -39,6 +39,10 @@ func TraversalJoin(abs Traversal, rel Traversal) Traversal {
 // the resulting value. This is supported only for relative traversals,
 // and will panic if applied to an absolute traversal.
 func (t Traversal) TraverseRel(val cty.Value) (cty.Value, Diagnostics) {
+	if !t.IsRelative() {
+		panic("can't use TraverseRel on an absolute traversal")
+	}
+
 	current := val
 	var diags Diagnostics
 	for _, tr := range t {
@@ -56,8 +60,47 @@ func (t Traversal) TraverseRel(val cty.Value) (cty.Value, Diagnostics) {
 // returning the resulting value. This is supported only for absolute
 // traversals, and will panic if applied to a relative traversal.
 func (t Traversal) TraverseAbs(ctx *EvalContext) (cty.Value, Diagnostics) {
-	// TODO: implement
-	return cty.DynamicVal, nil
+	if t.IsRelative() {
+		panic("can't use TraverseAbs on a relative traversal")
+	}
+
+	split := t.SimpleSplit()
+	root := split.Abs[0].(TraverseRoot)
+	name := root.Name
+
+	if ctx == nil || ctx.Variables == nil {
+		return cty.DynamicVal, Diagnostics{
+			{
+				Severity: DiagError,
+				Summary:  "Variables not allowed",
+				Detail:   "Variables may not be used here.",
+				Subject:  &root.SrcRange,
+			},
+		}
+	}
+
+	val, exists := ctx.Variables[name]
+	if !exists {
+		suggestions := make([]string, 0, len(ctx.Variables))
+		for k := range ctx.Variables {
+			suggestions = append(suggestions, k)
+		}
+		suggestion := nameSuggestion(name, suggestions)
+		if suggestion != "" {
+			suggestion = fmt.Sprintf(" Did you mean %q?", suggestion)
+		}
+
+		return cty.DynamicVal, Diagnostics{
+			{
+				Severity: DiagError,
+				Summary:  "Unknown variable",
+				Detail:   fmt.Sprintf("There is no variable named %q.%s", name, suggestion),
+				Subject:  &root.SrcRange,
+			},
+		}
+	}
+
+	return split.Rel.TraverseRel(val)
 }
 
 // IsRelative returns true if the receiver is a relative traversal, or false
@@ -67,9 +110,9 @@ func (t Traversal) IsRelative() bool {
 		return true
 	}
 	if _, firstIsRoot := t[0].(TraverseRoot); firstIsRoot {
-		return true
+		return false
 	}
-	return false
+	return true
 }
 
 // SimpleSplit returns a TraversalSplit where the name lookup is the absolute
