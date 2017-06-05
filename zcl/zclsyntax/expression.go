@@ -83,7 +83,10 @@ func (e *RelativeTraversalExpr) walkChildNodes(w internalWalkFunc) {
 }
 
 func (e *RelativeTraversalExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
-	panic("RelativeTraversalExpr.Value not yet implemented")
+	src, diags := e.Source.Value(ctx)
+	ret, travDiags := e.Traversal.TraverseRel(src)
+	diags = append(diags, travDiags...)
+	return ret, diags
 }
 
 func (e *RelativeTraversalExpr) Range() zcl.Range {
@@ -413,7 +416,13 @@ func (e *IndexExpr) walkChildNodes(w internalWalkFunc) {
 }
 
 func (e *IndexExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
-	panic("IndexExpr.Value not yet implemented")
+	var diags zcl.Diagnostics
+	coll, collDiags := e.Collection.Value(ctx)
+	key, keyDiags := e.Key.Value(ctx)
+	diags = append(diags, collDiags...)
+	diags = append(diags, keyDiags...)
+
+	return zcl.Index(coll, key, &e.SrcRange)
 }
 
 func (e *IndexExpr) Range() zcl.Range {

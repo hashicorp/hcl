@@ -272,6 +272,45 @@ upper(
 			}),
 			0,
 		},
+
+		{
+			`["hello"][0]`,
+			nil,
+			cty.StringVal("hello"),
+			0,
+		},
+		{
+			`[][0]`,
+			nil,
+			cty.DynamicVal,
+			1, // invalid index
+		},
+		{
+			`["hello"][negate(0)]`,
+			&zcl.EvalContext{
+				Functions: map[string]function.Function{
+					"negate": stdlib.NegateFunc,
+				},
+			},
+			cty.StringVal("hello"),
+			0,
+		},
+		{
+			`[][negate(0)]`,
+			&zcl.EvalContext{
+				Functions: map[string]function.Function{
+					"negate": stdlib.NegateFunc,
+				},
+			},
+			cty.DynamicVal,
+			1, // invalid index
+		},
+		{
+			`["hello"]["0"]`, // key gets converted to number
+			nil,
+			cty.StringVal("hello"),
+			0,
+		},
 	}
 
 	for _, test := range tests {
