@@ -70,6 +70,30 @@ func (e *ScopeTraversalExpr) StartRange() zcl.Range {
 	return e.SrcRange
 }
 
+// RelativeTraversalExpr is an Expression that retrieves a value from another
+// value using a _relative_ traversal.
+type RelativeTraversalExpr struct {
+	Source    Expression
+	Traversal zcl.Traversal
+	SrcRange  zcl.Range
+}
+
+func (e *RelativeTraversalExpr) walkChildNodes(w internalWalkFunc) {
+	// Scope traversals have no child nodes
+}
+
+func (e *RelativeTraversalExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
+	panic("RelativeTraversalExpr.Value not yet implemented")
+}
+
+func (e *RelativeTraversalExpr) Range() zcl.Range {
+	return e.SrcRange
+}
+
+func (e *RelativeTraversalExpr) StartRange() zcl.Range {
+	return e.SrcRange
+}
+
 // FunctionCallExpr is an Expression that calls a function from the EvalContext
 // and returns its result.
 type FunctionCallExpr struct {

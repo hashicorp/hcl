@@ -27,6 +27,10 @@ func (e *ObjectConsExpr) Variables() []zcl.Traversal {
 	return Variables(e)
 }
 
+func (e *RelativeTraversalExpr) Variables() []zcl.Traversal {
+	return Variables(e)
+}
+
 func (e *ScopeTraversalExpr) Variables() []zcl.Traversal {
 	return Variables(e)
 }
