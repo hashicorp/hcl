@@ -387,6 +387,31 @@ func (e *ConditionalExpr) StartRange() zcl.Range {
 	return e.Condition.StartRange()
 }
 
+type IndexExpr struct {
+	Collection Expression
+	Key        Expression
+
+	SrcRange  zcl.Range
+	OpenRange zcl.Range
+}
+
+func (e *IndexExpr) walkChildNodes(w internalWalkFunc) {
+	e.Collection = w(e.Collection).(Expression)
+	e.Key = w(e.Key).(Expression)
+}
+
+func (e *IndexExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
+	panic("IndexExpr.Value not yet implemented")
+}
+
+func (e *IndexExpr) Range() zcl.Range {
+	return e.SrcRange
+}
+
+func (e *IndexExpr) StartRange() zcl.Range {
+	return e.OpenRange
+}
+
 type TupleConsExpr struct {
 	Exprs []Expression
 

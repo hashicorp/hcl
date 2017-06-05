@@ -461,10 +461,11 @@ Traversal:
 		case TokenDot:
 			// Attribute access or splat
 			dot := p.Read()
-			attrTok := p.Read()
+			attrTok := p.Peek()
 
 			switch attrTok.Type {
 			case TokenIdent:
+				attrTok = p.Read() // eat token
 				name := string(attrTok.Bytes)
 				rng := zcl.RangeBetween(dot.Range, attrTok.Range)
 				step := zcl.TraverseAttr{
@@ -491,7 +492,51 @@ Traversal:
 				// in order to support autocomplete triggered by typing a
 				// period.
 				p.setRecovery()
-				break Traversal
+			}
+
+		case TokenOBrack:
+			// Indexing of a collection.
+			// This may or may not be a zcl.Traverser, depending on whether
+			// the key value is something constant.
+
+			open := p.Read()
+			var close Token
+			p.PushIncludeNewlines(false) // arbitrary newlines allowed in brackets
+			keyExpr, keyDiags := p.ParseExpression()
+			diags = append(diags, keyDiags...)
+			if p.recovery && keyDiags.HasErrors() {
+				close = p.recover(TokenCBrack)
+			} else {
+				close = p.Read()
+				if close.Type != TokenCBrack && !p.recovery {
+					diags = append(diags, &zcl.Diagnostic{
+						Severity: zcl.DiagError,
+						Summary:  "Missing close bracket on index",
+						Detail:   "The index operator must end with a closing bracket (\"]\").",
+						Subject:  &close.Range,
+					})
+					close = p.recover(TokenCBrack)
+				}
+			}
+			p.PushIncludeNewlines(true)
+
+			if lit, isLit := keyExpr.(*LiteralValueExpr); isLit {
+				litKey, _ := lit.Value(nil)
+				rng := zcl.RangeBetween(open.Range, close.Range)
+				step := &zcl.TraverseIndex{
+					Key:      litKey,
+					SrcRange: rng,
+				}
+				ret = makeRelativeTraversal(ret, step, rng)
+			} else {
+				rng := zcl.RangeBetween(open.Range, close.Range)
+				ret = &IndexExpr{
+					Collection: ret,
+					Key:        keyExpr,
+
+					SrcRange:  rng,
+					OpenRange: open.Range,
+				}
 			}
 
 		default:
