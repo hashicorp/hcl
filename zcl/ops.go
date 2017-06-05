@@ -1,7 +1,10 @@
 package zcl
 
 import (
+	"fmt"
+
 	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-cty/cty/convert"
 )
 
 // Index is a helper function that performs the same operation as the index
@@ -46,6 +49,32 @@ func Index(collection, key cty.Value, srcRange *Range) (cty.Value, Diagnostics) 
 	switch {
 
 	case ty.IsListType() || ty.IsTupleType() || ty.IsMapType():
+		var wantType cty.Type
+		switch {
+		case ty.IsListType() || ty.IsTupleType():
+			wantType = cty.Number
+		case ty.IsMapType():
+			wantType = cty.String
+		default:
+			// should never happen
+			panic("don't know what key type we want")
+		}
+
+		key, keyErr := convert.Convert(key, wantType)
+		if keyErr != nil {
+			return cty.DynamicVal, Diagnostics{
+				{
+					Severity: DiagError,
+					Summary:  "Invalid index",
+					Detail: fmt.Sprintf(
+						"The given key does not identify an element in this collection value: %s.",
+						keyErr.Error(),
+					),
+					Subject: srcRange,
+				},
+			}
+		}
+
 		has := collection.HasIndex(key)
 		if !has.IsKnown() {
 			if ty.IsTupleType() {
@@ -59,7 +88,7 @@ func Index(collection, key cty.Value, srcRange *Range) (cty.Value, Diagnostics) 
 				{
 					Severity: DiagError,
 					Summary:  "Invalid index",
-					Detail:   "The given index value does not identify an element in this collection value.",
+					Detail:   "The given key does not identify an element in this collection value.",
 					Subject:  srcRange,
 				},
 			}
@@ -68,13 +97,17 @@ func Index(collection, key cty.Value, srcRange *Range) (cty.Value, Diagnostics) 
 		return collection.Index(key), nil
 
 	case ty.IsObjectType():
-		if kty != cty.String {
+		key, keyErr := convert.Convert(key, cty.String)
+		if keyErr != nil {
 			return cty.DynamicVal, Diagnostics{
 				{
 					Severity: DiagError,
 					Summary:  "Invalid index",
-					Detail:   "The given key does not identify an element in this collection value. A string key is required.",
-					Subject:  srcRange,
+					Detail: fmt.Sprintf(
+						"The given key does not identify an element in this collection value: %s.",
+						keyErr.Error(),
+					),
+					Subject: srcRange,
 				},
 			}
 		}
@@ -92,7 +125,7 @@ func Index(collection, key cty.Value, srcRange *Range) (cty.Value, Diagnostics) 
 				{
 					Severity: DiagError,
 					Summary:  "Invalid index",
-					Detail:   "The given index value does not identify an element in this collection value.",
+					Detail:   "The given key does not identify an element in this collection value.",
 					Subject:  srcRange,
 				},
 			}
