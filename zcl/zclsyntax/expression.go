@@ -114,6 +114,18 @@ func (e *FunctionCallExpr) walkChildNodes(w internalWalkFunc) {
 func (e *FunctionCallExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
 	var diags zcl.Diagnostics
 
+	if ctx == nil || ctx.Functions == nil {
+		return cty.DynamicVal, zcl.Diagnostics{
+			{
+				Severity: zcl.DiagError,
+				Summary:  "Function calls not allowed",
+				Detail:   "Functions may not be called here.",
+				Subject:  &e.NameRange,
+				Context:  e.Range().Ptr(),
+			},
+		}
+	}
+
 	f, exists := ctx.Functions[e.Name]
 	if !exists {
 		avail := make([]string, 0, len(ctx.Functions))
