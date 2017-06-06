@@ -11,7 +11,7 @@ type File struct {
 	Name  string
 	Bytes []byte
 
-	Body Body
+	Body *Body
 }
 
 type Body struct {
@@ -32,6 +32,15 @@ func (n *Body) walkChildNodes(w internalWalkFunc) {
 
 func (n *Body) Tokens() *TokenSeq {
 	return n.AllTokens
+}
+
+func (n *Body) AppendItem(node Node) {
+	if n.AllTokens == nil {
+		new := make(TokenSeq, 0, 1)
+		n.AllTokens = &new
+	}
+	n.Items = append(n.Items, node)
+	*(n.AllTokens) = append(*(n.AllTokens), node.Tokens())
 }
 
 type Attribute struct {
@@ -75,6 +84,10 @@ type Unstructured struct {
 
 func (n *Unstructured) Tokens() *TokenSeq {
 	return n.AllTokens
+}
+
+func (n *Unstructured) walkChildNodes(w internalWalkFunc) {
+	// no child nodes
 }
 
 type Expression struct {

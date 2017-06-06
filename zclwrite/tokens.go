@@ -38,8 +38,8 @@ func (t *Token) AppendToTokens(src Tokens) Tokens {
 	return append(src, t)
 }
 
-func (ts *Tokens) AppendToTokens(src Tokens) Tokens {
-	return append(src, (*ts)...)
+func (ts Tokens) AppendToTokens(src Tokens) Tokens {
+	return append(src, ts...)
 }
 
 func (ts *TokenSeq) AppendToTokens(src Tokens) Tokens {
