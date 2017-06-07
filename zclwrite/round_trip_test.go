@@ -51,7 +51,7 @@ block "thing" {
 			result := wr.Bytes()
 
 			if !bytes.Equal(result, src) {
-				t.Errorf("wrong result\nresult:\n%s\ninput\n:%s", result, src)
+				t.Errorf("wrong result\nresult:\n%s\ninput:\n%s", result, src)
 			}
 		})
 	}
