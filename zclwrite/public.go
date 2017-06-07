@@ -6,10 +6,10 @@ import (
 	"github.com/zclconf/go-zcl/zcl"
 )
 
-// Parse interprets the given source bytes into a writer AST. The resulting AST
-// can be used to perform surgical edits on the source code before turning
-// it back into bytes again.
-func Parse(src []byte, filename string, start zcl.Pos) (*File, zcl.Diagnostics) {
+// ParseConfig interprets the given source bytes into a *zclwrite.File. The
+// resulting AST can be used to perform surgical edits on the source code
+// before turning it back into bytes again.
+func ParseConfig(src []byte, filename string, start zcl.Pos) (*File, zcl.Diagnostics) {
 	return parse(src, filename, start)
 }
 
