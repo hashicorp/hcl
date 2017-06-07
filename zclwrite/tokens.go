@@ -1,6 +1,8 @@
 package zclwrite
 
 import (
+	"io"
+
 	"github.com/zclconf/go-zcl/zcl/zclsyntax"
 )
 
@@ -64,8 +66,44 @@ func (ts *TokenSeq) Tokens() Tokens {
 	return tokens
 }
 
-func (ts *TokenSeq) Append(other *TokenSeq) {
-	*ts = append(*ts, other)
+// WriteTo takes an io.Writer and writes the bytes for each token to it,
+// along with the spacing that separates each token. In other words, this
+// allows serializing the tokens to a file or other such byte stream.
+func (ts *TokenSeq) WriteTo(wr io.Writer) (int, error) {
+	// We know we're going to be writing a lot of small chunks of repeated
+	// space characters, so we'll prepare a buffer of these that we can
+	// easily pass to wr.Write without any further allocation.
+	spaces := make([]byte, 40)
+	for i := range spaces {
+		spaces[i] = ' '
+	}
+
+	var n int
+	var err error
+	ts.EachToken(func(token *Token) {
+		if err != nil {
+			return
+		}
+
+		for spacesBefore := token.SpacesBefore; spacesBefore > 0; spacesBefore -= len(spaces) {
+			thisChunk := spacesBefore
+			if thisChunk > len(spaces) {
+				thisChunk = len(spaces)
+			}
+			var thisN int
+			thisN, err = wr.Write(spaces[:thisChunk])
+			n += thisN
+			if err != nil {
+				return
+			}
+		}
+
+		var thisN int
+		thisN, err = wr.Write(token.Bytes)
+		n += thisN
+	})
+
+	return n, err
 }
 
 // TokenSeqEmpty is a TokenSeq that contains no tokens. It can be used anywhere,

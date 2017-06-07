@@ -1,5 +1,7 @@
 package zclwrite
 
+import "io"
+
 type Node interface {
 	walkChildNodes(w internalWalkFunc)
 	Tokens() *TokenSeq
@@ -12,6 +14,10 @@ type File struct {
 	Bytes []byte
 
 	Body *Body
+}
+
+func (f *File) WriteTo(wr io.Writer) (int, error) {
+	return f.Body.AllTokens.WriteTo(wr)
 }
 
 type Body struct {
