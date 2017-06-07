@@ -48,15 +48,18 @@ func parse(src []byte, filename string, start zcl.Pos) (*File, zcl.Diagnostics) 
 		writerTokens: writerTokens,
 	}
 
-	// we ignore "before" and "after" at the root, because the root body covers
-	// the entire input.
-	_, root, _ := parseBody(file.Body.(*zclsyntax.Body), from)
+	before, root, after := parseBody(file.Body.(*zclsyntax.Body), from)
 
 	return &File{
 		Name:     filename,
 		SrcBytes: src,
 
 		Body: root,
+		AllTokens: &TokenSeq{
+			before.Seq(),
+			root.AllTokens,
+			after.Seq(),
+		},
 	}, nil
 }
 

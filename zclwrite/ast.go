@@ -16,12 +16,13 @@ type File struct {
 	Name     string
 	SrcBytes []byte
 
-	Body *Body
+	Body      *Body
+	AllTokens *TokenSeq
 }
 
 // WriteTo writes the tokens underlying the receiving file to the given writer.
 func (f *File) WriteTo(wr io.Writer) (int, error) {
-	return f.Body.AllTokens.WriteTo(wr)
+	return f.AllTokens.WriteTo(wr)
 }
 
 // Bytes returns a buffer containing the source code resulting from the
