@@ -10,8 +10,12 @@ import (
 // but it's also possible to directly manipulate the tree of token generators
 // to make changes that the AST API doesn't directly allow.
 type TokenGen interface {
-	AppendToTokens(Tokens) Tokens
+	EachToken(TokenCallback)
 }
+
+// TokenCallback is used with TokenGen implementations to specify the action
+// that is to be taken for each token in the flattened token sequence.
+type TokenCallback func(*Token)
 
 // Token is a single sequence of bytes annotated with a type. It is similar
 // in purpose to zclsyntax.Token, but discards the source position information
@@ -34,26 +38,30 @@ type Tokens []*Token
 // of tokens from a tree of TokenGens.
 type TokenSeq []TokenGen
 
-func (t *Token) AppendToTokens(src Tokens) Tokens {
-	return append(src, t)
+func (t *Token) EachToken(cb TokenCallback) {
+	cb(t)
 }
 
-func (ts Tokens) AppendToTokens(src Tokens) Tokens {
-	return append(src, ts...)
-}
-
-func (ts *TokenSeq) AppendToTokens(src Tokens) Tokens {
-	toks := src
-	for _, gen := range *ts {
-		toks = gen.AppendToTokens(toks)
+func (ts Tokens) EachToken(cb TokenCallback) {
+	for _, t := range ts {
+		cb(t)
 	}
-	return toks
+}
+
+func (ts *TokenSeq) EachToken(cb TokenCallback) {
+	for _, gen := range *ts {
+		gen.EachToken(cb)
+	}
 }
 
 // Tokens returns the flat list of tokens represented by the receiving
 // token sequence.
 func (ts *TokenSeq) Tokens() Tokens {
-	return ts.AppendToTokens(nil)
+	var tokens Tokens
+	ts.EachToken(func(token *Token) {
+		tokens = append(tokens, token)
+	})
+	return tokens
 }
 
 func (ts *TokenSeq) Append(other *TokenSeq) {
