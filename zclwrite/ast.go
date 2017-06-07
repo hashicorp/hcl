@@ -1,6 +1,9 @@
 package zclwrite
 
-import "io"
+import (
+	"bytes"
+	"io"
+)
 
 type Node interface {
 	walkChildNodes(w internalWalkFunc)
@@ -10,18 +13,36 @@ type Node interface {
 type internalWalkFunc func(Node)
 
 type File struct {
-	Name  string
-	Bytes []byte
+	Name     string
+	SrcBytes []byte
 
 	Body *Body
 }
 
+// WriteTo writes the tokens underlying the receiving file to the given writer.
 func (f *File) WriteTo(wr io.Writer) (int, error) {
 	return f.Body.AllTokens.WriteTo(wr)
 }
 
+// Bytes returns a buffer containing the source code resulting from the
+// tokens underlying the receiving file. If any updates have been made via
+// the AST API, these will be reflected in the result.
+func (f *File) Bytes() []byte {
+	buf := &bytes.Buffer{}
+	f.WriteTo(buf)
+	return buf.Bytes()
+}
+
+// Format makes in-place modifications to the tokens underlying the receiving
+// file in order to change the whitespace to be in canonical form.
+func (f *File) Format() {
+	format(f.Body.AllTokens.Tokens())
+}
+
 type Body struct {
 	// Items may contain Attribute, Block and Unstructured instances.
+	// Items and AllTokens should be updated only by methods of this type,
+	// since they must be kept synchronized for correct operation.
 	Items     []Node
 	AllTokens *TokenSeq
 

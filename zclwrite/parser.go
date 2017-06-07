@@ -53,8 +53,8 @@ func parse(src []byte, filename string, start zcl.Pos) (*File, zcl.Diagnostics) 
 	_, root, _ := parseBody(file.Body.(*zclsyntax.Body), from)
 
 	return &File{
-		Name:  filename,
-		Bytes: src,
+		Name:     filename,
+		SrcBytes: src,
 
 		Body: root,
 	}, nil
