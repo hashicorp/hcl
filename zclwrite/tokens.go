@@ -51,6 +51,9 @@ func (ts Tokens) EachToken(cb TokenCallback) {
 }
 
 func (ts *TokenSeq) EachToken(cb TokenCallback) {
+	if ts == nil {
+		return
+	}
 	for _, gen := range *ts {
 		gen.EachToken(cb)
 	}
