@@ -118,14 +118,51 @@ func parseBody(nativeBody *zclsyntax.Body, from inputTokens) (inputTokens, *Body
 		IndentLevel: 0, // TODO: deal with this
 	}
 
-	// TODO: actually partition the native item tokens
-	// For now we'll just return it all as one big Unstructured.
-	unstructured := &Unstructured{
-		AllTokens: within.Seq(),
+	remain := within
+	for _, nativeItem := range nativeItems {
+		beforeItem, item, afterItem := parseBodyItem(nativeItem, remain)
+
+		if beforeItem.Len() > 0 {
+			body.AppendItem(&Unstructured{
+				AllTokens: beforeItem.Seq(),
+			})
+		}
+		body.AppendItem(item)
+
+		remain = afterItem
 	}
-	body.AppendItem(unstructured)
+
+	if remain.Len() > 0 {
+		body.AppendItem(&Unstructured{
+			AllTokens: remain.Seq(),
+		})
+	}
 
 	return before, body, after
+}
+
+func parseBodyItem(nativeItem zclsyntax.Node, from inputTokens) (inputTokens, Node, inputTokens) {
+	before, within, after := from.Partition(nativeItem.Range())
+
+	var item Node
+
+	switch nativeItem.(type) {
+	case *zclsyntax.Attribute:
+		// TODO: actually deconstruct the attribute parts
+		item = &Unstructured{
+			AllTokens: within.Seq(),
+		}
+	case *zclsyntax.Block:
+		// TODO: actually deconstruct the block parts
+		item = &Unstructured{
+			AllTokens: within.Seq(),
+		}
+	default:
+		// should never happen if caller is behaving
+		panic("unsupported native item type")
+	}
+
+	return before, item, after
 }
 
 // writerTokens takes a sequence of tokens as produced by the main zclsyntax

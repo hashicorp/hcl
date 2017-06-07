@@ -19,12 +19,8 @@ func TestParse(t *testing.T) {
 		{
 			"",
 			&Body{
-				Items: []Node{
-					&Unstructured{
-						AllTokens: &TokenSeq{Tokens{}},
-					},
-				},
-				AllTokens: &TokenSeq{&TokenSeq{Tokens{}}},
+				Items:     nil,
+				AllTokens: nil,
 			},
 		},
 		{
