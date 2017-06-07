@@ -146,12 +146,11 @@ func parseBodyItem(nativeItem zclsyntax.Node, from inputTokens) (inputTokens, No
 
 	var item Node
 
-	switch nativeItem.(type) {
+	switch tItem := nativeItem.(type) {
 	case *zclsyntax.Attribute:
-		// TODO: actually deconstruct the attribute parts
-		item = &Unstructured{
-			AllTokens: within.Seq(),
-		}
+		item = parseAttribute(tItem, within)
+		// TODO: Grab the newline and any line comment from "after" and
+		// write them into the attribute object.
 	case *zclsyntax.Block:
 		// TODO: actually deconstruct the block parts
 		item = &Unstructured{
@@ -163,6 +162,50 @@ func parseBodyItem(nativeItem zclsyntax.Node, from inputTokens) (inputTokens, No
 	}
 
 	return before, item, after
+}
+
+func parseAttribute(nativeAttr *zclsyntax.Attribute, from inputTokens) *Attribute {
+	var allTokens TokenSeq
+	attr := &Attribute{}
+
+	before, nameTokens, from := from.Partition(nativeAttr.NameRange)
+	if before.Len() > 0 {
+		allTokens = append(allTokens, before.Seq())
+	}
+	attr.NameTokens = nameTokens.Seq()
+	allTokens = append(allTokens, attr.NameTokens)
+
+	before, equalsTokens, from := from.Partition(nativeAttr.EqualsRange)
+	if before.Len() > 0 {
+		allTokens = append(allTokens, before.Seq())
+	}
+	attr.EqualsTokens = equalsTokens.Seq()
+	allTokens = append(allTokens, attr.EqualsTokens)
+
+	before, exprTokens, from := from.Partition(nativeAttr.Expr.Range())
+	if before.Len() > 0 {
+		allTokens = append(allTokens, before.Seq())
+	}
+	attr.Expr = parseExpression(nativeAttr.Expr, exprTokens)
+	allTokens = append(allTokens, attr.Expr.AllTokens)
+
+	// Collect any stragglers, although we shouldn't generally have any since
+	// the newline and any line comments don't get included in the attribute's
+	// range.
+	if from.Len() > 0 {
+		allTokens = append(allTokens, from.Seq())
+	}
+
+	attr.AllTokens = &allTokens
+
+	return attr
+}
+
+func parseExpression(nativeExpr zclsyntax.Expression, from inputTokens) *Expression {
+	// TODO: Populate VarRefs by analyzing the result of nativeExpr.Variables()
+	return &Expression{
+		AllTokens: from.Seq(),
+	}
 }
 
 // writerTokens takes a sequence of tokens as produced by the main zclsyntax

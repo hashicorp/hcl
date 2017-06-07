@@ -77,13 +77,17 @@ type Attribute struct {
 	LeadCommentTokens *TokenSeq
 	NameTokens        *TokenSeq
 	EqualsTokens      *TokenSeq
-	Value             *Expression
+	Expr              *Expression
 	LineCommentTokens *TokenSeq
 	EOLTokens         *TokenSeq
 }
 
 func (a *Attribute) walkChildNodes(w internalWalkFunc) {
-	w(a.Value)
+	w(a.Expr)
+}
+
+func (n *Attribute) Tokens() *TokenSeq {
+	return n.AllTokens
 }
 
 type Block struct {

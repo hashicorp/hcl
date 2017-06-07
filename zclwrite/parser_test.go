@@ -27,43 +27,88 @@ func TestParse(t *testing.T) {
 			"a = 1",
 			&Body{
 				Items: []Node{
-					&Unstructured{
-						AllTokens: &TokenSeq{Tokens{
+					&Attribute{
+						AllTokens: &TokenSeq{
+							&TokenSeq{
+								Tokens{
+									{
+										Type:         zclsyntax.TokenIdent,
+										Bytes:        []byte(`a`),
+										SpacesBefore: 0,
+									},
+								},
+							},
+							&TokenSeq{
+								Tokens{
+									{
+										Type:         zclsyntax.TokenEqual,
+										Bytes:        []byte(`=`),
+										SpacesBefore: 1,
+									},
+								},
+							},
+							&TokenSeq{
+								Tokens{
+									{
+										Type:         zclsyntax.TokenNumberLit,
+										Bytes:        []byte(`1`),
+										SpacesBefore: 1,
+									},
+								},
+							},
+						},
+						NameTokens: &TokenSeq{Tokens{
 							{
 								Type:         zclsyntax.TokenIdent,
 								Bytes:        []byte(`a`),
 								SpacesBefore: 0,
 							},
+						}},
+						EqualsTokens: &TokenSeq{Tokens{
 							{
 								Type:         zclsyntax.TokenEqual,
 								Bytes:        []byte(`=`),
 								SpacesBefore: 1,
 							},
-							{
-								Type:         zclsyntax.TokenNumberLit,
-								Bytes:        []byte(`1`),
-								SpacesBefore: 1,
-							},
 						}},
+						Expr: &Expression{
+							AllTokens: &TokenSeq{Tokens{
+								{
+									Type:         zclsyntax.TokenNumberLit,
+									Bytes:        []byte(`1`),
+									SpacesBefore: 1,
+								},
+							}},
+						},
 					},
 				},
 				AllTokens: &TokenSeq{
 					&TokenSeq{
-						Tokens{
-							{
-								Type:         zclsyntax.TokenIdent,
-								Bytes:        []byte(`a`),
-								SpacesBefore: 0,
+						&TokenSeq{
+							Tokens{
+								{
+									Type:         zclsyntax.TokenIdent,
+									Bytes:        []byte(`a`),
+									SpacesBefore: 0,
+								},
 							},
-							{
-								Type:         zclsyntax.TokenEqual,
-								Bytes:        []byte(`=`),
-								SpacesBefore: 1,
+						},
+						&TokenSeq{
+							Tokens{
+								{
+									Type:         zclsyntax.TokenEqual,
+									Bytes:        []byte(`=`),
+									SpacesBefore: 1,
+								},
 							},
-							{
-								Type:         zclsyntax.TokenNumberLit,
-								Bytes:        []byte(`1`),
-								SpacesBefore: 1,
+						},
+						&TokenSeq{
+							Tokens{
+								{
+									Type:         zclsyntax.TokenNumberLit,
+									Bytes:        []byte(`1`),
+									SpacesBefore: 1,
+								},
 							},
 						},
 					},
