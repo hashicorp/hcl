@@ -133,7 +133,10 @@ func parseBody(nativeBody *zclsyntax.Body, from inputTokens) (inputTokens, *Body
 // indices as the input, allowing the two sets of tokens to be correlated
 // by index.
 func writerTokens(nativeTokens zclsyntax.Tokens) Tokens {
-	ret := make(Tokens, len(nativeTokens))
+	// Ultimately we want a slice of token _pointers_, but since we can
+	// predict how much memory we're going to devote to tokens we'll allocate
+	// it all as a single flat buffer and thus give the GC less work to do.
+	tokBuf := make([]Token, len(nativeTokens))
 	var lastByteOffset int
 	for i, mainToken := range nativeTokens {
 		// Create a copy of the bytes so that we can mutate without
@@ -141,7 +144,7 @@ func writerTokens(nativeTokens zclsyntax.Tokens) Tokens {
 		bytes := make([]byte, len(mainToken.Bytes))
 		copy(bytes, mainToken.Bytes)
 
-		ret[i] = &Token{
+		tokBuf[i] = Token{
 			Type:  mainToken.Type,
 			Bytes: bytes,
 
@@ -152,6 +155,12 @@ func writerTokens(nativeTokens zclsyntax.Tokens) Tokens {
 		}
 
 		lastByteOffset = mainToken.Range.End.Byte
+	}
+
+	// Now make a slice of pointers into the previous slice.
+	ret := make(Tokens, len(tokBuf))
+	for i := range ret {
+		ret[i] = &tokBuf[i]
 	}
 
 	return ret
