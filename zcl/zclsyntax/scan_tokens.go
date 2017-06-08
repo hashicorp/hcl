@@ -26,11 +26,11 @@ var _zcltok_actions []byte = []byte{
 	1, 58, 1, 59, 1, 60, 1, 61,
 	1, 62, 1, 63, 1, 64, 1, 65,
 	1, 66, 1, 67, 1, 68, 1, 69,
-	1, 70, 1, 71, 1, 72, 2, 0,
-	1, 2, 3, 16, 2, 3, 17, 2,
-	3, 28, 2, 3, 29, 2, 3, 40,
-	2, 3, 41, 2, 3, 42, 2, 3,
-	43, 2, 3, 44,
+	1, 70, 1, 71, 1, 72, 1, 73,
+	2, 0, 1, 2, 3, 16, 2, 3,
+	17, 2, 3, 28, 2, 3, 29, 2,
+	3, 40, 2, 3, 41, 2, 3, 42,
+	2, 3, 43, 2, 3, 44,
 }
 
 var _zcltok_key_offsets []int16 = []int16{
@@ -184,7 +184,7 @@ var _zcltok_trans_keys []byte = []byte{
 	233, 234, 237, 239, 240, 243, 48, 57,
 	65, 90, 97, 122, 196, 218, 229, 236,
 	10, 170, 181, 183, 186, 128, 150, 152,
-	182, 184, 255, 192, 255, 128, 255, 173,
+	182, 184, 255, 192, 255, 0, 127, 173,
 	130, 133, 146, 159, 165, 171, 175, 255,
 	181, 190, 184, 185, 192, 255, 140, 134,
 	138, 142, 161, 163, 255, 182, 130, 136,
@@ -1410,7 +1410,7 @@ var _zcltok_indicies []int16 = []int16{
 	61, 62, 37, 39, 63, 41, 64, 65,
 	66, 11, 11, 11, 14, 38, 9, 44,
 	9, 11, 11, 11, 11, 9, 11, 11,
-	11, 9, 11, 9, 11, 11, 9, 9,
+	11, 9, 11, 9, 11, 9, 11, 9,
 	9, 9, 9, 9, 11, 9, 9, 9,
 	9, 11, 11, 11, 11, 11, 9, 9,
 	11, 9, 9, 11, 9, 11, 9, 9,
@@ -2063,7 +2063,7 @@ var _zcltok_indicies []int16 = []int16{
 }
 
 var _zcltok_trans_targs []int16 = []int16{
-	947, 1, 952, 2, 3, 955, 947, 5,
+	947, 1, 947, 2, 3, 955, 947, 5,
 	956, 947, 7, 8, 285, 11, 12, 13,
 	14, 15, 286, 287, 18, 288, 20, 21,
 	289, 290, 291, 292, 293, 294, 295, 296,
@@ -2202,12 +2202,12 @@ var _zcltok_trans_targs []int16 = []int16{
 }
 
 var _zcltok_trans_actions []byte = []byte{
-	125, 0, 145, 0, 0, 145, 117, 0,
-	5, 121, 0, 0, 0, 0, 0, 0,
+	127, 0, 71, 0, 0, 147, 119, 0,
+	5, 123, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 95, 0, 0, 0,
+	0, 0, 0, 0, 97, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
@@ -2254,7 +2254,7 @@ var _zcltok_trans_actions []byte = []byte{
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 119, 142, 0, 0, 0, 0,
+	0, 0, 121, 144, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
@@ -2285,7 +2285,7 @@ var _zcltok_trans_actions []byte = []byte{
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 123, 99, 0, 0,
+	0, 0, 0, 0, 125, 101, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
@@ -2298,21 +2298,21 @@ var _zcltok_trans_actions []byte = []byte{
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 27, 5, 0,
-	0, 29, 0, 49, 35, 47, 130, 0,
-	0, 0, 0, 69, 55, 67, 136, 0,
-	0, 0, 0, 0, 71, 0, 0, 0,
-	93, 154, 0, 85, 148, 5, 0, 0,
-	87, 0, 89, 0, 97, 0, 0, 0,
+	0, 29, 0, 49, 35, 47, 132, 0,
+	0, 0, 0, 69, 55, 67, 138, 0,
+	0, 0, 0, 0, 73, 0, 0, 0,
+	95, 156, 0, 87, 150, 5, 0, 0,
+	89, 0, 91, 0, 99, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 5, 5, 5, 151, 151,
-	151, 151, 151, 151, 5, 5, 151, 5,
-	111, 115, 101, 109, 75, 81, 107, 103,
-	0, 0, 79, 73, 77, 105, 0, 0,
+	0, 0, 0, 5, 5, 5, 153, 153,
+	153, 153, 153, 153, 5, 5, 153, 5,
+	113, 117, 103, 111, 77, 83, 109, 105,
+	0, 0, 81, 75, 79, 107, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
-	0, 83, 91, 113, 0, 0, 0, 0,
+	0, 85, 93, 115, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
@@ -2334,9 +2334,9 @@ var _zcltok_trans_actions []byte = []byte{
 	15, 0, 5, 5, 21, 0, 0, 0,
 	5, 5, 5, 23, 0, 19, 9, 0,
 	17, 7, 25, 0, 0, 0, 0, 37,
-	0, 133, 133, 43, 0, 0, 41, 33,
+	0, 135, 135, 43, 0, 0, 41, 33,
 	39, 31, 45, 0, 0, 0, 57, 0,
-	139, 139, 63, 0, 0, 61, 53, 59,
+	141, 141, 63, 0, 0, 61, 53, 59,
 	51, 65,
 }
 
@@ -2467,8 +2467,8 @@ var _zcltok_to_state_actions []byte = []byte{
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 1, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 127, 0, 0, 0,
-	0, 0, 0, 127, 0, 0, 0, 0,
+	0, 0, 0, 0, 129, 0, 0, 0,
+	0, 0, 0, 129, 0, 0, 0, 0,
 	0, 0,
 }
 
@@ -2724,7 +2724,7 @@ var _zcltok_eof_trans []int16 = []int16{
 	766, 766, 766, 770, 770, 772, 774, 772,
 	772, 774, 0, 0, 780, 782, 780, 780,
 	782, 0, 0, 0, 841, 842, 843, 844,
-	1, 844, 844, 847, 848, 844, 844, 844,
+	842, 844, 844, 847, 848, 844, 844, 844,
 	854, 844, 844, 884, 884, 884, 884, 884,
 	884, 884, 884, 884, 884, 884, 884, 884,
 	884, 884, 884, 884, 884, 884, 884, 884,
@@ -3397,62 +3397,69 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 
 				act = 35
 			case 45:
+				// line 242 "scan_tokens.rl"
+
+				te = p + 1
+				{
+					token(TokenComment)
+				}
+			case 46:
 				// line 243 "scan_tokens.rl"
 
 				te = p + 1
 				{
 					token(TokenNewline)
 				}
-			case 46:
+			case 47:
 				// line 245 "scan_tokens.rl"
 
 				te = p + 1
 				{
 					token(TokenEqualOp)
 				}
-			case 47:
+			case 48:
 				// line 246 "scan_tokens.rl"
 
 				te = p + 1
 				{
 					token(TokenNotEqual)
 				}
-			case 48:
+			case 49:
 				// line 247 "scan_tokens.rl"
 
 				te = p + 1
 				{
 					token(TokenGreaterThanEq)
 				}
-			case 49:
+			case 50:
 				// line 248 "scan_tokens.rl"
 
 				te = p + 1
 				{
 					token(TokenLessThanEq)
 				}
-			case 50:
+			case 51:
 				// line 249 "scan_tokens.rl"
 
 				te = p + 1
 				{
 					token(TokenAnd)
 				}
-			case 51:
+			case 52:
 				// line 250 "scan_tokens.rl"
 
 				te = p + 1
 				{
 					token(TokenOr)
 				}
-			case 52:
+			case 53:
 				// line 251 "scan_tokens.rl"
 
 				te = p + 1
 				{
 					selfToken()
 				}
-			case 53:
+			case 54:
 				// line 154 "scan_tokens.rl"
 
 				te = p + 1
@@ -3460,7 +3467,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 					token(TokenOBrace)
 					braces++
 				}
-			case 54:
+			case 55:
 				// line 159 "scan_tokens.rl"
 
 				te = p + 1
@@ -3481,7 +3488,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 						braces--
 					}
 				}
-			case 55:
+			case 56:
 				// line 171 "scan_tokens.rl"
 
 				te = p + 1
@@ -3511,7 +3518,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 						braces--
 					}
 				}
-			case 56:
+			case 57:
 				// line 71 "scan_tokens.rl"
 
 				te = p + 1
@@ -3525,7 +3532,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 						goto _again
 					}
 				}
-			case 57:
+			case 58:
 				// line 81 "scan_tokens.rl"
 
 				te = p + 1
@@ -3556,27 +3563,27 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 						goto _again
 					}
 				}
-			case 58:
+			case 59:
 				// line 262 "scan_tokens.rl"
 
 				te = p + 1
 				{
 					token(TokenBadUTF8)
 				}
-			case 59:
+			case 60:
 				// line 263 "scan_tokens.rl"
 
 				te = p + 1
 				{
 					token(TokenInvalid)
 				}
-			case 60:
+			case 61:
 				// line 238 "scan_tokens.rl"
 
 				te = p
 				p--
 
-			case 61:
+			case 62:
 				// line 239 "scan_tokens.rl"
 
 				te = p
@@ -3584,7 +3591,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 				{
 					token(TokenNumberLit)
 				}
-			case 62:
+			case 63:
 				// line 240 "scan_tokens.rl"
 
 				te = p
@@ -3592,7 +3599,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 				{
 					token(TokenIdent)
 				}
-			case 63:
+			case 64:
 				// line 242 "scan_tokens.rl"
 
 				te = p
@@ -3600,7 +3607,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 				{
 					token(TokenComment)
 				}
-			case 64:
+			case 65:
 				// line 251 "scan_tokens.rl"
 
 				te = p
@@ -3608,7 +3615,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 				{
 					selfToken()
 				}
-			case 65:
+			case 66:
 				// line 261 "scan_tokens.rl"
 
 				te = p
@@ -3616,7 +3623,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 				{
 					token(TokenTabs)
 				}
-			case 66:
+			case 67:
 				// line 262 "scan_tokens.rl"
 
 				te = p
@@ -3624,7 +3631,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 				{
 					token(TokenBadUTF8)
 				}
-			case 67:
+			case 68:
 				// line 263 "scan_tokens.rl"
 
 				te = p
@@ -3632,35 +3639,35 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 				{
 					token(TokenInvalid)
 				}
-			case 68:
+			case 69:
 				// line 239 "scan_tokens.rl"
 
 				p = (te) - 1
 				{
 					token(TokenNumberLit)
 				}
-			case 69:
+			case 70:
 				// line 240 "scan_tokens.rl"
 
 				p = (te) - 1
 				{
 					token(TokenIdent)
 				}
-			case 70:
+			case 71:
 				// line 251 "scan_tokens.rl"
 
 				p = (te) - 1
 				{
 					selfToken()
 				}
-			case 71:
+			case 72:
 				// line 262 "scan_tokens.rl"
 
 				p = (te) - 1
 				{
 					token(TokenBadUTF8)
 				}
-			case 72:
+			case 73:
 				// line 1 "NONE"
 
 				switch act {
@@ -3691,7 +3698,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 					}
 				}
 
-				// line 3573 "scan_tokens.go"
+				// line 3578 "scan_tokens.go"
 			}
 		}
 
@@ -3712,7 +3719,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
 
 				act = 0
 
-				// line 3593 "scan_tokens.go"
+				// line 3598 "scan_tokens.go"
 			}
 		}
 

@@ -53,8 +53,8 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
         BeginHeredocTmpl = '<<' ('-')? Ident Newline;
 
         Comment = (
-            ("#" any* EndOfLine) |
-            ("//" any* EndOfLine) |
+            ("#" (any - EndOfLine)* EndOfLine) |
+            ("//" (any - EndOfLine)* EndOfLine) |
             ("/*" any* "*/")
         );
 

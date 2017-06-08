@@ -19,10 +19,8 @@ baz    = 1
 # this file is awesome
 
 # tossed salads and scrambled eggs
-block "thing" {
-  foobar = 1 # quite stylish
-  baz    = 1
-}
+foobar = 1
+baz    = 1
 
 # and they all lived happily ever after
 `,

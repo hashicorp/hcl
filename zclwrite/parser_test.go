@@ -115,6 +115,229 @@ func TestParse(t *testing.T) {
 				},
 			},
 		},
+		{
+			"# aye aye aye\na = 1",
+			&Body{
+				Items: []Node{
+					&Attribute{
+						AllTokens: &TokenSeq{
+							&TokenSeq{
+								Tokens{
+									{
+										Type:         zclsyntax.TokenComment,
+										Bytes:        []byte("# aye aye aye\n"),
+										SpacesBefore: 0,
+									},
+								},
+							},
+							&TokenSeq{
+								Tokens{
+									{
+										Type:         zclsyntax.TokenIdent,
+										Bytes:        []byte(`a`),
+										SpacesBefore: 0,
+									},
+								},
+							},
+							&TokenSeq{
+								Tokens{
+									{
+										Type:         zclsyntax.TokenEqual,
+										Bytes:        []byte(`=`),
+										SpacesBefore: 1,
+									},
+								},
+							},
+							&TokenSeq{
+								Tokens{
+									{
+										Type:         zclsyntax.TokenNumberLit,
+										Bytes:        []byte(`1`),
+										SpacesBefore: 1,
+									},
+								},
+							},
+						},
+						LeadCommentTokens: &TokenSeq{Tokens{
+							{
+								Type:         zclsyntax.TokenComment,
+								Bytes:        []byte("# aye aye aye\n"),
+								SpacesBefore: 0,
+							},
+						}},
+						NameTokens: &TokenSeq{Tokens{
+							{
+								Type:         zclsyntax.TokenIdent,
+								Bytes:        []byte(`a`),
+								SpacesBefore: 0,
+							},
+						}},
+						EqualsTokens: &TokenSeq{Tokens{
+							{
+								Type:         zclsyntax.TokenEqual,
+								Bytes:        []byte(`=`),
+								SpacesBefore: 1,
+							},
+						}},
+						Expr: &Expression{
+							AllTokens: &TokenSeq{Tokens{
+								{
+									Type:         zclsyntax.TokenNumberLit,
+									Bytes:        []byte(`1`),
+									SpacesBefore: 1,
+								},
+							}},
+						},
+					},
+				},
+				AllTokens: &TokenSeq{
+					&TokenSeq{
+						&TokenSeq{
+							Tokens{
+								{
+									Type:         zclsyntax.TokenComment,
+									Bytes:        []byte("# aye aye aye\n"),
+									SpacesBefore: 0,
+								},
+							},
+						},
+						&TokenSeq{
+							Tokens{
+								{
+									Type:         zclsyntax.TokenIdent,
+									Bytes:        []byte(`a`),
+									SpacesBefore: 0,
+								},
+							},
+						},
+						&TokenSeq{
+							Tokens{
+								{
+									Type:         zclsyntax.TokenEqual,
+									Bytes:        []byte(`=`),
+									SpacesBefore: 1,
+								},
+							},
+						},
+						&TokenSeq{
+							Tokens{
+								{
+									Type:         zclsyntax.TokenNumberLit,
+									Bytes:        []byte(`1`),
+									SpacesBefore: 1,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			"# bee bee bee\n\nb = 1", // two newlines separate the comment from the attribute
+			&Body{
+				Items: []Node{
+					&Attribute{
+						AllTokens: &TokenSeq{
+							&TokenSeq{
+								Tokens{
+									{
+										Type:         zclsyntax.TokenIdent,
+										Bytes:        []byte(`b`),
+										SpacesBefore: 0,
+									},
+								},
+							},
+							&TokenSeq{
+								Tokens{
+									{
+										Type:         zclsyntax.TokenEqual,
+										Bytes:        []byte(`=`),
+										SpacesBefore: 1,
+									},
+								},
+							},
+							&TokenSeq{
+								Tokens{
+									{
+										Type:         zclsyntax.TokenNumberLit,
+										Bytes:        []byte(`1`),
+										SpacesBefore: 1,
+									},
+								},
+							},
+						},
+						NameTokens: &TokenSeq{Tokens{
+							{
+								Type:         zclsyntax.TokenIdent,
+								Bytes:        []byte(`b`),
+								SpacesBefore: 0,
+							},
+						}},
+						EqualsTokens: &TokenSeq{Tokens{
+							{
+								Type:         zclsyntax.TokenEqual,
+								Bytes:        []byte(`=`),
+								SpacesBefore: 1,
+							},
+						}},
+						Expr: &Expression{
+							AllTokens: &TokenSeq{Tokens{
+								{
+									Type:         zclsyntax.TokenNumberLit,
+									Bytes:        []byte(`1`),
+									SpacesBefore: 1,
+								},
+							}},
+						},
+					},
+				},
+				AllTokens: &TokenSeq{
+					&TokenSeq{
+						Tokens{
+							{
+								Type:         zclsyntax.TokenComment,
+								Bytes:        []byte("# bee bee bee\n"),
+								SpacesBefore: 0,
+							},
+							{
+								Type:         zclsyntax.TokenNewline,
+								Bytes:        []byte("\n"),
+								SpacesBefore: 0,
+							},
+						},
+					},
+					&TokenSeq{
+						&TokenSeq{
+							Tokens{
+								{
+									Type:         zclsyntax.TokenIdent,
+									Bytes:        []byte(`b`),
+									SpacesBefore: 0,
+								},
+							},
+						},
+						&TokenSeq{
+							Tokens{
+								{
+									Type:         zclsyntax.TokenEqual,
+									Bytes:        []byte(`=`),
+									SpacesBefore: 1,
+								},
+							},
+						},
+						&TokenSeq{
+							Tokens{
+								{
+									Type:         zclsyntax.TokenNumberLit,
+									Bytes:        []byte(`1`),
+									SpacesBefore: 1,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	prettyConfig := &pretty.Config{
@@ -300,6 +523,82 @@ func TestPartitionTokens(t *testing.T) {
 					prettyConfig.Sprint(test.tokens), test.rng,
 					gotStart, test.wantStart,
 					gotEnd, test.wantEnd,
+				)
+			}
+		})
+	}
+}
+
+func TestPartitionLeadCommentTokens(t *testing.T) {
+	tests := []struct {
+		tokens    zclsyntax.Tokens
+		wantStart int
+	}{
+		{
+			zclsyntax.Tokens{},
+			0,
+		},
+		{
+			zclsyntax.Tokens{
+				{
+					Type: zclsyntax.TokenComment,
+				},
+			},
+			0,
+		},
+		{
+			zclsyntax.Tokens{
+				{
+					Type: zclsyntax.TokenComment,
+				},
+				{
+					Type: zclsyntax.TokenComment,
+				},
+			},
+			0,
+		},
+		{
+			zclsyntax.Tokens{
+				{
+					Type: zclsyntax.TokenComment,
+				},
+				{
+					Type: zclsyntax.TokenNewline,
+				},
+			},
+			2,
+		},
+		{
+			zclsyntax.Tokens{
+				{
+					Type: zclsyntax.TokenComment,
+				},
+				{
+					Type: zclsyntax.TokenNewline,
+				},
+				{
+					Type: zclsyntax.TokenComment,
+				},
+			},
+			2,
+		},
+	}
+
+	prettyConfig := &pretty.Config{
+		Diffable:          true,
+		IncludeUnexported: true,
+		PrintStringers:    true,
+	}
+
+	for i, test := range tests {
+		t.Run(fmt.Sprintf("%02d", i), func(t *testing.T) {
+			gotStart := partitionLeadCommentTokens(test.tokens)
+
+			if gotStart != test.wantStart {
+				t.Errorf(
+					"wrong result\ntokens: %s\ngot:   %d\nwant:  %d",
+					prettyConfig.Sprint(test.tokens),
+					gotStart, test.wantStart,
 				)
 			}
 		})

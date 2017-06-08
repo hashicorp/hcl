@@ -63,12 +63,16 @@ func (n *Body) Tokens() *TokenSeq {
 }
 
 func (n *Body) AppendItem(node Node) {
+	n.Items = append(n.Items, node)
+	n.AppendUnstructuredTokens(node.Tokens())
+}
+
+func (n *Body) AppendUnstructuredTokens(seq *TokenSeq) {
 	if n.AllTokens == nil {
 		new := make(TokenSeq, 0, 1)
 		n.AllTokens = &new
 	}
-	n.Items = append(n.Items, node)
-	*(n.AllTokens) = append(*(n.AllTokens), node.Tokens())
+	*(n.AllTokens) = append(*(n.AllTokens), seq)
 }
 
 type Attribute struct {
@@ -107,19 +111,8 @@ func (n *Block) walkChildNodes(w internalWalkFunc) {
 	w(n.Body)
 }
 
-// Unstructured represents consecutive sets of tokens within a Body that
-// aren't part of any particular construct. This includes blank lines
-// and comments that aren't immediately before an attribute or nested block.
-type Unstructured struct {
-	AllTokens *TokenSeq
-}
-
-func (n *Unstructured) Tokens() *TokenSeq {
+func (n *Block) Tokens() *TokenSeq {
 	return n.AllTokens
-}
-
-func (n *Unstructured) walkChildNodes(w internalWalkFunc) {
-	// no child nodes
 }
 
 type Expression struct {
