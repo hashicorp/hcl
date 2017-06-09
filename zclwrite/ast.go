@@ -3,6 +3,9 @@ package zclwrite
 import (
 	"bytes"
 	"io"
+
+	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-zcl/zcl"
 )
 
 type Node interface {
@@ -73,6 +76,41 @@ func (n *Body) AppendUnstructuredTokens(seq *TokenSeq) {
 		n.AllTokens = &new
 	}
 	*(n.AllTokens) = append(*(n.AllTokens), seq)
+}
+
+// FindAttribute returns the first attribute item from the body that has the
+// given name, or returns nil if there is currently no matching attribute.
+//
+// A valid AST has only one definition of each attribute, but that constraint
+// is not enforced in the zclwrite AST, so a tree that has been mutated by
+// other calls may contain additional matching attributes that cannot be seen
+// by this method.
+func (n *Body) FindAttribute(name string) *Attribute {
+	panic("Body.FindAttribute not yet implemented")
+}
+
+// SetAttributeValue either replaces the expression of an existing attribute
+// of the given name or adds a new attribute definition to the end of the block.
+//
+// The value is given as a cty.Value, and must therefore be a literal. To set
+// a variable reference or other traversal, use SetAttributeTraversal.
+//
+// The return value is the attribute that was either modified in-place or
+// created.
+func (n *Body) SetAttributeValue(name string, val cty.Value) *Attribute {
+	panic("Body.SetAttributeValue not yet implemented")
+}
+
+// SetAttributeTraversal either replaces the expression of an existing attribute
+// of the given name or adds a new attribute definition to the end of the block.
+//
+// The new expression is given as a zcl.Traversal, which must be an absolute
+// traversal. To set a literal value, use SetAttributeValue.
+//
+// The return value is the attribute that was either modified in-place or
+// created.
+func (n *Body) SetAttributeTraversal(name string, traversal zcl.Traversal) *Attribute {
+	panic("Body.SetAttributeTraversal not yet implemented")
 }
 
 type Attribute struct {
