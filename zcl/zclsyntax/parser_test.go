@@ -364,7 +364,7 @@ block "valid" {}
 		},
 
 		{
-			`a = 1`,
+			"a = 1\n",
 			0,
 			&Body{
 				Attributes: Attributes{
@@ -396,11 +396,11 @@ block "valid" {}
 				Blocks: Blocks{},
 				SrcRange: zcl.Range{
 					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
-					End:   zcl.Pos{Line: 1, Column: 6, Byte: 5},
+					End:   zcl.Pos{Line: 2, Column: 1, Byte: 6},
 				},
 				EndRange: zcl.Range{
-					Start: zcl.Pos{Line: 1, Column: 6, Byte: 5},
-					End:   zcl.Pos{Line: 1, Column: 6, Byte: 5},
+					Start: zcl.Pos{Line: 2, Column: 1, Byte: 6},
+					End:   zcl.Pos{Line: 2, Column: 1, Byte: 6},
 				},
 			},
 		},
@@ -459,6 +459,47 @@ block "valid" {}
 				EndRange: zcl.Range{
 					Start: zcl.Pos{Line: 1, Column: 12, Byte: 11},
 					End:   zcl.Pos{Line: 1, Column: 12, Byte: 11},
+				},
+			},
+		},
+		{
+			"a = 1 # line comment\n",
+			0,
+			&Body{
+				Attributes: Attributes{
+					"a": {
+						Name: "a",
+						Expr: &LiteralValueExpr{
+							Val: cty.NumberIntVal(1),
+
+							SrcRange: zcl.Range{
+								Start: zcl.Pos{Line: 1, Column: 5, Byte: 4},
+								End:   zcl.Pos{Line: 1, Column: 6, Byte: 5},
+							},
+						},
+
+						SrcRange: zcl.Range{
+							Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   zcl.Pos{Line: 1, Column: 6, Byte: 5},
+						},
+						NameRange: zcl.Range{
+							Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+						},
+						EqualsRange: zcl.Range{
+							Start: zcl.Pos{Line: 1, Column: 3, Byte: 2},
+							End:   zcl.Pos{Line: 1, Column: 4, Byte: 3},
+						},
+					},
+				},
+				Blocks: Blocks{},
+				SrcRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   zcl.Pos{Line: 2, Column: 1, Byte: 21},
+				},
+				EndRange: zcl.Range{
+					Start: zcl.Pos{Line: 2, Column: 1, Byte: 21},
+					End:   zcl.Pos{Line: 2, Column: 1, Byte: 21},
 				},
 			},
 		},

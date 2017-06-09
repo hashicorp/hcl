@@ -50,6 +50,31 @@ func (p *peeker) nextToken() (Token, int) {
 		switch tok.Type {
 		case TokenComment:
 			if !p.IncludeComments {
+				// Single-line comment tokens, starting with # or //, absorb
+				// the trailing newline that terminates them as part of their
+				// bytes. When we're filtering out comments, we must as a
+				// special case transform these to newline tokens in order
+				// to properly parse newline-terminated block items.
+
+				if p.includingNewlines() {
+					if len(tok.Bytes) > 0 && tok.Bytes[len(tok.Bytes)-1] == '\n' {
+						fakeNewline := Token{
+							Type:  TokenNewline,
+							Bytes: tok.Bytes[len(tok.Bytes)-1 : len(tok.Bytes)],
+
+							// We use the whole token range as the newline
+							// range, even though that's a little... weird,
+							// because otherwise we'd need to go count
+							// characters again in order to figure out the
+							// column of the newline, and that complexity
+							// isn't justified when ranges of newlines are
+							// so rarely printed anyway.
+							Range: tok.Range,
+						}
+						return fakeNewline, i + 1
+					}
+				}
+
 				continue
 			}
 		case TokenNewline:

@@ -157,11 +157,14 @@ func (p *parser) finishParsingBodyAttribute(ident Token) (Node, zcl.Diagnostics)
 		panic("finishParsingBodyAttribute called with next not equals")
 	}
 
+	var endRange zcl.Range
+
 	expr, diags := p.ParseExpression()
 	if p.recovery && diags.HasErrors() {
 		// recovery within expressions tends to be tricky, so we've probably
 		// landed somewhere weird. We'll try to reset to the start of a body
 		// item so parsing can continue.
+		endRange = p.PrevRange()
 		p.recoverAfterBodyItem()
 	} else {
 		end := p.Peek()
@@ -175,13 +178,13 @@ func (p *parser) finishParsingBodyAttribute(ident Token) (Node, zcl.Diagnostics)
 					Context:  zcl.RangeBetween(ident.Range, end.Range).Ptr(),
 				})
 			}
+			endRange = p.PrevRange()
 			p.recoverAfterBodyItem()
 		} else {
+			endRange = p.PrevRange()
 			p.Read() // eat newline
 		}
 	}
-
-	endRange := p.PrevRange()
 
 	return &Attribute{
 		Name: string(ident.Bytes),
