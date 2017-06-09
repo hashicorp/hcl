@@ -81,9 +81,8 @@ func (it inputTokens) Partition(rng zcl.Range) (before, within, after inputToken
 func (it inputTokens) PartitionIncludingComments(rng zcl.Range) (before, within, after inputTokens) {
 	start, end := partitionTokens(it.nativeTokens, rng)
 	start = partitionLeadCommentTokens(it.nativeTokens[:start])
-
-	// TODO: Also adjust "end" to include any trailing line comments and the
-	// associated newline.
+	_, afterNewline := partitionLineEndTokens(it.nativeTokens[end:])
+	end += afterNewline
 
 	before = it.Slice(0, start)
 	within = it.Slice(start, end)
@@ -92,13 +91,14 @@ func (it inputTokens) PartitionIncludingComments(rng zcl.Range) (before, within,
 
 }
 
-// PartitionWithComments is similar to PartitionIncludeComments but it returns
+// PartitionBlockItem is similar to PartitionIncludeComments but it returns
 // the comments as separate token sequences so that they can be captured into
-// AST attributes.
-func (it inputTokens) PartitionWithComments(rng zcl.Range) (before, leadComments, within, lineComments, after inputTokens) {
+// AST attributes. It makes assumptions that apply only to block items, so
+// should not be used for other constructs.
+func (it inputTokens) PartitionBlockItem(rng zcl.Range) (before, leadComments, within, lineComments, newline, after inputTokens) {
 	before, within, after = it.Partition(rng)
 	before, leadComments = before.PartitionLeadComments()
-	lineComments = after.Slice(0, 0) // FIXME: implement this
+	lineComments, newline, after = after.PartitionLineEndTokens()
 	return
 }
 
@@ -106,6 +106,14 @@ func (it inputTokens) PartitionLeadComments() (before, within inputTokens) {
 	start := partitionLeadCommentTokens(it.nativeTokens)
 	before = it.Slice(0, start)
 	within = it.Slice(start, len(it.nativeTokens))
+	return
+}
+
+func (it inputTokens) PartitionLineEndTokens() (comments, newline, after inputTokens) {
+	afterComments, afterNewline := partitionLineEndTokens(it.nativeTokens)
+	comments = it.Slice(0, afterComments)
+	newline = it.Slice(afterComments, afterNewline)
+	after = it.Slice(afterNewline, len(it.nativeTokens))
 	return
 }
 
@@ -179,13 +187,13 @@ func parseBody(nativeBody *zclsyntax.Body, from inputTokens) (inputTokens, *Body
 }
 
 func parseBodyItem(nativeItem zclsyntax.Node, from inputTokens) (inputTokens, Node, inputTokens) {
-	before, leadComments, within, lineComments, after := from.PartitionWithComments(nativeItem.Range())
+	before, leadComments, within, lineComments, newline, after := from.PartitionBlockItem(nativeItem.Range())
 
 	var item Node
 
 	switch tItem := nativeItem.(type) {
 	case *zclsyntax.Attribute:
-		item = parseAttribute(tItem, within, leadComments, lineComments)
+		item = parseAttribute(tItem, within, leadComments, lineComments, newline)
 		// TODO: Grab the newline and any line comment from "after" and
 		// write them into the attribute object.
 	case *zclsyntax.Block:
@@ -199,7 +207,7 @@ func parseBodyItem(nativeItem zclsyntax.Node, from inputTokens) (inputTokens, No
 	return before, item, after
 }
 
-func parseAttribute(nativeAttr *zclsyntax.Attribute, from, leadComments, lineComments inputTokens) *Attribute {
+func parseAttribute(nativeAttr *zclsyntax.Attribute, from, leadComments, lineComments, newline inputTokens) *Attribute {
 	var allTokens TokenSeq
 	attr := &Attribute{}
 
@@ -229,14 +237,18 @@ func parseAttribute(nativeAttr *zclsyntax.Attribute, from, leadComments, lineCom
 	attr.Expr = parseExpression(nativeAttr.Expr, exprTokens)
 	allTokens = append(allTokens, attr.Expr.AllTokens)
 
-	// Collect any stragglers, such as a trailing newline
-	if from.Len() > 0 {
-		allTokens = append(allTokens, from.Seq())
-	}
-
 	if lineComments.Len() > 0 {
 		attr.LineCommentTokens = lineComments.Seq()
 		allTokens = append(allTokens, attr.LineCommentTokens)
+	}
+
+	if newline.Len() > 0 {
+		allTokens = append(allTokens, newline.Seq())
+	}
+
+	// Collect any stragglers, though there shouldn't be any
+	if from.Len() > 0 {
+		allTokens = append(allTokens, from.Seq())
 	}
 
 	attr.AllTokens = &allTokens
@@ -363,6 +375,47 @@ func partitionLeadCommentTokens(toks zclsyntax.Tokens) int {
 		}
 	}
 	return 0
+}
+
+// partitionLineEndTokens takes a sequence of tokens that is assumed
+// to immediately follow a construct that can have a line comment, and
+// returns first the index where any line comments end and then second
+// the index immediately after the trailing newline.
+//
+// Line comments are defined as comments that appear immediately after
+// a construct on the same line where its significant tokens ended.
+//
+// Since single-line comment tokens (# and //) include the newline that
+// terminates them, in the presence of these the two returned indices
+// will be the same since the comment itself serves as the line end.
+func partitionLineEndTokens(toks zclsyntax.Tokens) (afterComment, afterNewline int) {
+	for i := 0; i < len(toks); i++ {
+		tok := toks[i]
+		if tok.Type != zclsyntax.TokenComment {
+			switch tok.Type {
+			case zclsyntax.TokenNewline:
+				return i, i + 1
+			case zclsyntax.TokenEOF:
+				// Although this is valid, we mustn't include the EOF
+				// itself as our "newline" or else strange things will
+				// happen when we try to append new items.
+				return i, i
+			default:
+				// If we have well-formed input here then nothing else should be
+				// possible. This path should never happen, because we only try
+				// to extract tokens from the sequence if the parser succeeded,
+				// and it should catch this problem itself.
+				panic("malformed line trailers: expected only comments and newlines")
+			}
+		}
+
+		if len(tok.Bytes) > 0 && tok.Bytes[len(tok.Bytes)-1] == '\n' {
+			// Newline at the end of a single-line comment serves both as
+			// the end of comments *and* the end of the line.
+			return i + 1, i + 1
+		}
+	}
+	return len(toks), len(toks)
 }
 
 // lexConfig uses the zclsyntax scanner to get a token stream and then

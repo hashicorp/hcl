@@ -233,6 +233,123 @@ func TestParse(t *testing.T) {
 			},
 		},
 		{
+			"a = 1 # because it is\n",
+			&Body{
+				Items: []Node{
+					&Attribute{
+						AllTokens: &TokenSeq{
+							&TokenSeq{
+								Tokens{
+									{
+										Type:         zclsyntax.TokenIdent,
+										Bytes:        []byte(`a`),
+										SpacesBefore: 0,
+									},
+								},
+							},
+							&TokenSeq{
+								Tokens{
+									{
+										Type:         zclsyntax.TokenEqual,
+										Bytes:        []byte(`=`),
+										SpacesBefore: 1,
+									},
+								},
+							},
+							&TokenSeq{
+								Tokens{
+									{
+										Type:         zclsyntax.TokenNumberLit,
+										Bytes:        []byte(`1`),
+										SpacesBefore: 1,
+									},
+								},
+							},
+							&TokenSeq{
+								Tokens{
+									{
+										Type:         zclsyntax.TokenComment,
+										Bytes:        []byte("# because it is\n"),
+										SpacesBefore: 1,
+									},
+								},
+							},
+						},
+						NameTokens: &TokenSeq{Tokens{
+							{
+								Type:         zclsyntax.TokenIdent,
+								Bytes:        []byte(`a`),
+								SpacesBefore: 0,
+							},
+						}},
+						EqualsTokens: &TokenSeq{Tokens{
+							{
+								Type:         zclsyntax.TokenEqual,
+								Bytes:        []byte(`=`),
+								SpacesBefore: 1,
+							},
+						}},
+						Expr: &Expression{
+							AllTokens: &TokenSeq{Tokens{
+								{
+									Type:         zclsyntax.TokenNumberLit,
+									Bytes:        []byte(`1`),
+									SpacesBefore: 1,
+								},
+							}},
+						},
+						LineCommentTokens: &TokenSeq{Tokens{
+							{
+								Type:         zclsyntax.TokenComment,
+								Bytes:        []byte("# because it is\n"),
+								SpacesBefore: 1,
+							},
+						}},
+					},
+				},
+				AllTokens: &TokenSeq{
+					&TokenSeq{
+						&TokenSeq{
+							Tokens{
+								{
+									Type:         zclsyntax.TokenIdent,
+									Bytes:        []byte(`a`),
+									SpacesBefore: 0,
+								},
+							},
+						},
+						&TokenSeq{
+							Tokens{
+								{
+									Type:         zclsyntax.TokenEqual,
+									Bytes:        []byte(`=`),
+									SpacesBefore: 1,
+								},
+							},
+						},
+						&TokenSeq{
+							Tokens{
+								{
+									Type:         zclsyntax.TokenNumberLit,
+									Bytes:        []byte(`1`),
+									SpacesBefore: 1,
+								},
+							},
+						},
+						&TokenSeq{
+							Tokens{
+								{
+									Type:         zclsyntax.TokenComment,
+									Bytes:        []byte("# because it is\n"),
+									SpacesBefore: 1,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			"# bee bee bee\n\nb = 1", // two newlines separate the comment from the attribute
 			&Body{
 				Items: []Node{
