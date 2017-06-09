@@ -10,7 +10,8 @@ import (
 func TestRoundTrip(t *testing.T) {
 	tests := []string{
 		``,
-		`foo = 1`,
+		`foo = 1
+`,
 		`
 foobar = 1
 baz    = 1

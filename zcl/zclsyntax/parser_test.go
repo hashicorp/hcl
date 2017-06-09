@@ -33,7 +33,7 @@ func TestParseConfig(t *testing.T) {
 		},
 
 		{
-			`block {}`,
+			"block {}\n",
 			0,
 			&Body{
 				Attributes: Attributes{},
@@ -72,16 +72,16 @@ func TestParseConfig(t *testing.T) {
 				},
 				SrcRange: zcl.Range{
 					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
-					End:   zcl.Pos{Line: 1, Column: 9, Byte: 8},
+					End:   zcl.Pos{Line: 2, Column: 1, Byte: 9},
 				},
 				EndRange: zcl.Range{
-					Start: zcl.Pos{Line: 1, Column: 9, Byte: 8},
-					End:   zcl.Pos{Line: 1, Column: 9, Byte: 8},
+					Start: zcl.Pos{Line: 2, Column: 1, Byte: 9},
+					End:   zcl.Pos{Line: 2, Column: 1, Byte: 9},
 				},
 			},
 		},
 		{
-			`block {}block {}`,
+			"block {}block {}\n",
 			1, // missing newline after block definition
 			&Body{
 				Attributes: Attributes{},
@@ -120,16 +120,16 @@ func TestParseConfig(t *testing.T) {
 				},
 				SrcRange: zcl.Range{
 					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
-					End:   zcl.Pos{Line: 1, Column: 17, Byte: 16},
+					End:   zcl.Pos{Line: 2, Column: 1, Byte: 17},
 				},
 				EndRange: zcl.Range{
-					Start: zcl.Pos{Line: 1, Column: 17, Byte: 16},
-					End:   zcl.Pos{Line: 1, Column: 17, Byte: 16},
+					Start: zcl.Pos{Line: 2, Column: 1, Byte: 17},
+					End:   zcl.Pos{Line: 2, Column: 1, Byte: 17},
 				},
 			},
 		},
 		{
-			`block "foo" {}`,
+			"block \"foo\" {}\n",
 			0,
 			&Body{
 				Attributes: Attributes{},
@@ -173,11 +173,11 @@ func TestParseConfig(t *testing.T) {
 				},
 				SrcRange: zcl.Range{
 					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
-					End:   zcl.Pos{Line: 1, Column: 15, Byte: 14},
+					End:   zcl.Pos{Line: 2, Column: 1, Byte: 15},
 				},
 				EndRange: zcl.Range{
-					Start: zcl.Pos{Line: 1, Column: 15, Byte: 14},
-					End:   zcl.Pos{Line: 1, Column: 15, Byte: 14},
+					Start: zcl.Pos{Line: 2, Column: 1, Byte: 15},
+					End:   zcl.Pos{Line: 2, Column: 1, Byte: 15},
 				},
 			},
 		},
@@ -269,7 +269,8 @@ block "valid" {}
 			},
 		},
 		{
-			`block "f\o" {}`,
+			`block "f\o" {}
+`,
 			1, // "\o" is not a valid escape sequence
 			&Body{
 				Attributes: Attributes{},
@@ -301,16 +302,17 @@ block "valid" {}
 				},
 				SrcRange: zcl.Range{
 					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
-					End:   zcl.Pos{Line: 1, Column: 15, Byte: 14},
+					End:   zcl.Pos{Line: 2, Column: 1, Byte: 15},
 				},
 				EndRange: zcl.Range{
-					Start: zcl.Pos{Line: 1, Column: 15, Byte: 14},
-					End:   zcl.Pos{Line: 1, Column: 15, Byte: 14},
+					Start: zcl.Pos{Line: 2, Column: 1, Byte: 15},
+					End:   zcl.Pos{Line: 2, Column: 1, Byte: 15},
 				},
 			},
 		},
 		{
-			`block "f\n" {}`,
+			`block "f\n" {}
+`,
 			0,
 			&Body{
 				Attributes: Attributes{},
@@ -354,11 +356,11 @@ block "valid" {}
 				},
 				SrcRange: zcl.Range{
 					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
-					End:   zcl.Pos{Line: 1, Column: 15, Byte: 14},
+					End:   zcl.Pos{Line: 2, Column: 1, Byte: 15},
 				},
 				EndRange: zcl.Range{
-					Start: zcl.Pos{Line: 1, Column: 15, Byte: 14},
-					End:   zcl.Pos{Line: 1, Column: 15, Byte: 14},
+					Start: zcl.Pos{Line: 2, Column: 1, Byte: 15},
+					End:   zcl.Pos{Line: 2, Column: 1, Byte: 15},
 				},
 			},
 		},
@@ -405,7 +407,7 @@ block "valid" {}
 			},
 		},
 		{
-			`a = foo.bar`,
+			"a = foo.bar\n",
 			0,
 			&Body{
 				Attributes: Attributes{
@@ -454,11 +456,11 @@ block "valid" {}
 				Blocks: Blocks{},
 				SrcRange: zcl.Range{
 					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
-					End:   zcl.Pos{Line: 1, Column: 12, Byte: 11},
+					End:   zcl.Pos{Line: 2, Column: 1, Byte: 12},
 				},
 				EndRange: zcl.Range{
-					Start: zcl.Pos{Line: 1, Column: 12, Byte: 11},
-					End:   zcl.Pos{Line: 1, Column: 12, Byte: 11},
+					Start: zcl.Pos{Line: 2, Column: 1, Byte: 12},
+					End:   zcl.Pos{Line: 2, Column: 1, Byte: 12},
 				},
 			},
 		},

@@ -168,15 +168,25 @@ func (p *parser) finishParsingBodyAttribute(ident Token) (Node, zcl.Diagnostics)
 		p.recoverAfterBodyItem()
 	} else {
 		end := p.Peek()
-		if end.Type != TokenNewline && end.Type != TokenEOF {
+		if end.Type != TokenNewline {
 			if !p.recovery {
-				diags = append(diags, &zcl.Diagnostic{
-					Severity: zcl.DiagError,
-					Summary:  "Missing newline after attribute definition",
-					Detail:   "An attribute definition must end with a newline.",
-					Subject:  &end.Range,
-					Context:  zcl.RangeBetween(ident.Range, end.Range).Ptr(),
-				})
+				if end.Type == TokenEOF {
+					diags = append(diags, &zcl.Diagnostic{
+						Severity: zcl.DiagError,
+						Summary:  "Missing newline after attribute definition",
+						Detail:   "A newline is required after an attribute definition at the end of a file.",
+						Subject:  &end.Range,
+						Context:  zcl.RangeBetween(ident.Range, end.Range).Ptr(),
+					})
+				} else {
+					diags = append(diags, &zcl.Diagnostic{
+						Severity: zcl.DiagError,
+						Summary:  "Missing newline after attribute definition",
+						Detail:   "An attribute definition must end with a newline.",
+						Subject:  &end.Range,
+						Context:  zcl.RangeBetween(ident.Range, end.Range).Ptr(),
+					})
+				}
 			}
 			endRange = p.PrevRange()
 			p.recoverAfterBodyItem()
@@ -285,17 +295,27 @@ Token:
 	cBraceRange := p.PrevRange()
 
 	eol := p.Peek()
-	if eol.Type == TokenNewline || eol.Type == TokenEOF {
+	if eol.Type == TokenNewline {
 		p.Read() // eat newline
 	} else {
 		if !p.recovery {
-			diags = append(diags, &zcl.Diagnostic{
-				Severity: zcl.DiagError,
-				Summary:  "Missing newline after block definition",
-				Detail:   "A block definition must end with a newline.",
-				Subject:  &eol.Range,
-				Context:  zcl.RangeBetween(ident.Range, eol.Range).Ptr(),
-			})
+			if eol.Type == TokenEOF {
+				diags = append(diags, &zcl.Diagnostic{
+					Severity: zcl.DiagError,
+					Summary:  "Missing newline after block definition",
+					Detail:   "A newline is required after a block definition at the end of a file.",
+					Subject:  &eol.Range,
+					Context:  zcl.RangeBetween(ident.Range, eol.Range).Ptr(),
+				})
+			} else {
+				diags = append(diags, &zcl.Diagnostic{
+					Severity: zcl.DiagError,
+					Summary:  "Missing newline after block definition",
+					Detail:   "A block definition must end with a newline.",
+					Subject:  &eol.Range,
+					Context:  zcl.RangeBetween(ident.Range, eol.Range).Ptr(),
+				})
+			}
 		}
 		p.recoverAfterBodyItem()
 	}

@@ -24,7 +24,7 @@ func TestParse(t *testing.T) {
 			},
 		},
 		{
-			"a = 1",
+			"a = 1\n",
 			&Body{
 				Items: []Node{
 					&Attribute{
@@ -53,6 +53,15 @@ func TestParse(t *testing.T) {
 										Type:         zclsyntax.TokenNumberLit,
 										Bytes:        []byte(`1`),
 										SpacesBefore: 1,
+									},
+								},
+							},
+							&TokenSeq{
+								Tokens{
+									{
+										Type:         zclsyntax.TokenNewline,
+										Bytes:        []byte{'\n'},
+										SpacesBefore: 0,
 									},
 								},
 							},
@@ -111,12 +120,21 @@ func TestParse(t *testing.T) {
 								},
 							},
 						},
+						&TokenSeq{
+							Tokens{
+								{
+									Type:         zclsyntax.TokenNewline,
+									Bytes:        []byte{'\n'},
+									SpacesBefore: 0,
+								},
+							},
+						},
 					},
 				},
 			},
 		},
 		{
-			"# aye aye aye\na = 1",
+			"# aye aye aye\na = 1\n",
 			&Body{
 				Items: []Node{
 					&Attribute{
@@ -154,6 +172,15 @@ func TestParse(t *testing.T) {
 										Type:         zclsyntax.TokenNumberLit,
 										Bytes:        []byte(`1`),
 										SpacesBefore: 1,
+									},
+								},
+							},
+							&TokenSeq{
+								Tokens{
+									{
+										Type:         zclsyntax.TokenNewline,
+										Bytes:        []byte{'\n'},
+										SpacesBefore: 0,
 									},
 								},
 							},
@@ -225,6 +252,15 @@ func TestParse(t *testing.T) {
 									Type:         zclsyntax.TokenNumberLit,
 									Bytes:        []byte(`1`),
 									SpacesBefore: 1,
+								},
+							},
+						},
+						&TokenSeq{
+							Tokens{
+								{
+									Type:         zclsyntax.TokenNewline,
+									Bytes:        []byte{'\n'},
+									SpacesBefore: 0,
 								},
 							},
 						},
@@ -350,7 +386,7 @@ func TestParse(t *testing.T) {
 			},
 		},
 		{
-			"# bee bee bee\n\nb = 1", // two newlines separate the comment from the attribute
+			"# bee bee bee\n\nb = 1\n", // two newlines separate the comment from the attribute
 			&Body{
 				Items: []Node{
 					&Attribute{
@@ -379,6 +415,15 @@ func TestParse(t *testing.T) {
 										Type:         zclsyntax.TokenNumberLit,
 										Bytes:        []byte(`1`),
 										SpacesBefore: 1,
+									},
+								},
+							},
+							&TokenSeq{
+								Tokens{
+									{
+										Type:         zclsyntax.TokenNewline,
+										Bytes:        []byte{'\n'},
+										SpacesBefore: 0,
 									},
 								},
 							},
@@ -448,6 +493,15 @@ func TestParse(t *testing.T) {
 									Type:         zclsyntax.TokenNumberLit,
 									Bytes:        []byte(`1`),
 									SpacesBefore: 1,
+								},
+							},
+						},
+						&TokenSeq{
+							Tokens{
+								{
+									Type:         zclsyntax.TokenNewline,
+									Bytes:        []byte{'\n'},
+									SpacesBefore: 0,
 								},
 							},
 						},

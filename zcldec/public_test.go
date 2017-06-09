@@ -26,14 +26,14 @@ func TestDecode(t *testing.T) {
 			0,
 		},
 		{
-			`a = 1`,
+			"a = 1\n",
 			&ObjectSpec{},
 			nil,
 			cty.EmptyObjectVal,
 			1, // attribute named "a" is not expected here
 		},
 		{
-			`a = 1`,
+			"a = 1\n",
 			&ObjectSpec{
 				"a": &AttrSpec{
 					Name: "a",
@@ -47,7 +47,7 @@ func TestDecode(t *testing.T) {
 			0,
 		},
 		{
-			`a = 1`,
+			"a = 1\n",
 			&AttrSpec{
 				Name: "a",
 				Type: cty.Number,
@@ -57,7 +57,7 @@ func TestDecode(t *testing.T) {
 			0,
 		},
 		{
-			`a = "1"`,
+			"a = \"1\"\n",
 			&AttrSpec{
 				Name: "a",
 				Type: cty.Number,
@@ -67,7 +67,7 @@ func TestDecode(t *testing.T) {
 			0,
 		},
 		{
-			`a = true`,
+			"a = true\n",
 			&AttrSpec{
 				Name: "a",
 				Type: cty.Number,
@@ -112,7 +112,7 @@ b {
 			0,
 		},
 		{
-			`a {}`,
+			"a {}\n",
 			&BlockSpec{
 				TypeName: "b",
 				Nested:   ObjectSpec{},
@@ -179,7 +179,7 @@ func TestSourceRange(t *testing.T) {
 		want   zcl.Range
 	}{
 		{
-			`a = 1`,
+			"a = 1\n",
 			&AttrSpec{
 				Name: "a",
 			},
@@ -192,7 +192,8 @@ func TestSourceRange(t *testing.T) {
 			`
 b {
   a = 1
-}`,
+}
+`,
 			&BlockSpec{
 				TypeName: "b",
 				Nested: &AttrSpec{
@@ -210,7 +211,8 @@ b {
   c {
     a = 1
   }
-}`,
+}
+`,
 			&BlockSpec{
 				TypeName: "b",
 				Nested: &BlockSpec{

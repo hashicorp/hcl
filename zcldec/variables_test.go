@@ -21,12 +21,12 @@ func TestVariables(t *testing.T) {
 			nil,
 		},
 		{
-			`a = foo`,
+			"a = foo\n",
 			&ObjectSpec{},
 			nil, // "a" is not actually used, so "foo" is not required
 		},
 		{
-			`a = foo`,
+			"a = foo\n",
 			&AttrSpec{
 				Name: "a",
 			},
@@ -43,7 +43,7 @@ func TestVariables(t *testing.T) {
 			},
 		},
 		{
-			`a = foo`,
+			"a = foo\n",
 			&ObjectSpec{
 				"a": &AttrSpec{
 					Name: "a",
@@ -65,7 +65,8 @@ func TestVariables(t *testing.T) {
 			`
 b {
   a = foo
-}`,
+}
+`,
 			&BlockSpec{
 				TypeName: "b",
 				Nested: &AttrSpec{
