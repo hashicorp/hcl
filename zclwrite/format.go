@@ -4,10 +4,287 @@ import (
 	"github.com/zclconf/go-zcl/zcl/zclsyntax"
 )
 
+// placeholder token used when we don't have a token but we don't want
+// to pass a real "nil" and complicate things with nil pointer checks
+var nilToken = &Token{
+	Type:         zclsyntax.TokenNil,
+	Bytes:        []byte{},
+	SpacesBefore: 0,
+}
+
 // format rewrites tokens within the given sequence, in-place, to adjust the
 // whitespace around their content to achieve canonical formatting.
 func format(tokens Tokens) {
-	// currently does nothing
+	// Formatting is a multi-pass process. More details on the passes below,
+	// but this is the overview:
+	// - adjust the leading space on each line to create appropriate
+	//   indentation
+	// - adjust spaces between tokens in a single cell using a set of rules
+	// - adjust the leading space in the "assign" and "comment" cells on each
+	//   line to vertically align with neighboring lines.
+	// All of these steps operate in-place on the given tokens, so a caller
+	// may collect a flat sequence of all of the tokens underlying an AST
+	// and pass it here and we will then indirectly modify the AST itself.
+	// Formatting must change only whitespace. Specifically, that means
+	// changing the SpacesBefore attribute on a token while leaving the
+	// other token attributes unchanged.
+
+	lines := linesForFormat(tokens)
+	formatIndent(lines)
+	formatSpaces(lines)
+	formatCells(lines)
+}
+
+func formatIndent(lines []formatLine) {
+	// Our methodology for indents is to take the input one line at a time
+	// and count the bracketing delimiters on each line. If a line has a net
+	// increase in open brackets, we increase the indent level by one and
+	// remember how many new openers we had. If the line has a net _decrease_,
+	// we'll compare it to the most recent number of openers and decrease the
+	// dedent level by one each time we pass an indent level remembered
+	// earlier.
+	// The "indent stack" used here allows for us to recognize degenerate
+	// input where brackets are not symmetrical within lines and avoid
+	// pushing things too far left or right, creating confusion.
+
+	// We'll start our indent stack at a reasonable capacity to minimize the
+	// chance of us needing to grow it; 10 here means 10 levels of indent,
+	// which should be more than enough for reasonable zcl uses.
+	indents := make([]int, 0, 10)
+
+	for i := range lines {
+		// TODO: need to track when we're inside a multi-line template and
+		// suspend indentation processing.
+
+		line := &lines[i]
+		if len(line.lead) == 0 {
+			continue
+		}
+		if line.lead[0].Type == zclsyntax.TokenNewline {
+			// Never place spaces before a newline
+			line.lead[0].SpacesBefore = 0
+			continue
+		}
+
+		netBrackets := 0
+		for _, token := range line.lead {
+			netBrackets += tokenBracketChange(token)
+		}
+		for _, token := range line.assign {
+			netBrackets += tokenBracketChange(token)
+		}
+
+		switch {
+		case netBrackets > 0:
+			line.lead[0].SpacesBefore = 2 * len(indents)
+			indents = append(indents, netBrackets)
+		case netBrackets < 0:
+			closed := -netBrackets
+			for closed > 0 && len(indents) > 0 {
+				switch {
+
+				case closed > indents[len(indents)-1]:
+					closed -= indents[len(indents)-1]
+					indents = indents[:len(indents)-1]
+
+				case closed < indents[len(indents)-1]:
+					indents[len(indents)-1] -= closed
+					closed = 0
+
+				default:
+					indents = indents[:len(indents)-1]
+					closed = 0
+				}
+			}
+			line.lead[0].SpacesBefore = 2 * len(indents)
+		default:
+			line.lead[0].SpacesBefore = 2 * len(indents)
+		}
+	}
+}
+
+func formatSpaces(lines []formatLine) {
+	for _, line := range lines {
+		for i, token := range line.lead {
+			var before, after *Token
+			if i > 0 {
+				before = line.lead[i-1]
+			} else {
+				before = nilToken
+			}
+			if i < (len(line.lead) - 1) {
+				after = line.lead[i+1]
+			} else {
+				after = nilToken
+			}
+			if spaceAfterToken(token, before, after) {
+				after.SpacesBefore = 1
+			} else {
+				after.SpacesBefore = 0
+			}
+		}
+		for i, token := range line.assign {
+			if i == 0 {
+				// first token in "assign" always has one space before to
+				// separate the equals sign from what it's assigning.
+				token.SpacesBefore = 1
+			}
+
+			var before, after *Token
+			if i > 0 {
+				before = line.assign[i-1]
+			} else {
+				before = nilToken
+			}
+			if i < (len(line.assign) - 1) {
+				after = line.assign[i+1]
+			} else {
+				after = nilToken
+			}
+			if spaceAfterToken(token, before, after) {
+				after.SpacesBefore = 1
+			} else {
+				after.SpacesBefore = 0
+			}
+		}
+
+	}
+}
+
+func formatCells(lines []formatLine) {
+
+	chainStart := -1
+	maxColumns := 0
+
+	// We'll deal with the "assign" cell first, since moving that will
+	// also impact the "comment" cell.
+	closeAssignChain := func(i int) {
+		for _, chainLine := range lines[chainStart:i] {
+			columns := chainLine.lead.Columns()
+			spaces := (maxColumns - columns) + 1
+			chainLine.assign[0].SpacesBefore = spaces
+		}
+		chainStart = -1
+		maxColumns = 0
+	}
+	for i, line := range lines {
+		if line.assign == nil {
+			if chainStart != -1 {
+				closeAssignChain(i)
+			}
+		} else {
+			if chainStart == -1 {
+				chainStart = i
+			}
+			columns := line.lead.Columns()
+			if columns > maxColumns {
+				maxColumns = columns
+			}
+		}
+	}
+	if chainStart != -1 {
+		closeAssignChain(len(lines))
+	}
+
+	// Now we'll deal with the comments
+	closeCommentChain := func(i int) {
+		for _, chainLine := range lines[chainStart:i] {
+			columns := chainLine.lead.Columns() + chainLine.assign.Columns()
+			spaces := (maxColumns - columns) + 1
+			chainLine.comment[0].SpacesBefore = spaces
+		}
+		chainStart = -1
+		maxColumns = 0
+	}
+	for i, line := range lines {
+		if line.comment == nil {
+			if chainStart != -1 {
+				closeCommentChain(i)
+			}
+		} else {
+			if chainStart == -1 {
+				chainStart = i
+			}
+			columns := line.lead.Columns() + line.assign.Columns()
+			if columns > maxColumns {
+				maxColumns = columns
+			}
+		}
+	}
+	if chainStart != -1 {
+		closeCommentChain(len(lines))
+	}
+
+}
+
+// spaceAfterToken decides whether a particular subject token should have a
+// space after it when surrounded by the given before and after tokens.
+// "before" can be TokenNil, if the subject token is at the start of a sequence.
+func spaceAfterToken(subject, before, after *Token) bool {
+	switch {
+
+	case after.Type == zclsyntax.TokenNewline || after.Type == zclsyntax.TokenNil:
+		// Never add spaces before a newline
+		return false
+
+	case subject.Type == zclsyntax.TokenIdent && after.Type == zclsyntax.TokenOParen:
+		// Don't split a function name from open paren in a call
+		return false
+
+	case after.Type == zclsyntax.TokenComma:
+		// No space right before a comma in an argument list
+		return false
+
+	case subject.Type == zclsyntax.TokenQuotedLit || subject.Type == zclsyntax.TokenStringLit || subject.Type == zclsyntax.TokenOQuote || subject.Type == zclsyntax.TokenOHeredoc || after.Type == zclsyntax.TokenQuotedLit || after.Type == zclsyntax.TokenStringLit || after.Type == zclsyntax.TokenCQuote || after.Type == zclsyntax.TokenCHeredoc:
+		// No extra spaces within templates
+		return false
+
+	case subject.Type == zclsyntax.TokenMinus:
+		// Since a minus can either be subtraction or negation, and the latter
+		// should _not_ have a space after it, we need to use some heuristics
+		// to decide which case this is.
+		// We guess that we have a negation if the token before doesn't look
+		// like it could be the end of an expression.
+
+		switch before.Type {
+
+		case zclsyntax.TokenNil:
+			// Minus at the start of input must be a negation
+			return false
+
+		case zclsyntax.TokenOParen, zclsyntax.TokenOBrace, zclsyntax.TokenOBrack, zclsyntax.TokenEqual, zclsyntax.TokenColon, zclsyntax.TokenComma, zclsyntax.TokenQuestion:
+			// Minus immediately after an opening bracket or separator must be a negation.
+			return false
+
+		case zclsyntax.TokenPlus, zclsyntax.TokenStar, zclsyntax.TokenSlash, zclsyntax.TokenPercent, zclsyntax.TokenMinus:
+			// Minus immediately after another arithmetic operator must be negation.
+			return false
+
+		case zclsyntax.TokenEqualOp, zclsyntax.TokenNotEqual, zclsyntax.TokenGreaterThan, zclsyntax.TokenGreaterThanEq, zclsyntax.TokenLessThan, zclsyntax.TokenLessThanEq:
+			// Minus immediately after another comparison operator must be negation.
+			return false
+
+		case zclsyntax.TokenAnd, zclsyntax.TokenOr, zclsyntax.TokenBang:
+			// Minus immediately after logical operator doesn't make sense but probably intended as negation.
+			return false
+
+		default:
+			return true
+		}
+
+	case tokenBracketChange(subject) > 0:
+		// No spaces after open brackets
+		return false
+
+	case tokenBracketChange(after) < 0:
+		// No spaces before close brackets
+		return false
+
+	default:
+		// Most tokens are space-separated
+		return true
+
+	}
 }
 
 func linesForFormat(tokens Tokens) []formatLine {
@@ -64,9 +341,21 @@ func linesForFormat(tokens Tokens) []formatLine {
 		}
 
 		for i, tok := range line.lead {
-			if tok.Type == zclsyntax.TokenEqual {
-				line.assign = line.lead[i:]
-				line.lead = line.lead[:i]
+			if i > 0 && tok.Type == zclsyntax.TokenEqual {
+				// We only move the tokens into "assign" if the RHS seems to
+				// be a whole expression, which we determine by counting
+				// brackets. If there's a net positive number of brackets
+				// then that suggests we're introducing a multi-line expression.
+				netBrackets := 0
+				for _, token := range line.lead[i:] {
+					netBrackets += tokenBracketChange(token)
+				}
+
+				if netBrackets == 0 {
+					line.assign = line.lead[i:]
+					line.lead = line.lead[:i]
+				}
+				break
 			}
 		}
 	}
@@ -85,6 +374,17 @@ func tokenIsNewline(tok *Token) bool {
 		}
 	}
 	return false
+}
+
+func tokenBracketChange(tok *Token) int {
+	switch tok.Type {
+	case zclsyntax.TokenOBrace, zclsyntax.TokenOBrack, zclsyntax.TokenOParen, zclsyntax.TokenTemplateControl, zclsyntax.TokenTemplateInterp:
+		return 1
+	case zclsyntax.TokenCBrace, zclsyntax.TokenCBrack, zclsyntax.TokenCParen, zclsyntax.TokenTemplateSeqEnd:
+		return -1
+	default:
+		return 0
+	}
 }
 
 // formatLine represents a single line of source code for formatting purposes,

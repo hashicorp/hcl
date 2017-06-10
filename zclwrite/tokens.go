@@ -1,8 +1,10 @@
 package zclwrite
 
 import (
+	"bytes"
 	"io"
 
+	"github.com/apparentlymart/go-textseg/textseg"
 	"github.com/zclconf/go-zcl/zcl/zclsyntax"
 )
 
@@ -35,6 +37,30 @@ type Token struct {
 
 // Tokens is a flat list of tokens.
 type Tokens []*Token
+
+func (ts Tokens) WriteTo(wr io.Writer) (int, error) {
+	seq := &TokenSeq{ts}
+	return seq.WriteTo(wr)
+}
+
+func (ts Tokens) Bytes() []byte {
+	buf := &bytes.Buffer{}
+	ts.WriteTo(buf)
+	return buf.Bytes()
+}
+
+// Columns returns the number of columns (grapheme clusters) the token sequence
+// occupies. The result is not meaningful if there are newline or single-line
+// comment tokens in the sequence.
+func (ts Tokens) Columns() int {
+	ret := 0
+	for _, token := range ts {
+		ret += token.SpacesBefore // spaces are always worth one column each
+		ct, _ := textseg.TokenCount(token.Bytes, textseg.ScanGraphemeClusters)
+		ret += ct
+	}
+	return ret
+}
 
 // TokenSeq combines zero or more TokenGens together to produce a flat sequence
 // of tokens from a tree of TokenGens.
