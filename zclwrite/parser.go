@@ -194,8 +194,6 @@ func parseBodyItem(nativeItem zclsyntax.Node, from inputTokens) (inputTokens, No
 	switch tItem := nativeItem.(type) {
 	case *zclsyntax.Attribute:
 		item = parseAttribute(tItem, within, leadComments, lineComments, newline)
-		// TODO: Grab the newline and any line comment from "after" and
-		// write them into the attribute object.
 	case *zclsyntax.Block:
 		// TODO: implement this
 		panic("block parsing not yet implemented")
@@ -243,7 +241,8 @@ func parseAttribute(nativeAttr *zclsyntax.Attribute, from, leadComments, lineCom
 	}
 
 	if newline.Len() > 0 {
-		allTokens = append(allTokens, newline.Seq())
+		attr.EOLTokens = newline.Seq()
+		allTokens = append(allTokens, attr.EOLTokens)
 	}
 
 	// Collect any stragglers, though there shouldn't be any

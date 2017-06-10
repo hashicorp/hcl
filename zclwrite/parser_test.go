@@ -89,6 +89,13 @@ func TestParse(t *testing.T) {
 								},
 							}},
 						},
+						EOLTokens: &TokenSeq{Tokens{
+							{
+								Type:         zclsyntax.TokenNewline,
+								Bytes:        []byte{'\n'},
+								SpacesBefore: 0,
+							},
+						}},
 					},
 				},
 				AllTokens: &TokenSeq{
@@ -215,6 +222,13 @@ func TestParse(t *testing.T) {
 								},
 							}},
 						},
+						EOLTokens: &TokenSeq{Tokens{
+							{
+								Type:         zclsyntax.TokenNewline,
+								Bytes:        []byte{'\n'},
+								SpacesBefore: 0,
+							},
+						}},
 					},
 				},
 				AllTokens: &TokenSeq{
@@ -451,6 +465,13 @@ func TestParse(t *testing.T) {
 								},
 							}},
 						},
+						EOLTokens: &TokenSeq{Tokens{
+							{
+								Type:         zclsyntax.TokenNewline,
+								Bytes:        []byte{'\n'},
+								SpacesBefore: 0,
+							},
+						}},
 					},
 				},
 				AllTokens: &TokenSeq{
