@@ -10,7 +10,8 @@ import (
 )
 
 type TemplateExpr struct {
-	Parts []Expression
+	Parts  []Expression
+	Unwrap bool
 
 	SrcRange zcl.Range
 }
@@ -22,6 +23,14 @@ func (e *TemplateExpr) walkChildNodes(w internalWalkFunc) {
 }
 
 func (e *TemplateExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
+	if e.Unwrap {
+		if len(e.Parts) != 1 {
+			// should never happen - parser bug, if so
+			panic("Unwrap set with len(e.Parts) != 1")
+		}
+		return e.Parts[0].Value(ctx)
+	}
+
 	buf := &bytes.Buffer{}
 	var diags zcl.Diagnostics
 	isKnown := true

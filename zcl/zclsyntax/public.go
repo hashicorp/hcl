@@ -63,7 +63,7 @@ func ParseTemplate(src []byte, filename string, start zcl.Pos) (Expression, zcl.
 	tokens, diags := LexTemplate(src, filename, start)
 	peeker := newPeeker(tokens, false)
 	parser := &parser{peeker: peeker}
-	expr, parseDiags := parser.ParseTemplate(TokenEOF)
+	expr, parseDiags := parser.ParseTemplate()
 	diags = append(diags, parseDiags...)
 	return expr, diags
 }

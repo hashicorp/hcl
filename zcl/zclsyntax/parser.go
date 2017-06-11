@@ -698,7 +698,16 @@ func (p *parser) parseExpressionTerm() (Expression, zcl.Diagnostics) {
 	case TokenOQuote, TokenOHeredoc:
 		open := p.Read() // eat opening marker
 		closer := p.oppositeBracket(open.Type)
-		return p.ParseTemplate(closer)
+		parts, unwrap, diags := p.parseTemplateParts(closer)
+
+		closeRange := p.PrevRange()
+
+		return &TemplateExpr{
+			Parts:  parts,
+			Unwrap: unwrap,
+
+			SrcRange: zcl.RangeBetween(open.Range, closeRange),
+		}, diags
 
 	case TokenMinus:
 		tok := p.Read() // eat minus token
@@ -1028,7 +1037,27 @@ func (p *parser) parseObjectCons() (Expression, zcl.Diagnostics) {
 	}, diags
 }
 
-func (p *parser) ParseTemplate(end TokenType) (Expression, zcl.Diagnostics) {
+func (p *parser) ParseTemplate() (Expression, zcl.Diagnostics) {
+	startRange := p.NextRange()
+	parts, unwrap, diags := p.parseTemplateParts(TokenEOF)
+	endRange := p.PrevRange()
+
+	return &TemplateExpr{
+		Parts:  parts,
+		Unwrap: unwrap,
+
+		SrcRange: zcl.RangeBetween(startRange, endRange),
+	}, diags
+}
+
+// parseTemplateParts parses the expressions that make up the content of a
+// template, up to the given closing delimiter. It also returns a flag that
+// is true if the first part should be returned as-is, or false if the
+// full set of parts should be wrapped in a TemplateExpr to return.
+//
+// The wrapping is done separately by the caller so that any template
+// delimiters can be included in the template's source range.
+func (p *parser) parseTemplateParts(end TokenType) ([]Expression, bool, zcl.Diagnostics) {
 	var parts []Expression
 	var diags zcl.Diagnostics
 
@@ -1129,29 +1158,19 @@ Token:
 		// If a sequence has no content, we'll treat it as if it had an
 		// empty string in it because that's what the user probably means
 		// if they write "" in configuration.
-		return &LiteralValueExpr{
-			Val: cty.StringVal(""),
-			SrcRange: zcl.Range{
-				Filename: startRange.Filename,
-				Start:    startRange.Start,
-				End:      startRange.Start,
+		return []Expression{
+			&LiteralValueExpr{
+				Val: cty.StringVal(""),
+				SrcRange: zcl.Range{
+					Filename: startRange.Filename,
+					Start:    startRange.Start,
+					End:      startRange.Start,
+				},
 			},
-		}, diags
+		}, true, diags
 	}
 
-	if len(parts) == 1 {
-		// If a sequence only has one part then as a special case we return
-		// that part alone. This allows the use of single-part templates to
-		// represent general expressions in syntaxes such as JSON where
-		// un-quoted expressions are not possible.
-		return parts[0], diags
-	}
-
-	return &TemplateExpr{
-		Parts: parts,
-
-		SrcRange: zcl.RangeBetween(parts[0].Range(), parts[len(parts)-1].Range()),
-	}, diags
+	return parts, len(parts) == 1, diags
 }
 
 // parseQuotedStringLiteral is a helper for parsing quoted strings that

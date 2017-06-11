@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/kylelemons/godebug/pretty"
 	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-zcl/zcl"
@@ -407,6 +408,65 @@ block "valid" {}
 			},
 		},
 		{
+			"a = \"hello ${true}\"\n",
+			0,
+			&Body{
+				Attributes: Attributes{
+					"a": {
+						Name: "a",
+						Expr: &TemplateExpr{
+							Parts: []Expression{
+								&LiteralValueExpr{
+									Val: cty.StringVal("hello "),
+
+									SrcRange: zcl.Range{
+										Start: zcl.Pos{Line: 1, Column: 6, Byte: 5},
+										End:   zcl.Pos{Line: 1, Column: 12, Byte: 11},
+									},
+								},
+								&LiteralValueExpr{
+									Val: cty.True,
+
+									SrcRange: zcl.Range{
+										Start: zcl.Pos{Line: 1, Column: 14, Byte: 13},
+										End:   zcl.Pos{Line: 1, Column: 18, Byte: 17},
+									},
+								},
+							},
+							Unwrap: false,
+
+							SrcRange: zcl.Range{
+								Start: zcl.Pos{Line: 1, Column: 5, Byte: 4},
+								End:   zcl.Pos{Line: 1, Column: 20, Byte: 19},
+							},
+						},
+
+						SrcRange: zcl.Range{
+							Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   zcl.Pos{Line: 1, Column: 20, Byte: 19},
+						},
+						NameRange: zcl.Range{
+							Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+						},
+						EqualsRange: zcl.Range{
+							Start: zcl.Pos{Line: 1, Column: 3, Byte: 2},
+							End:   zcl.Pos{Line: 1, Column: 4, Byte: 3},
+						},
+					},
+				},
+				Blocks: Blocks{},
+				SrcRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   zcl.Pos{Line: 2, Column: 1, Byte: 20},
+				},
+				EndRange: zcl.Range{
+					Start: zcl.Pos{Line: 2, Column: 1, Byte: 20},
+					End:   zcl.Pos{Line: 2, Column: 1, Byte: 20},
+				},
+			},
+		},
+		{
 			"a = foo.bar\n",
 			0,
 			&Body{
@@ -560,7 +620,11 @@ block "valid" {}
 
 			if !reflect.DeepEqual(got, test.want) {
 				diff := prettyConfig.Compare(test.want, got)
-				t.Errorf("wrong result\ninput: %s\ndiff:  %s", test.input, diff)
+				if diff != "" {
+					t.Errorf("wrong result\ninput: %s\ndiff:  %s", test.input, diff)
+				} else {
+					t.Errorf("wrong result\ninput: %s\ngot:   %s\nwant:  %s", test.input, spew.Sdump(got), spew.Sdump(test.want))
+				}
 			}
 		})
 	}
