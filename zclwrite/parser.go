@@ -195,8 +195,7 @@ func parseBodyItem(nativeItem zclsyntax.Node, from inputTokens) (inputTokens, No
 	case *zclsyntax.Attribute:
 		item = parseAttribute(tItem, within, leadComments, lineComments, newline)
 	case *zclsyntax.Block:
-		// TODO: implement this
-		panic("block parsing not yet implemented")
+		item = parseBlock(tItem, within, leadComments, lineComments, newline)
 	default:
 		// should never happen if caller is behaving
 		panic("unsupported native item type")
@@ -253,6 +252,78 @@ func parseAttribute(nativeAttr *zclsyntax.Attribute, from, leadComments, lineCom
 	attr.AllTokens = &allTokens
 
 	return attr
+}
+
+func parseBlock(nativeBlock *zclsyntax.Block, from, leadComments, lineComments, newline inputTokens) *Block {
+	var allTokens TokenSeq
+	block := &Block{}
+
+	if leadComments.Len() > 0 {
+		block.LeadCommentTokens = leadComments.Seq()
+		allTokens = append(allTokens, block.LeadCommentTokens)
+	}
+
+	before, typeTokens, from := from.Partition(nativeBlock.TypeRange)
+	if before.Len() > 0 {
+		allTokens = append(allTokens, before.Seq())
+	}
+	block.TypeTokens = typeTokens.Seq()
+	allTokens = append(allTokens, block.TypeTokens)
+
+	for _, rng := range nativeBlock.LabelRanges {
+		var labelTokens inputTokens
+		before, labelTokens, from = from.Partition(rng)
+		if before.Len() > 0 {
+			allTokens = append(allTokens, before.Seq())
+		}
+		seq := labelTokens.Seq()
+		block.LabelTokens = append(block.LabelTokens, seq)
+		*(block.LabelTokensFlat) = append(*(block.LabelTokensFlat), seq)
+		allTokens = append(allTokens, seq)
+	}
+
+	before, oBrace, from := from.Partition(nativeBlock.OpenBraceRange)
+	if before.Len() > 0 {
+		allTokens = append(allTokens, before.Seq())
+	}
+	block.OBraceTokens = oBrace.Seq()
+	allTokens = append(allTokens, block.OBraceTokens)
+
+	// We go a bit out of order here: we go hunting for the closing brace
+	// so that we have a delimited body, but then we'll deal with the body
+	// before we actually append the closing brace and any straggling tokens
+	// that appear after it.
+	bodyTokens, cBrace, from := from.Partition(nativeBlock.CloseBraceRange)
+	before, body, after := parseBody(nativeBlock.Body, bodyTokens)
+
+	if before.Len() > 0 {
+		allTokens = append(allTokens, before.Seq())
+	}
+	block.Body = body
+	allTokens = append(allTokens, body.AllTokens)
+	if after.Len() > 0 {
+		allTokens = append(allTokens, after.Seq())
+	}
+
+	block.CBraceTokens = cBrace.Seq()
+	allTokens = append(allTokens, block.CBraceTokens)
+
+	// stragglers
+	if after.Len() > 0 {
+		allTokens = append(allTokens, from.Seq())
+	}
+	if lineComments.Len() > 0 {
+		// blocks don't actually have line comments, so we'll just treat
+		// them as extra stragglers
+		allTokens = append(allTokens, lineComments.Seq())
+	}
+	if newline.Len() > 0 {
+		block.EOLTokens = newline.Seq()
+		allTokens = append(allTokens, block.EOLTokens)
+	}
+
+	block.AllTokens = &allTokens
+	return block
 }
 
 func parseExpression(nativeExpr zclsyntax.Expression, from inputTokens) *Expression {
@@ -336,7 +407,7 @@ func partitionTokens(toks zclsyntax.Tokens, rng zcl.Range) (start, end int) {
 			return len(toks), len(toks)
 		}
 
-		if toks[i].Range.ContainsOffset(rng.Start.Byte) {
+		if toks[i].Range.Start.Byte >= rng.Start.Byte {
 			start = i
 			break
 		}
@@ -348,8 +419,8 @@ func partitionTokens(toks zclsyntax.Tokens, rng zcl.Range) (start, end int) {
 			return start, len(toks)
 		}
 
-		if toks[i].Range.End.Byte >= rng.End.Byte {
-			end = i + 1 // end marker is exclusive
+		if toks[i].Range.Start.Byte >= rng.End.Byte {
+			end = i // end marker is exclusive
 			break
 		}
 	}

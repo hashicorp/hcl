@@ -530,6 +530,468 @@ func TestParse(t *testing.T) {
 				},
 			},
 		},
+		{
+			"b {}\n",
+			&Body{
+				Items: []Node{
+					&Block{
+						AllTokens: &TokenSeq{
+							&TokenSeq{
+								Tokens{
+									{
+										Type:         zclsyntax.TokenIdent,
+										Bytes:        []byte(`b`),
+										SpacesBefore: 0,
+									},
+								},
+							},
+							&TokenSeq{
+								Tokens{
+									{
+										Type:         zclsyntax.TokenOBrace,
+										Bytes:        []byte(`{`),
+										SpacesBefore: 1,
+									},
+								},
+							},
+							(*TokenSeq)(nil), // the empty body
+							&TokenSeq{
+								Tokens{
+									{
+										Type:         zclsyntax.TokenCBrace,
+										Bytes:        []byte(`}`),
+										SpacesBefore: 0,
+									},
+								},
+							},
+							&TokenSeq{
+								Tokens{
+									{
+										Type:         zclsyntax.TokenNewline,
+										Bytes:        []byte{'\n'},
+										SpacesBefore: 0,
+									},
+								},
+							},
+						},
+						TypeTokens: &TokenSeq{Tokens{
+							{
+								Type:         zclsyntax.TokenIdent,
+								Bytes:        []byte(`b`),
+								SpacesBefore: 0,
+							},
+						}},
+						OBraceTokens: &TokenSeq{Tokens{
+							{
+								Type:         zclsyntax.TokenOBrace,
+								Bytes:        []byte(`{`),
+								SpacesBefore: 1,
+							},
+						}},
+						Body: &Body{},
+						CBraceTokens: &TokenSeq{Tokens{
+							{
+								Type:         zclsyntax.TokenCBrace,
+								Bytes:        []byte(`}`),
+								SpacesBefore: 0,
+							},
+						}},
+						EOLTokens: &TokenSeq{Tokens{
+							{
+								Type:         zclsyntax.TokenNewline,
+								Bytes:        []byte{'\n'},
+								SpacesBefore: 0,
+							},
+						}},
+					},
+				},
+				AllTokens: &TokenSeq{
+					&TokenSeq{
+						&TokenSeq{
+							Tokens{
+								{
+									Type:         zclsyntax.TokenIdent,
+									Bytes:        []byte(`b`),
+									SpacesBefore: 0,
+								},
+							},
+						},
+						&TokenSeq{
+							Tokens{
+								{
+									Type:         zclsyntax.TokenOBrace,
+									Bytes:        []byte(`{`),
+									SpacesBefore: 1,
+								},
+							},
+						},
+						(*TokenSeq)(nil), // the empty body
+						&TokenSeq{
+							Tokens{
+								{
+									Type:         zclsyntax.TokenCBrace,
+									Bytes:        []byte(`}`),
+									SpacesBefore: 0,
+								},
+							},
+						},
+						&TokenSeq{
+							Tokens{
+								{
+									Type:         zclsyntax.TokenNewline,
+									Bytes:        []byte{'\n'},
+									SpacesBefore: 0,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			"b {\n  a = 1\n}\n",
+			&Body{
+				Items: []Node{
+					&Block{
+						AllTokens: &TokenSeq{
+							&TokenSeq{
+								Tokens{
+									{
+										Type:         zclsyntax.TokenIdent,
+										Bytes:        []byte(`b`),
+										SpacesBefore: 0,
+									},
+								},
+							},
+							&TokenSeq{
+								Tokens{
+									{
+										Type:         zclsyntax.TokenOBrace,
+										Bytes:        []byte(`{`),
+										SpacesBefore: 1,
+									},
+								},
+							},
+							&TokenSeq{
+								&TokenSeq{
+									Tokens{
+										{
+											Type:         zclsyntax.TokenNewline,
+											Bytes:        []byte{'\n'},
+											SpacesBefore: 0,
+										},
+									},
+								},
+								&TokenSeq{
+									&TokenSeq{
+										Tokens{
+											{
+												Type:         zclsyntax.TokenIdent,
+												Bytes:        []byte(`a`),
+												SpacesBefore: 2,
+											},
+										},
+									},
+									&TokenSeq{
+										Tokens{
+											{
+												Type:         zclsyntax.TokenEqual,
+												Bytes:        []byte(`=`),
+												SpacesBefore: 1,
+											},
+										},
+									},
+									&TokenSeq{
+										Tokens{
+											{
+												Type:         zclsyntax.TokenNumberLit,
+												Bytes:        []byte(`1`),
+												SpacesBefore: 1,
+											},
+										},
+									},
+									&TokenSeq{
+										Tokens{
+											{
+												Type:         zclsyntax.TokenNewline,
+												Bytes:        []byte{'\n'},
+												SpacesBefore: 0,
+											},
+										},
+									},
+								},
+							},
+							&TokenSeq{
+								Tokens{
+									{
+										Type:         zclsyntax.TokenCBrace,
+										Bytes:        []byte(`}`),
+										SpacesBefore: 0,
+									},
+								},
+							},
+							&TokenSeq{
+								Tokens{
+									{
+										Type:         zclsyntax.TokenNewline,
+										Bytes:        []byte{'\n'},
+										SpacesBefore: 0,
+									},
+								},
+							},
+						},
+						TypeTokens: &TokenSeq{Tokens{
+							{
+								Type:         zclsyntax.TokenIdent,
+								Bytes:        []byte(`b`),
+								SpacesBefore: 0,
+							},
+						}},
+						OBraceTokens: &TokenSeq{Tokens{
+							{
+								Type:         zclsyntax.TokenOBrace,
+								Bytes:        []byte(`{`),
+								SpacesBefore: 1,
+							},
+						}},
+						Body: &Body{
+							Items: []Node{
+								&Attribute{
+									AllTokens: &TokenSeq{
+										&TokenSeq{
+											Tokens{
+												{
+													Type:         zclsyntax.TokenIdent,
+													Bytes:        []byte(`a`),
+													SpacesBefore: 2,
+												},
+											},
+										},
+										&TokenSeq{
+											Tokens{
+												{
+													Type:         zclsyntax.TokenEqual,
+													Bytes:        []byte(`=`),
+													SpacesBefore: 1,
+												},
+											},
+										},
+										&TokenSeq{
+											Tokens{
+												{
+													Type:         zclsyntax.TokenNumberLit,
+													Bytes:        []byte(`1`),
+													SpacesBefore: 1,
+												},
+											},
+										},
+										&TokenSeq{
+											Tokens{
+												{
+													Type:         zclsyntax.TokenNewline,
+													Bytes:        []byte{'\n'},
+													SpacesBefore: 0,
+												},
+											},
+										},
+									},
+									NameTokens: &TokenSeq{
+										Tokens{
+											{
+												Type:         zclsyntax.TokenIdent,
+												Bytes:        []byte(`a`),
+												SpacesBefore: 2,
+											},
+										},
+									},
+									EqualsTokens: &TokenSeq{
+										Tokens{
+											{
+												Type:         zclsyntax.TokenEqual,
+												Bytes:        []byte(`=`),
+												SpacesBefore: 1,
+											},
+										},
+									},
+									Expr: &Expression{
+										AllTokens: &TokenSeq{
+											Tokens{
+												{
+													Type:         zclsyntax.TokenNumberLit,
+													Bytes:        []byte(`1`),
+													SpacesBefore: 1,
+												},
+											},
+										},
+									},
+									EOLTokens: &TokenSeq{
+										Tokens{
+											{
+												Type:         zclsyntax.TokenNewline,
+												Bytes:        []byte{'\n'},
+												SpacesBefore: 0,
+											},
+										},
+									},
+								},
+							},
+							AllTokens: &TokenSeq{
+								&TokenSeq{
+									Tokens{
+										{
+											Type:         zclsyntax.TokenNewline,
+											Bytes:        []byte{'\n'},
+											SpacesBefore: 0,
+										},
+									},
+								},
+								&TokenSeq{
+									&TokenSeq{
+										Tokens{
+											{
+												Type:         zclsyntax.TokenIdent,
+												Bytes:        []byte(`a`),
+												SpacesBefore: 2,
+											},
+										},
+									},
+									&TokenSeq{
+										Tokens{
+											{
+												Type:         zclsyntax.TokenEqual,
+												Bytes:        []byte(`=`),
+												SpacesBefore: 1,
+											},
+										},
+									},
+									&TokenSeq{
+										Tokens{
+											{
+												Type:         zclsyntax.TokenNumberLit,
+												Bytes:        []byte(`1`),
+												SpacesBefore: 1,
+											},
+										},
+									},
+									&TokenSeq{
+										Tokens{
+											{
+												Type:         zclsyntax.TokenNewline,
+												Bytes:        []byte{'\n'},
+												SpacesBefore: 0,
+											},
+										},
+									},
+								},
+							},
+						},
+						CBraceTokens: &TokenSeq{Tokens{
+							{
+								Type:         zclsyntax.TokenCBrace,
+								Bytes:        []byte(`}`),
+								SpacesBefore: 0,
+							},
+						}},
+						EOLTokens: &TokenSeq{Tokens{
+							{
+								Type:         zclsyntax.TokenNewline,
+								Bytes:        []byte{'\n'},
+								SpacesBefore: 0,
+							},
+						}},
+					},
+				},
+				AllTokens: &TokenSeq{
+					&TokenSeq{
+						&TokenSeq{
+							Tokens{
+								{
+									Type:         zclsyntax.TokenIdent,
+									Bytes:        []byte(`b`),
+									SpacesBefore: 0,
+								},
+							},
+						},
+						&TokenSeq{
+							Tokens{
+								{
+									Type:         zclsyntax.TokenOBrace,
+									Bytes:        []byte(`{`),
+									SpacesBefore: 1,
+								},
+							},
+						},
+						&TokenSeq{
+							&TokenSeq{
+								Tokens{
+									{
+										Type:         zclsyntax.TokenNewline,
+										Bytes:        []byte{'\n'},
+										SpacesBefore: 0,
+									},
+								},
+							},
+							&TokenSeq{
+								&TokenSeq{
+									Tokens{
+										{
+											Type:         zclsyntax.TokenIdent,
+											Bytes:        []byte(`a`),
+											SpacesBefore: 2,
+										},
+									},
+								},
+								&TokenSeq{
+									Tokens{
+										{
+											Type:         zclsyntax.TokenEqual,
+											Bytes:        []byte(`=`),
+											SpacesBefore: 1,
+										},
+									},
+								},
+								&TokenSeq{
+									Tokens{
+										{
+											Type:         zclsyntax.TokenNumberLit,
+											Bytes:        []byte(`1`),
+											SpacesBefore: 1,
+										},
+									},
+								},
+								&TokenSeq{
+									Tokens{
+										{
+											Type:         zclsyntax.TokenNewline,
+											Bytes:        []byte{'\n'},
+											SpacesBefore: 0,
+										},
+									},
+								},
+							},
+						},
+						&TokenSeq{
+							Tokens{
+								{
+									Type:         zclsyntax.TokenCBrace,
+									Bytes:        []byte(`}`),
+									SpacesBefore: 0,
+								},
+							},
+						},
+						&TokenSeq{
+							Tokens{
+								{
+									Type:         zclsyntax.TokenNewline,
+									Bytes:        []byte{'\n'},
+									SpacesBefore: 0,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	prettyConfig := &pretty.Config{

@@ -27,6 +27,20 @@ baz    = 1
 foobar = 1
 baz    = 1
 
+block {
+  a = "a"
+  b = "b"
+  c = "c"
+  d = "d"
+
+  subblock {
+  }
+
+  subblock {
+    e = "e"
+  }
+}
+
 # and they all lived happily ever after
 `,
 	}
