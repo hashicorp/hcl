@@ -77,7 +77,7 @@ func (r Range) Ptr() *Range {
 // String returns a compact string representation of the receiver.
 // Callers should generally prefer to present a range more visually,
 // e.g. via markers directly on the relevant portion of source code.
-func (r *Range) String() string {
+func (r Range) String() string {
 	if r.Start.Line == r.End.Line {
 		return fmt.Sprintf(
 			"%s:%d,%d-%d",
