@@ -1,7 +1,12 @@
 package zclsyntax
 
 import (
+	"fmt"
+
 	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-cty/cty/convert"
+	"github.com/zclconf/go-cty/cty/function"
+	"github.com/zclconf/go-cty/cty/function/stdlib"
 	"github.com/zclconf/go-zcl/zcl"
 )
 
@@ -66,6 +71,27 @@ func init() {
 	}
 }
 
+var operationImpls = map[Operation]function.Function{
+	OpLogicalAnd: stdlib.AndFunc,
+	OpLogicalOr:  stdlib.OrFunc,
+	OpLogicalNot: stdlib.NotFunc,
+
+	OpEqual:    stdlib.EqualFunc,
+	OpNotEqual: stdlib.NotEqualFunc,
+
+	OpGreaterThan:        stdlib.GreaterThanFunc,
+	OpGreaterThanOrEqual: stdlib.GreaterThanOrEqualToFunc,
+	OpLessThan:           stdlib.LessThanFunc,
+	OpLessThanOrEqual:    stdlib.LessThanOrEqualToFunc,
+
+	OpAdd:      stdlib.AddFunc,
+	OpSubtract: stdlib.SubtractFunc,
+	OpMultiply: stdlib.MultiplyFunc,
+	OpDivide:   stdlib.DivideFunc,
+	OpModulo:   stdlib.ModuloFunc,
+	OpNegate:   stdlib.NegateFunc,
+}
+
 type BinaryOpExpr struct {
 	LHS Expression
 	Op  Operation
@@ -80,7 +106,73 @@ func (e *BinaryOpExpr) walkChildNodes(w internalWalkFunc) {
 }
 
 func (e *BinaryOpExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
-	panic("BinaryOpExpr.Value not yet implemented")
+	impl := operationImpls[e.Op] // assumed to be a function taking exactly two arguments
+	params := impl.Params()
+	lhsParam := params[0]
+	rhsParam := params[1]
+
+	var diags zcl.Diagnostics
+
+	givenLHSVal, lhsDiags := e.LHS.Value(ctx)
+	givenRHSVal, rhsDiags := e.RHS.Value(ctx)
+	diags = append(diags, lhsDiags...)
+	diags = append(diags, rhsDiags...)
+
+	lhsVal, err := convert.Convert(givenLHSVal, lhsParam.Type)
+	if err != nil {
+		diags = append(diags, &zcl.Diagnostic{
+			Severity: zcl.DiagError,
+			Summary:  "Invalid operand",
+			Detail:   fmt.Sprintf("Unsuitable value for left operand: %s.", err),
+			Subject:  e.LHS.Range().Ptr(),
+			Context:  &e.SrcRange,
+		})
+	}
+	rhsVal, err := convert.Convert(givenRHSVal, rhsParam.Type)
+	if err != nil {
+		diags = append(diags, &zcl.Diagnostic{
+			Severity: zcl.DiagError,
+			Summary:  "Invalid operand",
+			Detail:   fmt.Sprintf("Unsuitable value for right operand: %s.", err),
+			Subject:  e.RHS.Range().Ptr(),
+			Context:  &e.SrcRange,
+		})
+	}
+
+	if diags.HasErrors() {
+		// Don't actually try the call if we have errors already, since the
+		// this will probably just produce a confusing duplicative diagnostic.
+		// Instead, we'll use the function's type check to figure out what
+		// type would be returned, if possible.
+		args := []cty.Value{givenLHSVal, givenRHSVal}
+		retType, err := impl.ReturnTypeForValues(args)
+		if err != nil {
+			// can't even get a return type, so we'll bail here.
+			return cty.DynamicVal, diags
+		}
+
+		return cty.UnknownVal(retType), diags
+	}
+
+	args := []cty.Value{lhsVal, rhsVal}
+	result, err := impl.Call(args)
+	if err != nil {
+		diags = append(diags, &zcl.Diagnostic{
+			// FIXME: This diagnostic is useless.
+			Severity: zcl.DiagError,
+			Summary:  "Operation failed",
+			Detail:   fmt.Sprintf("Error during operation: %s.", err),
+			Subject:  e.RHS.Range().Ptr(),
+			Context:  &e.SrcRange,
+		})
+		retType, err := impl.ReturnTypeForValues(args)
+		if err != nil {
+			return cty.DynamicVal, diags
+		}
+		return cty.UnknownVal(retType), diags
+	}
+
+	return result, diags
 }
 
 func (e *BinaryOpExpr) Range() zcl.Range {

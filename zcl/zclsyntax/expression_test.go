@@ -31,6 +31,18 @@ func TestExpressionParseAndValue(t *testing.T) {
 			0,
 		},
 		{
+			`(2+3)`,
+			nil,
+			cty.NumberIntVal(5),
+			0,
+		},
+		{
+			`(2+true)`,
+			nil,
+			cty.DynamicVal, // FIXME: should be cty.UnknownVal(cty.Number)
+			1,
+		},
+		{
 			`(
     1
 )`,
