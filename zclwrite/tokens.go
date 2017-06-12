@@ -135,6 +135,35 @@ func (ts *TokenSeq) WriteTo(wr io.Writer) (int, error) {
 	return n, err
 }
 
+// SoloToken returns the single token represented by the receiving sequence,
+// or nil if the sequence does not represent exactly one token.
+func (ts *TokenSeq) SoloToken() *Token {
+	var ret *Token
+	found := false
+	ts.EachToken(func(tok *Token) {
+		if ret == nil && !found {
+			ret = tok
+			found = true
+		} else if ret != nil && found {
+			ret = nil
+		}
+	})
+	return ret
+}
+
+// IsIdent returns true if and only if the token sequence represents a single
+// ident token whose name matches the given string.
+func (ts *TokenSeq) IsIdent(name []byte) bool {
+	tok := ts.SoloToken()
+	if tok == nil {
+		return false
+	}
+	if tok.Type != zclsyntax.TokenIdent {
+		return false
+	}
+	return bytes.Equal(tok.Bytes, name)
+}
+
 // TokenSeqEmpty is a TokenSeq that contains no tokens. It can be used anywhere,
 // but its primary purpose is to be assigned as a replacement for a non-empty
 // TokenSeq when eliminating a section of an input file.

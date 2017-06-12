@@ -86,7 +86,15 @@ func (n *Body) AppendUnstructuredTokens(seq *TokenSeq) {
 // other calls may contain additional matching attributes that cannot be seen
 // by this method.
 func (n *Body) FindAttribute(name string) *Attribute {
-	panic("Body.FindAttribute not yet implemented")
+	nameBytes := []byte(name)
+	for _, item := range n.Items {
+		if attr, ok := item.(*Attribute); ok {
+			if attr.NameTokens.IsIdent(nameBytes) {
+				return attr
+			}
+		}
+	}
+	return nil
 }
 
 // SetAttributeValue either replaces the expression of an existing attribute
