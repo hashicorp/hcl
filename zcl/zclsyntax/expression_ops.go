@@ -181,8 +181,7 @@ func (e *BinaryOpExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) 
 			Severity: zcl.DiagError,
 			Summary:  "Operation failed",
 			Detail:   fmt.Sprintf("Error during operation: %s.", err),
-			Subject:  e.RHS.Range().Ptr(),
-			Context:  &e.SrcRange,
+			Subject:  &e.SrcRange,
 		})
 		return cty.UnknownVal(e.Op.Type), diags
 	}
@@ -242,8 +241,7 @@ func (e *UnaryOpExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
 			Severity: zcl.DiagError,
 			Summary:  "Operation failed",
 			Detail:   fmt.Sprintf("Error during operation: %s.", err),
-			Subject:  e.Val.Range().Ptr(),
-			Context:  &e.SrcRange,
+			Subject:  &e.SrcRange,
 		})
 		return cty.UnknownVal(e.Op.Type), diags
 	}
