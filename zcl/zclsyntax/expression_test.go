@@ -115,6 +115,18 @@ func TestExpressionParseAndValue(t *testing.T) {
 			0,
 		},
 		{
+			`(- 2)`,
+			nil,
+			cty.NumberIntVal(-2),
+			0,
+		},
+		{
+			`(! true)`,
+			nil,
+			cty.False,
+			0,
+		},
+		{
 			`(
     1
 )`,

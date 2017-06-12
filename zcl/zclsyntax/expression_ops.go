@@ -211,7 +211,44 @@ func (e *UnaryOpExpr) walkChildNodes(w internalWalkFunc) {
 }
 
 func (e *UnaryOpExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
-	panic("UnaryOpExpr.Value not yet implemented")
+	impl := e.Op.Impl // assumed to be a function taking exactly one argument
+	params := impl.Params()
+	param := params[0]
+
+	givenVal, diags := e.Val.Value(ctx)
+
+	val, err := convert.Convert(givenVal, param.Type)
+	if err != nil {
+		diags = append(diags, &zcl.Diagnostic{
+			Severity: zcl.DiagError,
+			Summary:  "Invalid operand",
+			Detail:   fmt.Sprintf("Unsuitable value for unary operand: %s.", err),
+			Subject:  e.Val.Range().Ptr(),
+			Context:  &e.SrcRange,
+		})
+	}
+
+	if diags.HasErrors() {
+		// Don't actually try the call if we have errors already, since the
+		// this will probably just produce a confusing duplicative diagnostic.
+		return cty.UnknownVal(e.Op.Type), diags
+	}
+
+	args := []cty.Value{val}
+	result, err := impl.Call(args)
+	if err != nil {
+		diags = append(diags, &zcl.Diagnostic{
+			// FIXME: This diagnostic is useless.
+			Severity: zcl.DiagError,
+			Summary:  "Operation failed",
+			Detail:   fmt.Sprintf("Error during operation: %s.", err),
+			Subject:  e.Val.Range().Ptr(),
+			Context:  &e.SrcRange,
+		})
+		return cty.UnknownVal(e.Op.Type), diags
+	}
+
+	return result, diags
 }
 
 func (e *UnaryOpExpr) Range() zcl.Range {
