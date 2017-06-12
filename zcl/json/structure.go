@@ -6,6 +6,7 @@ import (
 	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-zcl/zcl"
 	"github.com/zclconf/go-zcl/zcl/hclhil"
+	"github.com/zclconf/go-zcl/zcl/zclsyntax"
 )
 
 // body is the implementation of "Body" used for files processed with the JSON
@@ -255,9 +256,6 @@ func (b *body) unpackBlock(v node, typeName string, typeRange *zcl.Range, labels
 }
 
 func (e *expression) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
-	// TEMP: Since we've not yet implemented the zcl native template language
-	// parser, for the moment we'll support only literal values here.
-
 	switch v := e.src.(type) {
 	case *stringVal:
 		if e.useHIL && ctx != nil {
@@ -277,6 +275,35 @@ func (e *expression) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
 				return cty.DynamicVal, diags
 			}
 			val, evalDiags := hilExpr.Value(ctx)
+			diags = append(diags, evalDiags...)
+			return val, diags
+		}
+
+		if ctx != nil {
+			// Parse string contents as a zcl native language expression.
+			// We only do this if we have a context, so passing a nil context
+			// is how the caller specifies that interpolations are not allowed
+			// and that the string should just be returned verbatim.
+			templateSrc := v.Value
+			expr, diags := zclsyntax.ParseTemplate(
+				[]byte(templateSrc),
+				v.SrcRange.Filename,
+
+				// This won't produce _exactly_ the right result, since
+				// the zclsyntax parser can't "see" any escapes we removed
+				// while parsing JSON, but it's better than nothing.
+				zcl.Pos{
+					Line: v.SrcRange.Start.Line,
+
+					// skip over the opening quote mark
+					Byte:   v.SrcRange.Start.Byte + 1,
+					Column: v.SrcRange.Start.Column + 1,
+				},
+			)
+			if diags.HasErrors() {
+				return cty.DynamicVal, diags
+			}
+			val, evalDiags := expr.Value(ctx)
 			diags = append(diags, evalDiags...)
 			return val, diags
 		}
