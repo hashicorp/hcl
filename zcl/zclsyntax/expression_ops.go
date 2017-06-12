@@ -10,29 +10,78 @@ import (
 	"github.com/zclconf/go-zcl/zcl"
 )
 
-type Operation rune
+type Operation struct {
+	Impl function.Function
+	Type cty.Type
+}
 
-const (
-	OpNil Operation = 0 // Zero value of Operation. Not a valid Operation.
+var (
+	OpLogicalOr = &Operation{
+		Impl: stdlib.OrFunc,
+		Type: cty.Bool,
+	}
+	OpLogicalAnd = &Operation{
+		Impl: stdlib.AndFunc,
+		Type: cty.Bool,
+	}
+	OpLogicalNot = &Operation{
+		Impl: stdlib.NotFunc,
+		Type: cty.Bool,
+	}
 
-	OpLogicalOr          Operation = '∨'
-	OpLogicalAnd         Operation = '∧'
-	OpLogicalNot         Operation = '!'
-	OpEqual              Operation = '='
-	OpNotEqual           Operation = '≠'
-	OpGreaterThan        Operation = '>'
-	OpGreaterThanOrEqual Operation = '≥'
-	OpLessThan           Operation = '<'
-	OpLessThanOrEqual    Operation = '≤'
-	OpAdd                Operation = '+'
-	OpSubtract           Operation = '-'
-	OpMultiply           Operation = '*'
-	OpDivide             Operation = '/'
-	OpModulo             Operation = '%'
-	OpNegate             Operation = '∓'
+	OpEqual = &Operation{
+		Impl: stdlib.EqualFunc,
+		Type: cty.Bool,
+	}
+	OpNotEqual = &Operation{
+		Impl: stdlib.NotEqualFunc,
+		Type: cty.Bool,
+	}
+
+	OpGreaterThan = &Operation{
+		Impl: stdlib.GreaterThanFunc,
+		Type: cty.Bool,
+	}
+	OpGreaterThanOrEqual = &Operation{
+		Impl: stdlib.GreaterThanOrEqualToFunc,
+		Type: cty.Bool,
+	}
+	OpLessThan = &Operation{
+		Impl: stdlib.LessThanFunc,
+		Type: cty.Bool,
+	}
+	OpLessThanOrEqual = &Operation{
+		Impl: stdlib.LessThanOrEqualToFunc,
+		Type: cty.Bool,
+	}
+
+	OpAdd = &Operation{
+		Impl: stdlib.AddFunc,
+		Type: cty.Number,
+	}
+	OpSubtract = &Operation{
+		Impl: stdlib.SubtractFunc,
+		Type: cty.Number,
+	}
+	OpMultiply = &Operation{
+		Impl: stdlib.MultiplyFunc,
+		Type: cty.Number,
+	}
+	OpDivide = &Operation{
+		Impl: stdlib.DivideFunc,
+		Type: cty.Number,
+	}
+	OpModulo = &Operation{
+		Impl: stdlib.ModuloFunc,
+		Type: cty.Number,
+	}
+	OpNegate = &Operation{
+		Impl: stdlib.NegateFunc,
+		Type: cty.Number,
+	}
 )
 
-var binaryOps []map[TokenType]Operation
+var binaryOps []map[TokenType]*Operation
 
 func init() {
 	// This operation table maps from the operator's token type
@@ -42,7 +91,7 @@ func init() {
 	// Binary operator groups are listed in order of precedence, with
 	// the *lowest* precedence first. Operators within the same group
 	// have left-to-right associativity.
-	binaryOps = []map[TokenType]Operation{
+	binaryOps = []map[TokenType]*Operation{
 		{
 			TokenOr: OpLogicalOr,
 		},
@@ -71,30 +120,9 @@ func init() {
 	}
 }
 
-var operationImpls = map[Operation]function.Function{
-	OpLogicalAnd: stdlib.AndFunc,
-	OpLogicalOr:  stdlib.OrFunc,
-	OpLogicalNot: stdlib.NotFunc,
-
-	OpEqual:    stdlib.EqualFunc,
-	OpNotEqual: stdlib.NotEqualFunc,
-
-	OpGreaterThan:        stdlib.GreaterThanFunc,
-	OpGreaterThanOrEqual: stdlib.GreaterThanOrEqualToFunc,
-	OpLessThan:           stdlib.LessThanFunc,
-	OpLessThanOrEqual:    stdlib.LessThanOrEqualToFunc,
-
-	OpAdd:      stdlib.AddFunc,
-	OpSubtract: stdlib.SubtractFunc,
-	OpMultiply: stdlib.MultiplyFunc,
-	OpDivide:   stdlib.DivideFunc,
-	OpModulo:   stdlib.ModuloFunc,
-	OpNegate:   stdlib.NegateFunc,
-}
-
 type BinaryOpExpr struct {
 	LHS Expression
-	Op  Operation
+	Op  *Operation
 	RHS Expression
 
 	SrcRange zcl.Range
@@ -106,7 +134,7 @@ func (e *BinaryOpExpr) walkChildNodes(w internalWalkFunc) {
 }
 
 func (e *BinaryOpExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
-	impl := operationImpls[e.Op] // assumed to be a function taking exactly two arguments
+	impl := e.Op.Impl // assumed to be a function taking exactly two arguments
 	params := impl.Params()
 	lhsParam := params[0]
 	rhsParam := params[1]
@@ -142,16 +170,7 @@ func (e *BinaryOpExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) 
 	if diags.HasErrors() {
 		// Don't actually try the call if we have errors already, since the
 		// this will probably just produce a confusing duplicative diagnostic.
-		// Instead, we'll use the function's type check to figure out what
-		// type would be returned, if possible.
-		args := []cty.Value{givenLHSVal, givenRHSVal}
-		retType, err := impl.ReturnTypeForValues(args)
-		if err != nil {
-			// can't even get a return type, so we'll bail here.
-			return cty.DynamicVal, diags
-		}
-
-		return cty.UnknownVal(retType), diags
+		return cty.UnknownVal(e.Op.Type), diags
 	}
 
 	args := []cty.Value{lhsVal, rhsVal}
@@ -165,11 +184,7 @@ func (e *BinaryOpExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) 
 			Subject:  e.RHS.Range().Ptr(),
 			Context:  &e.SrcRange,
 		})
-		retType, err := impl.ReturnTypeForValues(args)
-		if err != nil {
-			return cty.DynamicVal, diags
-		}
-		return cty.UnknownVal(retType), diags
+		return cty.UnknownVal(e.Op.Type), diags
 	}
 
 	return result, diags
@@ -184,7 +199,7 @@ func (e *BinaryOpExpr) StartRange() zcl.Range {
 }
 
 type UnaryOpExpr struct {
-	Op  Operation
+	Op  *Operation
 	Val Expression
 
 	SrcRange    zcl.Range

@@ -37,10 +37,82 @@ func TestExpressionParseAndValue(t *testing.T) {
 			0,
 		},
 		{
+			`(2+unk)`,
+			&zcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unk": cty.UnknownVal(cty.Number),
+				},
+			},
+			cty.UnknownVal(cty.Number),
+			0,
+		},
+		{
+			`(2+unk)`,
+			&zcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unk": cty.DynamicVal,
+				},
+			},
+			cty.UnknownVal(cty.Number),
+			0,
+		},
+		{
+			`(unk+unk)`,
+			&zcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unk": cty.DynamicVal,
+				},
+			},
+			cty.UnknownVal(cty.Number),
+			0,
+		},
+		{
 			`(2+true)`,
 			nil,
-			cty.DynamicVal, // FIXME: should be cty.UnknownVal(cty.Number)
-			1,
+			cty.UnknownVal(cty.Number),
+			1, // unsuitable type for right operand
+		},
+		{
+			`(false+true)`,
+			nil,
+			cty.UnknownVal(cty.Number),
+			2, // unsuitable type for each operand
+		},
+		{
+			`(5 == 5)`,
+			nil,
+			cty.True,
+			0,
+		},
+		{
+			`(5 == 4)`,
+			nil,
+			cty.False,
+			0,
+		},
+		{
+			`(1 == true)`,
+			nil,
+			cty.False,
+			0,
+		},
+		{
+			`("true" == true)`,
+			nil,
+			cty.False,
+			0,
+		},
+		{
+			`(true == "true")`,
+			nil,
+			cty.False,
+			0,
+		},
+		{
+			`(true != "true")`,
+			nil,
+			cty.True,
+			0,
 		},
 		{
 			`(

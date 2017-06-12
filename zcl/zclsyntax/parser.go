@@ -400,7 +400,7 @@ func (p *parser) parseTernaryConditional() (Expression, zcl.Diagnostics) {
 // parseBinaryOps calls itself recursively to work through all of the
 // operator precedence groups, and then eventually calls parseExpressionTerm
 // for each operand.
-func (p *parser) parseBinaryOps(ops []map[TokenType]Operation) (Expression, zcl.Diagnostics) {
+func (p *parser) parseBinaryOps(ops []map[TokenType]*Operation) (Expression, zcl.Diagnostics) {
 	if len(ops) == 0 {
 		// We've run out of operators, so now we'll just try to parse a term.
 		return p.parseExpressionWithTraversals()
@@ -410,7 +410,7 @@ func (p *parser) parseBinaryOps(ops []map[TokenType]Operation) (Expression, zcl.
 	remaining := ops[1:]
 
 	var lhs, rhs Expression
-	operation := OpNil
+	var operation *Operation
 	var diags zcl.Diagnostics
 
 	// Parse a term that might be the first operand of a binary
@@ -432,14 +432,14 @@ func (p *parser) parseBinaryOps(ops []map[TokenType]Operation) (Expression, zcl.
 	// instead of iteratively parsing only the remaining operators.
 	for {
 		next := p.Peek()
-		var newOp Operation
+		var newOp *Operation
 		var ok bool
 		if newOp, ok = thisLevel[next.Type]; !ok {
 			break
 		}
 
 		// Are we extending an expression started on the previous iteration?
-		if operation != OpNil {
+		if operation != nil {
 			lhs = &BinaryOpExpr{
 				LHS: lhs,
 				Op:  operation,
@@ -459,7 +459,7 @@ func (p *parser) parseBinaryOps(ops []map[TokenType]Operation) (Expression, zcl.
 		}
 	}
 
-	if operation == OpNil {
+	if operation == nil {
 		return lhs, diags
 	}
 
