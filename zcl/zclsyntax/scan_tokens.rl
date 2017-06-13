@@ -46,6 +46,9 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
         LogicalAnd = "&&";
         LogicalOr = "||";
 
+        Ellipsis = "...";
+        FatArrow = "=>";
+
         Newline = '\r' ? '\n';
         EndOfLine = Newline;
 
@@ -248,6 +251,8 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
             LessThanEqual    => { token(TokenLessThanEq); };
             LogicalAnd       => { token(TokenAnd); };
             LogicalOr        => { token(TokenOr); };
+            Ellipsis         => { token(TokenEllipsis); };
+            FatArrow         => { token(TokenFatArrow); };
             SelfToken        => { selfToken() };
 
             "{"              => openBrace;

@@ -4,7 +4,7 @@ package zclsyntax
 
 import "fmt"
 
-const _TokenType_name = "TokenNilTokenNewlineTokenBangTokenPercentTokenBitwiseAndTokenOParenTokenCParenTokenStarTokenPlusTokenCommaTokenMinusTokenDotTokenSlashTokenColonTokenSemicolonTokenLessThanTokenEqualTokenGreaterThanTokenQuestionTokenCommentTokenOHeredocTokenIdentTokenNumberLitTokenQuotedLitTokenStringLitTokenOBrackTokenCBrackTokenBitwiseXorTokenBacktickTokenCHeredocTokenOBraceTokenBitwiseOrTokenCBraceTokenBitwiseNotTokenOQuoteTokenCQuoteTokenTemplateControlTokenTemplateSeqEndTokenAndTokenOrTokenTemplateInterpTokenEqualOpTokenNotEqualTokenLessThanEqTokenGreaterThanEqTokenEOFTokenTabsTokenStarStarTokenInvalidTokenBadUTF8"
+const _TokenType_name = "TokenNilTokenNewlineTokenBangTokenPercentTokenBitwiseAndTokenOParenTokenCParenTokenStarTokenPlusTokenCommaTokenMinusTokenDotTokenSlashTokenColonTokenSemicolonTokenLessThanTokenEqualTokenGreaterThanTokenQuestionTokenCommentTokenOHeredocTokenIdentTokenNumberLitTokenQuotedLitTokenStringLitTokenOBrackTokenCBrackTokenBitwiseXorTokenBacktickTokenCHeredocTokenOBraceTokenBitwiseOrTokenCBraceTokenBitwiseNotTokenOQuoteTokenCQuoteTokenTemplateControlTokenEllipsisTokenFatArrowTokenTemplateSeqEndTokenAndTokenOrTokenTemplateInterpTokenEqualOpTokenNotEqualTokenLessThanEqTokenGreaterThanEqTokenEOFTokenTabsTokenStarStarTokenInvalidTokenBadUTF8"
 
 var _TokenType_map = map[TokenType]string{
 	0:      _TokenType_name[0:8],
@@ -44,19 +44,21 @@ var _TokenType_map = map[TokenType]string{
 	171:    _TokenType_name[401:412],
 	187:    _TokenType_name[412:423],
 	955:    _TokenType_name[423:443],
-	8718:   _TokenType_name[443:462],
-	8743:   _TokenType_name[462:470],
-	8744:   _TokenType_name[470:477],
-	8747:   _TokenType_name[477:496],
-	8788:   _TokenType_name[496:508],
-	8800:   _TokenType_name[508:521],
-	8804:   _TokenType_name[521:536],
-	8805:   _TokenType_name[536:554],
-	9220:   _TokenType_name[554:562],
-	9225:   _TokenType_name[562:571],
-	10138:  _TokenType_name[571:584],
-	65533:  _TokenType_name[584:596],
-	128169: _TokenType_name[596:608],
+	8230:   _TokenType_name[443:456],
+	8658:   _TokenType_name[456:469],
+	8718:   _TokenType_name[469:488],
+	8743:   _TokenType_name[488:496],
+	8744:   _TokenType_name[496:503],
+	8747:   _TokenType_name[503:522],
+	8788:   _TokenType_name[522:534],
+	8800:   _TokenType_name[534:547],
+	8804:   _TokenType_name[547:562],
+	8805:   _TokenType_name[562:580],
+	9220:   _TokenType_name[580:588],
+	9225:   _TokenType_name[588:597],
+	10138:  _TokenType_name[597:610],
+	65533:  _TokenType_name[610:622],
+	128169: _TokenType_name[622:634],
 }
 
 func (i TokenType) String() string {
