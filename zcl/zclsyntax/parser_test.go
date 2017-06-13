@@ -567,6 +567,199 @@ block "valid" {}
 		},
 
 		{
+			"a = [for k, v in foo: v if true]\n",
+			0,
+			&Body{
+				Attributes: Attributes{
+					"a": {
+						Name: "a",
+						Expr: &ForExpr{
+							KeyVar: "k",
+							ValVar: "v",
+
+							CollExpr: &ScopeTraversalExpr{
+								Traversal: zcl.Traversal{
+									zcl.TraverseRoot{
+										Name: "foo",
+										SrcRange: zcl.Range{
+											Start: zcl.Pos{Line: 1, Column: 18, Byte: 17},
+											End:   zcl.Pos{Line: 1, Column: 21, Byte: 20},
+										},
+									},
+								},
+								SrcRange: zcl.Range{
+									Start: zcl.Pos{Line: 1, Column: 18, Byte: 17},
+									End:   zcl.Pos{Line: 1, Column: 21, Byte: 20},
+								},
+							},
+							ValExpr: &ScopeTraversalExpr{
+								Traversal: zcl.Traversal{
+									zcl.TraverseRoot{
+										Name: "v",
+										SrcRange: zcl.Range{
+											Start: zcl.Pos{Line: 1, Column: 23, Byte: 22},
+											End:   zcl.Pos{Line: 1, Column: 24, Byte: 23},
+										},
+									},
+								},
+								SrcRange: zcl.Range{
+									Start: zcl.Pos{Line: 1, Column: 23, Byte: 22},
+									End:   zcl.Pos{Line: 1, Column: 24, Byte: 23},
+								},
+							},
+							CondExpr: &LiteralValueExpr{
+								Val: cty.True,
+								SrcRange: zcl.Range{
+									Start: zcl.Pos{Line: 1, Column: 28, Byte: 27},
+									End:   zcl.Pos{Line: 1, Column: 32, Byte: 31},
+								},
+							},
+
+							SrcRange: zcl.Range{
+								Start: zcl.Pos{Line: 1, Column: 5, Byte: 4},
+								End:   zcl.Pos{Line: 1, Column: 33, Byte: 32},
+							},
+							OpenRange: zcl.Range{
+								Start: zcl.Pos{Line: 1, Column: 5, Byte: 4},
+								End:   zcl.Pos{Line: 1, Column: 6, Byte: 5},
+							},
+							CloseRange: zcl.Range{
+								Start: zcl.Pos{Line: 1, Column: 32, Byte: 31},
+								End:   zcl.Pos{Line: 1, Column: 33, Byte: 32},
+							},
+						},
+
+						SrcRange: zcl.Range{
+							Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   zcl.Pos{Line: 1, Column: 33, Byte: 32},
+						},
+						NameRange: zcl.Range{
+							Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+						},
+						EqualsRange: zcl.Range{
+							Start: zcl.Pos{Line: 1, Column: 3, Byte: 2},
+							End:   zcl.Pos{Line: 1, Column: 4, Byte: 3},
+						},
+					},
+				},
+				Blocks: Blocks{},
+				SrcRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   zcl.Pos{Line: 2, Column: 1, Byte: 33},
+				},
+				EndRange: zcl.Range{
+					Start: zcl.Pos{Line: 2, Column: 1, Byte: 33},
+					End:   zcl.Pos{Line: 2, Column: 1, Byte: 33},
+				},
+			},
+		},
+		{
+			"a = [for k, v in foo: k => v... if true]\n",
+			2, // can't use => or ... in a tuple for
+			&Body{
+				Attributes: Attributes{
+					"a": {
+						Name: "a",
+						Expr: &ForExpr{
+							KeyVar: "k",
+							ValVar: "v",
+
+							CollExpr: &ScopeTraversalExpr{
+								Traversal: zcl.Traversal{
+									zcl.TraverseRoot{
+										Name: "foo",
+										SrcRange: zcl.Range{
+											Start: zcl.Pos{Line: 1, Column: 18, Byte: 17},
+											End:   zcl.Pos{Line: 1, Column: 21, Byte: 20},
+										},
+									},
+								},
+								SrcRange: zcl.Range{
+									Start: zcl.Pos{Line: 1, Column: 18, Byte: 17},
+									End:   zcl.Pos{Line: 1, Column: 21, Byte: 20},
+								},
+							},
+							KeyExpr: &ScopeTraversalExpr{
+								Traversal: zcl.Traversal{
+									zcl.TraverseRoot{
+										Name: "k",
+										SrcRange: zcl.Range{
+											Start: zcl.Pos{Line: 1, Column: 23, Byte: 22},
+											End:   zcl.Pos{Line: 1, Column: 24, Byte: 23},
+										},
+									},
+								},
+								SrcRange: zcl.Range{
+									Start: zcl.Pos{Line: 1, Column: 23, Byte: 22},
+									End:   zcl.Pos{Line: 1, Column: 24, Byte: 23},
+								},
+							},
+							ValExpr: &ScopeTraversalExpr{
+								Traversal: zcl.Traversal{
+									zcl.TraverseRoot{
+										Name: "v",
+										SrcRange: zcl.Range{
+											Start: zcl.Pos{Line: 1, Column: 28, Byte: 27},
+											End:   zcl.Pos{Line: 1, Column: 29, Byte: 28},
+										},
+									},
+								},
+								SrcRange: zcl.Range{
+									Start: zcl.Pos{Line: 1, Column: 28, Byte: 27},
+									End:   zcl.Pos{Line: 1, Column: 29, Byte: 28},
+								},
+							},
+							CondExpr: &LiteralValueExpr{
+								Val: cty.True,
+								SrcRange: zcl.Range{
+									Start: zcl.Pos{Line: 1, Column: 36, Byte: 35},
+									End:   zcl.Pos{Line: 1, Column: 40, Byte: 39},
+								},
+							},
+							Group: true,
+
+							SrcRange: zcl.Range{
+								Start: zcl.Pos{Line: 1, Column: 5, Byte: 4},
+								End:   zcl.Pos{Line: 1, Column: 41, Byte: 40},
+							},
+							OpenRange: zcl.Range{
+								Start: zcl.Pos{Line: 1, Column: 5, Byte: 4},
+								End:   zcl.Pos{Line: 1, Column: 6, Byte: 5},
+							},
+							CloseRange: zcl.Range{
+								Start: zcl.Pos{Line: 1, Column: 40, Byte: 39},
+								End:   zcl.Pos{Line: 1, Column: 41, Byte: 40},
+							},
+						},
+
+						SrcRange: zcl.Range{
+							Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   zcl.Pos{Line: 1, Column: 41, Byte: 40},
+						},
+						NameRange: zcl.Range{
+							Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   zcl.Pos{Line: 1, Column: 2, Byte: 1},
+						},
+						EqualsRange: zcl.Range{
+							Start: zcl.Pos{Line: 1, Column: 3, Byte: 2},
+							End:   zcl.Pos{Line: 1, Column: 4, Byte: 3},
+						},
+					},
+				},
+				Blocks: Blocks{},
+				SrcRange: zcl.Range{
+					Start: zcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   zcl.Pos{Line: 2, Column: 1, Byte: 41},
+				},
+				EndRange: zcl.Range{
+					Start: zcl.Pos{Line: 2, Column: 1, Byte: 41},
+					End:   zcl.Pos{Line: 2, Column: 1, Byte: 41},
+				},
+			},
+		},
+
+		{
 			`	`,
 			2, // tabs not allowed, and body item is required here
 			&Body{

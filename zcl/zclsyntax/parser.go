@@ -849,10 +849,14 @@ func (p *parser) parseTupleCons() (Expression, zcl.Diagnostics) {
 		panic("parseTupleCons called without peeker pointing to open bracket")
 	}
 
-	var close Token
-
 	p.PushIncludeNewlines(false)
 	defer p.PopIncludeNewlines()
+
+	if forKeyword.TokenMatches(p.Peek()) {
+		return p.finishParsingForExpr(open)
+	}
+
+	var close Token
 
 	var diags zcl.Diagnostics
 	var exprs []Expression
@@ -915,13 +919,17 @@ func (p *parser) parseObjectCons() (Expression, zcl.Diagnostics) {
 		panic("parseObjectCons called without peeker pointing to open brace")
 	}
 
+	p.PushIncludeNewlines(true)
+	defer p.PopIncludeNewlines()
+
+	if forKeyword.TokenMatches(p.Peek()) {
+		return p.finishParsingForExpr(open)
+	}
+
 	var close Token
 
 	var diags zcl.Diagnostics
 	var items []ObjectConsItem
-
-	p.PushIncludeNewlines(true)
-	defer p.PopIncludeNewlines()
 
 	for {
 		next := p.Peek()
@@ -1034,6 +1042,215 @@ func (p *parser) parseObjectCons() (Expression, zcl.Diagnostics) {
 
 		SrcRange:  zcl.RangeBetween(open.Range, close.Range),
 		OpenRange: open.Range,
+	}, diags
+}
+
+func (p *parser) finishParsingForExpr(open Token) (Expression, zcl.Diagnostics) {
+	introducer := p.Read()
+	if !forKeyword.TokenMatches(introducer) {
+		// Should never happen if callers are behaving
+		panic("finishParsingForExpr called without peeker pointing to 'for' identifier")
+	}
+
+	var makeObj bool
+	var closeType TokenType
+	switch open.Type {
+	case TokenOBrace:
+		makeObj = true
+		closeType = TokenCBrace
+	case TokenOBrack:
+		makeObj = false // making a tuple
+		closeType = TokenCBrack
+	default:
+		// Should never happen if callers are behaving
+		panic("finishParsingForExpr called with invalid open token")
+	}
+
+	var diags zcl.Diagnostics
+	var keyName, valName string
+
+	if p.Peek().Type != TokenIdent {
+		if !p.recovery {
+			diags = append(diags, &zcl.Diagnostic{
+				Severity: zcl.DiagError,
+				Summary:  "Invalid 'for' expression",
+				Detail:   "For expression requires variable name after 'for'.",
+				Subject:  p.Peek().Range.Ptr(),
+				Context:  zcl.RangeBetween(open.Range, p.Peek().Range).Ptr(),
+			})
+		}
+		close := p.recover(closeType)
+		return &LiteralValueExpr{
+			Val:      cty.DynamicVal,
+			SrcRange: zcl.RangeBetween(open.Range, close.Range),
+		}, diags
+	}
+
+	valName = string(p.Read().Bytes)
+
+	if p.Peek().Type == TokenComma {
+		// What we just read was actually the key, then.
+		keyName = valName
+		p.Read() // eat comma
+
+		if p.Peek().Type != TokenIdent {
+			if !p.recovery {
+				diags = append(diags, &zcl.Diagnostic{
+					Severity: zcl.DiagError,
+					Summary:  "Invalid 'for' expression",
+					Detail:   "For expression requires value variable name after comma.",
+					Subject:  p.Peek().Range.Ptr(),
+					Context:  zcl.RangeBetween(open.Range, p.Peek().Range).Ptr(),
+				})
+			}
+			close := p.recover(closeType)
+			return &LiteralValueExpr{
+				Val:      cty.DynamicVal,
+				SrcRange: zcl.RangeBetween(open.Range, close.Range),
+			}, diags
+		}
+
+		valName = string(p.Read().Bytes)
+	}
+
+	if !inKeyword.TokenMatches(p.Peek()) {
+		if !p.recovery {
+			diags = append(diags, &zcl.Diagnostic{
+				Severity: zcl.DiagError,
+				Summary:  "Invalid 'for' expression",
+				Detail:   "For expression requires 'in' keyword after names.",
+				Subject:  p.Peek().Range.Ptr(),
+				Context:  zcl.RangeBetween(open.Range, p.Peek().Range).Ptr(),
+			})
+		}
+		close := p.recover(closeType)
+		return &LiteralValueExpr{
+			Val:      cty.DynamicVal,
+			SrcRange: zcl.RangeBetween(open.Range, close.Range),
+		}, diags
+	}
+	p.Read() // eat 'in' keyword
+
+	collExpr, collDiags := p.ParseExpression()
+	diags = append(diags, collDiags...)
+	if p.recovery && collDiags.HasErrors() {
+		close := p.recover(closeType)
+		return &LiteralValueExpr{
+			Val:      cty.DynamicVal,
+			SrcRange: zcl.RangeBetween(open.Range, close.Range),
+		}, diags
+	}
+
+	if p.Peek().Type != TokenColon {
+		if !p.recovery {
+			diags = append(diags, &zcl.Diagnostic{
+				Severity: zcl.DiagError,
+				Summary:  "Invalid 'for' expression",
+				Detail:   "For expression requires colon after collection expression.",
+				Subject:  p.Peek().Range.Ptr(),
+				Context:  zcl.RangeBetween(open.Range, p.Peek().Range).Ptr(),
+			})
+		}
+		close := p.recover(closeType)
+		return &LiteralValueExpr{
+			Val:      cty.DynamicVal,
+			SrcRange: zcl.RangeBetween(open.Range, close.Range),
+		}, diags
+	}
+	p.Read() // eat colon
+
+	var keyExpr, valExpr Expression
+	var keyDiags, valDiags zcl.Diagnostics
+	valExpr, valDiags = p.ParseExpression()
+	if p.Peek().Type == TokenFatArrow {
+		// What we just parsed was actually keyExpr
+		p.Read() // eat the fat arrow
+		keyExpr, keyDiags = valExpr, valDiags
+
+		valExpr, valDiags = p.ParseExpression()
+	}
+	diags = append(diags, keyDiags...)
+	diags = append(diags, valDiags...)
+	if p.recovery && (keyDiags.HasErrors() || valDiags.HasErrors()) {
+		close := p.recover(closeType)
+		return &LiteralValueExpr{
+			Val:      cty.DynamicVal,
+			SrcRange: zcl.RangeBetween(open.Range, close.Range),
+		}, diags
+	}
+
+	group := false
+	var ellipsis Token
+	if p.Peek().Type == TokenEllipsis {
+		ellipsis = p.Read()
+		group = true
+	}
+
+	var condExpr Expression
+	var condDiags zcl.Diagnostics
+	if ifKeyword.TokenMatches(p.Peek()) {
+		p.Read() // eat "if"
+		condExpr, condDiags = p.ParseExpression()
+		diags = append(diags, condDiags...)
+		if p.recovery && condDiags.HasErrors() {
+			close := p.recover(p.oppositeBracket(open.Type))
+			return &LiteralValueExpr{
+				Val:      cty.DynamicVal,
+				SrcRange: zcl.RangeBetween(open.Range, close.Range),
+			}, diags
+		}
+	}
+
+	var close Token
+	if p.Peek().Type == closeType {
+		close = p.Read()
+	} else {
+		if !p.recovery {
+			diags = append(diags, &zcl.Diagnostic{
+				Severity: zcl.DiagError,
+				Summary:  "Invalid 'for' expression",
+				Detail:   "Extra characters after the end of the 'for' expression.",
+				Subject:  p.Peek().Range.Ptr(),
+				Context:  zcl.RangeBetween(open.Range, p.Peek().Range).Ptr(),
+			})
+		}
+		close = p.recover(closeType)
+	}
+
+	if !makeObj {
+		if keyExpr != nil {
+			diags = append(diags, &zcl.Diagnostic{
+				Severity: zcl.DiagError,
+				Summary:  "Invalid 'for' expression",
+				Detail:   "Key expression is not valid when building a tuple.",
+				Subject:  keyExpr.Range().Ptr(),
+				Context:  zcl.RangeBetween(open.Range, close.Range).Ptr(),
+			})
+		}
+
+		if group {
+			diags = append(diags, &zcl.Diagnostic{
+				Severity: zcl.DiagError,
+				Summary:  "Invalid 'for' expression",
+				Detail:   "Grouping ellipsis (...) cannot be used when building a tuple.",
+				Subject:  &ellipsis.Range,
+				Context:  zcl.RangeBetween(open.Range, close.Range).Ptr(),
+			})
+		}
+	}
+
+	return &ForExpr{
+		KeyVar:   keyName,
+		ValVar:   valName,
+		CollExpr: collExpr,
+		KeyExpr:  keyExpr,
+		ValExpr:  valExpr,
+		CondExpr: condExpr,
+		Group:    group,
+
+		SrcRange:   zcl.RangeBetween(open.Range, close.Range),
+		OpenRange:  open.Range,
+		CloseRange: close.Range,
 	}, diags
 }
 
