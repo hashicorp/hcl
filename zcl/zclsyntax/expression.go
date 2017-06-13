@@ -562,3 +562,48 @@ func (e *ObjectConsExpr) Range() zcl.Range {
 func (e *ObjectConsExpr) StartRange() zcl.Range {
 	return e.OpenRange
 }
+
+// ForExpr represents iteration constructs:
+//
+//     tuple = [for i, v in list: upper(v) if i > 2]
+//     object = {for k, v in map: k => upper(v)}
+//     object_of_tuples = {for v in list: v.key: v...}
+type ForExpr struct {
+	KeyVar string // empty if ignoring the key
+	ValVar string
+
+	CollExpr Expression
+
+	KeyExpr  Expression // nil when producing a tuple
+	ValExpr  Expression
+	CondExpr Expression // null if no "if" clause is present
+
+	Group bool // set if the ellipsis is used on the value in an object for
+
+	SrcRange   zcl.Range
+	OpenRange  zcl.Range
+	CloseRange zcl.Range
+}
+
+func (e *ForExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
+	panic("ForExpr.Value not yet implemented")
+}
+
+func (e *ForExpr) walkChildNodes(w internalWalkFunc) {
+	e.CollExpr = w(e.CollExpr).(Expression)
+	if e.KeyExpr != nil {
+		e.KeyExpr = w(e.KeyExpr).(Expression)
+	}
+	e.ValExpr = w(e.ValExpr).(Expression)
+	if e.CondExpr != nil {
+		e.CondExpr = w(e.CondExpr).(Expression)
+	}
+}
+
+func (e *ForExpr) Range() zcl.Range {
+	return e.SrcRange
+}
+
+func (e *ForExpr) StartRange() zcl.Range {
+	return e.OpenRange
+}

@@ -15,6 +15,10 @@ func (e *ConditionalExpr) Variables() []zcl.Traversal {
 	return Variables(e)
 }
 
+func (e *ForExpr) Variables() []zcl.Traversal {
+	return Variables(e)
+}
+
 func (e *FunctionCallExpr) Variables() []zcl.Traversal {
 	return Variables(e)
 }
