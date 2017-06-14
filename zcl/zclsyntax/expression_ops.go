@@ -130,7 +130,7 @@ type BinaryOpExpr struct {
 
 func (e *BinaryOpExpr) walkChildNodes(w internalWalkFunc) {
 	e.LHS = w(e.LHS).(Expression)
-	e.RHS = w(e.LHS).(Expression)
+	e.RHS = w(e.RHS).(Expression)
 }
 
 func (e *BinaryOpExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
