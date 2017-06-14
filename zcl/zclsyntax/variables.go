@@ -11,15 +11,76 @@ import (
 func Variables(expr Expression) []zcl.Traversal {
 	var vars []zcl.Traversal
 
-	// TODO: When traversing into ForExpr, filter out references to
-	// the iterator variables, since they are references into the child
-	// scope, and thus not interesting to the caller.
+	walker := &variablesWalker{
+		Callback: func(t zcl.Traversal) {
+			vars = append(vars, t)
+		},
+	}
 
-	VisitAll(expr, func(n Node) zcl.Diagnostics {
-		if ste, ok := n.(*ScopeTraversalExpr); ok {
-			vars = append(vars, ste.Traversal)
-		}
-		return nil
-	})
+	Walk(expr, walker)
+
 	return vars
+}
+
+// variablesWalker is a Walker implementation that calls its callback for any
+// root scope traversal found while walking.
+type variablesWalker struct {
+	Callback    func(zcl.Traversal)
+	localScopes []map[string]struct{}
+}
+
+func (w *variablesWalker) Enter(n Node) zcl.Diagnostics {
+	switch tn := n.(type) {
+	case *ScopeTraversalExpr:
+		t := tn.Traversal
+
+		// Check if the given root name appears in any of the active
+		// local scopes. We don't want to return local variables here, since
+		// the goal of walking variables is to tell the calling application
+		// which names it needs to populate in the _root_ scope.
+		name := t.RootName()
+		for _, names := range w.localScopes {
+			if _, localized := names[name]; localized {
+				return nil
+			}
+		}
+
+		w.Callback(t)
+	case ChildScope:
+		w.localScopes = append(w.localScopes, tn.LocalNames)
+	}
+	return nil
+}
+
+func (w *variablesWalker) Exit(n Node) zcl.Diagnostics {
+	switch n.(type) {
+	case ChildScope:
+		// pop the latest local scope, assuming that the walker will
+		// behave symmetrically as promised.
+		w.localScopes = w.localScopes[:len(w.localScopes)-1]
+	}
+	return nil
+}
+
+// ChildScope is a synthetic AST node that is visited during a walk to
+// indicate that its descendent will be evaluated in a child scope, which
+// may mask certain variables from the parent scope as locals.
+//
+// ChildScope nodes don't really exist in the AST, but are rather synthesized
+// on the fly during walk. Therefore it doesn't do any good to transform them;
+// instead, transform either parent node that created a scope or the expression
+// that the child scope struct wraps.
+type ChildScope struct {
+	LocalNames map[string]struct{}
+	Expr       *Expression // pointer because it can be replaced on walk
+}
+
+func (e ChildScope) walkChildNodes(w internalWalkFunc) {
+	*(e.Expr) = w(*(e.Expr)).(Expression)
+}
+
+// Range returns the range of the expression that the ChildScope is
+// encapsulating. It isn't really very useful to call Range on a ChildScope.
+func (e ChildScope) Range() zcl.Range {
+	return (*e.Expr).Range()
 }

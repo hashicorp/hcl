@@ -591,12 +591,30 @@ func (e *ForExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
 
 func (e *ForExpr) walkChildNodes(w internalWalkFunc) {
 	e.CollExpr = w(e.CollExpr).(Expression)
-	if e.KeyExpr != nil {
-		e.KeyExpr = w(e.KeyExpr).(Expression)
+
+	scopeNames := map[string]struct{}{}
+	if e.KeyVar != "" {
+		scopeNames[e.KeyVar] = struct{}{}
 	}
-	e.ValExpr = w(e.ValExpr).(Expression)
+	if e.ValVar != "" {
+		scopeNames[e.ValVar] = struct{}{}
+	}
+
+	if e.KeyExpr != nil {
+		w(ChildScope{
+			LocalNames: scopeNames,
+			Expr:       &e.KeyExpr,
+		})
+	}
+	w(ChildScope{
+		LocalNames: scopeNames,
+		Expr:       &e.ValExpr,
+	})
 	if e.CondExpr != nil {
-		e.CondExpr = w(e.CondExpr).(Expression)
+		w(ChildScope{
+			LocalNames: scopeNames,
+			Expr:       &e.CondExpr,
+		})
 	}
 }
 
