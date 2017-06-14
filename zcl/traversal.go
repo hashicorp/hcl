@@ -79,28 +79,36 @@ func (t Traversal) TraverseAbs(ctx *EvalContext) (cty.Value, Diagnostics) {
 		}
 	}
 
-	val, exists := ctx.Variables[name]
-	if !exists {
-		suggestions := make([]string, 0, len(ctx.Variables))
-		for k := range ctx.Variables {
-			suggestions = append(suggestions, k)
+	thisCtx := ctx
+	for thisCtx != nil {
+		val, exists := thisCtx.Variables[name]
+		if exists {
+			return split.Rel.TraverseRel(val)
 		}
-		suggestion := nameSuggestion(name, suggestions)
-		if suggestion != "" {
-			suggestion = fmt.Sprintf(" Did you mean %q?", suggestion)
-		}
-
-		return cty.DynamicVal, Diagnostics{
-			{
-				Severity: DiagError,
-				Summary:  "Unknown variable",
-				Detail:   fmt.Sprintf("There is no variable named %q.%s", name, suggestion),
-				Subject:  &root.SrcRange,
-			},
-		}
+		thisCtx = thisCtx.parent
 	}
 
-	return split.Rel.TraverseRel(val)
+	suggestions := make([]string, 0, len(ctx.Variables))
+	thisCtx = ctx
+	for thisCtx != nil {
+		for k := range thisCtx.Variables {
+			suggestions = append(suggestions, k)
+		}
+		thisCtx = thisCtx.parent
+	}
+	suggestion := nameSuggestion(name, suggestions)
+	if suggestion != "" {
+		suggestion = fmt.Sprintf(" Did you mean %q?", suggestion)
+	}
+
+	return cty.DynamicVal, Diagnostics{
+		{
+			Severity: DiagError,
+			Summary:  "Unknown variable",
+			Detail:   fmt.Sprintf("There is no variable named %q.%s", name, suggestion),
+			Subject:  &root.SrcRange,
+		},
+	}
 }
 
 // IsRelative returns true if the receiver is a relative traversal, or false
