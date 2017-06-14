@@ -129,6 +129,7 @@ func (e *FunctionCallExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnosti
 		}
 	}
 
+	// FIXME: also need to look in ctx.parent, etc
 	f, exists := ctx.Functions[e.Name]
 	if !exists {
 		avail := make([]string, 0, len(ctx.Functions))
