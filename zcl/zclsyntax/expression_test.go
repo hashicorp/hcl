@@ -370,6 +370,71 @@ upper(
 		},
 
 		{
+			`{for k, v in {hello: "world"}: k => v if k == "hello"}`,
+			nil,
+			cty.ObjectVal(map[string]cty.Value{
+				"hello": cty.StringVal("world"),
+			}),
+			0,
+		},
+		{
+			`{for k, v in ["world"]: k => v if k == 0}`,
+			nil,
+			cty.ObjectVal(map[string]cty.Value{
+				"0": cty.StringVal("world"),
+			}),
+			0,
+		},
+		{
+			`{for v in ["world"]: v => v}`,
+			nil,
+			cty.ObjectVal(map[string]cty.Value{
+				"world": cty.StringVal("world"),
+			}),
+			0,
+		},
+		{
+			`{for k, v in {hello: "world"}: k => v if k == "foo"}`,
+			nil,
+			cty.EmptyObjectVal,
+			0,
+		},
+		{
+			`{for k, v in {hello: "world"}: 5 => v}`,
+			nil,
+			cty.ObjectVal(map[string]cty.Value{
+				"5": cty.StringVal("world"),
+			}),
+			0,
+		},
+		{
+			`{for k, v in {hello: "world"}: [] => v}`,
+			nil,
+			cty.DynamicVal,
+			1, // key expression has the wrong type
+		},
+		{
+			`{for k, v in {hello: "world"}: k => k if k == "hello"}`,
+			nil,
+			cty.ObjectVal(map[string]cty.Value{
+				"hello": cty.StringVal("hello"),
+			}),
+			0,
+		},
+		{
+			`{for k, v in {hello: "world"}: k => foo}`,
+			&zcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"foo": cty.StringVal("foo"),
+				},
+			},
+			cty.ObjectVal(map[string]cty.Value{
+				"hello": cty.StringVal("foo"),
+			}),
+			0,
+		},
+
+		{
 			`["hello"][0]`,
 			nil,
 			cty.StringVal("hello"),

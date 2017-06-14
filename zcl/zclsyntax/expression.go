@@ -587,7 +587,152 @@ type ForExpr struct {
 }
 
 func (e *ForExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
-	panic("ForExpr.Value not yet implemented")
+	var diags zcl.Diagnostics
+
+	collVal, collDiags := e.CollExpr.Value(ctx)
+	diags = append(diags, collDiags...)
+
+	if collVal.IsNull() {
+		diags = append(diags, &zcl.Diagnostic{
+			Severity: zcl.DiagError,
+			Summary:  "Iteration over null value",
+			Detail:   "A null value cannot be used as the collection in a 'for' expression.",
+			Subject:  e.CollExpr.Range().Ptr(),
+			Context:  &e.SrcRange,
+		})
+		return cty.DynamicVal, diags
+	}
+	if !collVal.IsKnown() {
+		return cty.DynamicVal, diags
+	}
+	if !collVal.CanIterateElements() {
+		diags = append(diags, &zcl.Diagnostic{
+			Severity: zcl.DiagError,
+			Summary:  "Iteration over non-iterable value",
+			Detail: fmt.Sprintf(
+				"A value of type %s cannot be used as the collection in a 'for' expression.",
+				collVal.Type().FriendlyName(),
+			),
+			Subject: e.CollExpr.Range().Ptr(),
+			Context: &e.SrcRange,
+		})
+		return cty.DynamicVal, diags
+	}
+
+	childCtx := ctx.NewChild()
+	childCtx.Variables = map[string]cty.Value{}
+
+	if e.KeyExpr != nil {
+		// Producing an object
+		vals := map[string]cty.Value{}
+
+		it := collVal.ElementIterator()
+
+		known := true
+		for it.Next() {
+			k, v := it.Element()
+			if e.KeyVar != "" {
+				childCtx.Variables[e.KeyVar] = k
+			}
+			childCtx.Variables[e.ValVar] = v
+
+			if e.CondExpr != nil {
+				includeRaw, condDiags := e.CondExpr.Value(childCtx)
+				diags = append(diags, condDiags...)
+				if includeRaw.IsNull() {
+					if known {
+						diags = append(diags, &zcl.Diagnostic{
+							Severity: zcl.DiagError,
+							Summary:  "Condition is null",
+							Detail:   "The value of the 'if' clause must not be null.",
+							Subject:  e.CondExpr.Range().Ptr(),
+							Context:  &e.SrcRange,
+						})
+					}
+					known = false
+					continue
+				}
+				if !includeRaw.IsKnown() {
+					// We will eventually return DynamicVal, but we'll continue
+					// iterating in case there are other diagnostics to gather
+					// for later elements.
+					known = false
+					continue
+				}
+
+				include, err := convert.Convert(includeRaw, cty.Bool)
+				if err != nil {
+					if known {
+						diags = append(diags, &zcl.Diagnostic{
+							Severity: zcl.DiagError,
+							Summary:  "Invalid 'for' condition",
+							Detail:   fmt.Sprintf("The 'if' clause value is invalid: %s.", err.Error()),
+							Subject:  e.CondExpr.Range().Ptr(),
+							Context:  &e.SrcRange,
+						})
+					}
+					known = false
+					continue
+				}
+
+				if include.False() {
+					// Skip this element
+					continue
+				}
+			}
+
+			keyRaw, keyDiags := e.KeyExpr.Value(childCtx)
+			diags = append(diags, keyDiags...)
+			if keyRaw.IsNull() {
+				if known {
+					diags = append(diags, &zcl.Diagnostic{
+						Severity: zcl.DiagError,
+						Summary:  "Invalid object key",
+						Detail:   "Key expression in 'for' expression must not produce a null value.",
+						Subject:  e.KeyExpr.Range().Ptr(),
+						Context:  &e.SrcRange,
+					})
+				}
+				known = false
+				continue
+			}
+			if !keyRaw.IsKnown() {
+				known = false
+				continue
+			}
+
+			key, err := convert.Convert(keyRaw, cty.String)
+			if err != nil {
+				if known {
+					diags = append(diags, &zcl.Diagnostic{
+						Severity: zcl.DiagError,
+						Summary:  "Invalid object key",
+						Detail:   fmt.Sprintf("The key expression produced an invalid result: %s.", err.Error()),
+						Subject:  e.KeyExpr.Range().Ptr(),
+						Context:  &e.SrcRange,
+					})
+				}
+				known = false
+				continue
+			}
+
+			val, valDiags := e.ValExpr.Value(childCtx)
+			diags = append(diags, valDiags...)
+			vals[key.AsString()] = val
+		}
+
+		if !known {
+			return cty.DynamicVal, diags
+		}
+
+		return cty.ObjectVal(vals), diags
+
+	} else {
+		// Producing a tuple
+		vals := []cty.Value{}
+		panic("for into a tuple is not yet implemented")
+		return cty.TupleVal(vals), diags
+	}
 }
 
 func (e *ForExpr) walkChildNodes(w internalWalkFunc) {
