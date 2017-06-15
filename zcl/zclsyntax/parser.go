@@ -779,6 +779,7 @@ func (p *parser) finishParsingFunctionCall(name Token) (Expression, zcl.Diagnost
 
 	var args []Expression
 	var diags zcl.Diagnostics
+	var expandFinal bool
 	var closeTok Token
 
 	// Arbitrary newlines are allowed inside the function call parentheses.
@@ -810,6 +811,26 @@ Token:
 			break Token
 		}
 
+		if sep.Type == TokenEllipsis {
+			expandFinal = true
+
+			if p.Peek().Type != TokenCParen {
+				if !p.recovery {
+					diags = append(diags, &zcl.Diagnostic{
+						Severity: zcl.DiagError,
+						Summary:  "Missing closing parenthesis",
+						Detail:   "An expanded function argument (with ...) must be immediately followed by closing parentheses.",
+						Subject:  &sep.Range,
+						Context:  zcl.RangeBetween(name.Range, sep.Range).Ptr(),
+					})
+				}
+				closeTok = p.recover(TokenCParen)
+			} else {
+				closeTok = p.Read() // eat closing paren
+			}
+			break Token
+		}
+
 		if sep.Type != TokenComma {
 			diags = append(diags, &zcl.Diagnostic{
 				Severity: zcl.DiagError,
@@ -818,7 +839,7 @@ Token:
 				Subject:  &sep.Range,
 				Context:  zcl.RangeBetween(name.Range, sep.Range).Ptr(),
 			})
-			p.recover(TokenCParen)
+			closeTok = p.recover(TokenCParen)
 			break Token
 		}
 
@@ -835,6 +856,8 @@ Token:
 	return &FunctionCallExpr{
 		Name: string(name.Bytes),
 		Args: args,
+
+		ExpandFinal: expandFinal,
 
 		NameRange:       name.Range,
 		OpenParenRange:  openTok.Range,

@@ -243,6 +243,46 @@ upper(
 			0,
 		},
 		{
+			`upper(["foo"]...)`,
+			&zcl.EvalContext{
+				Functions: map[string]function.Function{
+					"upper": stdlib.UpperFunc,
+				},
+			},
+			cty.StringVal("FOO"),
+			0,
+		},
+		{
+			`upper("foo", []...)`,
+			&zcl.EvalContext{
+				Functions: map[string]function.Function{
+					"upper": stdlib.UpperFunc,
+				},
+			},
+			cty.StringVal("FOO"),
+			0,
+		},
+		{
+			`upper("foo", "bar")`,
+			&zcl.EvalContext{
+				Functions: map[string]function.Function{
+					"upper": stdlib.UpperFunc,
+				},
+			},
+			cty.DynamicVal,
+			1, // too many function arguments
+		},
+		{
+			`upper(["foo", "bar"]...)`,
+			&zcl.EvalContext{
+				Functions: map[string]function.Function{
+					"upper": stdlib.UpperFunc,
+				},
+			},
+			cty.DynamicVal,
+			1, // too many function arguments
+		},
+		{
 			`[]`,
 			nil,
 			cty.EmptyTupleVal,

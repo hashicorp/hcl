@@ -103,6 +103,10 @@ type FunctionCallExpr struct {
 	Name string
 	Args []Expression
 
+	// If true, the final argument should be a tuple, list or set which will
+	// expand to be one argument per element.
+	ExpandFinal bool
+
 	NameRange       zcl.Range
 	OpenParenRange  zcl.Range
 	CloseParenRange zcl.Range
@@ -155,8 +159,60 @@ func (e *FunctionCallExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnosti
 	params := f.Params()
 	varParam := f.VarParam()
 
-	if len(e.Args) < len(params) {
-		missing := params[len(e.Args)]
+	args := e.Args
+	if e.ExpandFinal {
+		if len(args) < 1 {
+			// should never happen if the parser is behaving
+			panic("ExpandFinal set on function call with no arguments")
+		}
+		expandExpr := args[len(args)-1]
+		expandVal, expandDiags := expandExpr.Value(ctx)
+		diags = append(diags, expandDiags...)
+		if expandDiags.HasErrors() {
+			return cty.DynamicVal, diags
+		}
+
+		switch {
+		case expandVal.Type().IsTupleType() || expandVal.Type().IsListType() || expandVal.Type().IsSetType():
+			if expandVal.IsNull() {
+				diags = append(diags, &zcl.Diagnostic{
+					Severity: zcl.DiagError,
+					Summary:  "Invalid expanding argument value",
+					Detail:   "The expanding argument (indicated by ...) must not be null.",
+					Context:  expandExpr.Range().Ptr(),
+					Subject:  e.Range().Ptr(),
+				})
+				return cty.DynamicVal, diags
+			}
+			if !expandVal.IsKnown() {
+				return cty.DynamicVal, diags
+			}
+
+			newArgs := make([]Expression, 0, (len(args)-1)+expandVal.LengthInt())
+			newArgs = append(newArgs, args[:len(args)-1]...)
+			it := expandVal.ElementIterator()
+			for it.Next() {
+				_, val := it.Element()
+				newArgs = append(newArgs, &LiteralValueExpr{
+					Val:      val,
+					SrcRange: expandExpr.Range(),
+				})
+			}
+			args = newArgs
+		default:
+			diags = append(diags, &zcl.Diagnostic{
+				Severity: zcl.DiagError,
+				Summary:  "Invalid expanding argument value",
+				Detail:   "The expanding argument (indicated by ...) must be of a tuple, list, or set type.",
+				Context:  expandExpr.Range().Ptr(),
+				Subject:  e.Range().Ptr(),
+			})
+			return cty.DynamicVal, diags
+		}
+	}
+
+	if len(args) < len(params) {
+		missing := params[len(args)]
 		qual := ""
 		if varParam != nil {
 			qual = " at least"
@@ -175,7 +231,7 @@ func (e *FunctionCallExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnosti
 		}
 	}
 
-	if varParam == nil && len(e.Args) > len(params) {
+	if varParam == nil && len(args) > len(params) {
 		return cty.DynamicVal, zcl.Diagnostics{
 			{
 				Severity: zcl.DiagError,
@@ -184,15 +240,15 @@ func (e *FunctionCallExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnosti
 					"Function %q expects only %d argument(s).",
 					e.Name, len(params),
 				),
-				Subject: e.Args[len(params)].StartRange().Ptr(),
+				Subject: args[len(params)].StartRange().Ptr(),
 				Context: e.Range().Ptr(),
 			},
 		}
 	}
 
-	argVals := make([]cty.Value, len(e.Args))
+	argVals := make([]cty.Value, len(args))
 
-	for i, argExpr := range e.Args {
+	for i, argExpr := range args {
 		var param *function.Parameter
 		if i < len(params) {
 			param = &params[i]
