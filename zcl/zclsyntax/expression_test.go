@@ -418,6 +418,18 @@ upper(
 			0,
 		},
 		{
+			`{for k, v in {hello: "world"}: upper(k) => upper(v) if k == "hello"}`,
+			&zcl.EvalContext{
+				Functions: map[string]function.Function{
+					"upper": stdlib.UpperFunc,
+				},
+			},
+			cty.ObjectVal(map[string]cty.Value{
+				"HELLO": cty.StringVal("WORLD"),
+			}),
+			0,
+		},
+		{
 			`{for k, v in ["world"]: k => v if k == 0}`,
 			nil,
 			cty.ObjectVal(map[string]cty.Value{

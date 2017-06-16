@@ -17,3 +17,9 @@ type EvalContext struct {
 func (ctx *EvalContext) NewChild() *EvalContext {
 	return &EvalContext{parent: ctx}
 }
+
+// Parent returns the parent of the receiver, or nil if the receiver has
+// no parent.
+func (ctx *EvalContext) Parent() *EvalContext {
+	return ctx.parent
+}
