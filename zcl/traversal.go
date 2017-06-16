@@ -68,7 +68,22 @@ func (t Traversal) TraverseAbs(ctx *EvalContext) (cty.Value, Diagnostics) {
 	root := split.Abs[0].(TraverseRoot)
 	name := root.Name
 
-	if ctx == nil || ctx.Variables == nil {
+	thisCtx := ctx
+	hasNonNil := false
+	for thisCtx != nil {
+		if thisCtx.Variables == nil {
+			thisCtx = thisCtx.parent
+			continue
+		}
+		hasNonNil = true
+		val, exists := thisCtx.Variables[name]
+		if exists {
+			return split.Rel.TraverseRel(val)
+		}
+		thisCtx = thisCtx.parent
+	}
+
+	if !hasNonNil {
 		return cty.DynamicVal, Diagnostics{
 			{
 				Severity: DiagError,
@@ -77,15 +92,6 @@ func (t Traversal) TraverseAbs(ctx *EvalContext) (cty.Value, Diagnostics) {
 				Subject:  &root.SrcRange,
 			},
 		}
-	}
-
-	thisCtx := ctx
-	for thisCtx != nil {
-		val, exists := thisCtx.Variables[name]
-		if exists {
-			return split.Rel.TraverseRel(val)
-		}
-		thisCtx = thisCtx.parent
 	}
 
 	suggestions := make([]string, 0, len(ctx.Variables))
