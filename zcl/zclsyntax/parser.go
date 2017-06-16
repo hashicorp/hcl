@@ -512,12 +512,21 @@ Traversal:
 					dot := p.Read()
 					if p.Peek().Type != TokenIdent {
 						if !p.recovery {
-							diags = append(diags, &zcl.Diagnostic{
-								Severity: zcl.DiagError,
-								Summary:  "Invalid attribute name",
-								Detail:   "An attribute name is required after a dot.",
-								Subject:  &attrTok.Range,
-							})
+							if p.Peek().Type == TokenStar {
+								diags = append(diags, &zcl.Diagnostic{
+									Severity: zcl.DiagError,
+									Summary:  "Nested splat expression not allowed",
+									Detail:   "A splat expression (*) cannot be used inside another attribute-only splat expression.",
+									Subject:  p.Peek().Range.Ptr(),
+								})
+							} else {
+								diags = append(diags, &zcl.Diagnostic{
+									Severity: zcl.DiagError,
+									Summary:  "Invalid attribute name",
+									Detail:   "An attribute name is required after a dot.",
+									Subject:  &attrTok.Range,
+								})
+							}
 						}
 						p.setRecovery()
 						continue Traversal

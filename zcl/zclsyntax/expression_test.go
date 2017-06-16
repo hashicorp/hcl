@@ -529,6 +529,15 @@ upper(
 			cty.StringVal("Steve"),
 			0,
 		},
+		{
+			`[["hello"], ["goodbye"]].*.*`,
+			nil,
+			cty.TupleVal([]cty.Value{
+				cty.TupleVal([]cty.Value{cty.StringVal("hello")}),
+				cty.TupleVal([]cty.Value{cty.StringVal("goodbye")}),
+			}),
+			1,
+		},
 
 		{
 			`["hello"][0]`,
