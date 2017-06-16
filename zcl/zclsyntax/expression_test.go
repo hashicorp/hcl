@@ -487,6 +487,50 @@ upper(
 		},
 
 		{
+			`[{name: "Steve"}, {name: "Ermintrude"}].*.name`,
+			nil,
+			cty.TupleVal([]cty.Value{
+				cty.StringVal("Steve"),
+				cty.StringVal("Ermintrude"),
+			}),
+			0,
+		},
+		{
+			`{name: "Steve"}.*.name`,
+			nil,
+			cty.TupleVal([]cty.Value{
+				cty.StringVal("Steve"),
+			}),
+			0,
+		},
+		{
+			`["hello", "goodbye"].*`,
+			nil,
+			cty.TupleVal([]cty.Value{
+				cty.StringVal("hello"),
+				cty.StringVal("goodbye"),
+			}),
+			0,
+		},
+		{
+			`"hello".*`,
+			nil,
+			cty.TupleVal([]cty.Value{
+				cty.StringVal("hello"),
+			}),
+			0,
+		},
+		{
+			// For an "attribute-only" splat, an index operator applies to
+			// the splat result as a whole, rather than being incorporated
+			// into the splat traversal itself.
+			`[{name: "Steve"}, {name: "Ermintrude"}].*.name[0]`,
+			nil,
+			cty.StringVal("Steve"),
+			0,
+		},
+
+		{
 			`["hello"][0]`,
 			nil,
 			cty.StringVal("hello"),

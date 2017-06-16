@@ -498,7 +498,61 @@ Traversal:
 
 				ret = makeRelativeTraversal(ret, step, rng)
 
-			// TODO: TokenStar, for splats
+			case TokenStar:
+				// "Attribute-only" splat expression.
+				// (This is a kinda weird construct inherited from HIL, which
+				// behaves a bit like a [*] splat except that it is only able
+				// to do attribute traversals into each of its elements,
+				// whereas foo[*] can support _any_ traversal.
+				marker := p.Read() // eat star
+				trav := make(zcl.Traversal, 0, 1)
+				var firstRange, lastRange zcl.Range
+				firstRange = p.NextRange()
+				for p.Peek().Type == TokenDot {
+					dot := p.Read()
+					if p.Peek().Type != TokenIdent {
+						if !p.recovery {
+							diags = append(diags, &zcl.Diagnostic{
+								Severity: zcl.DiagError,
+								Summary:  "Invalid attribute name",
+								Detail:   "An attribute name is required after a dot.",
+								Subject:  &attrTok.Range,
+							})
+						}
+						p.setRecovery()
+						continue Traversal
+					}
+
+					attrTok := p.Read()
+					trav = append(trav, zcl.TraverseAttr{
+						Name:     string(attrTok.Bytes),
+						SrcRange: zcl.RangeBetween(dot.Range, attrTok.Range),
+					})
+					lastRange = attrTok.Range
+				}
+
+				itemExpr := &AnonSymbolExpr{
+					SrcRange: zcl.RangeBetween(dot.Range, marker.Range),
+				}
+				var travExpr Expression
+				if len(trav) == 0 {
+					travExpr = itemExpr
+				} else {
+					travExpr = &RelativeTraversalExpr{
+						Source:    itemExpr,
+						Traversal: trav,
+						SrcRange:  zcl.RangeBetween(firstRange, lastRange),
+					}
+				}
+
+				ret = &SplatExpr{
+					Source: ret,
+					Each:   travExpr,
+					Item:   itemExpr,
+
+					SrcRange:    zcl.RangeBetween(dot.Range, lastRange),
+					MarkerRange: zcl.RangeBetween(dot.Range, marker.Range),
+				}
 
 			default:
 				diags = append(diags, &zcl.Diagnostic{
@@ -523,6 +577,8 @@ Traversal:
 			// the key value is something constant.
 
 			open := p.Read()
+			// TODO: If we have a TokenStar inside our brackets, parse as
+			// a Splat expression: foo[*].baz[0].
 			var close Token
 			p.PushIncludeNewlines(false) // arbitrary newlines allowed in brackets
 			keyExpr, keyDiags := p.ParseExpression()
