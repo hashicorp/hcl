@@ -841,3 +841,147 @@ func (e *ForExpr) Range() zcl.Range {
 func (e *ForExpr) StartRange() zcl.Range {
 	return e.OpenRange
 }
+
+type SplatExpr struct {
+	Source Expression
+	Each   Expression
+	Item   *AnonSymbolExpr
+
+	SrcRange    zcl.Range
+	MarkerRange zcl.Range
+}
+
+func (e *SplatExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
+	sourceVal, diags := e.Source.Value(ctx)
+	if diags.HasErrors() {
+		// We'll evaluate our "Each" expression here just to see if it
+		// produces any more diagnostics we can report. Since we're not
+		// assigning a value to our AnonSymbolExpr here it will return
+		// DynamicVal, which should short-circuit any use of it.
+		_, itemDiags := e.Item.Value(ctx)
+		diags = append(diags, itemDiags...)
+		return cty.DynamicVal, diags
+	}
+
+	if sourceVal.IsNull() {
+		diags = append(diags, &zcl.Diagnostic{
+			Severity: zcl.DiagError,
+			Summary:  "Splat of null value",
+			Detail:   "Splat expressions (with the * symbol) cannot be applied to null values.",
+			Subject:  e.Source.Range().Ptr(),
+			Context:  zcl.RangeBetween(e.Source.Range(), e.MarkerRange).Ptr(),
+		})
+		return cty.DynamicVal, diags
+	}
+	if !sourceVal.IsKnown() {
+		return cty.DynamicVal, diags
+	}
+
+	// A "special power" of splat expressions is that they can be applied
+	// both to tuples/lists and to other values, and in the latter case
+	// the value will be treated as an implicit single-value list. We'll
+	// deal with that here first.
+	if !(sourceVal.Type().IsTupleType() || sourceVal.Type().IsListType()) {
+		sourceVal = cty.ListVal([]cty.Value{sourceVal})
+	}
+
+	vals := make([]cty.Value, 0, sourceVal.LengthInt())
+	it := sourceVal.ElementIterator()
+	if ctx == nil {
+		// we need a context to use our AnonSymbolExpr, so we'll just
+		// make an empty one here to use as a placeholder.
+		ctx = ctx.NewChild()
+	}
+	isKnown := true
+	for it.Next() {
+		_, sourceItem := it.Element()
+		e.Item.setValue(ctx, sourceItem)
+		newItem, itemDiags := e.Each.Value(ctx)
+		diags = append(diags, itemDiags...)
+		if itemDiags.HasErrors() {
+			isKnown = false
+		}
+		vals = append(vals, newItem)
+	}
+	e.Item.clearValue(ctx) // clean up our temporary value
+
+	if !isKnown {
+		return cty.DynamicVal, diags
+	}
+
+	return cty.TupleVal(vals), diags
+}
+
+func (e *SplatExpr) walkChildNodes(w internalWalkFunc) {
+	e.Source = w(e.Source).(Expression)
+	e.Each = w(e.Each).(Expression)
+}
+
+func (e *SplatExpr) Range() zcl.Range {
+	return e.SrcRange
+}
+
+func (e *SplatExpr) StartRange() zcl.Range {
+	return e.MarkerRange
+}
+
+// AnonSymbolExpr is used as a placeholder for a value in an expression that
+// can be applied dynamically to any value at runtime.
+//
+// This is a rather odd, synthetic expression. It is used as part of the
+// representation of splat expressions as a placeholder for the current item
+// being visited in the splat evaluation.
+//
+// AnonSymbolExpr cannot be evaluated in isolation. If its Value is called
+// directly then cty.DynamicVal will be returned. Instead, it is evaluated
+// in terms of another node (i.e. a splat expression) which temporarily
+// assigns it a value.
+type AnonSymbolExpr struct {
+	SrcRange zcl.Range
+	values   map[*zcl.EvalContext]cty.Value
+}
+
+func (e *AnonSymbolExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
+	if ctx == nil {
+		return cty.DynamicVal, nil
+	}
+	val, exists := e.values[ctx]
+	if !exists {
+		return cty.DynamicVal, nil
+	}
+	return val, nil
+}
+
+// setValue sets a temporary local value for the expression when evaluated
+// in the given context, which must be non-nil.
+func (e *AnonSymbolExpr) setValue(ctx *zcl.EvalContext, val cty.Value) {
+	if e.values == nil {
+		e.values = make(map[*zcl.EvalContext]cty.Value)
+	}
+	if ctx == nil {
+		panic("can't setValue for a nil EvalContext")
+	}
+	e.values[ctx] = val
+}
+
+func (e *AnonSymbolExpr) clearValue(ctx *zcl.EvalContext) {
+	if e.values == nil {
+		return
+	}
+	if ctx == nil {
+		panic("can't clearValue for a nil EvalContext")
+	}
+	delete(e.values, ctx)
+}
+
+func (e *AnonSymbolExpr) walkChildNodes(w internalWalkFunc) {
+	// AnonSymbolExpr is a leaf node in the tree
+}
+
+func (e *AnonSymbolExpr) Range() zcl.Range {
+	return e.SrcRange
+}
+
+func (e *AnonSymbolExpr) StartRange() zcl.Range {
+	return e.SrcRange
+}

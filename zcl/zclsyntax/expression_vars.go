@@ -7,6 +7,10 @@ import (
 	"github.com/zclconf/go-zcl/zcl"
 )
 
+func (e *AnonSymbolExpr) Variables() []zcl.Traversal {
+	return Variables(e)
+}
+
 func (e *BinaryOpExpr) Variables() []zcl.Traversal {
 	return Variables(e)
 }
@@ -40,6 +44,10 @@ func (e *RelativeTraversalExpr) Variables() []zcl.Traversal {
 }
 
 func (e *ScopeTraversalExpr) Variables() []zcl.Traversal {
+	return Variables(e)
+}
+
+func (e *SplatExpr) Variables() []zcl.Traversal {
 	return Variables(e)
 }
 
