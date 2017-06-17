@@ -52,6 +52,12 @@ func (b *body) Content(schema *zcl.BodySchema) (*zcl.BodyContent, zcl.Diagnostic
 	}
 
 	for k, attr := range b.obj.Attrs {
+		if k == "//" {
+			// Ignore "//" keys in objects representing bodies, to allow
+			// their use as comments.
+			continue
+		}
+
 		if _, ok := hiddenAttrs[k]; !ok {
 			var fixItHint string
 			suggestion := nameSuggestion(k, nameSuggestions)
@@ -140,6 +146,12 @@ func (b *body) PartialContent(schema *zcl.BodySchema) (*zcl.BodyContent, zcl.Bod
 func (b *body) JustAttributes() (zcl.Attributes, zcl.Diagnostics) {
 	attrs := make(map[string]*zcl.Attribute)
 	for name, jsonAttr := range b.obj.Attrs {
+		if name == "//" {
+			// Ignore "//" keys in objects representing bodies, to allow
+			// their use as comments.
+			continue
+		}
+
 		if _, hidden := b.hiddenAttrs[name]; hidden {
 			continue
 		}

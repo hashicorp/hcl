@@ -30,6 +30,19 @@ func TestBodyPartialContent(t *testing.T) {
 			0,
 		},
 		{
+			`{"//": "comment that should be ignored"}`,
+			&zcl.BodySchema{},
+			&zcl.BodyContent{
+				Attributes: map[string]*zcl.Attribute{},
+				MissingItemRange: zcl.Range{
+					Filename: "test.json",
+					Start:    zcl.Pos{Line: 1, Column: 40, Byte: 39},
+					End:      zcl.Pos{Line: 1, Column: 41, Byte: 40},
+				},
+			},
+			0,
+		},
+		{
 			`{"name":"Ermintrude"}`,
 			&zcl.BodySchema{
 				Attributes: []zcl.AttributeSchema{
@@ -619,6 +632,11 @@ func TestBodyContent(t *testing.T) {
 			1,
 		},
 		{
+			`{"//": "comment that should be ignored"}`,
+			&zcl.BodySchema{},
+			0,
+		},
+		{
 			`{"unknow": true}`,
 			&zcl.BodySchema{
 				Attributes: []zcl.AttributeSchema{
@@ -697,6 +715,10 @@ func TestJustAttributes(t *testing.T) {
 					},
 				},
 			},
+		},
+		{
+			`{"//": "comment that should be ignored"}`,
+			map[string]*zcl.Attribute{},
 		},
 	}
 
