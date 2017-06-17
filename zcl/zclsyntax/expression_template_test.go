@@ -128,6 +128,49 @@ trim`,
 			cty.StringVal("truetrimtrue"), // trimming is no-op of neighbors aren't literal strings
 			0,
 		},
+
+		{
+			`!{ if true ~} hello !{~ endif }`,
+			nil,
+			cty.StringVal("hello"),
+			0,
+		},
+		{
+			`!{ if false ~} hello !{~ endif}`,
+			nil,
+			cty.StringVal(""),
+			0,
+		},
+		{
+			`!{ if true ~} hello !{~ else ~} goodbye !{~ endif }`,
+			nil,
+			cty.StringVal("hello"),
+			0,
+		},
+		{
+			`!{ if false ~} hello !{~ else ~} goodbye !{~ endif }`,
+			nil,
+			cty.StringVal("goodbye"),
+			0,
+		},
+		{
+			`!{ if true ~} !{~ if false ~} hello !{~ else ~} goodbye !{~ endif ~} !{~ endif }`,
+			nil,
+			cty.StringVal("goodbye"),
+			0,
+		},
+		{
+			`!{ if false ~} !{~ if false ~} hello !{~ else ~} goodbye !{~ endif ~} !{~ endif }`,
+			nil,
+			cty.StringVal(""),
+			0,
+		},
+		{
+			`!{ of true ~} hello !{~ endif}`,
+			nil,
+			cty.UnknownVal(cty.String),
+			2, // "of" is not a valid control keyword, and "endif" is therefore also unexpected
+		},
 	}
 
 	for _, test := range tests {
