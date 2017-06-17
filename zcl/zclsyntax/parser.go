@@ -4,8 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"strings"
-	"unicode"
 
 	"github.com/apparentlymart/go-textseg/textseg"
 	"github.com/zclconf/go-cty/cty"
@@ -763,12 +761,12 @@ func (p *parser) parseExpressionTerm() (Expression, zcl.Diagnostics) {
 	case TokenOQuote, TokenOHeredoc:
 		open := p.Read() // eat opening marker
 		closer := p.oppositeBracket(open.Type)
-		parts, unwrap, diags := p.parseTemplateParts(closer)
+		exprs, unwrap, _, diags := p.parseTemplateInner(closer)
 
 		closeRange := p.PrevRange()
 
 		return &TemplateExpr{
-			Parts:  parts,
+			Parts:  exprs,
 			Unwrap: unwrap,
 
 			SrcRange: zcl.RangeBetween(open.Range, closeRange),
@@ -1342,142 +1340,6 @@ func (p *parser) finishParsingForExpr(open Token) (Expression, zcl.Diagnostics) 
 	}, diags
 }
 
-func (p *parser) ParseTemplate() (Expression, zcl.Diagnostics) {
-	startRange := p.NextRange()
-	parts, unwrap, diags := p.parseTemplateParts(TokenEOF)
-	endRange := p.PrevRange()
-
-	return &TemplateExpr{
-		Parts:  parts,
-		Unwrap: unwrap,
-
-		SrcRange: zcl.RangeBetween(startRange, endRange),
-	}, diags
-}
-
-// parseTemplateParts parses the expressions that make up the content of a
-// template, up to the given closing delimiter. It also returns a flag that
-// is true if the first part should be returned as-is, or false if the
-// full set of parts should be wrapped in a TemplateExpr to return.
-//
-// The wrapping is done separately by the caller so that any template
-// delimiters can be included in the template's source range.
-func (p *parser) parseTemplateParts(end TokenType) ([]Expression, bool, zcl.Diagnostics) {
-	var parts []Expression
-	var diags zcl.Diagnostics
-
-	startRange := p.NextRange()
-	ltrimNext := false
-	nextCanTrimPrev := false
-
-Token:
-	for {
-		next := p.Read()
-		if next.Type == end {
-			// all done!
-			break
-		}
-
-		ltrim := ltrimNext
-		ltrimNext = false
-		canTrimPrev := nextCanTrimPrev
-		nextCanTrimPrev = false
-
-		switch next.Type {
-		case TokenStringLit, TokenQuotedLit:
-			str, strDiags := p.decodeStringLit(next)
-			diags = append(diags, strDiags...)
-
-			if ltrim {
-				str = strings.TrimLeftFunc(str, unicode.IsSpace)
-			}
-
-			parts = append(parts, &LiteralValueExpr{
-				Val:      cty.StringVal(str),
-				SrcRange: next.Range,
-			})
-			nextCanTrimPrev = true
-
-		case TokenTemplateInterp:
-			// if the opener is ${~ then we want to eat any trailing whitespace
-			// in the preceding literal token, assuming it is indeed a literal
-			// token.
-			if canTrimPrev && len(next.Bytes) == 3 && next.Bytes[2] == '~' && len(parts) > 0 {
-				prevExpr := parts[len(parts)-1]
-				if lexpr, ok := prevExpr.(*LiteralValueExpr); ok {
-					val := lexpr.Val
-					if val.Type() == cty.String && val.IsKnown() && !val.IsNull() {
-						str := val.AsString()
-						str = strings.TrimRightFunc(str, unicode.IsSpace)
-						lexpr.Val = cty.StringVal(str)
-					}
-				}
-			}
-
-			p.PushIncludeNewlines(false)
-			expr, exprDiags := p.ParseExpression()
-			diags = append(diags, exprDiags...)
-			close := p.Peek()
-			if close.Type != TokenTemplateSeqEnd {
-				if !p.recovery {
-					diags = append(diags, &zcl.Diagnostic{
-						Severity: zcl.DiagError,
-						Summary:  "Extra characters after interpolation expression",
-						Detail:   "Expected a closing brace to end the interpolation expression, but found extra characters.",
-						Subject:  &close.Range,
-						Context:  zcl.RangeBetween(startRange, close.Range).Ptr(),
-					})
-				}
-				p.recover(TokenTemplateSeqEnd)
-			} else {
-				p.Read() // eat closing brace
-
-				// If the closer is ~} then we want to eat any leading
-				// whitespace on the next token, if it turns out to be a
-				// literal token.
-				if len(close.Bytes) == 2 && close.Bytes[0] == '~' {
-					ltrimNext = true
-				}
-			}
-			p.PopIncludeNewlines()
-			parts = append(parts, expr)
-		case TokenTemplateControl:
-			panic("template control sequences not yet supported")
-
-		default:
-			if !p.recovery {
-				diags = append(diags, &zcl.Diagnostic{
-					Severity: zcl.DiagError,
-					Summary:  "Unterminated template string",
-					Detail:   "No closing marker was found for the string.",
-					Subject:  &next.Range,
-					Context:  zcl.RangeBetween(startRange, next.Range).Ptr(),
-				})
-			}
-			p.recover(end)
-			break Token
-		}
-	}
-
-	if len(parts) == 0 {
-		// If a sequence has no content, we'll treat it as if it had an
-		// empty string in it because that's what the user probably means
-		// if they write "" in configuration.
-		return []Expression{
-			&LiteralValueExpr{
-				Val: cty.StringVal(""),
-				SrcRange: zcl.Range{
-					Filename: startRange.Filename,
-					Start:    startRange.Start,
-					End:      startRange.Start,
-				},
-			},
-		}, true, diags
-	}
-
-	return parts, len(parts) == 1, diags
-}
-
 // parseQuotedStringLiteral is a helper for parsing quoted strings that
 // aren't allowed to contain any interpolations, such as block labels.
 func (p *parser) parseQuotedStringLiteral() (string, zcl.Range, zcl.Diagnostics) {
@@ -1870,5 +1732,12 @@ func (p *parser) oppositeBracket(ty TokenType) TokenType {
 
 	default:
 		return TokenNil
+	}
+}
+
+func errPlaceholderExpr(rng zcl.Range) Expression {
+	return &LiteralValueExpr{
+		Val:      cty.DynamicVal,
+		SrcRange: rng,
 	}
 }
