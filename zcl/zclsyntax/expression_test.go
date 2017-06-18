@@ -530,6 +530,17 @@ upper(
 			0,
 		},
 		{
+			`{for i, v in ["a", "b", "c", "b", "d"]: v => i}`,
+			nil,
+			cty.ObjectVal(map[string]cty.Value{
+				"a": cty.NumberIntVal(0),
+				"b": cty.NumberIntVal(1),
+				"c": cty.NumberIntVal(2),
+				"d": cty.NumberIntVal(4),
+			}),
+			1, // duplicate key "b"
+		},
+		{
 			`[for v in {hello: "world"}: v...]`,
 			nil,
 			cty.TupleVal([]cty.Value{

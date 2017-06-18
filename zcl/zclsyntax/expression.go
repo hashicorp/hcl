@@ -802,7 +802,21 @@ func (e *ForExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
 				k := key.AsString()
 				groupVals[k] = append(groupVals[k], val)
 			} else {
-				vals[key.AsString()] = val
+				k := key.AsString()
+				if _, exists := vals[k]; exists {
+					diags = append(diags, &zcl.Diagnostic{
+						Severity: zcl.DiagError,
+						Summary:  "Duplicate object key",
+						Detail: fmt.Sprintf(
+							"Two different items produced the key %q in this for expression. If duplicates are expected, use the ellipsis (...) after the value expression to enable grouping by key.",
+							k,
+						),
+						Subject: e.KeyExpr.Range().Ptr(),
+						Context: &e.SrcRange,
+					})
+				} else {
+					vals[key.AsString()] = val
+				}
 			}
 		}
 
