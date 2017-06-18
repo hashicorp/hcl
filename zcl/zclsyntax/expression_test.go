@@ -530,6 +530,22 @@ upper(
 			0,
 		},
 		{
+			`{for i, v in ["a", "b", "c", "b", "d"]: v => i... if i <= 2}`,
+			nil,
+			cty.ObjectVal(map[string]cty.Value{
+				"a": cty.TupleVal([]cty.Value{
+					cty.NumberIntVal(0),
+				}),
+				"b": cty.TupleVal([]cty.Value{
+					cty.NumberIntVal(1),
+				}),
+				"c": cty.TupleVal([]cty.Value{
+					cty.NumberIntVal(2),
+				}),
+			}),
+			0,
+		},
+		{
 			`{for i, v in ["a", "b", "c", "b", "d"]: v => i}`,
 			nil,
 			cty.ObjectVal(map[string]cty.Value{
@@ -589,6 +605,39 @@ upper(
 			},
 			cty.DynamicVal,
 			1, // can't iterate over a string (even if it's unknown)
+		},
+		{
+			`[for v in ["a", "b"]: v if unk]`,
+			&zcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unk": cty.UnknownVal(cty.Bool),
+				},
+			},
+			cty.DynamicVal,
+			0,
+		},
+		{
+			`[for v in ["a", "b"]: v if unk]`,
+			&zcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unk": cty.UnknownVal(cty.Number),
+				},
+			},
+			cty.DynamicVal,
+			0, // if expression must be bool
+		},
+		{
+			`[for v in ["a", "b"]: unk]`,
+			&zcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unk": cty.UnknownVal(cty.String),
+				},
+			},
+			cty.TupleVal([]cty.Value{
+				cty.UnknownVal(cty.String),
+				cty.UnknownVal(cty.String),
+			}),
+			0,
 		},
 
 		{
