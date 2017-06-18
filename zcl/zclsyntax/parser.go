@@ -1331,6 +1331,16 @@ func (p *parser) finishParsingForExpr(open Token) (Expression, zcl.Diagnostics) 
 				Context:  zcl.RangeBetween(open.Range, close.Range).Ptr(),
 			})
 		}
+	} else {
+		if keyExpr == nil {
+			diags = append(diags, &zcl.Diagnostic{
+				Severity: zcl.DiagError,
+				Summary:  "Invalid 'for' expression",
+				Detail:   "Key expression is required when building an object.",
+				Subject:  valExpr.Range().Ptr(),
+				Context:  zcl.RangeBetween(open.Range, close.Range).Ptr(),
+			})
+		}
 	}
 
 	return &ForExpr{

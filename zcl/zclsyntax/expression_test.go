@@ -493,6 +493,72 @@ upper(
 			}),
 			0,
 		},
+		{
+			`[for k, v in {hello: "world"}: k => v]`,
+			nil,
+			cty.ObjectVal(map[string]cty.Value{
+				"hello": cty.StringVal("world"),
+			}),
+			1, // can't have a key expr when producing a tuple
+		},
+		{
+			`{for v in {hello: "world"}: v}`,
+			nil,
+			cty.TupleVal([]cty.Value{
+				cty.StringVal("world"),
+			}),
+			1, // must have a key expr when producing a map
+		},
+		{
+			`[for v in {hello: "world"}: v...]`,
+			nil,
+			cty.TupleVal([]cty.Value{
+				cty.StringVal("world"),
+			}),
+			1, // can't use grouping when producing a tuple
+		},
+		{
+			`[for v in "hello": v]`,
+			nil,
+			cty.DynamicVal,
+			1, // can't iterate over a string
+		},
+		{
+			`[for v in null: v]`,
+			nil,
+			cty.DynamicVal,
+			1, // can't iterate over a null value
+		},
+		{
+			`[for v in unk: v]`,
+			&zcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unk": cty.UnknownVal(cty.List(cty.String)),
+				},
+			},
+			cty.DynamicVal,
+			0,
+		},
+		{
+			`[for v in unk: v]`,
+			&zcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unk": cty.DynamicVal,
+				},
+			},
+			cty.DynamicVal,
+			0,
+		},
+		{
+			`[for v in unk: v]`,
+			&zcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unk": cty.UnknownVal(cty.String),
+				},
+			},
+			cty.DynamicVal,
+			1, // can't iterate over a string (even if it's unknown)
+		},
 
 		{
 			`[{name: "Steve"}, {name: "Ermintrude"}].*.name`,
