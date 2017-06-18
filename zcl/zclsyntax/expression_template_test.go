@@ -171,6 +171,52 @@ trim`,
 			cty.UnknownVal(cty.String),
 			2, // "of" is not a valid control keyword, and "endif" is therefore also unexpected
 		},
+		{
+			`%{ for v in ["a", "b", "c"] }${v}%{ endfor }`,
+			nil,
+			cty.StringVal("abc"),
+			0,
+		},
+		{
+			`%{ for v in ["a", "b", "c"] } ${v} %{ endfor }`,
+			nil,
+			cty.StringVal(" a  b  c "),
+			0,
+		},
+		{
+			`%{ for v in ["a", "b", "c"] ~} ${v} %{~ endfor }`,
+			nil,
+			cty.StringVal("abc"),
+			0,
+		},
+		{
+			`%{ for v in [] }${v}%{ endfor }`,
+			nil,
+			cty.StringVal(""),
+			0,
+		},
+		{
+			`%{ for i, v in ["a", "b", "c"] }${i}${v}%{ endfor }`,
+			nil,
+			cty.StringVal("0a1b2c"),
+			0,
+		},
+		{
+			`%{ for k, v in {"A" = "a", "B" = "b", "C" = "c"} }${k}${v}%{ endfor }`,
+			nil,
+			cty.StringVal("AaBbCc"),
+			0,
+		},
+		{
+			`%{ for v in ["a", "b", "c"] }${v}${nl}%{ endfor }`,
+			&zcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"nl": cty.StringVal("\n"),
+				},
+			},
+			cty.StringVal("a\nb\nc\n"),
+			0,
+		},
 	}
 
 	for _, test := range tests {

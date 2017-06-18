@@ -240,6 +240,103 @@ Token:
 	}, diags
 }
 
+func (p *templateParser) parseFor() (Expression, zcl.Diagnostics) {
+	open := p.Read()
+	openFor, isFor := open.(*templateForToken)
+	if !isFor {
+		// should never happen if caller is behaving
+		panic("parseFor called with peeker not pointing at for token")
+	}
+
+	var contentExprs []Expression
+	var diags zcl.Diagnostics
+	var endforRange zcl.Range
+
+Token:
+	for {
+		next := p.Peek()
+		if end, isEnd := next.(*templateEndToken); isEnd {
+			diags = append(diags, &zcl.Diagnostic{
+				Severity: zcl.DiagError,
+				Summary:  "Unexpected end of template",
+				Detail: fmt.Sprintf(
+					"The for directive at %s is missing its corresponding endfor directive.",
+					openFor.SrcRange,
+				),
+				Subject: &end.SrcRange,
+			})
+			return errPlaceholderExpr(end.SrcRange), diags
+		}
+		if end, isCtrlEnd := next.(*templateEndCtrlToken); isCtrlEnd {
+			p.Read() // eat end directive
+
+			switch end.Type {
+
+			case templateElse:
+				diags = append(diags, &zcl.Diagnostic{
+					Severity: zcl.DiagError,
+					Summary:  "Unexpected else directive",
+					Detail:   "An else clause is not expected for a for directive.",
+					Subject:  &end.SrcRange,
+				})
+
+			case templateEndFor:
+				endforRange = end.SrcRange
+				break Token
+
+			default:
+				diags = append(diags, &zcl.Diagnostic{
+					Severity: zcl.DiagError,
+					Summary:  fmt.Sprintf("Unexpected %s directive", end.Name()),
+					Detail: fmt.Sprintf(
+						"Expecting an endfor directive corresponding to the for directive at %s.",
+						openFor.SrcRange,
+					),
+					Subject: &end.SrcRange,
+				})
+			}
+
+			return errPlaceholderExpr(end.SrcRange), diags
+		}
+
+		expr, exprDiags := p.parseExpr()
+		diags = append(diags, exprDiags...)
+		contentExprs = append(contentExprs, expr)
+	}
+
+	if len(contentExprs) == 0 {
+		contentExprs = append(contentExprs, &LiteralValueExpr{
+			Val: cty.StringVal(""),
+			SrcRange: zcl.Range{
+				Filename: openFor.SrcRange.Filename,
+				Start:    openFor.SrcRange.End,
+				End:      openFor.SrcRange.End,
+			},
+		})
+	}
+
+	contentExpr := &TemplateExpr{
+		Parts:    contentExprs,
+		SrcRange: zcl.RangeBetween(contentExprs[0].Range(), contentExprs[len(contentExprs)-1].Range()),
+	}
+
+	forExpr := &ForExpr{
+		KeyVar: openFor.KeyVar,
+		ValVar: openFor.ValVar,
+
+		CollExpr: openFor.CollExpr,
+		ValExpr:  contentExpr,
+
+		SrcRange:   zcl.RangeBetween(openFor.SrcRange, endforRange),
+		OpenRange:  openFor.SrcRange,
+		CloseRange: endforRange,
+	}
+
+	return &TemplateJoinExpr{
+		Tuple: forExpr,
+	}, diags
+}
+
 func (p *templateParser) Peek() templateToken {
 	return p.Tokens[p.pos]
 }
@@ -354,8 +451,8 @@ Token:
 				if !p.recovery {
 					diags = append(diags, &zcl.Diagnostic{
 						Severity: zcl.DiagError,
-						Summary:  "Invalid template control keyword",
-						Detail:   "A template control keyword (\"if\", \"for\", etc) is expected at the beginning of a !{ sequence.",
+						Summary:  "Invalid template directive",
+						Detail:   "A template directive keyword (\"if\", \"for\", etc) is expected at the beginning of a !{ sequence.",
 						Subject:  &kw.Range,
 						Context:  zcl.RangeBetween(next.Range, kw.Range).Ptr(),
 					})
@@ -385,6 +482,77 @@ Token:
 			case endifKeyword.TokenMatches(kw):
 				parts = append(parts, &templateEndCtrlToken{
 					Type:     templateEndIf,
+					SrcRange: zcl.RangeBetween(next.Range, p.NextRange()),
+				})
+
+			case forKeyword.TokenMatches(kw):
+				var keyName, valName string
+				if p.Peek().Type != TokenIdent {
+					if !p.recovery {
+						diags = append(diags, &zcl.Diagnostic{
+							Severity: zcl.DiagError,
+							Summary:  "Invalid 'for' directive",
+							Detail:   "For directive requires variable name after 'for'.",
+							Subject:  p.Peek().Range.Ptr(),
+						})
+					}
+					p.recover(TokenTemplateSeqEnd)
+					p.PopIncludeNewlines()
+					continue Token
+				}
+
+				valName = string(p.Read().Bytes)
+
+				if p.Peek().Type == TokenComma {
+					// What we just read was actually the key, then.
+					keyName = valName
+					p.Read() // eat comma
+
+					if p.Peek().Type != TokenIdent {
+						if !p.recovery {
+							diags = append(diags, &zcl.Diagnostic{
+								Severity: zcl.DiagError,
+								Summary:  "Invalid 'for' directive",
+								Detail:   "For directive requires value variable name after comma.",
+								Subject:  p.Peek().Range.Ptr(),
+							})
+						}
+						p.recover(TokenTemplateSeqEnd)
+						p.PopIncludeNewlines()
+						continue Token
+					}
+
+					valName = string(p.Read().Bytes)
+				}
+
+				if !inKeyword.TokenMatches(p.Peek()) {
+					if !p.recovery {
+						diags = append(diags, &zcl.Diagnostic{
+							Severity: zcl.DiagError,
+							Summary:  "Invalid 'for' directive",
+							Detail:   "For directive requires 'in' keyword after names.",
+							Subject:  p.Peek().Range.Ptr(),
+						})
+					}
+					p.recover(TokenTemplateSeqEnd)
+					p.PopIncludeNewlines()
+					continue Token
+				}
+				p.Read() // eat 'in' keyword
+
+				collExpr, collDiags := p.ParseExpression()
+				diags = append(diags, collDiags...)
+				parts = append(parts, &templateForToken{
+					KeyVar:   keyName,
+					ValVar:   valName,
+					CollExpr: collExpr,
+
+					SrcRange: zcl.RangeBetween(next.Range, p.NextRange()),
+				})
+
+			case endforKeyword.TokenMatches(kw):
+				parts = append(parts, &templateEndCtrlToken{
+					Type:     templateEndFor,
 					SrcRange: zcl.RangeBetween(next.Range, p.NextRange()),
 				})
 

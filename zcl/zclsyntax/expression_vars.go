@@ -55,6 +55,10 @@ func (e *TemplateExpr) Variables() []zcl.Traversal {
 	return Variables(e)
 }
 
+func (e *TemplateJoinExpr) Variables() []zcl.Traversal {
+	return Variables(e)
+}
+
 func (e *TemplateWrapExpr) Variables() []zcl.Traversal {
 	return Variables(e)
 }
