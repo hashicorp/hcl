@@ -695,6 +695,44 @@ func (e *ForExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
 	childCtx := ctx.NewChild()
 	childCtx.Variables = map[string]cty.Value{}
 
+	// Before we start we'll do an early check to see if any CondExpr we've
+	// been given is of the wrong type. This isn't 100% reliable (it may
+	// be DynamicVal until real values are given) but it should catch some
+	// straightforward cases and prevent a barrage of repeated errors.
+	if e.CondExpr != nil {
+		if e.KeyVar != "" {
+			childCtx.Variables[e.KeyVar] = cty.DynamicVal
+		}
+		childCtx.Variables[e.ValVar] = cty.DynamicVal
+
+		result, condDiags := e.CondExpr.Value(childCtx)
+		diags = append(diags, condDiags...)
+		if result.IsNull() {
+			diags = append(diags, &zcl.Diagnostic{
+				Severity: zcl.DiagError,
+				Summary:  "Condition is null",
+				Detail:   "The value of the 'if' clause must not be null.",
+				Subject:  e.CondExpr.Range().Ptr(),
+				Context:  &e.SrcRange,
+			})
+			return cty.DynamicVal, diags
+		}
+		_, err := convert.Convert(result, cty.Bool)
+		if err != nil {
+			diags = append(diags, &zcl.Diagnostic{
+				Severity: zcl.DiagError,
+				Summary:  "Invalid 'for' condition",
+				Detail:   fmt.Sprintf("The 'if' clause value is invalid: %s.", err.Error()),
+				Subject:  e.CondExpr.Range().Ptr(),
+				Context:  &e.SrcRange,
+			})
+			return cty.DynamicVal, diags
+		}
+		if condDiags.HasErrors() {
+			return cty.DynamicVal, diags
+		}
+	}
+
 	if e.KeyExpr != nil {
 		// Producing an object
 		var vals map[string]cty.Value
@@ -731,14 +769,6 @@ func (e *ForExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
 					known = false
 					continue
 				}
-				if !includeRaw.IsKnown() {
-					// We will eventually return DynamicVal, but we'll continue
-					// iterating in case there are other diagnostics to gather
-					// for later elements.
-					known = false
-					continue
-				}
-
 				include, err := convert.Convert(includeRaw, cty.Bool)
 				if err != nil {
 					if known {
@@ -750,6 +780,10 @@ func (e *ForExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
 							Context:  &e.SrcRange,
 						})
 					}
+					known = false
+					continue
+				}
+				if !include.IsKnown() {
 					known = false
 					continue
 				}

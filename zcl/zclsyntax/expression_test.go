@@ -607,30 +607,56 @@ upper(
 			1, // can't iterate over a string (even if it's unknown)
 		},
 		{
-			`[for v in ["a", "b"]: v if unk]`,
+			`[for v in ["a", "b"]: v if unkbool]`,
 			&zcl.EvalContext{
 				Variables: map[string]cty.Value{
-					"unk": cty.UnknownVal(cty.Bool),
+					"unkbool": cty.UnknownVal(cty.Bool),
 				},
 			},
 			cty.DynamicVal,
 			0,
 		},
 		{
-			`[for v in ["a", "b"]: v if unk]`,
+			`[for v in ["a", "b"]: v if nullbool]`,
 			&zcl.EvalContext{
 				Variables: map[string]cty.Value{
-					"unk": cty.UnknownVal(cty.Number),
+					"nullbool": cty.NullVal(cty.Bool),
 				},
 			},
 			cty.DynamicVal,
-			0, // if expression must be bool
+			1, // value of if clause must not be null
 		},
 		{
-			`[for v in ["a", "b"]: unk]`,
+			`[for v in ["a", "b"]: v if dyn]`,
 			&zcl.EvalContext{
 				Variables: map[string]cty.Value{
-					"unk": cty.UnknownVal(cty.String),
+					"dyn": cty.DynamicVal,
+				},
+			},
+			cty.DynamicVal,
+			0,
+		},
+		{
+			`[for v in ["a", "b"]: v if unknum]`,
+			&zcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unknum": cty.UnknownVal(cty.List(cty.Number)),
+				},
+			},
+			cty.DynamicVal,
+			1, // if expression must be bool
+		},
+		{
+			`[for i, v in ["a", "b"]: v if i + i]`,
+			nil,
+			cty.DynamicVal,
+			1, // if expression must be bool
+		},
+		{
+			`[for v in ["a", "b"]: unkstr]`,
+			&zcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unkstr": cty.UnknownVal(cty.String),
 				},
 			},
 			cty.TupleVal([]cty.Value{
