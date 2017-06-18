@@ -365,7 +365,7 @@ func TestScanTokens_normal(t *testing.T) {
 			},
 		},
 		{
-			`"!{a}"`,
+			`"%{a}"`,
 			[]Token{
 				{
 					Type:  TokenOQuote,
@@ -377,7 +377,7 @@ func TestScanTokens_normal(t *testing.T) {
 				},
 				{
 					Type:  TokenTemplateControl,
-					Bytes: []byte(`!{`),
+					Bytes: []byte(`%{`),
 					Range: zcl.Range{
 						Start: zcl.Pos{Byte: 1, Line: 1, Column: 2},
 						End:   zcl.Pos{Byte: 3, Line: 1, Column: 4},

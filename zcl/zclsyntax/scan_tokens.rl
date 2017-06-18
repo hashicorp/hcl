@@ -193,24 +193,24 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
         }
 
         TemplateInterp = "${" ("~")?;
-        TemplateControl = "!{" ("~")?;
+        TemplateControl = "%{" ("~")?;
         EndStringTmpl = '"';
         StringLiteralChars = (AnyUTF8 - ("\r"|"\n"));
         TemplateStringLiteral = (
             ('$' ^'{') |
-            ('!' ^'{') |
+            ('%' ^'{') |
             ('\\' StringLiteralChars) |
-            (StringLiteralChars - ("$" | "!" | '"'))
+            (StringLiteralChars - ("$" | '%' | '"'))
         )+;
         HeredocStringLiteral = (
             ('$' ^'{') |
-            ('!' ^'{') |
-            (StringLiteralChars - ("$" | "!"))
+            ('%' ^'{') |
+            (StringLiteralChars - ("$" | '%'))
         )*;
         BareStringLiteral = (
             ('$' ^'{') |
-            ('!' ^'{') |
-            (StringLiteralChars - ("$" | "!"))
+            ('%' ^'{') |
+            (StringLiteralChars - ("$" | '%'))
         )* Newline?;
 
         stringTemplate := |*
