@@ -433,7 +433,6 @@ block "valid" {}
 									},
 								},
 							},
-							Unwrap: false,
 
 							SrcRange: zcl.Range{
 								Start: zcl.Pos{Line: 1, Column: 5, Byte: 4},

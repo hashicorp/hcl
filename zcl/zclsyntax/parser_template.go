@@ -14,12 +14,20 @@ func (p *parser) ParseTemplate() (Expression, zcl.Diagnostics) {
 }
 
 func (p *parser) parseTemplate(end TokenType) (Expression, zcl.Diagnostics) {
-	exprs, unwrap, rng, diags := p.parseTemplateInner(end)
+	exprs, passthru, rng, diags := p.parseTemplateInner(end)
+
+	if passthru {
+		if len(exprs) != 1 {
+			panic("passthru set with len(exprs) != 1")
+		}
+		return &TemplateWrapExpr{
+			Wrapped:  exprs[0],
+			SrcRange: rng,
+		}, diags
+	}
 
 	return &TemplateExpr{
-		Parts:  exprs,
-		Unwrap: unwrap,
-
+		Parts:    exprs,
 		SrcRange: rng,
 	}, diags
 }
@@ -33,14 +41,14 @@ func (p *parser) parseTemplateInner(end TokenType) ([]Expression, bool, zcl.Rang
 	exprs, exprsDiags := tp.parseRoot()
 	diags = append(diags, exprsDiags...)
 
-	unwrap := false
+	passthru := false
 	if len(parts.Tokens) == 2 { // one real token and one synthetic "end" token
 		if _, isInterp := parts.Tokens[0].(*templateInterpToken); isInterp {
-			unwrap = true
+			passthru = true
 		}
 	}
 
-	return exprs, unwrap, parts.SrcRange, diags
+	return exprs, passthru, parts.SrcRange, diags
 }
 
 type templateParser struct {
@@ -87,8 +95,7 @@ func (p *templateParser) parseExpr() (Expression, zcl.Diagnostics) {
 		return p.parseIf()
 
 	case *templateForToken:
-		// TODO: implement
-		panic("template for token not yet implemented")
+		return p.parseFor()
 
 	case *templateEndToken:
 		p.Read() // eat erroneous token

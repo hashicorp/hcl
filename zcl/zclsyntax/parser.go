@@ -761,14 +761,22 @@ func (p *parser) parseExpressionTerm() (Expression, zcl.Diagnostics) {
 	case TokenOQuote, TokenOHeredoc:
 		open := p.Read() // eat opening marker
 		closer := p.oppositeBracket(open.Type)
-		exprs, unwrap, _, diags := p.parseTemplateInner(closer)
+		exprs, passthru, _, diags := p.parseTemplateInner(closer)
 
 		closeRange := p.PrevRange()
 
-		return &TemplateExpr{
-			Parts:  exprs,
-			Unwrap: unwrap,
+		if passthru {
+			if len(exprs) != 1 {
+				panic("passthru set with len(exprs) != 1")
+			}
+			return &TemplateWrapExpr{
+				Wrapped:  exprs[0],
+				SrcRange: zcl.RangeBetween(open.Range, closeRange),
+			}, diags
+		}
 
+		return &TemplateExpr{
+			Parts:    exprs,
 			SrcRange: zcl.RangeBetween(open.Range, closeRange),
 		}, diags
 

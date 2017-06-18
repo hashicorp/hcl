@@ -10,8 +10,7 @@ import (
 )
 
 type TemplateExpr struct {
-	Parts  []Expression
-	Unwrap bool
+	Parts []Expression
 
 	SrcRange zcl.Range
 }
@@ -23,14 +22,6 @@ func (e *TemplateExpr) walkChildNodes(w internalWalkFunc) {
 }
 
 func (e *TemplateExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
-	if e.Unwrap {
-		if len(e.Parts) != 1 {
-			// should never happen - parser bug, if so
-			panic("Unwrap set with len(e.Parts) != 1")
-		}
-		return e.Parts[0].Value(ctx)
-	}
-
 	buf := &bytes.Buffer{}
 	var diags zcl.Diagnostics
 	isKnown := true
@@ -92,4 +83,30 @@ func (e *TemplateExpr) Range() zcl.Range {
 
 func (e *TemplateExpr) StartRange() zcl.Range {
 	return e.Parts[0].StartRange()
+}
+
+// TemplateWrapExpr is used instead of a TemplateExpr when a template
+// consists _only_ of a single interpolation sequence. In that case, the
+// template's result is the single interpolation's result, verbatim with
+// no type conversions.
+type TemplateWrapExpr struct {
+	Wrapped Expression
+
+	SrcRange zcl.Range
+}
+
+func (e *TemplateWrapExpr) walkChildNodes(w internalWalkFunc) {
+	e.Wrapped = w(e.Wrapped).(Expression)
+}
+
+func (e *TemplateWrapExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
+	return e.Wrapped.Value(ctx)
+}
+
+func (e *TemplateWrapExpr) Range() zcl.Range {
+	return e.SrcRange
+}
+
+func (e *TemplateWrapExpr) StartRange() zcl.Range {
+	return e.SrcRange
 }
