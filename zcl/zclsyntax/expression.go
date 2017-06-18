@@ -672,7 +672,7 @@ func (e *ForExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
 		})
 		return cty.DynamicVal, diags
 	}
-	if !collVal.IsKnown() {
+	if collVal.Type() == cty.DynamicPseudoType {
 		return cty.DynamicVal, diags
 	}
 	if !collVal.CanIterateElements() {
@@ -686,6 +686,9 @@ func (e *ForExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
 			Subject: e.CollExpr.Range().Ptr(),
 			Context: &e.SrcRange,
 		})
+		return cty.DynamicVal, diags
+	}
+	if !collVal.IsKnown() {
 		return cty.DynamicVal, diags
 	}
 
@@ -800,7 +803,71 @@ func (e *ForExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
 	} else {
 		// Producing a tuple
 		vals := []cty.Value{}
-		panic("for into a tuple is not yet implemented")
+
+		it := collVal.ElementIterator()
+
+		known := true
+		for it.Next() {
+			k, v := it.Element()
+			if e.KeyVar != "" {
+				childCtx.Variables[e.KeyVar] = k
+			}
+			childCtx.Variables[e.ValVar] = v
+
+			if e.CondExpr != nil {
+				includeRaw, condDiags := e.CondExpr.Value(childCtx)
+				diags = append(diags, condDiags...)
+				if includeRaw.IsNull() {
+					if known {
+						diags = append(diags, &zcl.Diagnostic{
+							Severity: zcl.DiagError,
+							Summary:  "Condition is null",
+							Detail:   "The value of the 'if' clause must not be null.",
+							Subject:  e.CondExpr.Range().Ptr(),
+							Context:  &e.SrcRange,
+						})
+					}
+					known = false
+					continue
+				}
+				if !includeRaw.IsKnown() {
+					// We will eventually return DynamicVal, but we'll continue
+					// iterating in case there are other diagnostics to gather
+					// for later elements.
+					known = false
+					continue
+				}
+
+				include, err := convert.Convert(includeRaw, cty.Bool)
+				if err != nil {
+					if known {
+						diags = append(diags, &zcl.Diagnostic{
+							Severity: zcl.DiagError,
+							Summary:  "Invalid 'for' condition",
+							Detail:   fmt.Sprintf("The 'if' clause value is invalid: %s.", err.Error()),
+							Subject:  e.CondExpr.Range().Ptr(),
+							Context:  &e.SrcRange,
+						})
+					}
+					known = false
+					continue
+				}
+
+				if include.False() {
+					// Skip this element
+					continue
+				}
+			}
+
+			val, valDiags := e.ValExpr.Value(childCtx)
+			diags = append(diags, valDiags...)
+			vals = append(vals, val)
+		}
+
+		if !known {
+			return cty.DynamicVal, diags
+		}
+
 		return cty.TupleVal(vals), diags
 	}
 }

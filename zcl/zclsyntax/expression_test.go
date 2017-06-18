@@ -485,6 +485,14 @@ upper(
 			}),
 			0,
 		},
+		{
+			`[for k, v in {hello: "world"}: "${k}=${v}"]`,
+			nil,
+			cty.TupleVal([]cty.Value{
+				cty.StringVal("hello=world"),
+			}),
+			0,
+		},
 
 		{
 			`[{name: "Steve"}, {name: "Ermintrude"}].*.name`,
