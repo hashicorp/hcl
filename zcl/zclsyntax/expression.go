@@ -697,7 +697,13 @@ func (e *ForExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
 
 	if e.KeyExpr != nil {
 		// Producing an object
-		vals := map[string]cty.Value{}
+		var vals map[string]cty.Value
+		var groupVals map[string][]cty.Value
+		if e.Group {
+			groupVals = map[string][]cty.Value{}
+		} else {
+			vals = map[string]cty.Value{}
+		}
 
 		it := collVal.ElementIterator()
 
@@ -791,11 +797,24 @@ func (e *ForExpr) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
 
 			val, valDiags := e.ValExpr.Value(childCtx)
 			diags = append(diags, valDiags...)
-			vals[key.AsString()] = val
+
+			if e.Group {
+				k := key.AsString()
+				groupVals[k] = append(groupVals[k], val)
+			} else {
+				vals[key.AsString()] = val
+			}
 		}
 
 		if !known {
 			return cty.DynamicVal, diags
+		}
+
+		if e.Group {
+			vals = map[string]cty.Value{}
+			for k, gvs := range groupVals {
+				vals[k] = cty.TupleVal(gvs)
+			}
 		}
 
 		return cty.ObjectVal(vals), diags

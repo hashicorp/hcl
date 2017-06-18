@@ -510,6 +510,26 @@ upper(
 			1, // must have a key expr when producing a map
 		},
 		{
+			`{for i, v in ["a", "b", "c", "b", "d"]: v => i...}`,
+			nil,
+			cty.ObjectVal(map[string]cty.Value{
+				"a": cty.TupleVal([]cty.Value{
+					cty.NumberIntVal(0),
+				}),
+				"b": cty.TupleVal([]cty.Value{
+					cty.NumberIntVal(1),
+					cty.NumberIntVal(3),
+				}),
+				"c": cty.TupleVal([]cty.Value{
+					cty.NumberIntVal(2),
+				}),
+				"d": cty.TupleVal([]cty.Value{
+					cty.NumberIntVal(4),
+				}),
+			}),
+			0,
+		},
+		{
 			`[for v in {hello: "world"}: v...]`,
 			nil,
 			cty.TupleVal([]cty.Value{
