@@ -695,32 +695,11 @@ func (p *parser) parseExpressionTerm() (Expression, zcl.Diagnostics) {
 	case TokenNumberLit:
 		tok := p.Read() // eat number token
 
-		// We'll lean on the cty converter to do the conversion, to ensure that
-		// the behavior is the same as what would happen if converting a
-		// non-literal string to a number.
-		numStrVal := cty.StringVal(string(tok.Bytes))
-		numVal, err := convert.Convert(numStrVal, cty.Number)
-		if err != nil {
-			ret := &LiteralValueExpr{
-				Val:      cty.UnknownVal(cty.Number),
-				SrcRange: tok.Range,
-			}
-			return ret, zcl.Diagnostics{
-				{
-					Severity: zcl.DiagError,
-					Summary:  "Invalid number literal",
-					// FIXME: not a very good error message, but convert only
-					// gives us "a number is required", so not much help either.
-					Detail:  "Failed to recognize the value of this number literal.",
-					Subject: &ret.SrcRange,
-				},
-			}
-		}
-
+		numVal, diags := p.numberLitValue(tok)
 		return &LiteralValueExpr{
 			Val:      numVal,
 			SrcRange: tok.Range,
-		}, nil
+		}, diags
 
 	case TokenIdent:
 		tok := p.Read() // eat identifier token
@@ -836,6 +815,28 @@ func (p *parser) parseExpressionTerm() (Expression, zcl.Diagnostics) {
 			SrcRange: start.Range,
 		}, diags
 	}
+}
+
+func (p *parser) numberLitValue(tok Token) (cty.Value, zcl.Diagnostics) {
+	// We'll lean on the cty converter to do the conversion, to ensure that
+	// the behavior is the same as what would happen if converting a
+	// non-literal string to a number.
+	numStrVal := cty.StringVal(string(tok.Bytes))
+	numVal, err := convert.Convert(numStrVal, cty.Number)
+	if err != nil {
+		ret := cty.UnknownVal(cty.Number)
+		return ret, zcl.Diagnostics{
+			{
+				Severity: zcl.DiagError,
+				Summary:  "Invalid number literal",
+				// FIXME: not a very good error message, but convert only
+				// gives us "a number is required", so not much help either.
+				Detail:  "Failed to recognize the value of this number literal.",
+				Subject: &tok.Range,
+			},
+		}
+	}
+	return numVal, nil
 }
 
 // finishParsingFunctionCall parses a function call assuming that the function

@@ -68,6 +68,26 @@ func ParseTemplate(src []byte, filename string, start zcl.Pos) (Expression, zcl.
 	return expr, diags
 }
 
+// ParseTraversalAbs parses the given buffer as a standalone absolute traversal.
+//
+// Parsing as a traversal is more limited than parsing as an expession since
+// it allows only attribute and indexing operations on variables. Traverals
+// are useful as a syntax for referring to objects without necessarily
+// evaluating them.
+func ParseTraversalAbs(src []byte, filename string, start zcl.Pos) (zcl.Traversal, zcl.Diagnostics) {
+	tokens, diags := LexExpression(src, filename, start)
+	peeker := newPeeker(tokens, false)
+	parser := &parser{peeker: peeker}
+
+	// Bare traverals are always parsed in  "ignore newlines" mode, as if
+	// they were wrapped in parentheses.
+	parser.PushIncludeNewlines(false)
+
+	expr, parseDiags := parser.ParseTraversalAbs()
+	diags = append(diags, parseDiags...)
+	return expr, diags
+}
+
 // LexConfig performs lexical analysis on the given buffer, treating it as a
 // whole zcl config file, and returns the resulting tokens.
 //
