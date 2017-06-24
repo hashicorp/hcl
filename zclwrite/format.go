@@ -231,6 +231,10 @@ func spaceAfterToken(subject, before, after *Token) bool {
 		// Don't split a function name from open paren in a call
 		return false
 
+	case subject.Type == zclsyntax.TokenDot || after.Type == zclsyntax.TokenDot:
+		// Don't use spaces around attribute access dots
+		return false
+
 	case after.Type == zclsyntax.TokenComma:
 		// No space right before a comma in an argument list
 		return false
