@@ -1,24 +1,47 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 
+	"github.com/zclconf/go-zcl/zcl"
+	"github.com/zclconf/go-zcl/zclparse"
 	"github.com/zclconf/go-zcl/zclwrite"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 const versionStr = "0.0.1-dev"
 
 var (
+	check       = flag.Bool("check", false, "perform a syntax check on the given files and produce diagnostics")
+	reqNoChange = flag.Bool("require-no-change", false, "return a non-zero status if any files are changed during formatting")
 	overwrite   = flag.Bool("w", false, "overwrite source files instead of writing to stdout")
 	showVersion = flag.Bool("version", false, "show the version number and immediately exit")
 )
 
+var parser = zclparse.NewParser()
+var diagWr zcl.DiagnosticWriter // initialized in init
+var checkErrs = false
+var changed []string
+
+func init() {
+	color := terminal.IsTerminal(int(os.Stderr.Fd()))
+	w, _, err := terminal.GetSize(int(os.Stdout.Fd()))
+	if err != nil {
+		w = 80
+	}
+	diagWr = zcl.NewDiagnosticTextWriter(os.Stderr, parser.Files(), uint(w), color)
+}
+
 func main() {
-	if err := realmain(); err != nil {
+	err := realmain()
+
+	if err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)
 	}
@@ -33,6 +56,25 @@ func realmain() error {
 		return nil
 	}
 
+	err := processFiles()
+	if err != nil {
+		return err
+	}
+
+	if checkErrs {
+		return errors.New("one or more files contained errors")
+	}
+
+	if *reqNoChange {
+		if len(changed) != 0 {
+			return fmt.Errorf("file(s) were changed: %s", strings.Join(changed, ", "))
+		}
+	}
+
+	return nil
+}
+
+func processFiles() error {
 	if flag.NArg() == 0 {
 		if *overwrite {
 			return errors.New("error: cannot use -w without source filenames")
@@ -76,7 +118,20 @@ func processFile(fn string, in *os.File) error {
 		return fmt.Errorf("failed to read %s: %s", fn, err)
 	}
 
+	if *check {
+		_, diags := parser.ParseZCL(inSrc, fn)
+		diagWr.WriteDiagnostics(diags)
+		if diags.HasErrors() {
+			checkErrs = true
+		}
+		return nil
+	}
+
 	outSrc := zclwrite.Format(inSrc)
+
+	if !bytes.Equal(inSrc, outSrc) {
+		changed = append(changed, fn)
+	}
 
 	if *overwrite {
 		return ioutil.WriteFile(fn, outSrc, 0644)
