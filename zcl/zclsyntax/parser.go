@@ -508,6 +508,24 @@ Traversal:
 				firstRange = p.NextRange()
 				for p.Peek().Type == TokenDot {
 					dot := p.Read()
+
+					if p.Peek().Type == TokenNumberLit {
+						// Continuing the "weird stuff inherited from HIL"
+						// theme, we also allow numbers as attribute names
+						// inside splats and interpret them as indexing
+						// into a list, for expressions like:
+						// foo.bar.*.baz.0.foo
+						numTok := p.Read()
+						numVal, numDiags := p.numberLitValue(numTok)
+						diags = append(diags, numDiags...)
+						trav = append(trav, zcl.TraverseIndex{
+							Key:      numVal,
+							SrcRange: zcl.RangeBetween(dot.Range, numTok.Range),
+						})
+						lastRange = numTok.Range
+						continue
+					}
+
 					if p.Peek().Type != TokenIdent {
 						if !p.recovery {
 							if p.Peek().Type == TokenStar {

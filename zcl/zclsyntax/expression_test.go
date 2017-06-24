@@ -701,6 +701,24 @@ upper(
 			0,
 		},
 		{
+			`[["hello"], ["world", "unused"]].*.0`,
+			nil,
+			cty.TupleVal([]cty.Value{
+				cty.StringVal("hello"),
+				cty.StringVal("world"),
+			}),
+			0,
+		},
+		{
+			`[[{name:"foo"}], [{name:"bar"}, {name:"baz"}]].*.0.name`,
+			nil,
+			cty.TupleVal([]cty.Value{
+				cty.StringVal("foo"),
+				cty.StringVal("bar"),
+			}),
+			0,
+		},
+		{
 			// For an "attribute-only" splat, an index operator applies to
 			// the splat result as a whole, rather than being incorporated
 			// into the splat traversal itself.
