@@ -123,8 +123,8 @@ func processFile(fn string, in *os.File) error {
 		diagWr.WriteDiagnostics(diags)
 		if diags.HasErrors() {
 			checkErrs = true
+			return nil
 		}
-		return nil
 	}
 
 	outSrc := zclwrite.Format(inSrc)
