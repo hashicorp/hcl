@@ -34,7 +34,7 @@ func scanTokens(data []byte, filename string, start zcl.Pos, mode scanMode) []To
         BrokenUTF8 = any - AnyUTF8;
 
         NumberLit = digit (digit|'.'|('e'|'E') ('+'|'-')? digit)*;
-        Ident = ID_Start ID_Continue*;
+        Ident = ID_Start (ID_Continue | '-')*;
 
         # Symbols that just represent themselves are handled as a single rule.
         SelfToken = "[" | "]" | "(" | ")" | "." | "," | "*" | "/" | "+" | "-" | "=" | "<" | ">" | "!" | "?" | ":" | "\n" | "&" | "|" | "~" | "^" | ";" | "`";
