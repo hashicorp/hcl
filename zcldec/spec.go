@@ -364,6 +364,27 @@ func (s *BlockListSpec) decode(content *zcl.BodyContent, block *zcl.Block, ctx *
 	panic("BlockListSpec.decode not yet implemented")
 }
 
+func (s *BlockListSpec) sourceRange(content *zcl.BodyContent, block *zcl.Block) zcl.Range {
+	// We return the source range of the _first_ block of the given type,
+	// since they are not guaranteed to form a contiguous range.
+
+	var childBlock *zcl.Block
+	for _, candidate := range content.Blocks {
+		if candidate.Type != s.TypeName {
+			continue
+		}
+
+		childBlock = candidate
+		break
+	}
+
+	if childBlock == nil {
+		return content.MissingItemRange
+	}
+
+	return sourceRange(childBlock.Body, childBlock, s.Nested)
+}
+
 // A BlockSetSpec is a Spec that produces a cty set of the results of
 // decoding all of the nested blocks of a given type, using a nested spec.
 type BlockSetSpec struct {
@@ -379,6 +400,27 @@ func (s *BlockSetSpec) visitSameBodyChildren(cb visitFunc) {
 
 func (s *BlockSetSpec) decode(content *zcl.BodyContent, block *zcl.Block, ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
 	panic("BlockSetSpec.decode not yet implemented")
+}
+
+func (s *BlockSetSpec) sourceRange(content *zcl.BodyContent, block *zcl.Block) zcl.Range {
+	// We return the source range of the _first_ block of the given type,
+	// since they are not guaranteed to form a contiguous range.
+
+	var childBlock *zcl.Block
+	for _, candidate := range content.Blocks {
+		if candidate.Type != s.TypeName {
+			continue
+		}
+
+		childBlock = candidate
+		break
+	}
+
+	if childBlock == nil {
+		return content.MissingItemRange
+	}
+
+	return sourceRange(childBlock.Body, childBlock, s.Nested)
 }
 
 // A BlockMapSpec is a Spec that produces a cty map of the results of
@@ -398,6 +440,27 @@ func (s *BlockMapSpec) visitSameBodyChildren(cb visitFunc) {
 
 func (s *BlockMapSpec) decode(content *zcl.BodyContent, block *zcl.Block, ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
 	panic("BlockMapSpec.decode not yet implemented")
+}
+
+func (s *BlockMapSpec) sourceRange(content *zcl.BodyContent, block *zcl.Block) zcl.Range {
+	// We return the source range of the _first_ block of the given type,
+	// since they are not guaranteed to form a contiguous range.
+
+	var childBlock *zcl.Block
+	for _, candidate := range content.Blocks {
+		if candidate.Type != s.TypeName {
+			continue
+		}
+
+		childBlock = candidate
+		break
+	}
+
+	if childBlock == nil {
+		return content.MissingItemRange
+	}
+
+	return sourceRange(childBlock.Body, childBlock, s.Nested)
 }
 
 // A BlockLabelSpec is a Spec that returns a cty.String representing the
@@ -422,4 +485,12 @@ func (s *BlockLabelSpec) visitSameBodyChildren(cb visitFunc) {
 
 func (s *BlockLabelSpec) decode(content *zcl.BodyContent, block *zcl.Block, ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
 	panic("BlockLabelSpec.decode not yet implemented")
+}
+
+func (s *BlockLabelSpec) sourceRange(content *zcl.BodyContent, block *zcl.Block) zcl.Range {
+	if block == nil {
+		panic("BlockListSpec used in non-block context")
+	}
+
+	return block.LabelRanges[s.Index]
 }
