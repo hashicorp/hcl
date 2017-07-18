@@ -85,6 +85,45 @@ b {
 				},
 			},
 		},
+		{
+			`
+b {
+  a = foo
+}
+b {
+  a = bar
+}
+c {
+  a = baz
+}
+`,
+			&BlockListSpec{
+				TypeName: "b",
+				Nested: &AttrSpec{
+					Name: "a",
+				},
+			},
+			[]zcl.Traversal{
+				{
+					zcl.TraverseRoot{
+						Name: "foo",
+						SrcRange: zcl.Range{
+							Start: zcl.Pos{Line: 3, Column: 7, Byte: 11},
+							End:   zcl.Pos{Line: 3, Column: 10, Byte: 14},
+						},
+					},
+				},
+				{
+					zcl.TraverseRoot{
+						Name: "bar",
+						SrcRange: zcl.Range{
+							Start: zcl.Pos{Line: 6, Column: 7, Byte: 27},
+							End:   zcl.Pos{Line: 6, Column: 10, Byte: 30},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for i, test := range tests {

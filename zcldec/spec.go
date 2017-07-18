@@ -360,8 +360,80 @@ func (s *BlockListSpec) visitSameBodyChildren(cb visitFunc) {
 	// leaf node ("Nested" does not use the same body)
 }
 
+// blockSpec implementation
+func (s *BlockListSpec) blockHeaderSchemata() []zcl.BlockHeaderSchema {
+	return []zcl.BlockHeaderSchema{
+		{
+			Type: s.TypeName,
+			// FIXME: Need to peek into s.Nested to see if it has any
+			// BlockLabelSpec instances, which will define then how many
+			// labels we need.
+		},
+	}
+}
+
+// specNeedingVariables implementation
+func (s *BlockListSpec) variablesNeeded(content *zcl.BodyContent) []zcl.Traversal {
+	var ret []zcl.Traversal
+
+	for _, childBlock := range content.Blocks {
+		if childBlock.Type != s.TypeName {
+			continue
+		}
+
+		ret = append(ret, Variables(childBlock.Body, s.Nested)...)
+	}
+
+	return ret
+}
+
 func (s *BlockListSpec) decode(content *zcl.BodyContent, block *zcl.Block, ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
-	panic("BlockListSpec.decode not yet implemented")
+	var diags zcl.Diagnostics
+
+	if s.Nested == nil {
+		panic("BlockSpec with no Nested Spec")
+	}
+
+	var elems []cty.Value
+	var sourceRanges []zcl.Range
+	for _, childBlock := range content.Blocks {
+		if childBlock.Type != s.TypeName {
+			continue
+		}
+
+		val, _, childDiags := decode(childBlock.Body, childBlock, ctx, s.Nested, false)
+		diags = append(diags, childDiags...)
+		elems = append(elems, val)
+		sourceRanges = append(sourceRanges, sourceRange(childBlock.Body, childBlock, s.Nested))
+	}
+
+	if len(elems) < s.MinItems {
+		diags = append(diags, &zcl.Diagnostic{
+			Severity: zcl.DiagError,
+			Summary:  fmt.Sprintf("insufficient %s blocks", s.TypeName),
+			Detail:   fmt.Sprintf("at least %d blocks are required", s.MinItems),
+			Subject:  &content.MissingItemRange,
+		})
+	} else if s.MaxItems > 0 && len(elems) > s.MaxItems {
+		diags = append(diags, &zcl.Diagnostic{
+			Severity: zcl.DiagError,
+			Summary:  fmt.Sprintf("too many %s blocks", s.TypeName),
+			Detail:   fmt.Sprintf("no more than %d blocks are allowed", s.MaxItems),
+			Subject:  &sourceRanges[s.MaxItems],
+		})
+	}
+
+	var ret cty.Value
+
+	if len(elems) == 0 {
+		// FIXME: We don't currently have enough info to construct a type for
+		// an empty list, so we'll just stub it out.
+		ret = cty.ListValEmpty(cty.DynamicPseudoType)
+	} else {
+		ret = cty.ListVal(elems)
+	}
+
+	return ret, diags
 }
 
 func (s *BlockListSpec) sourceRange(content *zcl.BodyContent, block *zcl.Block) zcl.Range {

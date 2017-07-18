@@ -146,6 +146,58 @@ b {}
 			cty.EmptyObjectVal,
 			1, // only one "b" block is allowed
 		},
+		{
+			`
+b {}
+b {}
+`,
+			&BlockListSpec{
+				TypeName: "b",
+				Nested:   ObjectSpec{},
+			},
+			nil,
+			cty.ListVal([]cty.Value{cty.EmptyObjectVal, cty.EmptyObjectVal}),
+			0,
+		},
+		{
+			``,
+			&BlockListSpec{
+				TypeName: "b",
+				Nested:   ObjectSpec{},
+			},
+			nil,
+			cty.ListValEmpty(cty.DynamicPseudoType),
+			0,
+		},
+		{
+			`
+b {}
+b {}
+b {}
+`,
+			&BlockListSpec{
+				TypeName: "b",
+				Nested:   ObjectSpec{},
+				MaxItems: 2,
+			},
+			nil,
+			cty.ListVal([]cty.Value{cty.EmptyObjectVal, cty.EmptyObjectVal, cty.EmptyObjectVal}),
+			1, // too many b blocks
+		},
+		{
+			`
+b {}
+b {}
+`,
+			&BlockListSpec{
+				TypeName: "b",
+				Nested:   ObjectSpec{},
+				MinItems: 10,
+			},
+			nil,
+			cty.ListVal([]cty.Value{cty.EmptyObjectVal, cty.EmptyObjectVal}),
+			1, // insufficient b blocks
+		},
 	}
 
 	for i, test := range tests {
