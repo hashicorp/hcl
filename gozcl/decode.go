@@ -266,7 +266,7 @@ func DecodeExpression(expr zcl.Expression, ctx *zcl.EvalContext, val interface{}
 		diags = append(diags, &zcl.Diagnostic{
 			Severity: zcl.DiagError,
 			Summary:  "Unsuitable value type",
-			Detail:   fmt.Sprintf("Incorrect value type: %s", err.Error()),
+			Detail:   fmt.Sprintf("Unsuitable value: %s", err.Error()),
 			Subject:  expr.StartRange().Ptr(),
 			Context:  expr.Range().Ptr(),
 		})
@@ -278,7 +278,7 @@ func DecodeExpression(expr zcl.Expression, ctx *zcl.EvalContext, val interface{}
 		diags = append(diags, &zcl.Diagnostic{
 			Severity: zcl.DiagError,
 			Summary:  "Unsuitable value type",
-			Detail:   fmt.Sprintf("Incorrect value type: %s", err.Error()),
+			Detail:   fmt.Sprintf("Unsuitable value: %s", err.Error()),
 			Subject:  expr.StartRange().Ptr(),
 			Context:  expr.Range().Ptr(),
 		})
