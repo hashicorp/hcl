@@ -17,6 +17,7 @@ import (
 	"syscall"
 	"testing"
 
+	"github.com/hashicorp/hcl/hcl/printer"
 	"github.com/hashicorp/hcl/testhelper"
 )
 
@@ -437,4 +438,24 @@ func renderFixtures(parent string) (path string, err error) {
 	}
 
 	return path, nil
+}
+
+func TestRunWithFormatter(t *testing.T) {
+	testFormatterSource := `
+variable "foo" {
+  default = "one"
+}
+`
+	testFormatterExpected := `variable "foo" {
+  default = "two"
+}
+`
+	in := bytes.NewBufferString(testFormatterSource)
+	actual := new(bytes.Buffer)
+	if err := Run(nil, nil, in, actual, Options{Filters: []printer.Filter{&testhelper.TestFilter{}}}); err != nil {
+		t.Fatalf("bad: %s", err)
+	}
+	if testFormatterExpected != actual.String() {
+		t.Fatalf("Expected %s, got %s", testFormatterExpected, actual.String())
+	}
 }
