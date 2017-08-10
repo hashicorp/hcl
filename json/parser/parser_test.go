@@ -338,6 +338,10 @@ func TestParse(t *testing.T) {
 			true,
 		},
 		{
+			"bad_input_missing_close.json",
+			true,
+		},
+		{
 			"good_input_tf_8110.json",
 			false,
 		},
