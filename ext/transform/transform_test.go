@@ -5,8 +5,8 @@ import (
 
 	"reflect"
 
+	"github.com/hashicorp/hcl2/hcltest"
 	"github.com/hashicorp/hcl2/zcl"
-	"github.com/hashicorp/hcl2/zcltest"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -27,9 +27,9 @@ func TestDeep(t *testing.T) {
 		return BodyWithDiagnostics(remain, diags)
 	})
 
-	src := zcltest.MockBody(&zcl.BodyContent{
-		Attributes: zcltest.MockAttrs(map[string]zcl.Expression{
-			"true": zcltest.MockExprLiteral(cty.True),
+	src := hcltest.MockBody(&zcl.BodyContent{
+		Attributes: hcltest.MockAttrs(map[string]zcl.Expression{
+			"true": hcltest.MockExprLiteral(cty.True),
 		}),
 		Blocks: []*zcl.Block{
 			{
@@ -38,7 +38,7 @@ func TestDeep(t *testing.T) {
 			},
 			{
 				Type: "child",
-				Body: zcltest.MockBody(&zcl.BodyContent{
+				Body: hcltest.MockBody(&zcl.BodyContent{
 					Blocks: []*zcl.Block{
 						{
 							Type: "remove",
@@ -70,8 +70,8 @@ func TestDeep(t *testing.T) {
 		}
 	}
 
-	wantAttrs := zcltest.MockAttrs(map[string]zcl.Expression{
-		"true": zcltest.MockExprLiteral(cty.True),
+	wantAttrs := hcltest.MockAttrs(map[string]zcl.Expression{
+		"true": hcltest.MockExprLiteral(cty.True),
 	})
 	if !reflect.DeepEqual(rootContent.Attributes, wantAttrs) {
 		t.Errorf("wrong root attributes\ngot:  %#v\nwant: %#v", rootContent.Attributes, wantAttrs)

@@ -1,7 +1,7 @@
 package userfunc
 
 import (
-	"github.com/hashicorp/hcl2/gozcl"
+	"github.com/hashicorp/hcl2/gohcl"
 	"github.com/hashicorp/hcl2/zcl"
 	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-cty/cty/function"
@@ -72,13 +72,13 @@ func decodeUserFunctions(body zcl.Body, blockType string, contextFunc ContextFun
 		var params []string
 		var varParam string
 
-		paramsDiags := gozcl.DecodeExpression(paramsExpr, nil, &params)
+		paramsDiags := gohcl.DecodeExpression(paramsExpr, nil, &params)
 		diags = append(diags, paramsDiags...)
 		if paramsDiags.HasErrors() {
 			continue
 		}
 		if varParamExpr != nil {
-			paramsDiags := gozcl.DecodeExpression(varParamExpr, nil, &varParam)
+			paramsDiags := gohcl.DecodeExpression(varParamExpr, nil, &varParam)
 			diags = append(diags, paramsDiags...)
 			if paramsDiags.HasErrors() {
 				continue

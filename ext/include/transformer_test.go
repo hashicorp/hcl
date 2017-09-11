@@ -5,36 +5,36 @@ import (
 	"testing"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/hashicorp/hcl2/gozcl"
+	"github.com/hashicorp/hcl2/gohcl"
+	"github.com/hashicorp/hcl2/hcltest"
 	"github.com/hashicorp/hcl2/zcl"
-	"github.com/hashicorp/hcl2/zcltest"
 	"github.com/zclconf/go-cty/cty"
 )
 
 func TestTransformer(t *testing.T) {
-	caller := zcltest.MockBody(&zcl.BodyContent{
+	caller := hcltest.MockBody(&zcl.BodyContent{
 		Blocks: zcl.Blocks{
 			{
 				Type: "include",
-				Body: zcltest.MockBody(&zcl.BodyContent{
-					Attributes: zcltest.MockAttrs(map[string]zcl.Expression{
-						"path": zcltest.MockExprVariable("var_path"),
+				Body: hcltest.MockBody(&zcl.BodyContent{
+					Attributes: hcltest.MockAttrs(map[string]zcl.Expression{
+						"path": hcltest.MockExprVariable("var_path"),
 					}),
 				}),
 			},
 			{
 				Type: "include",
-				Body: zcltest.MockBody(&zcl.BodyContent{
-					Attributes: zcltest.MockAttrs(map[string]zcl.Expression{
-						"path": zcltest.MockExprLiteral(cty.StringVal("include2")),
+				Body: hcltest.MockBody(&zcl.BodyContent{
+					Attributes: hcltest.MockAttrs(map[string]zcl.Expression{
+						"path": hcltest.MockExprLiteral(cty.StringVal("include2")),
 					}),
 				}),
 			},
 			{
 				Type: "foo",
-				Body: zcltest.MockBody(&zcl.BodyContent{
-					Attributes: zcltest.MockAttrs(map[string]zcl.Expression{
-						"from": zcltest.MockExprLiteral(cty.StringVal("caller")),
+				Body: hcltest.MockBody(&zcl.BodyContent{
+					Attributes: hcltest.MockAttrs(map[string]zcl.Expression{
+						"from": hcltest.MockExprLiteral(cty.StringVal("caller")),
 					}),
 				}),
 			},
@@ -42,25 +42,25 @@ func TestTransformer(t *testing.T) {
 	})
 
 	resolver := MapResolver(map[string]zcl.Body{
-		"include1": zcltest.MockBody(&zcl.BodyContent{
+		"include1": hcltest.MockBody(&zcl.BodyContent{
 			Blocks: zcl.Blocks{
 				{
 					Type: "foo",
-					Body: zcltest.MockBody(&zcl.BodyContent{
-						Attributes: zcltest.MockAttrs(map[string]zcl.Expression{
-							"from": zcltest.MockExprLiteral(cty.StringVal("include1")),
+					Body: hcltest.MockBody(&zcl.BodyContent{
+						Attributes: hcltest.MockAttrs(map[string]zcl.Expression{
+							"from": hcltest.MockExprLiteral(cty.StringVal("include1")),
 						}),
 					}),
 				},
 			},
 		}),
-		"include2": zcltest.MockBody(&zcl.BodyContent{
+		"include2": hcltest.MockBody(&zcl.BodyContent{
 			Blocks: zcl.Blocks{
 				{
 					Type: "foo",
-					Body: zcltest.MockBody(&zcl.BodyContent{
-						Attributes: zcltest.MockAttrs(map[string]zcl.Expression{
-							"from": zcltest.MockExprLiteral(cty.StringVal("include2")),
+					Body: hcltest.MockBody(&zcl.BodyContent{
+						Attributes: hcltest.MockAttrs(map[string]zcl.Expression{
+							"from": hcltest.MockExprLiteral(cty.StringVal("include2")),
 						}),
 					}),
 				},
@@ -84,7 +84,7 @@ func TestTransformer(t *testing.T) {
 		Foos []foo `zcl:"foo,block"`
 	}
 	var got result
-	diags := gozcl.DecodeBody(merged, nil, &got)
+	diags := gohcl.DecodeBody(merged, nil, &got)
 	if len(diags) != 0 {
 		t.Errorf("unexpected diags")
 		for _, diag := range diags {

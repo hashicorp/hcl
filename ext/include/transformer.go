@@ -2,7 +2,7 @@ package include
 
 import (
 	"github.com/hashicorp/hcl2/ext/transform"
-	"github.com/hashicorp/hcl2/gozcl"
+	"github.com/hashicorp/hcl2/gohcl"
 	"github.com/hashicorp/hcl2/zcl"
 )
 
@@ -69,7 +69,7 @@ func (t *transformer) TransformBody(in zcl.Body) zcl.Body {
 
 		pathExpr := incContent.Attributes["path"].Expr
 		var path string
-		incDiags = gozcl.DecodeExpression(pathExpr, t.Ctx, &path)
+		incDiags = gohcl.DecodeExpression(pathExpr, t.Ctx, &path)
 		diags = append(diags, incDiags...)
 		if incDiags.HasErrors() {
 			continue

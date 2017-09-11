@@ -4,8 +4,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/hashicorp/hcl2/hclparse"
 	"github.com/hashicorp/hcl2/zcl"
-	"github.com/hashicorp/hcl2/zclparse"
 )
 
 // FileResolver creates and returns a Resolver that interprets include paths
@@ -23,7 +23,7 @@ import (
 // If the path given in configuration ends with ".json" then the referenced
 // file is interpreted as JSON. Otherwise, it is interpreted as zcl native
 // syntax.
-func FileResolver(baseDir string, parser *zclparse.Parser) Resolver {
+func FileResolver(baseDir string, parser *hclparse.Parser) Resolver {
 	return &fileResolver{
 		BaseDir: baseDir,
 		Parser:  parser,
@@ -32,7 +32,7 @@ func FileResolver(baseDir string, parser *zclparse.Parser) Resolver {
 
 type fileResolver struct {
 	BaseDir string
-	Parser  *zclparse.Parser
+	Parser  *hclparse.Parser
 }
 
 func (r fileResolver) ResolveBodyPath(path string, refRange zcl.Range) (zcl.Body, zcl.Diagnostics) {
