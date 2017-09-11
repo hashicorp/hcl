@@ -3,7 +3,7 @@ package include
 import (
 	"github.com/hashicorp/hcl2/ext/transform"
 	"github.com/hashicorp/hcl2/gohcl"
-	"github.com/hashicorp/hcl2/zcl"
+	"github.com/hashicorp/hcl2/hcl"
 )
 
 // Transformer builds a transformer that finds any "include" blocks in a body
@@ -30,10 +30,10 @@ import (
 //    // "body" will now have includes resolved in its own content and that
 //    // of any descendent blocks.
 //
-func Transformer(blockType string, ctx *zcl.EvalContext, resolver Resolver) transform.Transformer {
+func Transformer(blockType string, ctx *hcl.EvalContext, resolver Resolver) transform.Transformer {
 	return &transformer{
-		Schema: &zcl.BodySchema{
-			Blocks: []zcl.BlockHeaderSchema{
+		Schema: &hcl.BodySchema{
+			Blocks: []hcl.BlockHeaderSchema{
 				{
 					Type: blockType,
 				},
@@ -45,12 +45,12 @@ func Transformer(blockType string, ctx *zcl.EvalContext, resolver Resolver) tran
 }
 
 type transformer struct {
-	Schema   *zcl.BodySchema
-	Ctx      *zcl.EvalContext
+	Schema   *hcl.BodySchema
+	Ctx      *hcl.EvalContext
 	Resolver Resolver
 }
 
-func (t *transformer) TransformBody(in zcl.Body) zcl.Body {
+func (t *transformer) TransformBody(in hcl.Body) hcl.Body {
 	content, remain, diags := in.PartialContent(t.Schema)
 
 	if content == nil || len(content.Blocks) == 0 {
@@ -58,7 +58,7 @@ func (t *transformer) TransformBody(in zcl.Body) zcl.Body {
 		return transform.BodyWithDiagnostics(remain, diags)
 	}
 
-	bodies := make([]zcl.Body, 1, len(content.Blocks)+1)
+	bodies := make([]hcl.Body, 1, len(content.Blocks)+1)
 	bodies[0] = remain // content in "remain" takes priority over includes
 	for _, block := range content.Blocks {
 		incContent, incDiags := block.Body.Content(includeBlockSchema)
@@ -79,11 +79,11 @@ func (t *transformer) TransformBody(in zcl.Body) zcl.Body {
 		bodies = append(bodies, transform.BodyWithDiagnostics(incBody, incDiags))
 	}
 
-	return zcl.MergeBodies(bodies)
+	return hcl.MergeBodies(bodies)
 }
 
-var includeBlockSchema = &zcl.BodySchema{
-	Attributes: []zcl.AttributeSchema{
+var includeBlockSchema = &hcl.BodySchema{
+	Attributes: []hcl.AttributeSchema{
 		{
 			Name:     "path",
 			Required: true,

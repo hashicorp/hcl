@@ -6,25 +6,25 @@ import (
 	"testing"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/hashicorp/hcl2/zcl"
+	"github.com/hashicorp/hcl2/hcl"
 )
 
 func TestImpliedBodySchema(t *testing.T) {
 	tests := []struct {
 		val         interface{}
-		wantSchema  *zcl.BodySchema
+		wantSchema  *hcl.BodySchema
 		wantPartial bool
 	}{
 		{
 			struct{}{},
-			&zcl.BodySchema{},
+			&hcl.BodySchema{},
 			false,
 		},
 		{
 			struct {
 				Ignored bool
 			}{},
-			&zcl.BodySchema{},
+			&hcl.BodySchema{},
 			false,
 		},
 		{
@@ -32,8 +32,8 @@ func TestImpliedBodySchema(t *testing.T) {
 				Attr1 bool `zcl:"attr1"`
 				Attr2 bool `zcl:"attr2"`
 			}{},
-			&zcl.BodySchema{
-				Attributes: []zcl.AttributeSchema{
+			&hcl.BodySchema{
+				Attributes: []hcl.AttributeSchema{
 					{
 						Name:     "attr1",
 						Required: true,
@@ -50,8 +50,8 @@ func TestImpliedBodySchema(t *testing.T) {
 			struct {
 				Attr *bool `zcl:"attr,attr"`
 			}{},
-			&zcl.BodySchema{
-				Attributes: []zcl.AttributeSchema{
+			&hcl.BodySchema{
+				Attributes: []hcl.AttributeSchema{
 					{
 						Name:     "attr",
 						Required: false,
@@ -64,8 +64,8 @@ func TestImpliedBodySchema(t *testing.T) {
 			struct {
 				Thing struct{} `zcl:"thing,block"`
 			}{},
-			&zcl.BodySchema{
-				Blocks: []zcl.BlockHeaderSchema{
+			&hcl.BodySchema{
+				Blocks: []hcl.BlockHeaderSchema{
 					{
 						Type: "thing",
 					},
@@ -80,8 +80,8 @@ func TestImpliedBodySchema(t *testing.T) {
 					Name string `zcl:"name,label"`
 				} `zcl:"thing,block"`
 			}{},
-			&zcl.BodySchema{
-				Blocks: []zcl.BlockHeaderSchema{
+			&hcl.BodySchema{
+				Blocks: []hcl.BlockHeaderSchema{
 					{
 						Type:       "thing",
 						LabelNames: []string{"type", "name"},
@@ -97,8 +97,8 @@ func TestImpliedBodySchema(t *testing.T) {
 					Name string `zcl:"name,label"`
 				} `zcl:"thing,block"`
 			}{},
-			&zcl.BodySchema{
-				Blocks: []zcl.BlockHeaderSchema{
+			&hcl.BodySchema{
+				Blocks: []hcl.BlockHeaderSchema{
 					{
 						Type:       "thing",
 						LabelNames: []string{"type", "name"},
@@ -114,8 +114,8 @@ func TestImpliedBodySchema(t *testing.T) {
 					Name string `zcl:"name,label"`
 				} `zcl:"thing,block"`
 			}{},
-			&zcl.BodySchema{
-				Blocks: []zcl.BlockHeaderSchema{
+			&hcl.BodySchema{
+				Blocks: []hcl.BlockHeaderSchema{
 					{
 						Type:       "thing",
 						LabelNames: []string{"type", "name"},
@@ -131,8 +131,8 @@ func TestImpliedBodySchema(t *testing.T) {
 					Something string `zcl:"something"`
 				} `zcl:"thing,block"`
 			}{},
-			&zcl.BodySchema{
-				Blocks: []zcl.BlockHeaderSchema{
+			&hcl.BodySchema{
+				Blocks: []hcl.BlockHeaderSchema{
 					{
 						Type:       "thing",
 						LabelNames: []string{"name"},
@@ -148,14 +148,14 @@ func TestImpliedBodySchema(t *testing.T) {
 					Name string `zcl:"name,label"`
 				} `zcl:"thing,block"`
 			}{},
-			&zcl.BodySchema{
-				Attributes: []zcl.AttributeSchema{
+			&hcl.BodySchema{
+				Attributes: []hcl.AttributeSchema{
 					{
 						Name:     "doodad",
 						Required: true,
 					},
 				},
-				Blocks: []zcl.BlockHeaderSchema{
+				Blocks: []hcl.BlockHeaderSchema{
 					{
 						Type:       "thing",
 						LabelNames: []string{"name"},
@@ -169,8 +169,8 @@ func TestImpliedBodySchema(t *testing.T) {
 				Doodad string `zcl:"doodad"`
 				Config string `zcl:",remain"`
 			}{},
-			&zcl.BodySchema{
-				Attributes: []zcl.AttributeSchema{
+			&hcl.BodySchema{
+				Attributes: []hcl.AttributeSchema{
 					{
 						Name:     "doodad",
 						Required: true,

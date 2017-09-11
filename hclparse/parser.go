@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/hashicorp/hcl2/zcl"
-	"github.com/hashicorp/hcl2/zcl/json"
-	"github.com/hashicorp/hcl2/zcl/zclsyntax"
+	"github.com/hashicorp/hcl2/hcl/hclsyntax"
+	"github.com/hashicorp/hcl2/hcl/json"
+	"github.com/hashicorp/hcl2/hcl"
 )
 
 // NOTE: This is the public interface for parsing. The actual parsers are
@@ -24,25 +24,25 @@ import (
 // and present them together, so returning diagnostics for the same file
 // multiple times would create a confusing result.
 type Parser struct {
-	files map[string]*zcl.File
+	files map[string]*hcl.File
 }
 
 // NewParser creates a new parser, ready to parse configuration files.
 func NewParser() *Parser {
 	return &Parser{
-		files: map[string]*zcl.File{},
+		files: map[string]*hcl.File{},
 	}
 }
 
 // ParseZCL parses the given buffer (which is assumed to have been loaded from
 // the given filename) as a native-syntax configuration file and returns the
-// zcl.File object representing it.
-func (p *Parser) ParseZCL(src []byte, filename string) (*zcl.File, zcl.Diagnostics) {
+// hcl.File object representing it.
+func (p *Parser) ParseZCL(src []byte, filename string) (*hcl.File, hcl.Diagnostics) {
 	if existing := p.files[filename]; existing != nil {
 		return existing, nil
 	}
 
-	file, diags := zclsyntax.ParseConfig(src, filename, zcl.Pos{Byte: 0, Line: 1, Column: 1})
+	file, diags := hclsyntax.ParseConfig(src, filename, hcl.Pos{Byte: 0, Line: 1, Column: 1})
 	p.files[filename] = file
 	return file, diags
 }
@@ -50,16 +50,16 @@ func (p *Parser) ParseZCL(src []byte, filename string) (*zcl.File, zcl.Diagnosti
 // ParseZCLFile reads the given filename and parses it as a native-syntax zcl
 // configuration file. An error diagnostic is returned if the given file
 // cannot be read.
-func (p *Parser) ParseZCLFile(filename string) (*zcl.File, zcl.Diagnostics) {
+func (p *Parser) ParseZCLFile(filename string) (*hcl.File, hcl.Diagnostics) {
 	if existing := p.files[filename]; existing != nil {
 		return existing, nil
 	}
 
 	src, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return nil, zcl.Diagnostics{
+		return nil, hcl.Diagnostics{
 			{
-				Severity: zcl.DiagError,
+				Severity: hcl.DiagError,
 				Summary:  "Failed to read file",
 				Detail:   fmt.Sprintf("The configuration file %q could not be read.", filename),
 			},
@@ -70,8 +70,8 @@ func (p *Parser) ParseZCLFile(filename string) (*zcl.File, zcl.Diagnostics) {
 }
 
 // ParseJSON parses the given JSON buffer (which is assumed to have been loaded
-// from the given filename) and returns the zcl.File object representing it.
-func (p *Parser) ParseJSON(src []byte, filename string) (*zcl.File, zcl.Diagnostics) {
+// from the given filename) and returns the hcl.File object representing it.
+func (p *Parser) ParseJSON(src []byte, filename string) (*hcl.File, hcl.Diagnostics) {
 	if existing := p.files[filename]; existing != nil {
 		return existing, nil
 	}
@@ -83,7 +83,7 @@ func (p *Parser) ParseJSON(src []byte, filename string) (*zcl.File, zcl.Diagnost
 
 // ParseJSONFile reads the given filename and parses it as JSON, similarly to
 // ParseJSON. An error diagnostic is returned if the given file cannot be read.
-func (p *Parser) ParseJSONFile(filename string) (*zcl.File, zcl.Diagnostics) {
+func (p *Parser) ParseJSONFile(filename string) (*hcl.File, hcl.Diagnostics) {
 	if existing := p.files[filename]; existing != nil {
 		return existing, nil
 	}
@@ -95,7 +95,7 @@ func (p *Parser) ParseJSONFile(filename string) (*zcl.File, zcl.Diagnostics) {
 
 // AddFile allows a caller to record in a parser a file that was parsed some
 // other way, thus allowing it to be included in the registry of sources.
-func (p *Parser) AddFile(filename string, file *zcl.File) {
+func (p *Parser) AddFile(filename string, file *hcl.File) {
 	p.files[filename] = file
 }
 
@@ -118,6 +118,6 @@ func (p *Parser) Sources() map[string][]byte {
 //
 // The returned map and all of the objects it refers to directly or indirectly
 // must not be modified.
-func (p *Parser) Files() map[string]*zcl.File {
+func (p *Parser) Files() map[string]*hcl.File {
 	return p.files
 }

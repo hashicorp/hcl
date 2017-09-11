@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/hashicorp/hcl2/zcl"
-	"github.com/hashicorp/hcl2/zcl/zclsyntax"
+	"github.com/hashicorp/hcl2/hcl/hclsyntax"
+	"github.com/hashicorp/hcl2/hcl"
 	"github.com/kylelemons/godebug/pretty"
 )
 
@@ -32,7 +32,7 @@ func TestParse(t *testing.T) {
 							&TokenSeq{
 								Tokens{
 									{
-										Type:         zclsyntax.TokenIdent,
+										Type:         hclsyntax.TokenIdent,
 										Bytes:        []byte(`a`),
 										SpacesBefore: 0,
 									},
@@ -41,7 +41,7 @@ func TestParse(t *testing.T) {
 							&TokenSeq{
 								Tokens{
 									{
-										Type:         zclsyntax.TokenEqual,
+										Type:         hclsyntax.TokenEqual,
 										Bytes:        []byte(`=`),
 										SpacesBefore: 1,
 									},
@@ -50,7 +50,7 @@ func TestParse(t *testing.T) {
 							&TokenSeq{
 								Tokens{
 									{
-										Type:         zclsyntax.TokenNumberLit,
+										Type:         hclsyntax.TokenNumberLit,
 										Bytes:        []byte(`1`),
 										SpacesBefore: 1,
 									},
@@ -59,7 +59,7 @@ func TestParse(t *testing.T) {
 							&TokenSeq{
 								Tokens{
 									{
-										Type:         zclsyntax.TokenNewline,
+										Type:         hclsyntax.TokenNewline,
 										Bytes:        []byte{'\n'},
 										SpacesBefore: 0,
 									},
@@ -68,14 +68,14 @@ func TestParse(t *testing.T) {
 						},
 						NameTokens: &TokenSeq{Tokens{
 							{
-								Type:         zclsyntax.TokenIdent,
+								Type:         hclsyntax.TokenIdent,
 								Bytes:        []byte(`a`),
 								SpacesBefore: 0,
 							},
 						}},
 						EqualsTokens: &TokenSeq{Tokens{
 							{
-								Type:         zclsyntax.TokenEqual,
+								Type:         hclsyntax.TokenEqual,
 								Bytes:        []byte(`=`),
 								SpacesBefore: 1,
 							},
@@ -83,7 +83,7 @@ func TestParse(t *testing.T) {
 						Expr: &Expression{
 							AllTokens: &TokenSeq{Tokens{
 								{
-									Type:         zclsyntax.TokenNumberLit,
+									Type:         hclsyntax.TokenNumberLit,
 									Bytes:        []byte(`1`),
 									SpacesBefore: 1,
 								},
@@ -91,7 +91,7 @@ func TestParse(t *testing.T) {
 						},
 						EOLTokens: &TokenSeq{Tokens{
 							{
-								Type:         zclsyntax.TokenNewline,
+								Type:         hclsyntax.TokenNewline,
 								Bytes:        []byte{'\n'},
 								SpacesBefore: 0,
 							},
@@ -103,7 +103,7 @@ func TestParse(t *testing.T) {
 						&TokenSeq{
 							Tokens{
 								{
-									Type:         zclsyntax.TokenIdent,
+									Type:         hclsyntax.TokenIdent,
 									Bytes:        []byte(`a`),
 									SpacesBefore: 0,
 								},
@@ -112,7 +112,7 @@ func TestParse(t *testing.T) {
 						&TokenSeq{
 							Tokens{
 								{
-									Type:         zclsyntax.TokenEqual,
+									Type:         hclsyntax.TokenEqual,
 									Bytes:        []byte(`=`),
 									SpacesBefore: 1,
 								},
@@ -121,7 +121,7 @@ func TestParse(t *testing.T) {
 						&TokenSeq{
 							Tokens{
 								{
-									Type:         zclsyntax.TokenNumberLit,
+									Type:         hclsyntax.TokenNumberLit,
 									Bytes:        []byte(`1`),
 									SpacesBefore: 1,
 								},
@@ -130,7 +130,7 @@ func TestParse(t *testing.T) {
 						&TokenSeq{
 							Tokens{
 								{
-									Type:         zclsyntax.TokenNewline,
+									Type:         hclsyntax.TokenNewline,
 									Bytes:        []byte{'\n'},
 									SpacesBefore: 0,
 								},
@@ -149,7 +149,7 @@ func TestParse(t *testing.T) {
 							&TokenSeq{
 								Tokens{
 									{
-										Type:         zclsyntax.TokenComment,
+										Type:         hclsyntax.TokenComment,
 										Bytes:        []byte("# aye aye aye\n"),
 										SpacesBefore: 0,
 									},
@@ -158,7 +158,7 @@ func TestParse(t *testing.T) {
 							&TokenSeq{
 								Tokens{
 									{
-										Type:         zclsyntax.TokenIdent,
+										Type:         hclsyntax.TokenIdent,
 										Bytes:        []byte(`a`),
 										SpacesBefore: 0,
 									},
@@ -167,7 +167,7 @@ func TestParse(t *testing.T) {
 							&TokenSeq{
 								Tokens{
 									{
-										Type:         zclsyntax.TokenEqual,
+										Type:         hclsyntax.TokenEqual,
 										Bytes:        []byte(`=`),
 										SpacesBefore: 1,
 									},
@@ -176,7 +176,7 @@ func TestParse(t *testing.T) {
 							&TokenSeq{
 								Tokens{
 									{
-										Type:         zclsyntax.TokenNumberLit,
+										Type:         hclsyntax.TokenNumberLit,
 										Bytes:        []byte(`1`),
 										SpacesBefore: 1,
 									},
@@ -185,7 +185,7 @@ func TestParse(t *testing.T) {
 							&TokenSeq{
 								Tokens{
 									{
-										Type:         zclsyntax.TokenNewline,
+										Type:         hclsyntax.TokenNewline,
 										Bytes:        []byte{'\n'},
 										SpacesBefore: 0,
 									},
@@ -194,21 +194,21 @@ func TestParse(t *testing.T) {
 						},
 						LeadCommentTokens: &TokenSeq{Tokens{
 							{
-								Type:         zclsyntax.TokenComment,
+								Type:         hclsyntax.TokenComment,
 								Bytes:        []byte("# aye aye aye\n"),
 								SpacesBefore: 0,
 							},
 						}},
 						NameTokens: &TokenSeq{Tokens{
 							{
-								Type:         zclsyntax.TokenIdent,
+								Type:         hclsyntax.TokenIdent,
 								Bytes:        []byte(`a`),
 								SpacesBefore: 0,
 							},
 						}},
 						EqualsTokens: &TokenSeq{Tokens{
 							{
-								Type:         zclsyntax.TokenEqual,
+								Type:         hclsyntax.TokenEqual,
 								Bytes:        []byte(`=`),
 								SpacesBefore: 1,
 							},
@@ -216,7 +216,7 @@ func TestParse(t *testing.T) {
 						Expr: &Expression{
 							AllTokens: &TokenSeq{Tokens{
 								{
-									Type:         zclsyntax.TokenNumberLit,
+									Type:         hclsyntax.TokenNumberLit,
 									Bytes:        []byte(`1`),
 									SpacesBefore: 1,
 								},
@@ -224,7 +224,7 @@ func TestParse(t *testing.T) {
 						},
 						EOLTokens: &TokenSeq{Tokens{
 							{
-								Type:         zclsyntax.TokenNewline,
+								Type:         hclsyntax.TokenNewline,
 								Bytes:        []byte{'\n'},
 								SpacesBefore: 0,
 							},
@@ -236,7 +236,7 @@ func TestParse(t *testing.T) {
 						&TokenSeq{
 							Tokens{
 								{
-									Type:         zclsyntax.TokenComment,
+									Type:         hclsyntax.TokenComment,
 									Bytes:        []byte("# aye aye aye\n"),
 									SpacesBefore: 0,
 								},
@@ -245,7 +245,7 @@ func TestParse(t *testing.T) {
 						&TokenSeq{
 							Tokens{
 								{
-									Type:         zclsyntax.TokenIdent,
+									Type:         hclsyntax.TokenIdent,
 									Bytes:        []byte(`a`),
 									SpacesBefore: 0,
 								},
@@ -254,7 +254,7 @@ func TestParse(t *testing.T) {
 						&TokenSeq{
 							Tokens{
 								{
-									Type:         zclsyntax.TokenEqual,
+									Type:         hclsyntax.TokenEqual,
 									Bytes:        []byte(`=`),
 									SpacesBefore: 1,
 								},
@@ -263,7 +263,7 @@ func TestParse(t *testing.T) {
 						&TokenSeq{
 							Tokens{
 								{
-									Type:         zclsyntax.TokenNumberLit,
+									Type:         hclsyntax.TokenNumberLit,
 									Bytes:        []byte(`1`),
 									SpacesBefore: 1,
 								},
@@ -272,7 +272,7 @@ func TestParse(t *testing.T) {
 						&TokenSeq{
 							Tokens{
 								{
-									Type:         zclsyntax.TokenNewline,
+									Type:         hclsyntax.TokenNewline,
 									Bytes:        []byte{'\n'},
 									SpacesBefore: 0,
 								},
@@ -291,7 +291,7 @@ func TestParse(t *testing.T) {
 							&TokenSeq{
 								Tokens{
 									{
-										Type:         zclsyntax.TokenIdent,
+										Type:         hclsyntax.TokenIdent,
 										Bytes:        []byte(`a`),
 										SpacesBefore: 0,
 									},
@@ -300,7 +300,7 @@ func TestParse(t *testing.T) {
 							&TokenSeq{
 								Tokens{
 									{
-										Type:         zclsyntax.TokenEqual,
+										Type:         hclsyntax.TokenEqual,
 										Bytes:        []byte(`=`),
 										SpacesBefore: 1,
 									},
@@ -309,7 +309,7 @@ func TestParse(t *testing.T) {
 							&TokenSeq{
 								Tokens{
 									{
-										Type:         zclsyntax.TokenNumberLit,
+										Type:         hclsyntax.TokenNumberLit,
 										Bytes:        []byte(`1`),
 										SpacesBefore: 1,
 									},
@@ -318,7 +318,7 @@ func TestParse(t *testing.T) {
 							&TokenSeq{
 								Tokens{
 									{
-										Type:         zclsyntax.TokenComment,
+										Type:         hclsyntax.TokenComment,
 										Bytes:        []byte("# because it is\n"),
 										SpacesBefore: 1,
 									},
@@ -327,14 +327,14 @@ func TestParse(t *testing.T) {
 						},
 						NameTokens: &TokenSeq{Tokens{
 							{
-								Type:         zclsyntax.TokenIdent,
+								Type:         hclsyntax.TokenIdent,
 								Bytes:        []byte(`a`),
 								SpacesBefore: 0,
 							},
 						}},
 						EqualsTokens: &TokenSeq{Tokens{
 							{
-								Type:         zclsyntax.TokenEqual,
+								Type:         hclsyntax.TokenEqual,
 								Bytes:        []byte(`=`),
 								SpacesBefore: 1,
 							},
@@ -342,7 +342,7 @@ func TestParse(t *testing.T) {
 						Expr: &Expression{
 							AllTokens: &TokenSeq{Tokens{
 								{
-									Type:         zclsyntax.TokenNumberLit,
+									Type:         hclsyntax.TokenNumberLit,
 									Bytes:        []byte(`1`),
 									SpacesBefore: 1,
 								},
@@ -350,7 +350,7 @@ func TestParse(t *testing.T) {
 						},
 						LineCommentTokens: &TokenSeq{Tokens{
 							{
-								Type:         zclsyntax.TokenComment,
+								Type:         hclsyntax.TokenComment,
 								Bytes:        []byte("# because it is\n"),
 								SpacesBefore: 1,
 							},
@@ -362,7 +362,7 @@ func TestParse(t *testing.T) {
 						&TokenSeq{
 							Tokens{
 								{
-									Type:         zclsyntax.TokenIdent,
+									Type:         hclsyntax.TokenIdent,
 									Bytes:        []byte(`a`),
 									SpacesBefore: 0,
 								},
@@ -371,7 +371,7 @@ func TestParse(t *testing.T) {
 						&TokenSeq{
 							Tokens{
 								{
-									Type:         zclsyntax.TokenEqual,
+									Type:         hclsyntax.TokenEqual,
 									Bytes:        []byte(`=`),
 									SpacesBefore: 1,
 								},
@@ -380,7 +380,7 @@ func TestParse(t *testing.T) {
 						&TokenSeq{
 							Tokens{
 								{
-									Type:         zclsyntax.TokenNumberLit,
+									Type:         hclsyntax.TokenNumberLit,
 									Bytes:        []byte(`1`),
 									SpacesBefore: 1,
 								},
@@ -389,7 +389,7 @@ func TestParse(t *testing.T) {
 						&TokenSeq{
 							Tokens{
 								{
-									Type:         zclsyntax.TokenComment,
+									Type:         hclsyntax.TokenComment,
 									Bytes:        []byte("# because it is\n"),
 									SpacesBefore: 1,
 								},
@@ -408,7 +408,7 @@ func TestParse(t *testing.T) {
 							&TokenSeq{
 								Tokens{
 									{
-										Type:         zclsyntax.TokenIdent,
+										Type:         hclsyntax.TokenIdent,
 										Bytes:        []byte(`b`),
 										SpacesBefore: 0,
 									},
@@ -417,7 +417,7 @@ func TestParse(t *testing.T) {
 							&TokenSeq{
 								Tokens{
 									{
-										Type:         zclsyntax.TokenEqual,
+										Type:         hclsyntax.TokenEqual,
 										Bytes:        []byte(`=`),
 										SpacesBefore: 1,
 									},
@@ -426,7 +426,7 @@ func TestParse(t *testing.T) {
 							&TokenSeq{
 								Tokens{
 									{
-										Type:         zclsyntax.TokenNumberLit,
+										Type:         hclsyntax.TokenNumberLit,
 										Bytes:        []byte(`1`),
 										SpacesBefore: 1,
 									},
@@ -435,7 +435,7 @@ func TestParse(t *testing.T) {
 							&TokenSeq{
 								Tokens{
 									{
-										Type:         zclsyntax.TokenNewline,
+										Type:         hclsyntax.TokenNewline,
 										Bytes:        []byte{'\n'},
 										SpacesBefore: 0,
 									},
@@ -444,14 +444,14 @@ func TestParse(t *testing.T) {
 						},
 						NameTokens: &TokenSeq{Tokens{
 							{
-								Type:         zclsyntax.TokenIdent,
+								Type:         hclsyntax.TokenIdent,
 								Bytes:        []byte(`b`),
 								SpacesBefore: 0,
 							},
 						}},
 						EqualsTokens: &TokenSeq{Tokens{
 							{
-								Type:         zclsyntax.TokenEqual,
+								Type:         hclsyntax.TokenEqual,
 								Bytes:        []byte(`=`),
 								SpacesBefore: 1,
 							},
@@ -459,7 +459,7 @@ func TestParse(t *testing.T) {
 						Expr: &Expression{
 							AllTokens: &TokenSeq{Tokens{
 								{
-									Type:         zclsyntax.TokenNumberLit,
+									Type:         hclsyntax.TokenNumberLit,
 									Bytes:        []byte(`1`),
 									SpacesBefore: 1,
 								},
@@ -467,7 +467,7 @@ func TestParse(t *testing.T) {
 						},
 						EOLTokens: &TokenSeq{Tokens{
 							{
-								Type:         zclsyntax.TokenNewline,
+								Type:         hclsyntax.TokenNewline,
 								Bytes:        []byte{'\n'},
 								SpacesBefore: 0,
 							},
@@ -478,12 +478,12 @@ func TestParse(t *testing.T) {
 					&TokenSeq{
 						Tokens{
 							{
-								Type:         zclsyntax.TokenComment,
+								Type:         hclsyntax.TokenComment,
 								Bytes:        []byte("# bee bee bee\n"),
 								SpacesBefore: 0,
 							},
 							{
-								Type:         zclsyntax.TokenNewline,
+								Type:         hclsyntax.TokenNewline,
 								Bytes:        []byte("\n"),
 								SpacesBefore: 0,
 							},
@@ -493,7 +493,7 @@ func TestParse(t *testing.T) {
 						&TokenSeq{
 							Tokens{
 								{
-									Type:         zclsyntax.TokenIdent,
+									Type:         hclsyntax.TokenIdent,
 									Bytes:        []byte(`b`),
 									SpacesBefore: 0,
 								},
@@ -502,7 +502,7 @@ func TestParse(t *testing.T) {
 						&TokenSeq{
 							Tokens{
 								{
-									Type:         zclsyntax.TokenEqual,
+									Type:         hclsyntax.TokenEqual,
 									Bytes:        []byte(`=`),
 									SpacesBefore: 1,
 								},
@@ -511,7 +511,7 @@ func TestParse(t *testing.T) {
 						&TokenSeq{
 							Tokens{
 								{
-									Type:         zclsyntax.TokenNumberLit,
+									Type:         hclsyntax.TokenNumberLit,
 									Bytes:        []byte(`1`),
 									SpacesBefore: 1,
 								},
@@ -520,7 +520,7 @@ func TestParse(t *testing.T) {
 						&TokenSeq{
 							Tokens{
 								{
-									Type:         zclsyntax.TokenNewline,
+									Type:         hclsyntax.TokenNewline,
 									Bytes:        []byte{'\n'},
 									SpacesBefore: 0,
 								},
@@ -539,7 +539,7 @@ func TestParse(t *testing.T) {
 							&TokenSeq{
 								Tokens{
 									{
-										Type:         zclsyntax.TokenIdent,
+										Type:         hclsyntax.TokenIdent,
 										Bytes:        []byte(`b`),
 										SpacesBefore: 0,
 									},
@@ -548,7 +548,7 @@ func TestParse(t *testing.T) {
 							&TokenSeq{
 								Tokens{
 									{
-										Type:         zclsyntax.TokenOBrace,
+										Type:         hclsyntax.TokenOBrace,
 										Bytes:        []byte(`{`),
 										SpacesBefore: 1,
 									},
@@ -558,7 +558,7 @@ func TestParse(t *testing.T) {
 							&TokenSeq{
 								Tokens{
 									{
-										Type:         zclsyntax.TokenCBrace,
+										Type:         hclsyntax.TokenCBrace,
 										Bytes:        []byte(`}`),
 										SpacesBefore: 0,
 									},
@@ -567,7 +567,7 @@ func TestParse(t *testing.T) {
 							&TokenSeq{
 								Tokens{
 									{
-										Type:         zclsyntax.TokenNewline,
+										Type:         hclsyntax.TokenNewline,
 										Bytes:        []byte{'\n'},
 										SpacesBefore: 0,
 									},
@@ -576,14 +576,14 @@ func TestParse(t *testing.T) {
 						},
 						TypeTokens: &TokenSeq{Tokens{
 							{
-								Type:         zclsyntax.TokenIdent,
+								Type:         hclsyntax.TokenIdent,
 								Bytes:        []byte(`b`),
 								SpacesBefore: 0,
 							},
 						}},
 						OBraceTokens: &TokenSeq{Tokens{
 							{
-								Type:         zclsyntax.TokenOBrace,
+								Type:         hclsyntax.TokenOBrace,
 								Bytes:        []byte(`{`),
 								SpacesBefore: 1,
 							},
@@ -591,14 +591,14 @@ func TestParse(t *testing.T) {
 						Body: &Body{},
 						CBraceTokens: &TokenSeq{Tokens{
 							{
-								Type:         zclsyntax.TokenCBrace,
+								Type:         hclsyntax.TokenCBrace,
 								Bytes:        []byte(`}`),
 								SpacesBefore: 0,
 							},
 						}},
 						EOLTokens: &TokenSeq{Tokens{
 							{
-								Type:         zclsyntax.TokenNewline,
+								Type:         hclsyntax.TokenNewline,
 								Bytes:        []byte{'\n'},
 								SpacesBefore: 0,
 							},
@@ -610,7 +610,7 @@ func TestParse(t *testing.T) {
 						&TokenSeq{
 							Tokens{
 								{
-									Type:         zclsyntax.TokenIdent,
+									Type:         hclsyntax.TokenIdent,
 									Bytes:        []byte(`b`),
 									SpacesBefore: 0,
 								},
@@ -619,7 +619,7 @@ func TestParse(t *testing.T) {
 						&TokenSeq{
 							Tokens{
 								{
-									Type:         zclsyntax.TokenOBrace,
+									Type:         hclsyntax.TokenOBrace,
 									Bytes:        []byte(`{`),
 									SpacesBefore: 1,
 								},
@@ -629,7 +629,7 @@ func TestParse(t *testing.T) {
 						&TokenSeq{
 							Tokens{
 								{
-									Type:         zclsyntax.TokenCBrace,
+									Type:         hclsyntax.TokenCBrace,
 									Bytes:        []byte(`}`),
 									SpacesBefore: 0,
 								},
@@ -638,7 +638,7 @@ func TestParse(t *testing.T) {
 						&TokenSeq{
 							Tokens{
 								{
-									Type:         zclsyntax.TokenNewline,
+									Type:         hclsyntax.TokenNewline,
 									Bytes:        []byte{'\n'},
 									SpacesBefore: 0,
 								},
@@ -657,7 +657,7 @@ func TestParse(t *testing.T) {
 							&TokenSeq{
 								Tokens{
 									{
-										Type:         zclsyntax.TokenIdent,
+										Type:         hclsyntax.TokenIdent,
 										Bytes:        []byte(`b`),
 										SpacesBefore: 0,
 									},
@@ -666,7 +666,7 @@ func TestParse(t *testing.T) {
 							&TokenSeq{
 								Tokens{
 									{
-										Type:         zclsyntax.TokenOBrace,
+										Type:         hclsyntax.TokenOBrace,
 										Bytes:        []byte(`{`),
 										SpacesBefore: 1,
 									},
@@ -676,7 +676,7 @@ func TestParse(t *testing.T) {
 								&TokenSeq{
 									Tokens{
 										{
-											Type:         zclsyntax.TokenNewline,
+											Type:         hclsyntax.TokenNewline,
 											Bytes:        []byte{'\n'},
 											SpacesBefore: 0,
 										},
@@ -686,7 +686,7 @@ func TestParse(t *testing.T) {
 									&TokenSeq{
 										Tokens{
 											{
-												Type:         zclsyntax.TokenIdent,
+												Type:         hclsyntax.TokenIdent,
 												Bytes:        []byte(`a`),
 												SpacesBefore: 2,
 											},
@@ -695,7 +695,7 @@ func TestParse(t *testing.T) {
 									&TokenSeq{
 										Tokens{
 											{
-												Type:         zclsyntax.TokenEqual,
+												Type:         hclsyntax.TokenEqual,
 												Bytes:        []byte(`=`),
 												SpacesBefore: 1,
 											},
@@ -704,7 +704,7 @@ func TestParse(t *testing.T) {
 									&TokenSeq{
 										Tokens{
 											{
-												Type:         zclsyntax.TokenNumberLit,
+												Type:         hclsyntax.TokenNumberLit,
 												Bytes:        []byte(`1`),
 												SpacesBefore: 1,
 											},
@@ -713,7 +713,7 @@ func TestParse(t *testing.T) {
 									&TokenSeq{
 										Tokens{
 											{
-												Type:         zclsyntax.TokenNewline,
+												Type:         hclsyntax.TokenNewline,
 												Bytes:        []byte{'\n'},
 												SpacesBefore: 0,
 											},
@@ -724,7 +724,7 @@ func TestParse(t *testing.T) {
 							&TokenSeq{
 								Tokens{
 									{
-										Type:         zclsyntax.TokenCBrace,
+										Type:         hclsyntax.TokenCBrace,
 										Bytes:        []byte(`}`),
 										SpacesBefore: 0,
 									},
@@ -733,7 +733,7 @@ func TestParse(t *testing.T) {
 							&TokenSeq{
 								Tokens{
 									{
-										Type:         zclsyntax.TokenNewline,
+										Type:         hclsyntax.TokenNewline,
 										Bytes:        []byte{'\n'},
 										SpacesBefore: 0,
 									},
@@ -742,14 +742,14 @@ func TestParse(t *testing.T) {
 						},
 						TypeTokens: &TokenSeq{Tokens{
 							{
-								Type:         zclsyntax.TokenIdent,
+								Type:         hclsyntax.TokenIdent,
 								Bytes:        []byte(`b`),
 								SpacesBefore: 0,
 							},
 						}},
 						OBraceTokens: &TokenSeq{Tokens{
 							{
-								Type:         zclsyntax.TokenOBrace,
+								Type:         hclsyntax.TokenOBrace,
 								Bytes:        []byte(`{`),
 								SpacesBefore: 1,
 							},
@@ -761,7 +761,7 @@ func TestParse(t *testing.T) {
 										&TokenSeq{
 											Tokens{
 												{
-													Type:         zclsyntax.TokenIdent,
+													Type:         hclsyntax.TokenIdent,
 													Bytes:        []byte(`a`),
 													SpacesBefore: 2,
 												},
@@ -770,7 +770,7 @@ func TestParse(t *testing.T) {
 										&TokenSeq{
 											Tokens{
 												{
-													Type:         zclsyntax.TokenEqual,
+													Type:         hclsyntax.TokenEqual,
 													Bytes:        []byte(`=`),
 													SpacesBefore: 1,
 												},
@@ -779,7 +779,7 @@ func TestParse(t *testing.T) {
 										&TokenSeq{
 											Tokens{
 												{
-													Type:         zclsyntax.TokenNumberLit,
+													Type:         hclsyntax.TokenNumberLit,
 													Bytes:        []byte(`1`),
 													SpacesBefore: 1,
 												},
@@ -788,7 +788,7 @@ func TestParse(t *testing.T) {
 										&TokenSeq{
 											Tokens{
 												{
-													Type:         zclsyntax.TokenNewline,
+													Type:         hclsyntax.TokenNewline,
 													Bytes:        []byte{'\n'},
 													SpacesBefore: 0,
 												},
@@ -798,7 +798,7 @@ func TestParse(t *testing.T) {
 									NameTokens: &TokenSeq{
 										Tokens{
 											{
-												Type:         zclsyntax.TokenIdent,
+												Type:         hclsyntax.TokenIdent,
 												Bytes:        []byte(`a`),
 												SpacesBefore: 2,
 											},
@@ -807,7 +807,7 @@ func TestParse(t *testing.T) {
 									EqualsTokens: &TokenSeq{
 										Tokens{
 											{
-												Type:         zclsyntax.TokenEqual,
+												Type:         hclsyntax.TokenEqual,
 												Bytes:        []byte(`=`),
 												SpacesBefore: 1,
 											},
@@ -817,7 +817,7 @@ func TestParse(t *testing.T) {
 										AllTokens: &TokenSeq{
 											Tokens{
 												{
-													Type:         zclsyntax.TokenNumberLit,
+													Type:         hclsyntax.TokenNumberLit,
 													Bytes:        []byte(`1`),
 													SpacesBefore: 1,
 												},
@@ -827,7 +827,7 @@ func TestParse(t *testing.T) {
 									EOLTokens: &TokenSeq{
 										Tokens{
 											{
-												Type:         zclsyntax.TokenNewline,
+												Type:         hclsyntax.TokenNewline,
 												Bytes:        []byte{'\n'},
 												SpacesBefore: 0,
 											},
@@ -839,7 +839,7 @@ func TestParse(t *testing.T) {
 								&TokenSeq{
 									Tokens{
 										{
-											Type:         zclsyntax.TokenNewline,
+											Type:         hclsyntax.TokenNewline,
 											Bytes:        []byte{'\n'},
 											SpacesBefore: 0,
 										},
@@ -849,7 +849,7 @@ func TestParse(t *testing.T) {
 									&TokenSeq{
 										Tokens{
 											{
-												Type:         zclsyntax.TokenIdent,
+												Type:         hclsyntax.TokenIdent,
 												Bytes:        []byte(`a`),
 												SpacesBefore: 2,
 											},
@@ -858,7 +858,7 @@ func TestParse(t *testing.T) {
 									&TokenSeq{
 										Tokens{
 											{
-												Type:         zclsyntax.TokenEqual,
+												Type:         hclsyntax.TokenEqual,
 												Bytes:        []byte(`=`),
 												SpacesBefore: 1,
 											},
@@ -867,7 +867,7 @@ func TestParse(t *testing.T) {
 									&TokenSeq{
 										Tokens{
 											{
-												Type:         zclsyntax.TokenNumberLit,
+												Type:         hclsyntax.TokenNumberLit,
 												Bytes:        []byte(`1`),
 												SpacesBefore: 1,
 											},
@@ -876,7 +876,7 @@ func TestParse(t *testing.T) {
 									&TokenSeq{
 										Tokens{
 											{
-												Type:         zclsyntax.TokenNewline,
+												Type:         hclsyntax.TokenNewline,
 												Bytes:        []byte{'\n'},
 												SpacesBefore: 0,
 											},
@@ -887,14 +887,14 @@ func TestParse(t *testing.T) {
 						},
 						CBraceTokens: &TokenSeq{Tokens{
 							{
-								Type:         zclsyntax.TokenCBrace,
+								Type:         hclsyntax.TokenCBrace,
 								Bytes:        []byte(`}`),
 								SpacesBefore: 0,
 							},
 						}},
 						EOLTokens: &TokenSeq{Tokens{
 							{
-								Type:         zclsyntax.TokenNewline,
+								Type:         hclsyntax.TokenNewline,
 								Bytes:        []byte{'\n'},
 								SpacesBefore: 0,
 							},
@@ -906,7 +906,7 @@ func TestParse(t *testing.T) {
 						&TokenSeq{
 							Tokens{
 								{
-									Type:         zclsyntax.TokenIdent,
+									Type:         hclsyntax.TokenIdent,
 									Bytes:        []byte(`b`),
 									SpacesBefore: 0,
 								},
@@ -915,7 +915,7 @@ func TestParse(t *testing.T) {
 						&TokenSeq{
 							Tokens{
 								{
-									Type:         zclsyntax.TokenOBrace,
+									Type:         hclsyntax.TokenOBrace,
 									Bytes:        []byte(`{`),
 									SpacesBefore: 1,
 								},
@@ -925,7 +925,7 @@ func TestParse(t *testing.T) {
 							&TokenSeq{
 								Tokens{
 									{
-										Type:         zclsyntax.TokenNewline,
+										Type:         hclsyntax.TokenNewline,
 										Bytes:        []byte{'\n'},
 										SpacesBefore: 0,
 									},
@@ -935,7 +935,7 @@ func TestParse(t *testing.T) {
 								&TokenSeq{
 									Tokens{
 										{
-											Type:         zclsyntax.TokenIdent,
+											Type:         hclsyntax.TokenIdent,
 											Bytes:        []byte(`a`),
 											SpacesBefore: 2,
 										},
@@ -944,7 +944,7 @@ func TestParse(t *testing.T) {
 								&TokenSeq{
 									Tokens{
 										{
-											Type:         zclsyntax.TokenEqual,
+											Type:         hclsyntax.TokenEqual,
 											Bytes:        []byte(`=`),
 											SpacesBefore: 1,
 										},
@@ -953,7 +953,7 @@ func TestParse(t *testing.T) {
 								&TokenSeq{
 									Tokens{
 										{
-											Type:         zclsyntax.TokenNumberLit,
+											Type:         hclsyntax.TokenNumberLit,
 											Bytes:        []byte(`1`),
 											SpacesBefore: 1,
 										},
@@ -962,7 +962,7 @@ func TestParse(t *testing.T) {
 								&TokenSeq{
 									Tokens{
 										{
-											Type:         zclsyntax.TokenNewline,
+											Type:         hclsyntax.TokenNewline,
 											Bytes:        []byte{'\n'},
 											SpacesBefore: 0,
 										},
@@ -973,7 +973,7 @@ func TestParse(t *testing.T) {
 						&TokenSeq{
 							Tokens{
 								{
-									Type:         zclsyntax.TokenCBrace,
+									Type:         hclsyntax.TokenCBrace,
 									Bytes:        []byte(`}`),
 									SpacesBefore: 0,
 								},
@@ -982,7 +982,7 @@ func TestParse(t *testing.T) {
 						&TokenSeq{
 							Tokens{
 								{
-									Type:         zclsyntax.TokenNewline,
+									Type:         hclsyntax.TokenNewline,
 									Bytes:        []byte{'\n'},
 									SpacesBefore: 0,
 								},
@@ -1002,7 +1002,7 @@ func TestParse(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.src, func(t *testing.T) {
-			file, diags := parse([]byte(test.src), "", zcl.Pos{Line: 1, Column: 1})
+			file, diags := parse([]byte(test.src), "", hcl.Pos{Line: 1, Column: 1})
 			if len(diags) > 0 {
 				for _, diag := range diags {
 					t.Logf(" - %s", diag.Error())
@@ -1035,126 +1035,126 @@ func TestParse(t *testing.T) {
 
 func TestPartitionTokens(t *testing.T) {
 	tests := []struct {
-		tokens    zclsyntax.Tokens
-		rng       zcl.Range
+		tokens    hclsyntax.Tokens
+		rng       hcl.Range
 		wantStart int
 		wantEnd   int
 	}{
 		{
-			zclsyntax.Tokens{},
-			zcl.Range{
-				Start: zcl.Pos{Byte: 0},
-				End:   zcl.Pos{Byte: 0},
+			hclsyntax.Tokens{},
+			hcl.Range{
+				Start: hcl.Pos{Byte: 0},
+				End:   hcl.Pos{Byte: 0},
 			},
 			0,
 			0,
 		},
 		{
-			zclsyntax.Tokens{
+			hclsyntax.Tokens{
 				{
-					Type: zclsyntax.TokenIdent,
-					Range: zcl.Range{
-						Start: zcl.Pos{Byte: 0},
-						End:   zcl.Pos{Byte: 4},
+					Type: hclsyntax.TokenIdent,
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 0},
+						End:   hcl.Pos{Byte: 4},
 					},
 				},
 			},
-			zcl.Range{
-				Start: zcl.Pos{Byte: 0},
-				End:   zcl.Pos{Byte: 4},
+			hcl.Range{
+				Start: hcl.Pos{Byte: 0},
+				End:   hcl.Pos{Byte: 4},
 			},
 			0,
 			1,
 		},
 		{
-			zclsyntax.Tokens{
+			hclsyntax.Tokens{
 				{
-					Type: zclsyntax.TokenIdent,
-					Range: zcl.Range{
-						Start: zcl.Pos{Byte: 0},
-						End:   zcl.Pos{Byte: 4},
+					Type: hclsyntax.TokenIdent,
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 0},
+						End:   hcl.Pos{Byte: 4},
 					},
 				},
 				{
-					Type: zclsyntax.TokenIdent,
-					Range: zcl.Range{
-						Start: zcl.Pos{Byte: 4},
-						End:   zcl.Pos{Byte: 8},
+					Type: hclsyntax.TokenIdent,
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 4},
+						End:   hcl.Pos{Byte: 8},
 					},
 				},
 				{
-					Type: zclsyntax.TokenIdent,
-					Range: zcl.Range{
-						Start: zcl.Pos{Byte: 8},
-						End:   zcl.Pos{Byte: 12},
+					Type: hclsyntax.TokenIdent,
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 8},
+						End:   hcl.Pos{Byte: 12},
 					},
 				},
 			},
-			zcl.Range{
-				Start: zcl.Pos{Byte: 4},
-				End:   zcl.Pos{Byte: 8},
+			hcl.Range{
+				Start: hcl.Pos{Byte: 4},
+				End:   hcl.Pos{Byte: 8},
 			},
 			1,
 			2,
 		},
 		{
-			zclsyntax.Tokens{
+			hclsyntax.Tokens{
 				{
-					Type: zclsyntax.TokenIdent,
-					Range: zcl.Range{
-						Start: zcl.Pos{Byte: 0},
-						End:   zcl.Pos{Byte: 4},
+					Type: hclsyntax.TokenIdent,
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 0},
+						End:   hcl.Pos{Byte: 4},
 					},
 				},
 				{
-					Type: zclsyntax.TokenIdent,
-					Range: zcl.Range{
-						Start: zcl.Pos{Byte: 4},
-						End:   zcl.Pos{Byte: 8},
+					Type: hclsyntax.TokenIdent,
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 4},
+						End:   hcl.Pos{Byte: 8},
 					},
 				},
 				{
-					Type: zclsyntax.TokenIdent,
-					Range: zcl.Range{
-						Start: zcl.Pos{Byte: 8},
-						End:   zcl.Pos{Byte: 12},
+					Type: hclsyntax.TokenIdent,
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 8},
+						End:   hcl.Pos{Byte: 12},
 					},
 				},
 			},
-			zcl.Range{
-				Start: zcl.Pos{Byte: 0},
-				End:   zcl.Pos{Byte: 8},
+			hcl.Range{
+				Start: hcl.Pos{Byte: 0},
+				End:   hcl.Pos{Byte: 8},
 			},
 			0,
 			2,
 		},
 		{
-			zclsyntax.Tokens{
+			hclsyntax.Tokens{
 				{
-					Type: zclsyntax.TokenIdent,
-					Range: zcl.Range{
-						Start: zcl.Pos{Byte: 0},
-						End:   zcl.Pos{Byte: 4},
+					Type: hclsyntax.TokenIdent,
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 0},
+						End:   hcl.Pos{Byte: 4},
 					},
 				},
 				{
-					Type: zclsyntax.TokenIdent,
-					Range: zcl.Range{
-						Start: zcl.Pos{Byte: 4},
-						End:   zcl.Pos{Byte: 8},
+					Type: hclsyntax.TokenIdent,
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 4},
+						End:   hcl.Pos{Byte: 8},
 					},
 				},
 				{
-					Type: zclsyntax.TokenIdent,
-					Range: zcl.Range{
-						Start: zcl.Pos{Byte: 8},
-						End:   zcl.Pos{Byte: 12},
+					Type: hclsyntax.TokenIdent,
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 8},
+						End:   hcl.Pos{Byte: 12},
 					},
 				},
 			},
-			zcl.Range{
-				Start: zcl.Pos{Byte: 4},
-				End:   zcl.Pos{Byte: 12},
+			hcl.Range{
+				Start: hcl.Pos{Byte: 4},
+				End:   hcl.Pos{Byte: 12},
 			},
 			1,
 			3,
@@ -1185,53 +1185,53 @@ func TestPartitionTokens(t *testing.T) {
 
 func TestPartitionLeadCommentTokens(t *testing.T) {
 	tests := []struct {
-		tokens    zclsyntax.Tokens
+		tokens    hclsyntax.Tokens
 		wantStart int
 	}{
 		{
-			zclsyntax.Tokens{},
+			hclsyntax.Tokens{},
 			0,
 		},
 		{
-			zclsyntax.Tokens{
+			hclsyntax.Tokens{
 				{
-					Type: zclsyntax.TokenComment,
+					Type: hclsyntax.TokenComment,
 				},
 			},
 			0,
 		},
 		{
-			zclsyntax.Tokens{
+			hclsyntax.Tokens{
 				{
-					Type: zclsyntax.TokenComment,
+					Type: hclsyntax.TokenComment,
 				},
 				{
-					Type: zclsyntax.TokenComment,
+					Type: hclsyntax.TokenComment,
 				},
 			},
 			0,
 		},
 		{
-			zclsyntax.Tokens{
+			hclsyntax.Tokens{
 				{
-					Type: zclsyntax.TokenComment,
+					Type: hclsyntax.TokenComment,
 				},
 				{
-					Type: zclsyntax.TokenNewline,
+					Type: hclsyntax.TokenNewline,
 				},
 			},
 			2,
 		},
 		{
-			zclsyntax.Tokens{
+			hclsyntax.Tokens{
 				{
-					Type: zclsyntax.TokenComment,
+					Type: hclsyntax.TokenComment,
 				},
 				{
-					Type: zclsyntax.TokenNewline,
+					Type: hclsyntax.TokenNewline,
 				},
 				{
-					Type: zclsyntax.TokenComment,
+					Type: hclsyntax.TokenComment,
 				},
 			},
 			2,
@@ -1268,17 +1268,17 @@ func TestLexConfig(t *testing.T) {
 			`a  b `,
 			Tokens{
 				{
-					Type:         zclsyntax.TokenIdent,
+					Type:         hclsyntax.TokenIdent,
 					Bytes:        []byte(`a`),
 					SpacesBefore: 0,
 				},
 				{
-					Type:         zclsyntax.TokenIdent,
+					Type:         hclsyntax.TokenIdent,
 					Bytes:        []byte(`b`),
 					SpacesBefore: 2,
 				},
 				{
-					Type:         zclsyntax.TokenEOF,
+					Type:         hclsyntax.TokenEOF,
 					Bytes:        []byte{},
 					SpacesBefore: 1,
 				},
@@ -1292,97 +1292,97 @@ foo "bar" "baz" {
 `,
 			Tokens{
 				{
-					Type:         zclsyntax.TokenNewline,
+					Type:         hclsyntax.TokenNewline,
 					Bytes:        []byte{'\n'},
 					SpacesBefore: 0,
 				},
 				{
-					Type:         zclsyntax.TokenIdent,
+					Type:         hclsyntax.TokenIdent,
 					Bytes:        []byte(`foo`),
 					SpacesBefore: 0,
 				},
 				{
-					Type:         zclsyntax.TokenOQuote,
+					Type:         hclsyntax.TokenOQuote,
 					Bytes:        []byte(`"`),
 					SpacesBefore: 1,
 				},
 				{
-					Type:         zclsyntax.TokenQuotedLit,
+					Type:         hclsyntax.TokenQuotedLit,
 					Bytes:        []byte(`bar`),
 					SpacesBefore: 0,
 				},
 				{
-					Type:         zclsyntax.TokenCQuote,
+					Type:         hclsyntax.TokenCQuote,
 					Bytes:        []byte(`"`),
 					SpacesBefore: 0,
 				},
 				{
-					Type:         zclsyntax.TokenOQuote,
+					Type:         hclsyntax.TokenOQuote,
 					Bytes:        []byte(`"`),
 					SpacesBefore: 1,
 				},
 				{
-					Type:         zclsyntax.TokenQuotedLit,
+					Type:         hclsyntax.TokenQuotedLit,
 					Bytes:        []byte(`baz`),
 					SpacesBefore: 0,
 				},
 				{
-					Type:         zclsyntax.TokenCQuote,
+					Type:         hclsyntax.TokenCQuote,
 					Bytes:        []byte(`"`),
 					SpacesBefore: 0,
 				},
 				{
-					Type:         zclsyntax.TokenOBrace,
+					Type:         hclsyntax.TokenOBrace,
 					Bytes:        []byte(`{`),
 					SpacesBefore: 1,
 				},
 				{
-					Type:         zclsyntax.TokenNewline,
+					Type:         hclsyntax.TokenNewline,
 					Bytes:        []byte("\n"),
 					SpacesBefore: 0,
 				},
 				{
-					Type:         zclsyntax.TokenIdent,
+					Type:         hclsyntax.TokenIdent,
 					Bytes:        []byte(`pizza`),
 					SpacesBefore: 4,
 				},
 				{
-					Type:         zclsyntax.TokenEqual,
+					Type:         hclsyntax.TokenEqual,
 					Bytes:        []byte(`=`),
 					SpacesBefore: 1,
 				},
 				{
-					Type:         zclsyntax.TokenOQuote,
+					Type:         hclsyntax.TokenOQuote,
 					Bytes:        []byte(`"`),
 					SpacesBefore: 1,
 				},
 				{
-					Type:         zclsyntax.TokenQuotedLit,
+					Type:         hclsyntax.TokenQuotedLit,
 					Bytes:        []byte(` cheese `),
 					SpacesBefore: 0,
 				},
 				{
-					Type:         zclsyntax.TokenCQuote,
+					Type:         hclsyntax.TokenCQuote,
 					Bytes:        []byte(`"`),
 					SpacesBefore: 0,
 				},
 				{
-					Type:         zclsyntax.TokenNewline,
+					Type:         hclsyntax.TokenNewline,
 					Bytes:        []byte("\n"),
 					SpacesBefore: 0,
 				},
 				{
-					Type:         zclsyntax.TokenCBrace,
+					Type:         hclsyntax.TokenCBrace,
 					Bytes:        []byte(`}`),
 					SpacesBefore: 0,
 				},
 				{
-					Type:         zclsyntax.TokenNewline,
+					Type:         hclsyntax.TokenNewline,
 					Bytes:        []byte("\n"),
 					SpacesBefore: 0,
 				},
 				{
-					Type:         zclsyntax.TokenEOF,
+					Type:         hclsyntax.TokenEOF,
 					Bytes:        []byte{},
 					SpacesBefore: 0,
 				},

@@ -3,12 +3,12 @@ package hcldec
 import (
 	"fmt"
 
-	"github.com/hashicorp/hcl2/zcl"
+	"github.com/hashicorp/hcl2/hcl"
 	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-cty/cty/convert"
 )
 
-// A Spec is a description of how to decode a zcl.Body to a cty.Value.
+// A Spec is a description of how to decode a hcl.Body to a cty.Value.
 //
 // The various other types in this package whose names end in "Spec" are
 // the spec implementations. The most common top-level spec is ObjectSpec,
@@ -19,7 +19,7 @@ type Spec interface {
 	//
 	// "block" is provided only by the nested calls performed by the spec
 	// types that work on block bodies.
-	decode(content *zcl.BodyContent, block *zcl.Block, ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics)
+	decode(content *hcl.BodyContent, block *hcl.Block, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics)
 
 	// Call the given callback once for each of the nested specs that would
 	// get decoded with the same body and block as the receiver. This should
@@ -30,7 +30,7 @@ type Spec interface {
 	// spec in the given content, in the context of the given block
 	// (which might be null). If the corresponding item is missing, return
 	// a place where it might be inserted.
-	sourceRange(content *zcl.BodyContent, block *zcl.Block) zcl.Range
+	sourceRange(content *hcl.BodyContent, block *hcl.Block) hcl.Range
 }
 
 type visitFunc func(spec Spec)
@@ -41,18 +41,18 @@ type ObjectSpec map[string]Spec
 
 // attrSpec is implemented by specs that require attributes from the body.
 type attrSpec interface {
-	attrSchemata() []zcl.AttributeSchema
+	attrSchemata() []hcl.AttributeSchema
 }
 
 // blockSpec is implemented by specs that require blocks from the body.
 type blockSpec interface {
-	blockHeaderSchemata() []zcl.BlockHeaderSchema
+	blockHeaderSchemata() []hcl.BlockHeaderSchema
 }
 
 // specNeedingVariables is implemented by specs that can use variables
 // from the EvalContext, to declare which variables they need.
 type specNeedingVariables interface {
-	variablesNeeded(content *zcl.BodyContent) []zcl.Traversal
+	variablesNeeded(content *hcl.BodyContent) []hcl.Traversal
 }
 
 func (s ObjectSpec) visitSameBodyChildren(cb visitFunc) {
@@ -61,12 +61,12 @@ func (s ObjectSpec) visitSameBodyChildren(cb visitFunc) {
 	}
 }
 
-func (s ObjectSpec) decode(content *zcl.BodyContent, block *zcl.Block, ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
+func (s ObjectSpec) decode(content *hcl.BodyContent, block *hcl.Block, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	vals := make(map[string]cty.Value, len(s))
-	var diags zcl.Diagnostics
+	var diags hcl.Diagnostics
 
 	for k, spec := range s {
-		var kd zcl.Diagnostics
+		var kd hcl.Diagnostics
 		vals[k], kd = spec.decode(content, block, ctx)
 		diags = append(diags, kd...)
 	}
@@ -74,7 +74,7 @@ func (s ObjectSpec) decode(content *zcl.BodyContent, block *zcl.Block, ctx *zcl.
 	return cty.ObjectVal(vals), diags
 }
 
-func (s ObjectSpec) sourceRange(content *zcl.BodyContent, block *zcl.Block) zcl.Range {
+func (s ObjectSpec) sourceRange(content *hcl.BodyContent, block *hcl.Block) hcl.Range {
 	if block != nil {
 		return block.DefRange
 	}
@@ -95,12 +95,12 @@ func (s TupleSpec) visitSameBodyChildren(cb visitFunc) {
 	}
 }
 
-func (s TupleSpec) decode(content *zcl.BodyContent, block *zcl.Block, ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
+func (s TupleSpec) decode(content *hcl.BodyContent, block *hcl.Block, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	vals := make([]cty.Value, len(s))
-	var diags zcl.Diagnostics
+	var diags hcl.Diagnostics
 
 	for i, spec := range s {
-		var ed zcl.Diagnostics
+		var ed hcl.Diagnostics
 		vals[i], ed = spec.decode(content, block, ctx)
 		diags = append(diags, ed...)
 	}
@@ -108,7 +108,7 @@ func (s TupleSpec) decode(content *zcl.BodyContent, block *zcl.Block, ctx *zcl.E
 	return cty.TupleVal(vals), diags
 }
 
-func (s TupleSpec) sourceRange(content *zcl.BodyContent, block *zcl.Block) zcl.Range {
+func (s TupleSpec) sourceRange(content *hcl.BodyContent, block *hcl.Block) hcl.Range {
 	if block != nil {
 		return block.DefRange
 	}
@@ -133,7 +133,7 @@ func (s *AttrSpec) visitSameBodyChildren(cb visitFunc) {
 }
 
 // specNeedingVariables implementation
-func (s *AttrSpec) variablesNeeded(content *zcl.BodyContent) []zcl.Traversal {
+func (s *AttrSpec) variablesNeeded(content *hcl.BodyContent) []hcl.Traversal {
 	attr, exists := content.Attributes[s.Name]
 	if !exists {
 		return nil
@@ -143,8 +143,8 @@ func (s *AttrSpec) variablesNeeded(content *zcl.BodyContent) []zcl.Traversal {
 }
 
 // attrSpec implementation
-func (s *AttrSpec) attrSchemata() []zcl.AttributeSchema {
-	return []zcl.AttributeSchema{
+func (s *AttrSpec) attrSchemata() []hcl.AttributeSchema {
+	return []hcl.AttributeSchema{
 		{
 			Name:     s.Name,
 			Required: s.Required,
@@ -152,7 +152,7 @@ func (s *AttrSpec) attrSchemata() []zcl.AttributeSchema {
 	}
 }
 
-func (s *AttrSpec) sourceRange(content *zcl.BodyContent, block *zcl.Block) zcl.Range {
+func (s *AttrSpec) sourceRange(content *hcl.BodyContent, block *hcl.Block) hcl.Range {
 	attr, exists := content.Attributes[s.Name]
 	if !exists {
 		return content.MissingItemRange
@@ -161,7 +161,7 @@ func (s *AttrSpec) sourceRange(content *zcl.BodyContent, block *zcl.Block) zcl.R
 	return attr.Expr.Range()
 }
 
-func (s *AttrSpec) decode(content *zcl.BodyContent, block *zcl.Block, ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
+func (s *AttrSpec) decode(content *hcl.BodyContent, block *hcl.Block, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	attr, exists := content.Attributes[s.Name]
 	if !exists {
 		// We don't need to check required and emit a diagnostic here, because
@@ -173,15 +173,15 @@ func (s *AttrSpec) decode(content *zcl.BodyContent, block *zcl.Block, ctx *zcl.E
 
 	convVal, err := convert.Convert(val, s.Type)
 	if err != nil {
-		diags = append(diags, &zcl.Diagnostic{
-			Severity: zcl.DiagError,
+		diags = append(diags, &hcl.Diagnostic{
+			Severity: hcl.DiagError,
 			Summary:  "Incorrect attribute value type",
 			Detail: fmt.Sprintf(
 				"Inappropriate value for attribute %q: %s.",
 				s.Name, err.Error(),
 			),
 			Subject: attr.Expr.StartRange().Ptr(),
-			Context: zcl.RangeBetween(attr.NameRange, attr.Expr.StartRange()).Ptr(),
+			Context: hcl.RangeBetween(attr.NameRange, attr.Expr.StartRange()).Ptr(),
 		})
 		// We'll return an unknown value of the _correct_ type so that the
 		// incomplete result can still be used for some analysis use-cases.
@@ -203,14 +203,14 @@ func (s *LiteralSpec) visitSameBodyChildren(cb visitFunc) {
 	// leaf node
 }
 
-func (s *LiteralSpec) decode(content *zcl.BodyContent, block *zcl.Block, ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
+func (s *LiteralSpec) decode(content *hcl.BodyContent, block *hcl.Block, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	return s.Value, nil
 }
 
-func (s *LiteralSpec) sourceRange(content *zcl.BodyContent, block *zcl.Block) zcl.Range {
+func (s *LiteralSpec) sourceRange(content *hcl.BodyContent, block *hcl.Block) hcl.Range {
 	// No sensible range to return for a literal, so the caller had better
 	// ensure it doesn't cause any diagnostics.
-	return zcl.Range{
+	return hcl.Range{
 		Filename: "<unknown>",
 	}
 }
@@ -218,7 +218,7 @@ func (s *LiteralSpec) sourceRange(content *zcl.BodyContent, block *zcl.Block) zc
 // An ExprSpec is a Spec that evaluates the given expression, ignoring the
 // given body.
 type ExprSpec struct {
-	Expr zcl.Expression
+	Expr hcl.Expression
 }
 
 func (s *ExprSpec) visitSameBodyChildren(cb visitFunc) {
@@ -226,15 +226,15 @@ func (s *ExprSpec) visitSameBodyChildren(cb visitFunc) {
 }
 
 // specNeedingVariables implementation
-func (s *ExprSpec) variablesNeeded(content *zcl.BodyContent) []zcl.Traversal {
+func (s *ExprSpec) variablesNeeded(content *hcl.BodyContent) []hcl.Traversal {
 	return s.Expr.Variables()
 }
 
-func (s *ExprSpec) decode(content *zcl.BodyContent, block *zcl.Block, ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
+func (s *ExprSpec) decode(content *hcl.BodyContent, block *hcl.Block, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	return s.Expr.Value(ctx)
 }
 
-func (s *ExprSpec) sourceRange(content *zcl.BodyContent, block *zcl.Block) zcl.Range {
+func (s *ExprSpec) sourceRange(content *hcl.BodyContent, block *hcl.Block) hcl.Range {
 	return s.Expr.Range()
 }
 
@@ -255,8 +255,8 @@ func (s *BlockSpec) visitSameBodyChildren(cb visitFunc) {
 }
 
 // blockSpec implementation
-func (s *BlockSpec) blockHeaderSchemata() []zcl.BlockHeaderSchema {
-	return []zcl.BlockHeaderSchema{
+func (s *BlockSpec) blockHeaderSchemata() []hcl.BlockHeaderSchema {
+	return []hcl.BlockHeaderSchema{
 		{
 			Type: s.TypeName,
 		},
@@ -264,8 +264,8 @@ func (s *BlockSpec) blockHeaderSchemata() []zcl.BlockHeaderSchema {
 }
 
 // specNeedingVariables implementation
-func (s *BlockSpec) variablesNeeded(content *zcl.BodyContent) []zcl.Traversal {
-	var childBlock *zcl.Block
+func (s *BlockSpec) variablesNeeded(content *hcl.BodyContent) []hcl.Traversal {
+	var childBlock *hcl.Block
 	for _, candidate := range content.Blocks {
 		if candidate.Type != s.TypeName {
 			continue
@@ -282,18 +282,18 @@ func (s *BlockSpec) variablesNeeded(content *zcl.BodyContent) []zcl.Traversal {
 	return Variables(childBlock.Body, s.Nested)
 }
 
-func (s *BlockSpec) decode(content *zcl.BodyContent, block *zcl.Block, ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
-	var diags zcl.Diagnostics
+func (s *BlockSpec) decode(content *hcl.BodyContent, block *hcl.Block, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
+	var diags hcl.Diagnostics
 
-	var childBlock *zcl.Block
+	var childBlock *hcl.Block
 	for _, candidate := range content.Blocks {
 		if candidate.Type != s.TypeName {
 			continue
 		}
 
 		if childBlock != nil {
-			diags = append(diags, &zcl.Diagnostic{
-				Severity: zcl.DiagError,
+			diags = append(diags, &hcl.Diagnostic{
+				Severity: hcl.DiagError,
 				Summary:  fmt.Sprintf("Duplicate %s block", s.TypeName),
 				Detail: fmt.Sprintf(
 					"Only one block of type %q is allowed. Previous definition was at %s.",
@@ -309,8 +309,8 @@ func (s *BlockSpec) decode(content *zcl.BodyContent, block *zcl.Block, ctx *zcl.
 
 	if childBlock == nil {
 		if s.Required {
-			diags = append(diags, &zcl.Diagnostic{
-				Severity: zcl.DiagError,
+			diags = append(diags, &hcl.Diagnostic{
+				Severity: hcl.DiagError,
 				Summary:  fmt.Sprintf("Missing %s block", s.TypeName),
 				Detail: fmt.Sprintf(
 					"A block of type %q is required here.", s.TypeName,
@@ -329,8 +329,8 @@ func (s *BlockSpec) decode(content *zcl.BodyContent, block *zcl.Block, ctx *zcl.
 	return val, diags
 }
 
-func (s *BlockSpec) sourceRange(content *zcl.BodyContent, block *zcl.Block) zcl.Range {
-	var childBlock *zcl.Block
+func (s *BlockSpec) sourceRange(content *hcl.BodyContent, block *hcl.Block) hcl.Range {
+	var childBlock *hcl.Block
 	for _, candidate := range content.Blocks {
 		if candidate.Type != s.TypeName {
 			continue
@@ -361,8 +361,8 @@ func (s *BlockListSpec) visitSameBodyChildren(cb visitFunc) {
 }
 
 // blockSpec implementation
-func (s *BlockListSpec) blockHeaderSchemata() []zcl.BlockHeaderSchema {
-	return []zcl.BlockHeaderSchema{
+func (s *BlockListSpec) blockHeaderSchemata() []hcl.BlockHeaderSchema {
+	return []hcl.BlockHeaderSchema{
 		{
 			Type: s.TypeName,
 			// FIXME: Need to peek into s.Nested to see if it has any
@@ -373,8 +373,8 @@ func (s *BlockListSpec) blockHeaderSchemata() []zcl.BlockHeaderSchema {
 }
 
 // specNeedingVariables implementation
-func (s *BlockListSpec) variablesNeeded(content *zcl.BodyContent) []zcl.Traversal {
-	var ret []zcl.Traversal
+func (s *BlockListSpec) variablesNeeded(content *hcl.BodyContent) []hcl.Traversal {
+	var ret []hcl.Traversal
 
 	for _, childBlock := range content.Blocks {
 		if childBlock.Type != s.TypeName {
@@ -387,15 +387,15 @@ func (s *BlockListSpec) variablesNeeded(content *zcl.BodyContent) []zcl.Traversa
 	return ret
 }
 
-func (s *BlockListSpec) decode(content *zcl.BodyContent, block *zcl.Block, ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
-	var diags zcl.Diagnostics
+func (s *BlockListSpec) decode(content *hcl.BodyContent, block *hcl.Block, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
+	var diags hcl.Diagnostics
 
 	if s.Nested == nil {
 		panic("BlockSpec with no Nested Spec")
 	}
 
 	var elems []cty.Value
-	var sourceRanges []zcl.Range
+	var sourceRanges []hcl.Range
 	for _, childBlock := range content.Blocks {
 		if childBlock.Type != s.TypeName {
 			continue
@@ -408,15 +408,15 @@ func (s *BlockListSpec) decode(content *zcl.BodyContent, block *zcl.Block, ctx *
 	}
 
 	if len(elems) < s.MinItems {
-		diags = append(diags, &zcl.Diagnostic{
-			Severity: zcl.DiagError,
+		diags = append(diags, &hcl.Diagnostic{
+			Severity: hcl.DiagError,
 			Summary:  fmt.Sprintf("insufficient %s blocks", s.TypeName),
 			Detail:   fmt.Sprintf("at least %d blocks are required", s.MinItems),
 			Subject:  &content.MissingItemRange,
 		})
 	} else if s.MaxItems > 0 && len(elems) > s.MaxItems {
-		diags = append(diags, &zcl.Diagnostic{
-			Severity: zcl.DiagError,
+		diags = append(diags, &hcl.Diagnostic{
+			Severity: hcl.DiagError,
 			Summary:  fmt.Sprintf("too many %s blocks", s.TypeName),
 			Detail:   fmt.Sprintf("no more than %d blocks are allowed", s.MaxItems),
 			Subject:  &sourceRanges[s.MaxItems],
@@ -436,11 +436,11 @@ func (s *BlockListSpec) decode(content *zcl.BodyContent, block *zcl.Block, ctx *
 	return ret, diags
 }
 
-func (s *BlockListSpec) sourceRange(content *zcl.BodyContent, block *zcl.Block) zcl.Range {
+func (s *BlockListSpec) sourceRange(content *hcl.BodyContent, block *hcl.Block) hcl.Range {
 	// We return the source range of the _first_ block of the given type,
 	// since they are not guaranteed to form a contiguous range.
 
-	var childBlock *zcl.Block
+	var childBlock *hcl.Block
 	for _, candidate := range content.Blocks {
 		if candidate.Type != s.TypeName {
 			continue
@@ -470,15 +470,15 @@ func (s *BlockSetSpec) visitSameBodyChildren(cb visitFunc) {
 	// leaf node ("Nested" does not use the same body)
 }
 
-func (s *BlockSetSpec) decode(content *zcl.BodyContent, block *zcl.Block, ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
+func (s *BlockSetSpec) decode(content *hcl.BodyContent, block *hcl.Block, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	panic("BlockSetSpec.decode not yet implemented")
 }
 
-func (s *BlockSetSpec) sourceRange(content *zcl.BodyContent, block *zcl.Block) zcl.Range {
+func (s *BlockSetSpec) sourceRange(content *hcl.BodyContent, block *hcl.Block) hcl.Range {
 	// We return the source range of the _first_ block of the given type,
 	// since they are not guaranteed to form a contiguous range.
 
-	var childBlock *zcl.Block
+	var childBlock *hcl.Block
 	for _, candidate := range content.Blocks {
 		if candidate.Type != s.TypeName {
 			continue
@@ -510,15 +510,15 @@ func (s *BlockMapSpec) visitSameBodyChildren(cb visitFunc) {
 	// leaf node ("Nested" does not use the same body)
 }
 
-func (s *BlockMapSpec) decode(content *zcl.BodyContent, block *zcl.Block, ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
+func (s *BlockMapSpec) decode(content *hcl.BodyContent, block *hcl.Block, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	panic("BlockMapSpec.decode not yet implemented")
 }
 
-func (s *BlockMapSpec) sourceRange(content *zcl.BodyContent, block *zcl.Block) zcl.Range {
+func (s *BlockMapSpec) sourceRange(content *hcl.BodyContent, block *hcl.Block) hcl.Range {
 	// We return the source range of the _first_ block of the given type,
 	// since they are not guaranteed to form a contiguous range.
 
-	var childBlock *zcl.Block
+	var childBlock *hcl.Block
 	for _, candidate := range content.Blocks {
 		if candidate.Type != s.TypeName {
 			continue
@@ -555,11 +555,11 @@ func (s *BlockLabelSpec) visitSameBodyChildren(cb visitFunc) {
 	// leaf node
 }
 
-func (s *BlockLabelSpec) decode(content *zcl.BodyContent, block *zcl.Block, ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
+func (s *BlockLabelSpec) decode(content *hcl.BodyContent, block *hcl.Block, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	panic("BlockLabelSpec.decode not yet implemented")
 }
 
-func (s *BlockLabelSpec) sourceRange(content *zcl.BodyContent, block *zcl.Block) zcl.Range {
+func (s *BlockLabelSpec) sourceRange(content *hcl.BodyContent, block *hcl.Block) hcl.Range {
 	if block == nil {
 		panic("BlockListSpec used in non-block context")
 	}

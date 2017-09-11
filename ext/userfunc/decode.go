@@ -2,13 +2,13 @@ package userfunc
 
 import (
 	"github.com/hashicorp/hcl2/gohcl"
-	"github.com/hashicorp/hcl2/zcl"
+	"github.com/hashicorp/hcl2/hcl"
 	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-cty/cty/function"
 )
 
-var funcBodySchema = &zcl.BodySchema{
-	Attributes: []zcl.AttributeSchema{
+var funcBodySchema = &hcl.BodySchema{
+	Attributes: []hcl.AttributeSchema{
 		{
 			Name:     "params",
 			Required: true,
@@ -24,9 +24,9 @@ var funcBodySchema = &zcl.BodySchema{
 	},
 }
 
-func decodeUserFunctions(body zcl.Body, blockType string, contextFunc ContextFunc) (funcs map[string]function.Function, remain zcl.Body, diags zcl.Diagnostics) {
-	schema := &zcl.BodySchema{
-		Blocks: []zcl.BlockHeaderSchema{
+func decodeUserFunctions(body hcl.Body, blockType string, contextFunc ContextFunc) (funcs map[string]function.Function, remain hcl.Body, diags hcl.Diagnostics) {
+	schema := &hcl.BodySchema{
+		Blocks: []hcl.BlockHeaderSchema{
 			{
 				Type:       blockType,
 				LabelNames: []string{"name"},
@@ -42,8 +42,8 @@ func decodeUserFunctions(body zcl.Body, blockType string, contextFunc ContextFun
 	// first call to getBaseCtx will populate context, and then the same
 	// context will be used for all subsequent calls. It's assumed that
 	// all functions in a given body should see an identical context.
-	var baseCtx *zcl.EvalContext
-	getBaseCtx := func() *zcl.EvalContext {
+	var baseCtx *hcl.EvalContext
+	getBaseCtx := func() *hcl.EvalContext {
 		if baseCtx == nil {
 			if contextFunc != nil {
 				baseCtx = contextFunc()
@@ -64,7 +64,7 @@ func decodeUserFunctions(body zcl.Body, blockType string, contextFunc ContextFun
 
 		paramsExpr := funcContent.Attributes["params"].Expr
 		resultExpr := funcContent.Attributes["result"].Expr
-		var varParamExpr zcl.Expression
+		var varParamExpr hcl.Expression
 		if funcContent.Attributes["variadic_param"] != nil {
 			varParamExpr = funcContent.Attributes["variadic_param"].Expr
 		}

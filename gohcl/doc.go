@@ -19,11 +19,11 @@
 //    label indicates that the value is to populated from a block label
 //    remain indicates that the value is to be populated from the remaining body after populating other fields
 //
-// "attr" fields may either be of type *zcl.Expression, in which case the raw
+// "attr" fields may either be of type *hcl.Expression, in which case the raw
 // expression is assigned, or of any type accepted by gocty, in which case
 // gocty will be used to assign the value to a native Go type.
 //
-// "block" fields may be of type *zcl.Block or zcl.Body, in which case the
+// "block" fields may be of type *hcl.Block or hcl.Body, in which case the
 // corresponding raw value is assigned, or may be a struct that recursively
 // uses the same tags. Block fields may also be slices of any of these types,
 // in which case multiple blocks of the corresponding type are decoded into
@@ -35,7 +35,7 @@
 // an identifier for the label in diagnostic messages.
 //
 // "remain" can be placed on a single field that may be either of type
-// zcl.Body or zcl.Attributes, in which case any remaining body content is
+// hcl.Body or hcl.Attributes, in which case any remaining body content is
 // placed into this field for delayed processing. If no "remain" field is
 // present then any attributes or blocks not matched by another valid tag
 // will cause an error diagnostic.

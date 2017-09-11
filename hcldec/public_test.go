@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/hashicorp/hcl2/zcl"
-	"github.com/hashicorp/hcl2/zcl/zclsyntax"
+	"github.com/hashicorp/hcl2/hcl/hclsyntax"
+	"github.com/hashicorp/hcl2/hcl"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -14,7 +14,7 @@ func TestDecode(t *testing.T) {
 	tests := []struct {
 		config    string
 		spec      Spec
-		ctx       *zcl.EvalContext
+		ctx       *hcl.EvalContext
 		want      cty.Value
 		diagCount int
 	}{
@@ -202,11 +202,11 @@ b {}
 
 	for i, test := range tests {
 		t.Run(fmt.Sprintf("%02d-%s", i, test.config), func(t *testing.T) {
-			file, parseDiags := zclsyntax.ParseConfig([]byte(test.config), "", zcl.Pos{Line: 1, Column: 1, Byte: 0})
+			file, parseDiags := hclsyntax.ParseConfig([]byte(test.config), "", hcl.Pos{Line: 1, Column: 1, Byte: 0})
 			body := file.Body
 			got, valDiags := Decode(body, test.spec, test.ctx)
 
-			var diags zcl.Diagnostics
+			var diags hcl.Diagnostics
 			diags = append(diags, parseDiags...)
 			diags = append(diags, valDiags...)
 
@@ -228,16 +228,16 @@ func TestSourceRange(t *testing.T) {
 	tests := []struct {
 		config string
 		spec   Spec
-		want   zcl.Range
+		want   hcl.Range
 	}{
 		{
 			"a = 1\n",
 			&AttrSpec{
 				Name: "a",
 			},
-			zcl.Range{
-				Start: zcl.Pos{Line: 1, Column: 5, Byte: 4},
-				End:   zcl.Pos{Line: 1, Column: 6, Byte: 5},
+			hcl.Range{
+				Start: hcl.Pos{Line: 1, Column: 5, Byte: 4},
+				End:   hcl.Pos{Line: 1, Column: 6, Byte: 5},
 			},
 		},
 		{
@@ -252,9 +252,9 @@ b {
 					Name: "a",
 				},
 			},
-			zcl.Range{
-				Start: zcl.Pos{Line: 3, Column: 7, Byte: 11},
-				End:   zcl.Pos{Line: 3, Column: 8, Byte: 12},
+			hcl.Range{
+				Start: hcl.Pos{Line: 3, Column: 7, Byte: 11},
+				End:   hcl.Pos{Line: 3, Column: 8, Byte: 12},
 			},
 		},
 		{
@@ -274,16 +274,16 @@ b {
 					},
 				},
 			},
-			zcl.Range{
-				Start: zcl.Pos{Line: 4, Column: 9, Byte: 19},
-				End:   zcl.Pos{Line: 4, Column: 10, Byte: 20},
+			hcl.Range{
+				Start: hcl.Pos{Line: 4, Column: 9, Byte: 19},
+				End:   hcl.Pos{Line: 4, Column: 10, Byte: 20},
 			},
 		},
 	}
 
 	for i, test := range tests {
 		t.Run(fmt.Sprintf("%02d-%s", i, test.config), func(t *testing.T) {
-			file, diags := zclsyntax.ParseConfig([]byte(test.config), "", zcl.Pos{Line: 1, Column: 1, Byte: 0})
+			file, diags := hclsyntax.ParseConfig([]byte(test.config), "", hcl.Pos{Line: 1, Column: 1, Byte: 0})
 			if len(diags) != 0 {
 				t.Errorf("wrong number of diagnostics %d; want %d", len(diags), 0)
 				for _, diag := range diags {

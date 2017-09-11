@@ -5,15 +5,15 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/hashicorp/hcl2/zcl"
-	"github.com/hashicorp/hcl2/zcl/zclsyntax"
+	"github.com/hashicorp/hcl2/hcl/hclsyntax"
+	"github.com/hashicorp/hcl2/hcl"
 )
 
 func TestVariables(t *testing.T) {
 	tests := []struct {
 		config string
 		spec   Spec
-		want   []zcl.Traversal
+		want   []hcl.Traversal
 	}{
 		{
 			``,
@@ -30,13 +30,13 @@ func TestVariables(t *testing.T) {
 			&AttrSpec{
 				Name: "a",
 			},
-			[]zcl.Traversal{
+			[]hcl.Traversal{
 				{
-					zcl.TraverseRoot{
+					hcl.TraverseRoot{
 						Name: "foo",
-						SrcRange: zcl.Range{
-							Start: zcl.Pos{Line: 1, Column: 5, Byte: 4},
-							End:   zcl.Pos{Line: 1, Column: 8, Byte: 7},
+						SrcRange: hcl.Range{
+							Start: hcl.Pos{Line: 1, Column: 5, Byte: 4},
+							End:   hcl.Pos{Line: 1, Column: 8, Byte: 7},
 						},
 					},
 				},
@@ -49,13 +49,13 @@ func TestVariables(t *testing.T) {
 					Name: "a",
 				},
 			},
-			[]zcl.Traversal{
+			[]hcl.Traversal{
 				{
-					zcl.TraverseRoot{
+					hcl.TraverseRoot{
 						Name: "foo",
-						SrcRange: zcl.Range{
-							Start: zcl.Pos{Line: 1, Column: 5, Byte: 4},
-							End:   zcl.Pos{Line: 1, Column: 8, Byte: 7},
+						SrcRange: hcl.Range{
+							Start: hcl.Pos{Line: 1, Column: 5, Byte: 4},
+							End:   hcl.Pos{Line: 1, Column: 8, Byte: 7},
 						},
 					},
 				},
@@ -73,13 +73,13 @@ b {
 					Name: "a",
 				},
 			},
-			[]zcl.Traversal{
+			[]hcl.Traversal{
 				{
-					zcl.TraverseRoot{
+					hcl.TraverseRoot{
 						Name: "foo",
-						SrcRange: zcl.Range{
-							Start: zcl.Pos{Line: 3, Column: 7, Byte: 11},
-							End:   zcl.Pos{Line: 3, Column: 10, Byte: 14},
+						SrcRange: hcl.Range{
+							Start: hcl.Pos{Line: 3, Column: 7, Byte: 11},
+							End:   hcl.Pos{Line: 3, Column: 10, Byte: 14},
 						},
 					},
 				},
@@ -103,22 +103,22 @@ c {
 					Name: "a",
 				},
 			},
-			[]zcl.Traversal{
+			[]hcl.Traversal{
 				{
-					zcl.TraverseRoot{
+					hcl.TraverseRoot{
 						Name: "foo",
-						SrcRange: zcl.Range{
-							Start: zcl.Pos{Line: 3, Column: 7, Byte: 11},
-							End:   zcl.Pos{Line: 3, Column: 10, Byte: 14},
+						SrcRange: hcl.Range{
+							Start: hcl.Pos{Line: 3, Column: 7, Byte: 11},
+							End:   hcl.Pos{Line: 3, Column: 10, Byte: 14},
 						},
 					},
 				},
 				{
-					zcl.TraverseRoot{
+					hcl.TraverseRoot{
 						Name: "bar",
-						SrcRange: zcl.Range{
-							Start: zcl.Pos{Line: 6, Column: 7, Byte: 27},
-							End:   zcl.Pos{Line: 6, Column: 10, Byte: 30},
+						SrcRange: hcl.Range{
+							Start: hcl.Pos{Line: 6, Column: 7, Byte: 27},
+							End:   hcl.Pos{Line: 6, Column: 10, Byte: 30},
 						},
 					},
 				},
@@ -128,7 +128,7 @@ c {
 
 	for i, test := range tests {
 		t.Run(fmt.Sprintf("%02d-%s", i, test.config), func(t *testing.T) {
-			file, diags := zclsyntax.ParseConfig([]byte(test.config), "", zcl.Pos{Line: 1, Column: 1, Byte: 0})
+			file, diags := hclsyntax.ParseConfig([]byte(test.config), "", hcl.Pos{Line: 1, Column: 1, Byte: 0})
 			if len(diags) != 0 {
 				t.Errorf("wrong number of diagnostics from ParseConfig %d; want %d", len(diags), 0)
 				for _, diag := range diags {

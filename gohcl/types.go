@@ -3,14 +3,14 @@ package gohcl
 import (
 	"reflect"
 
-	"github.com/hashicorp/hcl2/zcl"
+	"github.com/hashicorp/hcl2/hcl"
 )
 
-var victimExpr zcl.Expression
-var victimBody zcl.Body
+var victimExpr hcl.Expression
+var victimBody hcl.Body
 
 var exprType = reflect.TypeOf(&victimExpr).Elem()
 var bodyType = reflect.TypeOf(&victimBody).Elem()
-var blockType = reflect.TypeOf((*zcl.Block)(nil))
-var attrType = reflect.TypeOf((*zcl.Attribute)(nil))
-var attrsType = reflect.TypeOf(zcl.Attributes(nil))
+var blockType = reflect.TypeOf((*hcl.Block)(nil))
+var attrType = reflect.TypeOf((*hcl.Attribute)(nil))
+var attrsType = reflect.TypeOf(hcl.Attributes(nil))

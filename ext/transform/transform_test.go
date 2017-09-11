@@ -6,18 +6,18 @@ import (
 	"reflect"
 
 	"github.com/hashicorp/hcl2/hcltest"
-	"github.com/hashicorp/hcl2/zcl"
+	"github.com/hashicorp/hcl2/hcl"
 	"github.com/zclconf/go-cty/cty"
 )
 
 // Assert that deepWrapper implements Body
-var deepWrapperIsBody zcl.Body = deepWrapper{}
+var deepWrapperIsBody hcl.Body = deepWrapper{}
 
 func TestDeep(t *testing.T) {
 
-	testTransform := TransformerFunc(func(body zcl.Body) zcl.Body {
-		_, remain, diags := body.PartialContent(&zcl.BodySchema{
-			Blocks: []zcl.BlockHeaderSchema{
+	testTransform := TransformerFunc(func(body hcl.Body) hcl.Body {
+		_, remain, diags := body.PartialContent(&hcl.BodySchema{
+			Blocks: []hcl.BlockHeaderSchema{
 				{
 					Type: "remove",
 				},
@@ -27,19 +27,19 @@ func TestDeep(t *testing.T) {
 		return BodyWithDiagnostics(remain, diags)
 	})
 
-	src := hcltest.MockBody(&zcl.BodyContent{
-		Attributes: hcltest.MockAttrs(map[string]zcl.Expression{
+	src := hcltest.MockBody(&hcl.BodyContent{
+		Attributes: hcltest.MockAttrs(map[string]hcl.Expression{
 			"true": hcltest.MockExprLiteral(cty.True),
 		}),
-		Blocks: []*zcl.Block{
+		Blocks: []*hcl.Block{
 			{
 				Type: "remove",
-				Body: zcl.EmptyBody(),
+				Body: hcl.EmptyBody(),
 			},
 			{
 				Type: "child",
-				Body: hcltest.MockBody(&zcl.BodyContent{
-					Blocks: []*zcl.Block{
+				Body: hcltest.MockBody(&hcl.BodyContent{
+					Blocks: []*hcl.Block{
 						{
 							Type: "remove",
 						},
@@ -51,13 +51,13 @@ func TestDeep(t *testing.T) {
 
 	wrapped := Deep(src, testTransform)
 
-	rootContent, diags := wrapped.Content(&zcl.BodySchema{
-		Attributes: []zcl.AttributeSchema{
+	rootContent, diags := wrapped.Content(&hcl.BodySchema{
+		Attributes: []hcl.AttributeSchema{
 			{
 				Name: "true",
 			},
 		},
-		Blocks: []zcl.BlockHeaderSchema{
+		Blocks: []hcl.BlockHeaderSchema{
 			{
 				Type: "child",
 			},
@@ -70,7 +70,7 @@ func TestDeep(t *testing.T) {
 		}
 	}
 
-	wantAttrs := hcltest.MockAttrs(map[string]zcl.Expression{
+	wantAttrs := hcltest.MockAttrs(map[string]hcl.Expression{
 		"true": hcltest.MockExprLiteral(cty.True),
 	})
 	if !reflect.DeepEqual(rootContent.Attributes, wantAttrs) {
@@ -85,7 +85,7 @@ func TestDeep(t *testing.T) {
 	}
 
 	childBlock := rootContent.Blocks[0]
-	childContent, diags := childBlock.Body.Content(&zcl.BodySchema{})
+	childContent, diags := childBlock.Body.Content(&hcl.BodySchema{})
 	if len(diags) != 0 {
 		t.Errorf("unexpected diagnostics for child content")
 		for _, diag := range diags {

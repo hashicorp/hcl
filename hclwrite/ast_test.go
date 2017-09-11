@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/hashicorp/hcl2/zcl"
-	"github.com/hashicorp/hcl2/zcl/zclsyntax"
+	"github.com/hashicorp/hcl2/hcl/hclsyntax"
+	"github.com/hashicorp/hcl2/hcl"
 )
 
 func TestBodyFindAttribute(t *testing.T) {
@@ -27,7 +27,7 @@ func TestBodyFindAttribute(t *testing.T) {
 			&TokenSeq{
 				Tokens{
 					{
-						Type:  zclsyntax.TokenIdent,
+						Type:  hclsyntax.TokenIdent,
 						Bytes: []byte{'a'},
 					},
 				},
@@ -39,7 +39,7 @@ func TestBodyFindAttribute(t *testing.T) {
 			&TokenSeq{
 				Tokens{
 					{
-						Type:  zclsyntax.TokenIdent,
+						Type:  hclsyntax.TokenIdent,
 						Bytes: []byte{'a'},
 					},
 				},
@@ -51,7 +51,7 @@ func TestBodyFindAttribute(t *testing.T) {
 			&TokenSeq{
 				Tokens{
 					{
-						Type:  zclsyntax.TokenIdent,
+						Type:  hclsyntax.TokenIdent,
 						Bytes: []byte{'b'},
 					},
 				},
@@ -63,7 +63,7 @@ func TestBodyFindAttribute(t *testing.T) {
 			&TokenSeq{
 				Tokens{
 					{
-						Type:  zclsyntax.TokenIdent,
+						Type:  hclsyntax.TokenIdent,
 						Bytes: []byte{'c'},
 					},
 				},
@@ -73,7 +73,7 @@ func TestBodyFindAttribute(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("%s in %s", test.name, test.src), func(t *testing.T) {
-			f, diags := ParseConfig([]byte(test.src), "", zcl.Pos{Line: 1, Column: 1})
+			f, diags := ParseConfig([]byte(test.src), "", hcl.Pos{Line: 1, Column: 1})
 			if len(diags) != 0 {
 				for _, diag := range diags {
 					t.Logf("- %s", diag.Error())

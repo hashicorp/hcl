@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/hashicorp/hcl2/zcl"
-	zclJSON "github.com/hashicorp/hcl2/zcl/json"
+	zclJSON "github.com/hashicorp/hcl2/hcl/json"
+	"github.com/hashicorp/hcl2/hcl"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -83,12 +83,12 @@ func TestDecodeBody(t *testing.T) {
 			},
 			struct {
 				Name  string         `zcl:"name"`
-				Attrs zcl.Attributes `zcl:",remain"`
+				Attrs hcl.Attributes `zcl:",remain"`
 			}{},
 			func(gotI interface{}) bool {
 				got := gotI.(struct {
 					Name  string         `zcl:"name"`
-					Attrs zcl.Attributes `zcl:",remain"`
+					Attrs hcl.Attributes `zcl:",remain"`
 				})
 				return got.Name == "Ermintrude" && len(got.Attrs) == 1 && got.Attrs["age"] != nil
 			},
@@ -101,12 +101,12 @@ func TestDecodeBody(t *testing.T) {
 			},
 			struct {
 				Name   string   `zcl:"name"`
-				Remain zcl.Body `zcl:",remain"`
+				Remain hcl.Body `zcl:",remain"`
 			}{},
 			func(gotI interface{}) bool {
 				got := gotI.(struct {
 					Name   string   `zcl:"name"`
-					Remain zcl.Body `zcl:",remain"`
+					Remain hcl.Body `zcl:",remain"`
 				})
 
 				attrs, _ := got.Remain.JustAttributes()
@@ -420,9 +420,9 @@ func TestDecodeBody(t *testing.T) {
 				"name": "Ermintrude",
 				"age":  89,
 			},
-			map[string]*zcl.Attribute(nil),
+			map[string]*hcl.Attribute(nil),
 			func(gotI interface{}) bool {
-				got := gotI.(map[string]*zcl.Attribute)
+				got := gotI.(map[string]*hcl.Attribute)
 				return len(got) == 2 && got["name"] != nil && got["age"] != nil
 			},
 			0,
@@ -432,9 +432,9 @@ func TestDecodeBody(t *testing.T) {
 				"name": "Ermintrude",
 				"age":  13,
 			},
-			map[string]zcl.Expression(nil),
+			map[string]hcl.Expression(nil),
 			func(gotI interface{}) bool {
-				got := gotI.(map[string]zcl.Expression)
+				got := gotI.(map[string]hcl.Expression)
 				return len(got) == 2 && got["name"] != nil && got["age"] != nil
 			},
 			0,
@@ -561,17 +561,17 @@ type fixedExpression struct {
 	val cty.Value
 }
 
-func (e *fixedExpression) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
+func (e *fixedExpression) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	return e.val, nil
 }
 
-func (e *fixedExpression) Range() (r zcl.Range) {
+func (e *fixedExpression) Range() (r hcl.Range) {
 	return
 }
-func (e *fixedExpression) StartRange() (r zcl.Range) {
+func (e *fixedExpression) StartRange() (r hcl.Range) {
 	return
 }
 
-func (e *fixedExpression) Variables() []zcl.Traversal {
+func (e *fixedExpression) Variables() []hcl.Traversal {
 	return nil
 }

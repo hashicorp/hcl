@@ -3,8 +3,8 @@ package hclwrite
 import (
 	"sort"
 
-	"github.com/hashicorp/hcl2/zcl"
-	"github.com/hashicorp/hcl2/zcl/zclsyntax"
+	"github.com/hashicorp/hcl2/hcl/hclsyntax"
+	"github.com/hashicorp/hcl2/hcl"
 )
 
 // Our "parser" here is actually not doing any parsing of its own. Instead,
@@ -24,8 +24,8 @@ import (
 // If the parsing step produces any errors, the returned File is nil because
 // we can't reliably extract tokens from the partial AST produced by an
 // erroneous parse.
-func parse(src []byte, filename string, start zcl.Pos) (*File, zcl.Diagnostics) {
-	file, diags := zclsyntax.ParseConfig(src, filename, start)
+func parse(src []byte, filename string, start hcl.Pos) (*File, hcl.Diagnostics) {
+	file, diags := hclsyntax.ParseConfig(src, filename, start)
 	if diags.HasErrors() {
 		return nil, diags
 	}
@@ -35,7 +35,7 @@ func parse(src []byte, filename string, start zcl.Pos) (*File, zcl.Diagnostics) 
 	// slices from our sequence of "writer" tokens, which contain only
 	// *relative* position information that is more appropriate for
 	// transformation/writing use-cases.
-	nativeTokens, diags := zclsyntax.LexConfig(src, filename, start)
+	nativeTokens, diags := hclsyntax.LexConfig(src, filename, start)
 	if diags.HasErrors() {
 		// should never happen, since we would've caught these diags in
 		// the first call above.
@@ -48,7 +48,7 @@ func parse(src []byte, filename string, start zcl.Pos) (*File, zcl.Diagnostics) 
 		writerTokens: writerTokens,
 	}
 
-	before, root, after := parseBody(file.Body.(*zclsyntax.Body), from)
+	before, root, after := parseBody(file.Body.(*hclsyntax.Body), from)
 
 	return &File{
 		Name:     filename,
@@ -64,11 +64,11 @@ func parse(src []byte, filename string, start zcl.Pos) (*File, zcl.Diagnostics) 
 }
 
 type inputTokens struct {
-	nativeTokens zclsyntax.Tokens
+	nativeTokens hclsyntax.Tokens
 	writerTokens Tokens
 }
 
-func (it inputTokens) Partition(rng zcl.Range) (before, within, after inputTokens) {
+func (it inputTokens) Partition(rng hcl.Range) (before, within, after inputTokens) {
 	start, end := partitionTokens(it.nativeTokens, rng)
 	before = it.Slice(0, start)
 	within = it.Slice(start, end)
@@ -78,7 +78,7 @@ func (it inputTokens) Partition(rng zcl.Range) (before, within, after inputToken
 
 // PartitionIncludeComments is like Partition except the returned "within"
 // range includes any lead and line comments associated with the range.
-func (it inputTokens) PartitionIncludingComments(rng zcl.Range) (before, within, after inputTokens) {
+func (it inputTokens) PartitionIncludingComments(rng hcl.Range) (before, within, after inputTokens) {
 	start, end := partitionTokens(it.nativeTokens, rng)
 	start = partitionLeadCommentTokens(it.nativeTokens[:start])
 	_, afterNewline := partitionLineEndTokens(it.nativeTokens[end:])
@@ -95,7 +95,7 @@ func (it inputTokens) PartitionIncludingComments(rng zcl.Range) (before, within,
 // the comments as separate token sequences so that they can be captured into
 // AST attributes. It makes assumptions that apply only to block items, so
 // should not be used for other constructs.
-func (it inputTokens) PartitionBlockItem(rng zcl.Range) (before, leadComments, within, lineComments, newline, after inputTokens) {
+func (it inputTokens) PartitionBlockItem(rng hcl.Range) (before, leadComments, within, lineComments, newline, after inputTokens) {
 	before, within, after = it.Partition(rng)
 	before, leadComments = before.PartitionLeadComments()
 	lineComments, newline, after = after.PartitionLineEndTokens()
@@ -137,8 +137,8 @@ func (it inputTokens) Seq() *TokenSeq {
 	return &TokenSeq{it.writerTokens}
 }
 
-func (it inputTokens) Types() []zclsyntax.TokenType {
-	ret := make([]zclsyntax.TokenType, len(it.nativeTokens))
+func (it inputTokens) Types() []hclsyntax.TokenType {
+	ret := make([]hclsyntax.TokenType, len(it.nativeTokens))
 	for i, tok := range it.nativeTokens {
 		ret[i] = tok.Type
 	}
@@ -148,13 +148,13 @@ func (it inputTokens) Types() []zclsyntax.TokenType {
 // parseBody locates the given body within the given input tokens and returns
 // the resulting *Body object as well as the tokens that appeared before and
 // after it.
-func parseBody(nativeBody *zclsyntax.Body, from inputTokens) (inputTokens, *Body, inputTokens) {
+func parseBody(nativeBody *hclsyntax.Body, from inputTokens) (inputTokens, *Body, inputTokens) {
 	before, within, after := from.PartitionIncludingComments(nativeBody.SrcRange)
 
 	// The main AST doesn't retain the original source ordering of the
 	// body items, so we need to reconstruct that ordering by inspecting
 	// their source ranges.
-	nativeItems := make([]zclsyntax.Node, 0, len(nativeBody.Attributes)+len(nativeBody.Blocks))
+	nativeItems := make([]hclsyntax.Node, 0, len(nativeBody.Attributes)+len(nativeBody.Blocks))
 	for _, nativeAttr := range nativeBody.Attributes {
 		nativeItems = append(nativeItems, nativeAttr)
 	}
@@ -186,15 +186,15 @@ func parseBody(nativeBody *zclsyntax.Body, from inputTokens) (inputTokens, *Body
 	return before, body, after
 }
 
-func parseBodyItem(nativeItem zclsyntax.Node, from inputTokens) (inputTokens, Node, inputTokens) {
+func parseBodyItem(nativeItem hclsyntax.Node, from inputTokens) (inputTokens, Node, inputTokens) {
 	before, leadComments, within, lineComments, newline, after := from.PartitionBlockItem(nativeItem.Range())
 
 	var item Node
 
 	switch tItem := nativeItem.(type) {
-	case *zclsyntax.Attribute:
+	case *hclsyntax.Attribute:
 		item = parseAttribute(tItem, within, leadComments, lineComments, newline)
-	case *zclsyntax.Block:
+	case *hclsyntax.Block:
 		item = parseBlock(tItem, within, leadComments, lineComments, newline)
 	default:
 		// should never happen if caller is behaving
@@ -204,7 +204,7 @@ func parseBodyItem(nativeItem zclsyntax.Node, from inputTokens) (inputTokens, No
 	return before, item, after
 }
 
-func parseAttribute(nativeAttr *zclsyntax.Attribute, from, leadComments, lineComments, newline inputTokens) *Attribute {
+func parseAttribute(nativeAttr *hclsyntax.Attribute, from, leadComments, lineComments, newline inputTokens) *Attribute {
 	var allTokens TokenSeq
 	attr := &Attribute{}
 
@@ -254,7 +254,7 @@ func parseAttribute(nativeAttr *zclsyntax.Attribute, from, leadComments, lineCom
 	return attr
 }
 
-func parseBlock(nativeBlock *zclsyntax.Block, from, leadComments, lineComments, newline inputTokens) *Block {
+func parseBlock(nativeBlock *hclsyntax.Block, from, leadComments, lineComments, newline inputTokens) *Block {
 	var allTokens TokenSeq
 	block := &Block{}
 
@@ -326,7 +326,7 @@ func parseBlock(nativeBlock *zclsyntax.Block, from, leadComments, lineComments, 
 	return block
 }
 
-func parseExpression(nativeExpr zclsyntax.Expression, from inputTokens) *Expression {
+func parseExpression(nativeExpr hclsyntax.Expression, from inputTokens) *Expression {
 	// TODO: Populate VarRefs by analyzing the result of nativeExpr.Variables()
 	return &Expression{
 		AllTokens: from.Seq(),
@@ -340,7 +340,7 @@ func parseExpression(nativeExpr zclsyntax.Expression, from inputTokens) *Express
 // The resulting list contains the same number of tokens and uses the same
 // indices as the input, allowing the two sets of tokens to be correlated
 // by index.
-func writerTokens(nativeTokens zclsyntax.Tokens) Tokens {
+func writerTokens(nativeTokens hclsyntax.Tokens) Tokens {
 	// Ultimately we want a slice of token _pointers_, but since we can
 	// predict how much memory we're going to devote to tokens we'll allocate
 	// it all as a single flat buffer and thus give the GC less work to do.
@@ -374,7 +374,7 @@ func writerTokens(nativeTokens zclsyntax.Tokens) Tokens {
 	return ret
 }
 
-// partitionTokens takes a sequence of tokens and a zcl.Range and returns
+// partitionTokens takes a sequence of tokens and a hcl.Range and returns
 // two indices within the token sequence that correspond with the range
 // boundaries, such that the slice operator could be used to produce
 // three token sequences for before, within, and after respectively:
@@ -397,7 +397,7 @@ func writerTokens(nativeTokens zclsyntax.Tokens) Tokens {
 //
 // The tokens are assumed to be in source order and non-overlapping, which
 // will be true if the token sequence from the scanner is used directly.
-func partitionTokens(toks zclsyntax.Tokens, rng zcl.Range) (start, end int) {
+func partitionTokens(toks hclsyntax.Tokens, rng hcl.Range) (start, end int) {
 	// We us a linear search here because we assume tha in most cases our
 	// target range is close to the beginning of the sequence, and the seqences
 	// are generally small for most reasonable files anyway.
@@ -435,12 +435,12 @@ func partitionTokens(toks zclsyntax.Tokens, rng zcl.Range) (start, end int) {
 // Lead comments are defined as whole lines containing only comment tokens
 // with no blank lines between. If no such lines are found, the returned
 // index will be len(toks).
-func partitionLeadCommentTokens(toks zclsyntax.Tokens) int {
+func partitionLeadCommentTokens(toks hclsyntax.Tokens) int {
 	// single-line comments (which is what we're interested in here)
 	// consume their trailing newline, so we can just walk backwards
 	// until we stop seeing comment tokens.
 	for i := len(toks) - 1; i >= 0; i-- {
-		if toks[i].Type != zclsyntax.TokenComment {
+		if toks[i].Type != hclsyntax.TokenComment {
 			return i + 1
 		}
 	}
@@ -458,14 +458,14 @@ func partitionLeadCommentTokens(toks zclsyntax.Tokens) int {
 // Since single-line comment tokens (# and //) include the newline that
 // terminates them, in the presence of these the two returned indices
 // will be the same since the comment itself serves as the line end.
-func partitionLineEndTokens(toks zclsyntax.Tokens) (afterComment, afterNewline int) {
+func partitionLineEndTokens(toks hclsyntax.Tokens) (afterComment, afterNewline int) {
 	for i := 0; i < len(toks); i++ {
 		tok := toks[i]
-		if tok.Type != zclsyntax.TokenComment {
+		if tok.Type != hclsyntax.TokenComment {
 			switch tok.Type {
-			case zclsyntax.TokenNewline:
+			case hclsyntax.TokenNewline:
 				return i, i + 1
-			case zclsyntax.TokenEOF:
+			case hclsyntax.TokenEOF:
 				// Although this is valid, we mustn't include the EOF
 				// itself as our "newline" or else strange things will
 				// happen when we try to append new items.
@@ -494,6 +494,6 @@ func partitionLineEndTokens(toks zclsyntax.Tokens) (afterComment, afterNewline i
 // Any errors produced during scanning are ignored, so the results of this
 // function should be used with care.
 func lexConfig(src []byte) Tokens {
-	mainTokens, _ := zclsyntax.LexConfig(src, "", zcl.Pos{Byte: 0, Line: 1, Column: 1})
+	mainTokens, _ := hclsyntax.LexConfig(src, "", hcl.Pos{Byte: 0, Line: 1, Column: 1})
 	return writerTokens(mainTokens)
 }

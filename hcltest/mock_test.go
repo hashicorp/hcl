@@ -5,176 +5,176 @@ import (
 
 	"reflect"
 
-	"github.com/hashicorp/hcl2/zcl"
+	"github.com/hashicorp/hcl2/hcl"
 	"github.com/zclconf/go-cty/cty"
 )
 
-var mockBodyIsBody zcl.Body = mockBody{}
-var mockExprLiteralIsExpr zcl.Expression = mockExprLiteral{}
-var mockExprVariableIsExpr zcl.Expression = mockExprVariable("")
+var mockBodyIsBody hcl.Body = mockBody{}
+var mockExprLiteralIsExpr hcl.Expression = mockExprLiteral{}
+var mockExprVariableIsExpr hcl.Expression = mockExprVariable("")
 
 func TestMockBodyPartialContent(t *testing.T) {
 	tests := map[string]struct {
-		In        *zcl.BodyContent
-		Schema    *zcl.BodySchema
-		Want      *zcl.BodyContent
-		Remain    *zcl.BodyContent
+		In        *hcl.BodyContent
+		Schema    *hcl.BodySchema
+		Want      *hcl.BodyContent
+		Remain    *hcl.BodyContent
 		DiagCount int
 	}{
 		"empty": {
-			&zcl.BodyContent{},
-			&zcl.BodySchema{},
-			&zcl.BodyContent{
-				Attributes: zcl.Attributes{},
-				Blocks:     zcl.Blocks{},
+			&hcl.BodyContent{},
+			&hcl.BodySchema{},
+			&hcl.BodyContent{
+				Attributes: hcl.Attributes{},
+				Blocks:     hcl.Blocks{},
 			},
-			&zcl.BodyContent{
-				Attributes: zcl.Attributes{},
-				Blocks:     zcl.Blocks{},
+			&hcl.BodyContent{
+				Attributes: hcl.Attributes{},
+				Blocks:     hcl.Blocks{},
 			},
 			0,
 		},
 		"attribute requested": {
-			&zcl.BodyContent{
-				Attributes: MockAttrs(map[string]zcl.Expression{
+			&hcl.BodyContent{
+				Attributes: MockAttrs(map[string]hcl.Expression{
 					"name": MockExprLiteral(cty.StringVal("Ermintrude")),
 				}),
 			},
-			&zcl.BodySchema{
-				Attributes: []zcl.AttributeSchema{
+			&hcl.BodySchema{
+				Attributes: []hcl.AttributeSchema{
 					{
 						Name: "name",
 					},
 				},
 			},
-			&zcl.BodyContent{
-				Attributes: MockAttrs(map[string]zcl.Expression{
+			&hcl.BodyContent{
+				Attributes: MockAttrs(map[string]hcl.Expression{
 					"name": MockExprLiteral(cty.StringVal("Ermintrude")),
 				}),
-				Blocks: zcl.Blocks{},
+				Blocks: hcl.Blocks{},
 			},
-			&zcl.BodyContent{
-				Attributes: zcl.Attributes{},
-				Blocks:     zcl.Blocks{},
+			&hcl.BodyContent{
+				Attributes: hcl.Attributes{},
+				Blocks:     hcl.Blocks{},
 			},
 			0,
 		},
 		"attribute remains": {
-			&zcl.BodyContent{
-				Attributes: MockAttrs(map[string]zcl.Expression{
+			&hcl.BodyContent{
+				Attributes: MockAttrs(map[string]hcl.Expression{
 					"name": MockExprLiteral(cty.StringVal("Ermintrude")),
 				}),
 			},
-			&zcl.BodySchema{},
-			&zcl.BodyContent{
-				Attributes: zcl.Attributes{},
-				Blocks:     zcl.Blocks{},
+			&hcl.BodySchema{},
+			&hcl.BodyContent{
+				Attributes: hcl.Attributes{},
+				Blocks:     hcl.Blocks{},
 			},
-			&zcl.BodyContent{
-				Attributes: MockAttrs(map[string]zcl.Expression{
+			&hcl.BodyContent{
+				Attributes: MockAttrs(map[string]hcl.Expression{
 					"name": MockExprLiteral(cty.StringVal("Ermintrude")),
 				}),
-				Blocks: zcl.Blocks{},
+				Blocks: hcl.Blocks{},
 			},
 			0,
 		},
 		"attribute missing": {
-			&zcl.BodyContent{
-				Attributes: zcl.Attributes{},
+			&hcl.BodyContent{
+				Attributes: hcl.Attributes{},
 			},
-			&zcl.BodySchema{
-				Attributes: []zcl.AttributeSchema{
+			&hcl.BodySchema{
+				Attributes: []hcl.AttributeSchema{
 					{
 						Name:     "name",
 						Required: true,
 					},
 				},
 			},
-			&zcl.BodyContent{
-				Attributes: zcl.Attributes{},
-				Blocks:     zcl.Blocks{},
+			&hcl.BodyContent{
+				Attributes: hcl.Attributes{},
+				Blocks:     hcl.Blocks{},
 			},
-			&zcl.BodyContent{
-				Attributes: zcl.Attributes{},
-				Blocks:     zcl.Blocks{},
+			&hcl.BodyContent{
+				Attributes: hcl.Attributes{},
+				Blocks:     hcl.Blocks{},
 			},
 			1, // missing attribute "name"
 		},
 		"block requested, no labels": {
-			&zcl.BodyContent{
-				Blocks: zcl.Blocks{
+			&hcl.BodyContent{
+				Blocks: hcl.Blocks{
 					{
 						Type: "baz",
 					},
 				},
 			},
-			&zcl.BodySchema{
-				Blocks: []zcl.BlockHeaderSchema{
+			&hcl.BodySchema{
+				Blocks: []hcl.BlockHeaderSchema{
 					{
 						Type: "baz",
 					},
 				},
 			},
-			&zcl.BodyContent{
-				Attributes: zcl.Attributes{},
-				Blocks: zcl.Blocks{
+			&hcl.BodyContent{
+				Attributes: hcl.Attributes{},
+				Blocks: hcl.Blocks{
 					{
 						Type: "baz",
 					},
 				},
 			},
-			&zcl.BodyContent{
-				Attributes: zcl.Attributes{},
-				Blocks:     zcl.Blocks{},
+			&hcl.BodyContent{
+				Attributes: hcl.Attributes{},
+				Blocks:     hcl.Blocks{},
 			},
 			0,
 		},
 		"block requested, wrong labels": {
-			&zcl.BodyContent{
-				Blocks: zcl.Blocks{
+			&hcl.BodyContent{
+				Blocks: hcl.Blocks{
 					{
 						Type: "baz",
 					},
 				},
 			},
-			&zcl.BodySchema{
-				Blocks: []zcl.BlockHeaderSchema{
+			&hcl.BodySchema{
+				Blocks: []hcl.BlockHeaderSchema{
 					{
 						Type:       "baz",
 						LabelNames: []string{"foo"},
 					},
 				},
 			},
-			&zcl.BodyContent{
-				Attributes: zcl.Attributes{},
-				Blocks: zcl.Blocks{
+			&hcl.BodyContent{
+				Attributes: hcl.Attributes{},
+				Blocks: hcl.Blocks{
 					{
 						Type: "baz",
 					},
 				},
 			},
-			&zcl.BodyContent{
-				Attributes: zcl.Attributes{},
-				Blocks:     zcl.Blocks{},
+			&hcl.BodyContent{
+				Attributes: hcl.Attributes{},
+				Blocks:     hcl.Blocks{},
 			},
 			1, // "baz" requires 1 label
 		},
 		"block remains": {
-			&zcl.BodyContent{
-				Blocks: zcl.Blocks{
+			&hcl.BodyContent{
+				Blocks: hcl.Blocks{
 					{
 						Type: "baz",
 					},
 				},
 			},
-			&zcl.BodySchema{},
-			&zcl.BodyContent{
-				Attributes: zcl.Attributes{},
-				Blocks:     zcl.Blocks{},
+			&hcl.BodySchema{},
+			&hcl.BodyContent{
+				Attributes: hcl.Attributes{},
+				Blocks:     hcl.Blocks{},
 			},
-			&zcl.BodyContent{
-				Attributes: zcl.Attributes{},
-				Blocks: zcl.Blocks{
+			&hcl.BodyContent{
+				Attributes: hcl.Attributes{},
+				Blocks: hcl.Blocks{
 					{
 						Type: "baz",
 					},
@@ -183,12 +183,12 @@ func TestMockBodyPartialContent(t *testing.T) {
 			0,
 		},
 		"various": {
-			&zcl.BodyContent{
-				Attributes: MockAttrs(map[string]zcl.Expression{
+			&hcl.BodyContent{
+				Attributes: MockAttrs(map[string]hcl.Expression{
 					"name": MockExprLiteral(cty.StringVal("Ermintrude")),
 					"age":  MockExprLiteral(cty.NumberIntVal(32)),
 				}),
-				Blocks: zcl.Blocks{
+				Blocks: hcl.Blocks{
 					{
 						Type: "baz",
 					},
@@ -202,24 +202,24 @@ func TestMockBodyPartialContent(t *testing.T) {
 					},
 				},
 			},
-			&zcl.BodySchema{
-				Attributes: []zcl.AttributeSchema{
+			&hcl.BodySchema{
+				Attributes: []hcl.AttributeSchema{
 					{
 						Name: "name",
 					},
 				},
-				Blocks: []zcl.BlockHeaderSchema{
+				Blocks: []hcl.BlockHeaderSchema{
 					{
 						Type:       "bar",
 						LabelNames: []string{"name"},
 					},
 				},
 			},
-			&zcl.BodyContent{
-				Attributes: MockAttrs(map[string]zcl.Expression{
+			&hcl.BodyContent{
+				Attributes: MockAttrs(map[string]hcl.Expression{
 					"name": MockExprLiteral(cty.StringVal("Ermintrude")),
 				}),
-				Blocks: zcl.Blocks{
+				Blocks: hcl.Blocks{
 					{
 						Type:   "bar",
 						Labels: []string{"foo1"},
@@ -230,11 +230,11 @@ func TestMockBodyPartialContent(t *testing.T) {
 					},
 				},
 			},
-			&zcl.BodyContent{
-				Attributes: MockAttrs(map[string]zcl.Expression{
+			&hcl.BodyContent{
+				Attributes: MockAttrs(map[string]hcl.Expression{
 					"age": MockExprLiteral(cty.NumberIntVal(32)),
 				}),
-				Blocks: zcl.Blocks{
+				Blocks: hcl.Blocks{
 					{
 						Type: "baz",
 					},

@@ -1,13 +1,13 @@
 package hclwrite
 
 import (
-	"github.com/hashicorp/hcl2/zcl/zclsyntax"
+	"github.com/hashicorp/hcl2/hcl/hclsyntax"
 )
 
 // placeholder token used when we don't have a token but we don't want
 // to pass a real "nil" and complicate things with nil pointer checks
 var nilToken = &Token{
-	Type:         zclsyntax.TokenNil,
+	Type:         hclsyntax.TokenNil,
 	Bytes:        []byte{},
 	SpacesBefore: 0,
 }
@@ -60,7 +60,7 @@ func formatIndent(lines []formatLine) {
 		if len(line.lead) == 0 {
 			continue
 		}
-		if line.lead[0].Type == zclsyntax.TokenNewline {
+		if line.lead[0].Type == hclsyntax.TokenNewline {
 			// Never place spaces before a newline
 			line.lead[0].SpacesBefore = 0
 			continue
@@ -223,27 +223,27 @@ func formatCells(lines []formatLine) {
 func spaceAfterToken(subject, before, after *Token) bool {
 	switch {
 
-	case after.Type == zclsyntax.TokenNewline || after.Type == zclsyntax.TokenNil:
+	case after.Type == hclsyntax.TokenNewline || after.Type == hclsyntax.TokenNil:
 		// Never add spaces before a newline
 		return false
 
-	case subject.Type == zclsyntax.TokenIdent && after.Type == zclsyntax.TokenOParen:
+	case subject.Type == hclsyntax.TokenIdent && after.Type == hclsyntax.TokenOParen:
 		// Don't split a function name from open paren in a call
 		return false
 
-	case subject.Type == zclsyntax.TokenDot || after.Type == zclsyntax.TokenDot:
+	case subject.Type == hclsyntax.TokenDot || after.Type == hclsyntax.TokenDot:
 		// Don't use spaces around attribute access dots
 		return false
 
-	case after.Type == zclsyntax.TokenComma:
+	case after.Type == hclsyntax.TokenComma:
 		// No space right before a comma in an argument list
 		return false
 
-	case subject.Type == zclsyntax.TokenQuotedLit || subject.Type == zclsyntax.TokenStringLit || subject.Type == zclsyntax.TokenOQuote || subject.Type == zclsyntax.TokenOHeredoc || after.Type == zclsyntax.TokenQuotedLit || after.Type == zclsyntax.TokenStringLit || after.Type == zclsyntax.TokenCQuote || after.Type == zclsyntax.TokenCHeredoc:
+	case subject.Type == hclsyntax.TokenQuotedLit || subject.Type == hclsyntax.TokenStringLit || subject.Type == hclsyntax.TokenOQuote || subject.Type == hclsyntax.TokenOHeredoc || after.Type == hclsyntax.TokenQuotedLit || after.Type == hclsyntax.TokenStringLit || after.Type == hclsyntax.TokenCQuote || after.Type == hclsyntax.TokenCHeredoc:
 		// No extra spaces within templates
 		return false
 
-	case subject.Type == zclsyntax.TokenMinus:
+	case subject.Type == hclsyntax.TokenMinus:
 		// Since a minus can either be subtraction or negation, and the latter
 		// should _not_ have a space after it, we need to use some heuristics
 		// to decide which case this is.
@@ -252,23 +252,23 @@ func spaceAfterToken(subject, before, after *Token) bool {
 
 		switch before.Type {
 
-		case zclsyntax.TokenNil:
+		case hclsyntax.TokenNil:
 			// Minus at the start of input must be a negation
 			return false
 
-		case zclsyntax.TokenOParen, zclsyntax.TokenOBrace, zclsyntax.TokenOBrack, zclsyntax.TokenEqual, zclsyntax.TokenColon, zclsyntax.TokenComma, zclsyntax.TokenQuestion:
+		case hclsyntax.TokenOParen, hclsyntax.TokenOBrace, hclsyntax.TokenOBrack, hclsyntax.TokenEqual, hclsyntax.TokenColon, hclsyntax.TokenComma, hclsyntax.TokenQuestion:
 			// Minus immediately after an opening bracket or separator must be a negation.
 			return false
 
-		case zclsyntax.TokenPlus, zclsyntax.TokenStar, zclsyntax.TokenSlash, zclsyntax.TokenPercent, zclsyntax.TokenMinus:
+		case hclsyntax.TokenPlus, hclsyntax.TokenStar, hclsyntax.TokenSlash, hclsyntax.TokenPercent, hclsyntax.TokenMinus:
 			// Minus immediately after another arithmetic operator must be negation.
 			return false
 
-		case zclsyntax.TokenEqualOp, zclsyntax.TokenNotEqual, zclsyntax.TokenGreaterThan, zclsyntax.TokenGreaterThanEq, zclsyntax.TokenLessThan, zclsyntax.TokenLessThanEq:
+		case hclsyntax.TokenEqualOp, hclsyntax.TokenNotEqual, hclsyntax.TokenGreaterThan, hclsyntax.TokenGreaterThanEq, hclsyntax.TokenLessThan, hclsyntax.TokenLessThanEq:
 			// Minus immediately after another comparison operator must be negation.
 			return false
 
-		case zclsyntax.TokenAnd, zclsyntax.TokenOr, zclsyntax.TokenBang:
+		case hclsyntax.TokenAnd, hclsyntax.TokenOr, hclsyntax.TokenBang:
 			// Minus immediately after logical operator doesn't make sense but probably intended as negation.
 			return false
 
@@ -314,7 +314,7 @@ func linesForFormat(tokens Tokens) []formatLine {
 	li := 0
 	lineStart := 0
 	for i, tok := range tokens {
-		if tok.Type == zclsyntax.TokenEOF {
+		if tok.Type == hclsyntax.TokenEOF {
 			// The EOF token doesn't belong to any line, and terminates the
 			// token sequence.
 			lines[li].lead = tokens[lineStart:i]
@@ -339,13 +339,13 @@ func linesForFormat(tokens Tokens) []formatLine {
 			continue
 		}
 
-		if len(line.lead) > 1 && line.lead[len(line.lead)-1].Type == zclsyntax.TokenComment {
+		if len(line.lead) > 1 && line.lead[len(line.lead)-1].Type == hclsyntax.TokenComment {
 			line.comment = line.lead[len(line.lead)-1:]
 			line.lead = line.lead[:len(line.lead)-1]
 		}
 
 		for i, tok := range line.lead {
-			if i > 0 && tok.Type == zclsyntax.TokenEqual {
+			if i > 0 && tok.Type == hclsyntax.TokenEqual {
 				// We only move the tokens into "assign" if the RHS seems to
 				// be a whole expression, which we determine by counting
 				// brackets. If there's a net positive number of brackets
@@ -368,9 +368,9 @@ func linesForFormat(tokens Tokens) []formatLine {
 }
 
 func tokenIsNewline(tok *Token) bool {
-	if tok.Type == zclsyntax.TokenNewline {
+	if tok.Type == hclsyntax.TokenNewline {
 		return true
-	} else if tok.Type == zclsyntax.TokenComment {
+	} else if tok.Type == hclsyntax.TokenComment {
 		// Single line tokens (# and //) consume their terminating newline,
 		// so we need to treat them as newline tokens as well.
 		if len(tok.Bytes) > 0 && tok.Bytes[len(tok.Bytes)-1] == '\n' {
@@ -382,9 +382,9 @@ func tokenIsNewline(tok *Token) bool {
 
 func tokenBracketChange(tok *Token) int {
 	switch tok.Type {
-	case zclsyntax.TokenOBrace, zclsyntax.TokenOBrack, zclsyntax.TokenOParen, zclsyntax.TokenTemplateControl, zclsyntax.TokenTemplateInterp:
+	case hclsyntax.TokenOBrace, hclsyntax.TokenOBrack, hclsyntax.TokenOParen, hclsyntax.TokenTemplateControl, hclsyntax.TokenTemplateInterp:
 		return 1
-	case zclsyntax.TokenCBrace, zclsyntax.TokenCBrack, zclsyntax.TokenCParen, zclsyntax.TokenTemplateSeqEnd:
+	case hclsyntax.TokenCBrace, hclsyntax.TokenCBrack, hclsyntax.TokenCParen, hclsyntax.TokenTemplateSeqEnd:
 		return -1
 	default:
 		return 0

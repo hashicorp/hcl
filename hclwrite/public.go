@@ -3,13 +3,13 @@ package hclwrite
 import (
 	"bytes"
 
-	"github.com/hashicorp/hcl2/zcl"
+	"github.com/hashicorp/hcl2/hcl"
 )
 
 // ParseConfig interprets the given source bytes into a *zclwrite.File. The
 // resulting AST can be used to perform surgical edits on the source code
 // before turning it back into bytes again.
-func ParseConfig(src []byte, filename string, start zcl.Pos) (*File, zcl.Diagnostics) {
+func ParseConfig(src []byte, filename string, start hcl.Pos) (*File, hcl.Diagnostics) {
 	return parse(src, filename, start)
 }
 

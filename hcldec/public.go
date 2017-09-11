@@ -1,7 +1,7 @@
 package hcldec
 
 import (
-	"github.com/hashicorp/hcl2/zcl"
+	"github.com/hashicorp/hcl2/hcl"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -11,7 +11,7 @@ import (
 //
 // The ctx argument may be nil, in which case any references to variables or
 // functions will produce error diagnostics.
-func Decode(body zcl.Body, spec Spec, ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
+func Decode(body hcl.Body, spec Spec, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	val, _, diags := decode(body, nil, ctx, spec, false)
 	return val, diags
 }
@@ -22,7 +22,7 @@ func Decode(body zcl.Body, spec Spec, ctx *zcl.EvalContext) (cty.Value, zcl.Diag
 //
 // Any descendent block bodies are _not_ decoded partially and thus must
 // be fully described by the given specification.
-func PartialDecode(body zcl.Body, spec Spec, ctx *zcl.EvalContext) (cty.Value, zcl.Body, zcl.Diagnostics) {
+func PartialDecode(body hcl.Body, spec Spec, ctx *hcl.EvalContext) (cty.Value, hcl.Body, hcl.Diagnostics) {
 	return decode(body, nil, ctx, spec, true)
 }
 
@@ -42,6 +42,6 @@ func PartialDecode(body zcl.Body, spec Spec, ctx *zcl.EvalContext) (cty.Value, z
 // and may not actually be something ideal. It's expected that an application
 // will already have used Decode or PartialDecode earlier and thus had an
 // opportunity to detect and report spec violations.
-func SourceRange(body zcl.Body, spec Spec) zcl.Range {
+func SourceRange(body hcl.Body, spec Spec) hcl.Range {
 	return sourceRange(body, nil, spec)
 }

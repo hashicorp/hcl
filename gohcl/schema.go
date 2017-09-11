@@ -6,10 +6,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/hashicorp/hcl2/zcl"
+	"github.com/hashicorp/hcl2/hcl"
 )
 
-// ImpliedBodySchema produces a zcl.BodySchema derived from the type of the
+// ImpliedBodySchema produces a hcl.BodySchema derived from the type of the
 // given value, which must be a struct value or a pointer to one. If an
 // inappropriate value is passed, this function will panic.
 //
@@ -19,7 +19,7 @@ import (
 // This uses the tags on the fields of the struct to discover how each
 // field's value should be expressed within configuration. If an invalid
 // mapping is attempted, this function will panic.
-func ImpliedBodySchema(val interface{}) (schema *zcl.BodySchema, partial bool) {
+func ImpliedBodySchema(val interface{}) (schema *hcl.BodySchema, partial bool) {
 	ty := reflect.TypeOf(val)
 
 	if ty.Kind() == reflect.Ptr {
@@ -30,8 +30,8 @@ func ImpliedBodySchema(val interface{}) (schema *zcl.BodySchema, partial bool) {
 		panic(fmt.Sprintf("given value must be struct, not %T", val))
 	}
 
-	var attrSchemas []zcl.AttributeSchema
-	var blockSchemas []zcl.BlockHeaderSchema
+	var attrSchemas []hcl.AttributeSchema
+	var blockSchemas []hcl.BlockHeaderSchema
 
 	tags := getFieldTags(ty)
 
@@ -43,7 +43,7 @@ func ImpliedBodySchema(val interface{}) (schema *zcl.BodySchema, partial bool) {
 	for _, n := range attrNames {
 		idx := tags.Attributes[n]
 		field := ty.Field(idx)
-		attrSchemas = append(attrSchemas, zcl.AttributeSchema{
+		attrSchemas = append(attrSchemas, hcl.AttributeSchema{
 			Name:     n,
 			Required: field.Type.Kind() != reflect.Ptr,
 		})
@@ -78,14 +78,14 @@ func ImpliedBodySchema(val interface{}) (schema *zcl.BodySchema, partial bool) {
 			}
 		}
 
-		blockSchemas = append(blockSchemas, zcl.BlockHeaderSchema{
+		blockSchemas = append(blockSchemas, hcl.BlockHeaderSchema{
 			Type:       n,
 			LabelNames: labelNames,
 		})
 	}
 
 	partial = tags.Remain != nil
-	schema = &zcl.BodySchema{
+	schema = &hcl.BodySchema{
 		Attributes: attrSchemas,
 		Blocks:     blockSchemas,
 	}

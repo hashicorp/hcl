@@ -1,7 +1,7 @@
 package hcldec
 
 import (
-	"github.com/hashicorp/hcl2/zcl"
+	"github.com/hashicorp/hcl2/hcl"
 )
 
 // Variables processes the given body with the given spec and returns a
@@ -14,12 +14,12 @@ import (
 // If the given body is not compliant with the given schema, the result may
 // be incomplete, but that's assumed to be okay because the eventual call
 // to Decode will produce error diagnostics anyway.
-func Variables(body zcl.Body, spec Spec) []zcl.Traversal {
+func Variables(body hcl.Body, spec Spec) []hcl.Traversal {
 	schema := ImpliedSchema(spec)
 
 	content, _, _ := body.PartialContent(schema)
 
-	var vars []zcl.Traversal
+	var vars []hcl.Traversal
 
 	if vs, ok := spec.(specNeedingVariables); ok {
 		vars = append(vars, vs.variablesNeeded(content)...)

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/hashicorp/hcl2/zcl"
+	"github.com/hashicorp/hcl2/hcl"
 	"github.com/zclconf/go-cty/cty/convert"
 	"github.com/zclconf/go-cty/cty/gocty"
 )
@@ -25,7 +25,7 @@ import (
 // are returned then the given value may have been partially-populated but
 // may still be accessed by a careful caller for static analysis and editor
 // integration use-cases.
-func DecodeBody(body zcl.Body, ctx *zcl.EvalContext, val interface{}) zcl.Diagnostics {
+func DecodeBody(body hcl.Body, ctx *hcl.EvalContext, val interface{}) hcl.Diagnostics {
 	rv := reflect.ValueOf(val)
 	if rv.Kind() != reflect.Ptr {
 		panic(fmt.Sprintf("target value must be a pointer, not %s", rv.Type().String()))
@@ -34,7 +34,7 @@ func DecodeBody(body zcl.Body, ctx *zcl.EvalContext, val interface{}) zcl.Diagno
 	return decodeBodyToValue(body, ctx, rv.Elem())
 }
 
-func decodeBodyToValue(body zcl.Body, ctx *zcl.EvalContext, val reflect.Value) zcl.Diagnostics {
+func decodeBodyToValue(body hcl.Body, ctx *hcl.EvalContext, val reflect.Value) hcl.Diagnostics {
 	et := val.Type()
 	switch et.Kind() {
 	case reflect.Struct:
@@ -46,12 +46,12 @@ func decodeBodyToValue(body zcl.Body, ctx *zcl.EvalContext, val reflect.Value) z
 	}
 }
 
-func decodeBodyToStruct(body zcl.Body, ctx *zcl.EvalContext, val reflect.Value) zcl.Diagnostics {
+func decodeBodyToStruct(body hcl.Body, ctx *hcl.EvalContext, val reflect.Value) hcl.Diagnostics {
 	schema, partial := ImpliedBodySchema(val.Interface())
 
-	var content *zcl.BodyContent
-	var leftovers zcl.Body
-	var diags zcl.Diagnostics
+	var content *hcl.BodyContent
+	var leftovers hcl.Body
+	var diags hcl.Diagnostics
 	if partial {
 		content, leftovers, diags = body.PartialContent(schema)
 	} else {
@@ -117,8 +117,8 @@ func decodeBodyToStruct(body zcl.Body, ctx *zcl.EvalContext, val reflect.Value) 
 		}
 
 		if len(blocks) > 1 && !isSlice {
-			diags = append(diags, &zcl.Diagnostic{
-				Severity: zcl.DiagError,
+			diags = append(diags, &hcl.Diagnostic{
+				Severity: hcl.DiagError,
 				Summary:  fmt.Sprintf("Duplicate %s block", typeName),
 				Detail: fmt.Sprintf(
 					"Only one %s block is allowed. Another was defined at %s.",
@@ -133,8 +133,8 @@ func decodeBodyToStruct(body zcl.Body, ctx *zcl.EvalContext, val reflect.Value) 
 			if isSlice || isPtr {
 				val.Field(fieldIdx).Set(reflect.Zero(field.Type))
 			} else {
-				diags = append(diags, &zcl.Diagnostic{
-					Severity: zcl.DiagError,
+				diags = append(diags, &hcl.Diagnostic{
+					Severity: hcl.DiagError,
 					Summary:  fmt.Sprintf("Missing %s block", typeName),
 					Detail:   fmt.Sprintf("A %s block is required.", typeName),
 					Subject:  body.MissingItemRange().Ptr(),
@@ -181,7 +181,7 @@ func decodeBodyToStruct(body zcl.Body, ctx *zcl.EvalContext, val reflect.Value) 
 	return diags
 }
 
-func decodeBodyToMap(body zcl.Body, ctx *zcl.EvalContext, v reflect.Value) zcl.Diagnostics {
+func decodeBodyToMap(body hcl.Body, ctx *hcl.EvalContext, v reflect.Value) hcl.Diagnostics {
 	attrs, diags := body.JustAttributes()
 	if attrs == nil {
 		return diags
@@ -207,8 +207,8 @@ func decodeBodyToMap(body zcl.Body, ctx *zcl.EvalContext, v reflect.Value) zcl.D
 	return diags
 }
 
-func decodeBlockToValue(block *zcl.Block, ctx *zcl.EvalContext, v reflect.Value) zcl.Diagnostics {
-	var diags zcl.Diagnostics
+func decodeBlockToValue(block *hcl.Block, ctx *hcl.EvalContext, v reflect.Value) hcl.Diagnostics {
+	var diags hcl.Diagnostics
 
 	ty := v.Type()
 
@@ -253,7 +253,7 @@ func decodeBlockToValue(block *zcl.Block, ctx *zcl.EvalContext, v reflect.Value)
 // are returned then the given value may have been partially-populated but
 // may still be accessed by a careful caller for static analysis and editor
 // integration use-cases.
-func DecodeExpression(expr zcl.Expression, ctx *zcl.EvalContext, val interface{}) zcl.Diagnostics {
+func DecodeExpression(expr hcl.Expression, ctx *hcl.EvalContext, val interface{}) hcl.Diagnostics {
 	srcVal, diags := expr.Value(ctx)
 
 	convTy, err := gocty.ImpliedType(val)
@@ -263,8 +263,8 @@ func DecodeExpression(expr zcl.Expression, ctx *zcl.EvalContext, val interface{}
 
 	srcVal, err = convert.Convert(srcVal, convTy)
 	if err != nil {
-		diags = append(diags, &zcl.Diagnostic{
-			Severity: zcl.DiagError,
+		diags = append(diags, &hcl.Diagnostic{
+			Severity: hcl.DiagError,
 			Summary:  "Unsuitable value type",
 			Detail:   fmt.Sprintf("Unsuitable value: %s", err.Error()),
 			Subject:  expr.StartRange().Ptr(),
@@ -275,8 +275,8 @@ func DecodeExpression(expr zcl.Expression, ctx *zcl.EvalContext, val interface{}
 
 	err = gocty.FromCtyValue(srcVal, val)
 	if err != nil {
-		diags = append(diags, &zcl.Diagnostic{
-			Severity: zcl.DiagError,
+		diags = append(diags, &hcl.Diagnostic{
+			Severity: hcl.DiagError,
 			Summary:  "Unsuitable value type",
 			Detail:   fmt.Sprintf("Unsuitable value: %s", err.Error()),
 			Subject:  expr.StartRange().Ptr(),

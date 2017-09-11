@@ -1,7 +1,7 @@
 package userfunc
 
 import (
-	"github.com/hashicorp/hcl2/zcl"
+	"github.com/hashicorp/hcl2/hcl"
 	"github.com/zclconf/go-cty/cty/function"
 )
 
@@ -17,7 +17,7 @@ import (
 // configuration language, but more complex applications may use different
 // contexts to support lexical scoping depending on where in a configuration
 // structure a function declaration is found, etc.
-type ContextFunc func() *zcl.EvalContext
+type ContextFunc func() *hcl.EvalContext
 
 // DecodeUserFunctions looks for blocks of the given type in the given body
 // and, for each one found, interprets it as a custom function definition.
@@ -37,6 +37,6 @@ type ContextFunc func() *zcl.EvalContext
 //
 // If the returned diagnostics set has errors then the function map and
 // remain body may be nil or incomplete.
-func DecodeUserFunctions(body zcl.Body, blockType string, context ContextFunc) (funcs map[string]function.Function, remain zcl.Body, diags zcl.Diagnostics) {
+func DecodeUserFunctions(body hcl.Body, blockType string, context ContextFunc) (funcs map[string]function.Function, remain hcl.Body, diags hcl.Diagnostics) {
 	return decodeUserFunctions(body, blockType, context)
 }

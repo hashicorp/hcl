@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/hashicorp/hcl2/zcl"
-	"github.com/hashicorp/hcl2/zcl/zclsyntax"
+	"github.com/hashicorp/hcl2/hcl/hclsyntax"
+	"github.com/hashicorp/hcl2/hcl"
 	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-cty/cty/function"
 	"github.com/zclconf/go-cty/cty/function/stdlib"
@@ -48,7 +48,7 @@ block {
 	for _, test := range tests {
 		t.Run(test, func(t *testing.T) {
 			src := []byte(test)
-			file, diags := parse(src, "", zcl.Pos{Line: 1, Column: 1})
+			file, diags := parse(src, "", hcl.Pos{Line: 1, Column: 1})
 			if len(diags) != 0 {
 				for _, diag := range diags {
 					t.Logf(" - %s", diag.Error())
@@ -107,7 +107,7 @@ func TestRoundTripFormat(t *testing.T) {
 		"a=\"${\n5\n}\"\n",
 	}
 
-	ctx := &zcl.EvalContext{
+	ctx := &hcl.EvalContext{
 		Variables: map[string]cty.Value{
 			"hello": cty.StringVal("hello"),
 			"five":  cty.NumberIntVal(5),
@@ -122,7 +122,7 @@ func TestRoundTripFormat(t *testing.T) {
 
 			attrsAsObj := func(src []byte, phase string) cty.Value {
 				t.Logf("source %s:\n%s", phase, src)
-				f, diags := zclsyntax.ParseConfig(src, "", zcl.Pos{Line: 1, Column: 1})
+				f, diags := hclsyntax.ParseConfig(src, "", hcl.Pos{Line: 1, Column: 1})
 				if len(diags) != 0 {
 					for _, diag := range diags {
 						t.Logf(" - %s", diag.Error())

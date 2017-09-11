@@ -1,15 +1,15 @@
 package hcldec
 
 import (
-	"github.com/hashicorp/hcl2/zcl"
+	"github.com/hashicorp/hcl2/hcl"
 )
 
-// ImpliedSchema returns the *zcl.BodySchema implied by the given specification.
+// ImpliedSchema returns the *hcl.BodySchema implied by the given specification.
 // This is the schema that the Decode function will use internally to
 // access the content of a given body.
-func ImpliedSchema(spec Spec) *zcl.BodySchema {
-	var attrs []zcl.AttributeSchema
-	var blocks []zcl.BlockHeaderSchema
+func ImpliedSchema(spec Spec) *hcl.BodySchema {
+	var attrs []hcl.AttributeSchema
+	var blocks []hcl.BlockHeaderSchema
 
 	// visitSameBodyChildren walks through the spec structure, calling
 	// the given callback for each descendent spec encountered. We are
@@ -27,7 +27,7 @@ func ImpliedSchema(spec Spec) *zcl.BodySchema {
 	visit(spec)
 	spec.visitSameBodyChildren(visit)
 
-	return &zcl.BodySchema{
+	return &hcl.BodySchema{
 		Attributes: attrs,
 		Blocks:     blocks,
 	}

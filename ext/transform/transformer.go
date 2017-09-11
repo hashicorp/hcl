@@ -1,7 +1,7 @@
 package transform
 
 import (
-	"github.com/hashicorp/hcl2/zcl"
+	"github.com/hashicorp/hcl2/hcl"
 )
 
 // A Transformer takes a given body, applies some (possibly no-op)
@@ -13,14 +13,14 @@ import (
 // returns diagnostics when its methods are called. NewErrorBody is a utility
 // to help with this.
 type Transformer interface {
-	TransformBody(zcl.Body) zcl.Body
+	TransformBody(hcl.Body) hcl.Body
 }
 
 // TransformerFunc is a function type that implements Transformer.
-type TransformerFunc func(zcl.Body) zcl.Body
+type TransformerFunc func(hcl.Body) hcl.Body
 
 // TransformBody is an implementation of Transformer.TransformBody.
-func (f TransformerFunc) TransformBody(in zcl.Body) zcl.Body {
+func (f TransformerFunc) TransformBody(in hcl.Body) hcl.Body {
 	return f(in)
 }
 
@@ -32,7 +32,7 @@ func Chain(c []Transformer) Transformer {
 	return chain(c)
 }
 
-func (c chain) TransformBody(body zcl.Body) zcl.Body {
+func (c chain) TransformBody(body hcl.Body) hcl.Body {
 	for _, t := range c {
 		body = t.TransformBody(body)
 	}

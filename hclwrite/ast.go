@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"io"
 
-	"github.com/hashicorp/hcl2/zcl"
+	"github.com/hashicorp/hcl2/hcl"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -112,12 +112,12 @@ func (n *Body) SetAttributeValue(name string, val cty.Value) *Attribute {
 // SetAttributeTraversal either replaces the expression of an existing attribute
 // of the given name or adds a new attribute definition to the end of the block.
 //
-// The new expression is given as a zcl.Traversal, which must be an absolute
+// The new expression is given as a hcl.Traversal, which must be an absolute
 // traversal. To set a literal value, use SetAttributeValue.
 //
 // The return value is the attribute that was either modified in-place or
 // created.
-func (n *Body) SetAttributeTraversal(name string, traversal zcl.Traversal) *Attribute {
+func (n *Body) SetAttributeTraversal(name string, traversal hcl.Traversal) *Attribute {
 	panic("Body.SetAttributeTraversal not yet implemented")
 }
 

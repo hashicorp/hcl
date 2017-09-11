@@ -9,9 +9,9 @@ import (
 	"os"
 	"strings"
 
+	"github.com/hashicorp/hcl2/hcl"
 	"github.com/hashicorp/hcl2/hclparse"
 	"github.com/hashicorp/hcl2/hclwrite"
-	"github.com/hashicorp/hcl2/zcl"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
@@ -25,7 +25,7 @@ var (
 )
 
 var parser = hclparse.NewParser()
-var diagWr zcl.DiagnosticWriter // initialized in init
+var diagWr hcl.DiagnosticWriter // initialized in init
 var checkErrs = false
 var changed []string
 
@@ -35,7 +35,7 @@ func init() {
 	if err != nil {
 		w = 80
 	}
-	diagWr = zcl.NewDiagnosticTextWriter(os.Stderr, parser.Files(), uint(w), color)
+	diagWr = hcl.NewDiagnosticTextWriter(os.Stderr, parser.Files(), uint(w), color)
 }
 
 func main() {

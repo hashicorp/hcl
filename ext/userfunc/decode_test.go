@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/hcl2/zcl"
-	"github.com/hashicorp/hcl2/zcl/zclsyntax"
+	"github.com/hashicorp/hcl2/hcl/hclsyntax"
+	"github.com/hashicorp/hcl2/hcl"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -13,7 +13,7 @@ func TestDecodeUserFunctions(t *testing.T) {
 	tests := []struct {
 		src       string
 		testExpr  string
-		baseCtx   *zcl.EvalContext
+		baseCtx   *hcl.EvalContext
 		want      cty.Value
 		diagCount int
 	}{
@@ -98,7 +98,7 @@ function "closure" {
 }
 `,
 			`closure()`,
-			&zcl.EvalContext{
+			&hcl.EvalContext{
 				Variables: map[string]cty.Value{
 					"upvalue": cty.True,
 				},
@@ -138,23 +138,23 @@ function "neg" {
 
 	for i, test := range tests {
 		t.Run(fmt.Sprintf("%02d", i), func(t *testing.T) {
-			f, diags := zclsyntax.ParseConfig([]byte(test.src), "config", zcl.Pos{Line: 1, Column: 1})
+			f, diags := hclsyntax.ParseConfig([]byte(test.src), "config", hcl.Pos{Line: 1, Column: 1})
 			if f == nil || f.Body == nil {
 				t.Fatalf("got nil file or body")
 			}
 
-			funcs, _, funcsDiags := decodeUserFunctions(f.Body, "function", func() *zcl.EvalContext {
+			funcs, _, funcsDiags := decodeUserFunctions(f.Body, "function", func() *hcl.EvalContext {
 				return test.baseCtx
 			})
 			diags = append(diags, funcsDiags...)
 
-			expr, exprParseDiags := zclsyntax.ParseExpression([]byte(test.testExpr), "testexpr", zcl.Pos{Line: 1, Column: 1})
+			expr, exprParseDiags := hclsyntax.ParseExpression([]byte(test.testExpr), "testexpr", hcl.Pos{Line: 1, Column: 1})
 			diags = append(diags, exprParseDiags...)
 			if expr == nil {
 				t.Fatalf("parsing test expr returned nil")
 			}
 
-			got, exprDiags := expr.Value(&zcl.EvalContext{
+			got, exprDiags := expr.Value(&hcl.EvalContext{
 				Functions: funcs,
 			})
 			diags = append(diags, exprDiags...)

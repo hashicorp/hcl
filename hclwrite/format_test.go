@@ -7,7 +7,7 @@ import (
 	"reflect"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/hashicorp/hcl2/zcl/zclsyntax"
+	"github.com/hashicorp/hcl2/hcl/hclsyntax"
 )
 
 func TestFormat(t *testing.T) {
@@ -318,7 +318,7 @@ func TestLinesForFormat(t *testing.T) {
 	}{
 		{
 			Tokens{
-				&Token{Type: zclsyntax.TokenEOF},
+				&Token{Type: hclsyntax.TokenEOF},
 			},
 			[]formatLine{
 				{
@@ -328,99 +328,99 @@ func TestLinesForFormat(t *testing.T) {
 		},
 		{
 			Tokens{
-				&Token{Type: zclsyntax.TokenIdent},
-				&Token{Type: zclsyntax.TokenEOF},
+				&Token{Type: hclsyntax.TokenIdent},
+				&Token{Type: hclsyntax.TokenEOF},
 			},
 			[]formatLine{
 				{
 					lead: Tokens{
-						&Token{Type: zclsyntax.TokenIdent},
+						&Token{Type: hclsyntax.TokenIdent},
 					},
 				},
 			},
 		},
 		{
 			Tokens{
-				&Token{Type: zclsyntax.TokenIdent},
-				&Token{Type: zclsyntax.TokenNewline},
-				&Token{Type: zclsyntax.TokenNumberLit},
-				&Token{Type: zclsyntax.TokenEOF},
+				&Token{Type: hclsyntax.TokenIdent},
+				&Token{Type: hclsyntax.TokenNewline},
+				&Token{Type: hclsyntax.TokenNumberLit},
+				&Token{Type: hclsyntax.TokenEOF},
 			},
 			[]formatLine{
 				{
 					lead: Tokens{
-						&Token{Type: zclsyntax.TokenIdent},
-						&Token{Type: zclsyntax.TokenNewline},
+						&Token{Type: hclsyntax.TokenIdent},
+						&Token{Type: hclsyntax.TokenNewline},
 					},
 				},
 				{
 					lead: Tokens{
-						&Token{Type: zclsyntax.TokenNumberLit},
+						&Token{Type: hclsyntax.TokenNumberLit},
 					},
 				},
 			},
 		},
 		{
 			Tokens{
-				&Token{Type: zclsyntax.TokenIdent},
-				&Token{Type: zclsyntax.TokenComment, Bytes: []byte("#foo\n")},
-				&Token{Type: zclsyntax.TokenNumberLit},
-				&Token{Type: zclsyntax.TokenEOF},
+				&Token{Type: hclsyntax.TokenIdent},
+				&Token{Type: hclsyntax.TokenComment, Bytes: []byte("#foo\n")},
+				&Token{Type: hclsyntax.TokenNumberLit},
+				&Token{Type: hclsyntax.TokenEOF},
 			},
 			[]formatLine{
 				{
 					lead: Tokens{
-						&Token{Type: zclsyntax.TokenIdent},
+						&Token{Type: hclsyntax.TokenIdent},
 					},
 					comment: Tokens{
-						&Token{Type: zclsyntax.TokenComment, Bytes: []byte("#foo\n")},
+						&Token{Type: hclsyntax.TokenComment, Bytes: []byte("#foo\n")},
 					},
 				},
 				{
 					lead: Tokens{
-						&Token{Type: zclsyntax.TokenNumberLit},
-					},
-				},
-			},
-		},
-		{
-			Tokens{
-				&Token{Type: zclsyntax.TokenIdent},
-				&Token{Type: zclsyntax.TokenEqual},
-				&Token{Type: zclsyntax.TokenNumberLit},
-				&Token{Type: zclsyntax.TokenEOF},
-			},
-			[]formatLine{
-				{
-					lead: Tokens{
-						&Token{Type: zclsyntax.TokenIdent},
-					},
-					assign: Tokens{
-						&Token{Type: zclsyntax.TokenEqual},
-						&Token{Type: zclsyntax.TokenNumberLit},
+						&Token{Type: hclsyntax.TokenNumberLit},
 					},
 				},
 			},
 		},
 		{
 			Tokens{
-				&Token{Type: zclsyntax.TokenIdent},
-				&Token{Type: zclsyntax.TokenEqual},
-				&Token{Type: zclsyntax.TokenNumberLit},
-				&Token{Type: zclsyntax.TokenComment, Bytes: []byte("#foo\n")},
-				&Token{Type: zclsyntax.TokenEOF},
+				&Token{Type: hclsyntax.TokenIdent},
+				&Token{Type: hclsyntax.TokenEqual},
+				&Token{Type: hclsyntax.TokenNumberLit},
+				&Token{Type: hclsyntax.TokenEOF},
 			},
 			[]formatLine{
 				{
 					lead: Tokens{
-						&Token{Type: zclsyntax.TokenIdent},
+						&Token{Type: hclsyntax.TokenIdent},
 					},
 					assign: Tokens{
-						&Token{Type: zclsyntax.TokenEqual},
-						&Token{Type: zclsyntax.TokenNumberLit},
+						&Token{Type: hclsyntax.TokenEqual},
+						&Token{Type: hclsyntax.TokenNumberLit},
+					},
+				},
+			},
+		},
+		{
+			Tokens{
+				&Token{Type: hclsyntax.TokenIdent},
+				&Token{Type: hclsyntax.TokenEqual},
+				&Token{Type: hclsyntax.TokenNumberLit},
+				&Token{Type: hclsyntax.TokenComment, Bytes: []byte("#foo\n")},
+				&Token{Type: hclsyntax.TokenEOF},
+			},
+			[]formatLine{
+				{
+					lead: Tokens{
+						&Token{Type: hclsyntax.TokenIdent},
+					},
+					assign: Tokens{
+						&Token{Type: hclsyntax.TokenEqual},
+						&Token{Type: hclsyntax.TokenNumberLit},
 					},
 					comment: Tokens{
-						&Token{Type: zclsyntax.TokenComment, Bytes: []byte("#foo\n")},
+						&Token{Type: hclsyntax.TokenComment, Bytes: []byte("#foo\n")},
 					},
 				},
 				{
@@ -433,13 +433,13 @@ func TestLinesForFormat(t *testing.T) {
 				// A comment goes into a comment cell only if it is after
 				// some non-comment tokens, since whole-line comments must
 				// stay flush with the indent level.
-				&Token{Type: zclsyntax.TokenComment, Bytes: []byte("#foo\n")},
-				&Token{Type: zclsyntax.TokenEOF},
+				&Token{Type: hclsyntax.TokenComment, Bytes: []byte("#foo\n")},
+				&Token{Type: hclsyntax.TokenEOF},
 			},
 			[]formatLine{
 				{
 					lead: Tokens{
-						&Token{Type: zclsyntax.TokenComment, Bytes: []byte("#foo\n")},
+						&Token{Type: hclsyntax.TokenComment, Bytes: []byte("#foo\n")},
 					},
 				},
 				{

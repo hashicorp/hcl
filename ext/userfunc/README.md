@@ -15,7 +15,7 @@ function "add" {
 The extension is implemented as a pre-processor for `cty.Body` objects. Given
 a body that may contain functions, the `DecodeUserFunctions` function searches
 for blocks that define functions and returns a functions map suitable for
-inclusion in a `zcl.EvalContext`. It also returns a new `cty.Body` that
+inclusion in a `hcl.EvalContext`. It also returns a new `cty.Body` that
 contains the remainder of the content from the given body, allowing for
 further processing of remaining content.
 

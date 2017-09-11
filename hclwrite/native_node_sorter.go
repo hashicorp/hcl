@@ -1,11 +1,11 @@
 package hclwrite
 
 import (
-	"github.com/hashicorp/hcl2/zcl/zclsyntax"
+	"github.com/hashicorp/hcl2/hcl/hclsyntax"
 )
 
 type nativeNodeSorter struct {
-	Nodes []zclsyntax.Node
+	Nodes []hclsyntax.Node
 }
 
 func (s nativeNodeSorter) Len() int {

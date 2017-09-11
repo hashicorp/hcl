@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/hcl2/hclparse"
-	"github.com/hashicorp/hcl2/zcl"
+	"github.com/hashicorp/hcl2/hcl"
 )
 
 // FileResolver creates and returns a Resolver that interprets include paths
@@ -35,13 +35,13 @@ type fileResolver struct {
 	Parser  *hclparse.Parser
 }
 
-func (r fileResolver) ResolveBodyPath(path string, refRange zcl.Range) (zcl.Body, zcl.Diagnostics) {
+func (r fileResolver) ResolveBodyPath(path string, refRange hcl.Range) (hcl.Body, hcl.Diagnostics) {
 	callerFile := filepath.Join(r.BaseDir, refRange.Filename)
 	callerDir := filepath.Dir(callerFile)
 	targetFile := filepath.Join(callerDir, path)
 
-	var f *zcl.File
-	var diags zcl.Diagnostics
+	var f *hcl.File
+	var diags hcl.Diagnostics
 	if strings.HasSuffix(targetFile, ".json") {
 		f, diags = r.Parser.ParseJSONFile(targetFile)
 	} else {

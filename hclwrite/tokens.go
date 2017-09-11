@@ -5,7 +5,7 @@ import (
 	"io"
 
 	"github.com/apparentlymart/go-textseg/textseg"
-	"github.com/hashicorp/hcl2/zcl/zclsyntax"
+	"github.com/hashicorp/hcl2/hcl/hclsyntax"
 )
 
 // TokenGen is an abstract type that can append tokens to a list. It is the
@@ -25,7 +25,7 @@ type TokenCallback func(*Token)
 // in purpose to zclsyntax.Token, but discards the source position information
 // since that is not useful in code generation.
 type Token struct {
-	Type  zclsyntax.TokenType
+	Type  hclsyntax.TokenType
 	Bytes []byte
 
 	// We record the number of spaces before each token so that we can
@@ -158,7 +158,7 @@ func (ts *TokenSeq) IsIdent(name []byte) bool {
 	if tok == nil {
 		return false
 	}
-	if tok.Type != zclsyntax.TokenIdent {
+	if tok.Type != hclsyntax.TokenIdent {
 		return false
 	}
 	return bytes.Equal(tok.Bytes, name)
