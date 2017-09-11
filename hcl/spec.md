@@ -1,13 +1,13 @@
-# zcl Syntax-Agnostic Information Model
+# HCL Syntax-Agnostic Information Model
 
 This is the specification for the general information model (abstract types and
-semantics) for hcl. zcl is a system for defining configuration languages for
-applications. The zcl information model is designed to support multiple
+semantics) for hcl. HCL is a system for defining configuration languages for
+applications. The HCL information model is designed to support multiple
 concrete syntaxes for configuration, each with a mapping to the model defined
 in this specification.
 
 The two primary syntaxes intended for use in conjunction with this model are
-[the zcl native syntax](./zclsyntax/spec.md) and [the JSON syntax](./json/spec.md).
+[the HCL native syntax](./zclsyntax/spec.md) and [the JSON syntax](./json/spec.md).
 In principle other syntaxes are possible as long as either their language model
 is sufficiently rich to express the concepts described in this specification
 or the language targets a well-defined subset of the specification.
@@ -36,8 +36,8 @@ of a particular object.
 
 ## Body Content
 
-To support the expression of the zcl concepts in languages whose information
-model is a subset of zcl's, such as JSON, a _body_ is an opaque container
+To support the expression of the HCL concepts in languages whose information
+model is a subset of HCL's, such as JSON, a _body_ is an opaque container
 whose content can only be accessed by providing information on the expected
 structure of the content.
 
@@ -203,12 +203,12 @@ which is dynamically determined during evaluation. The _variable scope_ in
 the evaluation context is a map from variable name to value, using the same
 definition of value.
 
-The type system for zcl values is intended to be of a level abstraction
+The type system for HCL values is intended to be of a level abstraction
 suitable for configuration of various applications. A well-defined,
 implementation-language-agnostic type system is defined to allow for
 consistent processing of configuration across many implementation languages.
 Concrete implementations may provide additional functionality to lower
-zcl values and types to corresponding native language types, which may then
+HCL values and types to corresponding native language types, which may then
 impose additional constraints on the values outside of the scope of this
 specification.
 
@@ -257,7 +257,7 @@ value.
 
 Some syntaxes may be unable to represent numeric literals of arbitrary
 precision. This must be defined in the syntax specification as part of its
-description of mapping numeric literals to zcl values.
+description of mapping numeric literals to HCL values.
 
 ### Structural Types
 
@@ -355,14 +355,14 @@ The dynamic pseudo-type is identical only to itself.
 ### Capsule Types
 
 A _capsule type_ is a custom type defined by the calling application. A value
-of a capsule type is considered opaque to zcl, but may be accepted
+of a capsule type is considered opaque to HCL, but may be accepted
 by functions provided by the calling application.
 
 A particular capsule type is identical only to itself. The equality of two
 values of the same capsule type is defined by the calling application. No
 other operations are supported for values of capsule types.
 
-Support for capsule types in a zcl implementation is optional. Capsule types
+Support for capsule types in a HCL implementation is optional. Capsule types
 are intended to allow calling applications to pass through values that are
 not part of the standard type system. For example, an application that
 deals with raw binary data may define a capsule type representing a byte

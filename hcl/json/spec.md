@@ -1,7 +1,7 @@
-# zcl JSON Syntax Specification
+# HCL JSON Syntax Specification
 
-This is the specification for the JSON serialization for hcl. zcl is a system
-for defining configuration languages for applications. The zcl information
+This is the specification for the JSON serialization for hcl. HCL is a system
+for defining configuration languages for applications. The HCL information
 model is designed to support multiple concrete syntaxes for configuration,
 and this JSON-based format complements [the native syntax](../zclsyntax/spec.md)
 by being easy to machine-generate, whereas the native syntax is oriented
@@ -10,9 +10,9 @@ towards human authoring and maintenence.
 This syntax is defined in terms of JSON as defined in
 [RFC7159](https://tools.ietf.org/html/rfc7159). As such it inherits the JSON
 grammar as-is, and merely defines a specific methodology for interpreting
-JSON constructs into zcl structural elements and expressions.
+JSON constructs into HCL structural elements and expressions.
 
-This mapping is defined such that valid JSON-serialized zcl input can be
+This mapping is defined such that valid JSON-serialized HCL input can be
 produced using standard JSON implementations in various programming languages.
 _Parsing_ such JSON has some additional constraints not beyond what is normally
 supported by JSON parsers, though adaptations are defined to allow processing
@@ -21,7 +21,7 @@ sections.
 
 ## Structural Elements
 
-The zcl language-agnostic information model defines a _body_ as an abstract
+The HCL language-agnostic information model defines a _body_ as an abstract
 container for attribute definitions and child blocks. A body is represented
 in JSON as a JSON _object_.
 
@@ -31,10 +31,10 @@ JSON bodies, the schema is crucial to allow differentiation of attribute
 definitions and block definitions, both of which are represented via object
 properties.
 
-The special property name `"//"`, when used in an object representing a zcl
+The special property name `"//"`, when used in an object representing a HCL
 body, is parsed and ignored. A property with this name can be used to
 include human-readable comments. (This special property name is _not_
-processed in this way for any _other_ zcl constructs that are represented as
+processed in this way for any _other_ HCL constructs that are represented as
 JSON objects.)
 
 ### Attributes
@@ -164,16 +164,16 @@ at any other point in the block definition structure.
 
 ## Expressions
 
-JSON lacks a native expression syntax, so the zcl JSON syntax instead defines
+JSON lacks a native expression syntax, so the HCL JSON syntax instead defines
 a mapping for each of the JSON value types, including a special mapping for
 strings that allows optional use of arbitrary expressions.
 
 ### Objects
 
-When interpreted as an expression, a JSON object represents a value of a zcl
+When interpreted as an expression, a JSON object represents a value of a HCL
 object type.
 
-Each property of the JSON object represents an attribute of the zcl object type.
+Each property of the JSON object represents an attribute of the HCL object type.
 The object type is constructed by enumerating the JSON object properties,
 creating for each an attribute whose name exactly matches the property name,
 and whose type is the result of recursively applying the expression mapping
@@ -188,10 +188,10 @@ JSON object interpreted as an expression.
 
 ### Arrays
 
-When interpreted as an expression, a JSON array represents a value of a zcl
+When interpreted as an expression, a JSON array represents a value of a HCL
 tuple type.
 
-Each element of the JSON array represents an element of the zcl tuple type.
+Each element of the JSON array represents an element of the HCL tuple type.
 The tuple type is constructed by enumerationg the JSON array elements, creating
 for each an element whose type is the result of recursively applying the
 expression mapping rules. Correspondance is preserved between the array element
@@ -203,16 +203,16 @@ section.
 
 ### Numbers
 
-When interpreted as an expression, a JSON number represents a zcl number value.
+When interpreted as an expression, a JSON number represents a HCL number value.
 
-zcl numbers are arbitrary-precision decimal values, so an ideal implementation
+HCL numbers are arbitrary-precision decimal values, so an ideal implementation
 of this specification will translate exactly the value given to a number of
 corresponding precision.
 
 In practice, off-the-shelf JSON parsers often do not support customizing the
 processing of numbers, and instead force processing as 32-bit or 64-bit
 floating point values with a potential loss of precision. It is permissable
-for a zcl JSON parser to pass on such limitations _if and only if_ the
+for a HCL JSON parser to pass on such limitations _if and only if_ the
 available precision and other constraints are defined in its documentation.
 Calling applications each have differing precision requirements, so calling
 applications are free to select an implementation with more limited precision
@@ -221,12 +221,12 @@ capabilities should high precision not be required for that application.
 ### Boolean Values
 
 The JSON boolean values `true` and `false`, when interpreted as expressions,
-represent the corresponding zcl boolean values.
+represent the corresponding HCL boolean values.
 
 ### The Null Value
 
 The JSON value `null`, when interpreted as an expression, represents a
-zcl null value of the dynamic pseudo-type.
+HCL null value of the dynamic pseudo-type.
 
 ### Strings
 
@@ -234,7 +234,7 @@ When intepreted as an expression, a JSON string may be interpreted in one of
 two ways depending on the evaluation mode.
 
 If evaluating in literal-only mode (as defined by the syntax-agnostic
-information model) the literal string is intepreted directly as a zcl string
+information model) the literal string is intepreted directly as a HCL string
 value, by directly using the exact sequence of unicode characters represented.
 Template interpolations and directives MUST NOT be processed in this mode,
 allowing any characters that appear as introduction sequences to pass through
@@ -246,7 +246,7 @@ literally:
 
 When evaluating in full expression mode (again, as defined by the syntax-
 agnostic information model) the literal string is instead interpreted as a
-_standalone template_ in the zcl Native Syntax. The expression evaluation
+_standalone template_ in the HCL Native Syntax. The expression evaluation
 result is then the direct result of evaluating that template with the current
 variable scope and function table.
 
@@ -255,7 +255,7 @@ variable scope and function table.
 ```
 
 In particular the _Template Interpolation Unwrapping_ requirement from the
-zcl native syntax specification must be implemented, allowing the use of
+HCL native syntax specification must be implemented, allowing the use of
 single-interpolation templates to represent expressions that would not
 otherwise be representable in JSON, such as the following example where
 the result must be a number, rather than a string representation of a number:

@@ -1,8 +1,8 @@
-# zcl Native Syntax Specification
+# HCL Native Syntax Specification
 
 This is the specification of the syntax and semantics of the native syntax
-for hcl. zcl is a system for defining configuration languages for applications.
-The zcl information model is designed to support multiple concrete syntaxes
+for HCL. HCL is a system for defining configuration languages for applications.
+The HCL information model is designed to support multiple concrete syntaxes
 for configuration, but this native syntax is considered the primary format
 and is optimized for human authoring and maintenence, as opposed to machine
 generation of configuration.
@@ -10,7 +10,7 @@ generation of configuration.
 The language consists of three integrated sub-languages:
 
 * The _structural_ language defines the overall heirarchical configuration
-  structure, and is a serialization of zcl bodies, blocks and attributes.
+  structure, and is a serialization of HCL bodies, blocks and attributes.
 
 * The _expression_ language is used to express attribute values, either as
   literals or as derivations of other values.
@@ -22,7 +22,7 @@ In normal use these three sub-languages are used together within configuration
 files to describe an overall configuration, with the structural language
 being used at the top level. The expression and template languages can also
 be used in isolation, to implement features such as REPLs, debuggers, and
-integration into more limited zcl syntaxes such as the JSON profile.
+integration into more limited HCL syntaxes such as the JSON profile.
 
 ## Syntax Notation
 
@@ -73,7 +73,7 @@ Whitespace is defined as a sequence of zero or more space characters
 are _not_ considered whitespace but are ignored as such in certain contexts.
 
 Horizontal tab characters (U+0009) are not considered to be whitespace and
-are not valid within zcl native syntax.
+are not valid within HCL native syntax.
 
 Comments serve as program documentation and come in two forms:
 
@@ -155,7 +155,7 @@ constructs:
 * _Body Content_, which consists of a collection of attributes and blocks.
 
 These constructs correspond to the similarly-named concepts in the
-language-agnostic zcl information model.
+language-agnostic HCL information model.
 
 ```ebnf
 ConfigFile = Body;
@@ -205,7 +205,7 @@ Expression = (
 ### Types
 
 The value types used within the expression language are those defined by the
-syntax-agnostic zcl information model. An expression may return any valid
+syntax-agnostic HCL information model. An expression may return any valid
 type, but only a subset of the available types have first-class syntax.
 A calling application may make other types available via _variables_ and
 _functions_.
@@ -276,7 +276,7 @@ objectelem = (Identifier | Expression) "=" Expression;
 
 Only tuple and object values can be directly constructed via native syntax.
 Tuple and object values can in turn be converted to list, set and map values
-with other operations, which behaves as defined by the syntax-agnostic zcl
+with other operations, which behaves as defined by the syntax-agnostic HCL
 information model.
 
 When specifying an object element, an identifier is interpreted as a literal
@@ -413,7 +413,7 @@ Arguments = (
 ```
 
 The definition of functions and the semantics of calling them are defined by
-the language-agnostic zcl information model. The given arguments are mapped
+the language-agnostic HCL information model. The given arguments are mapped
 onto the function's _parameters_ and the result of a function call expression
 is the return value of the named function when given those arguments.
 
@@ -523,7 +523,7 @@ key expression must be an non-negative integer number representing the
 zero-based element index to access. If applied to a value of object or map
 type, the key expression must be a string representing the attribute name
 or element key. If the given key value is not of the appropriate type, a
-conversion is attempted using the conversion rules from the zcl
+conversion is attempted using the conversion rules from the HCL
 syntax-agnostic information model.
 
 An error is produced if the given key expression does not correspond to
@@ -647,7 +647,7 @@ a != b  not equal
 ```
 
 Two values are equal if the are of identical types and their values are
-equal as defined in the zcl syntax-agnostic information model. The equality
+equal as defined in the HCL syntax-agnostic information model. The equality
 operators are commutative and opposite, such that `(a == b) == !(a != b)`
 and `(a == b) == (b == a)` for all values `a` and `b`.
 
@@ -713,7 +713,7 @@ expression is the result of the conditional. If the predicate value is
 
 The second and third expressions must be of the same type or must be able to
 unify into a common type using the type unification rules defined in the
-zcl syntax-agnostic information model. This unified type is the result type
+HCL syntax-agnostic information model. This unified type is the result type
 of the conditional, with both expressions converted as necessary to the
 unified type.
 
@@ -748,8 +748,8 @@ single string to return. If any of the elements produce an unknown string
 or a value of the dynamic pseudo-type, the result is an unknown string.
 
 An important use-case for standalone templates is to enable the use of
-expressions in alternative zcl syntaxes where a native expression grammar is
-not available. For example, the zcl JSON profile treats the values of JSON
+expressions in alternative HCL syntaxes where a native expression grammar is
+not available. For example, the HCL JSON profile treats the values of JSON
 strings as standalone templates when attributes are evaluated in expression
 mode.
 
@@ -857,7 +857,7 @@ with no surrounding literals, directives or other interpolations, is
 returned verbatim, without conversion to string.
 
 This special case exists primarily to enable the native template language
-to be used inside strings in alternative zcl syntaxes that lack a first-class
+to be used inside strings in alternative HCL syntaxes that lack a first-class
 template or expression syntax. Unwrapping allows arbitrary expressions to be
 used to populate attributes when strings in such languages are interpreted
 as templates.
