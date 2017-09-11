@@ -1,7 +1,7 @@
 package zclwrite
 
 import (
-	"github.com/zclconf/go-zcl/zcl/zclsyntax"
+	"github.com/hashicorp/hcl2/zcl/zclsyntax"
 )
 
 type nativeNodeSorter struct {

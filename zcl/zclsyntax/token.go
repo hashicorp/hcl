@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/apparentlymart/go-textseg/textseg"
-	"github.com/zclconf/go-zcl/zcl"
+	"github.com/hashicorp/hcl2/zcl"
 )
 
 // Token represents a sequence of bytes from some zcl code that has been

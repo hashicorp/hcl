@@ -5,9 +5,9 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/hashicorp/hcl2/zcl"
 	"github.com/kylelemons/godebug/pretty"
 	"github.com/zclconf/go-cty/cty"
-	"github.com/zclconf/go-zcl/zcl"
 )
 
 func TestBodyContent(t *testing.T) {

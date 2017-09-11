@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/hashicorp/hcl2/zcl"
+	"github.com/hashicorp/hcl2/zcl/zclsyntax"
 	"github.com/zclconf/go-cty/cty"
-	"github.com/zclconf/go-zcl/zcl"
-	"github.com/zclconf/go-zcl/zcl/zclsyntax"
 )
 
 func TestDecodeUserFunctions(t *testing.T) {

@@ -3,8 +3,8 @@ package zclwrite
 import (
 	"sort"
 
-	"github.com/zclconf/go-zcl/zcl"
-	"github.com/zclconf/go-zcl/zcl/zclsyntax"
+	"github.com/hashicorp/hcl2/zcl"
+	"github.com/hashicorp/hcl2/zcl/zclsyntax"
 )
 
 // Our "parser" here is actually not doing any parsing of its own. Instead,

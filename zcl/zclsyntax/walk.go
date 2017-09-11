@@ -1,7 +1,7 @@
 package zclsyntax
 
 import (
-	"github.com/zclconf/go-zcl/zcl"
+	"github.com/hashicorp/hcl2/zcl"
 )
 
 // VisitFunc is the callback signature for VisitAll.

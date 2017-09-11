@@ -7,8 +7,8 @@ import (
 	"reflect"
 
 	"github.com/davecgh/go-spew/spew"
+	"github.com/hashicorp/hcl2/zcl"
 	"github.com/zclconf/go-cty/cty"
-	"github.com/zclconf/go-zcl/zcl"
 )
 
 func TestVariables(t *testing.T) {

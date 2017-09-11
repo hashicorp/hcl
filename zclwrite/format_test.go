@@ -7,7 +7,7 @@ import (
 	"reflect"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/zclconf/go-zcl/zcl/zclsyntax"
+	"github.com/hashicorp/hcl2/zcl/zclsyntax"
 )
 
 func TestFormat(t *testing.T) {

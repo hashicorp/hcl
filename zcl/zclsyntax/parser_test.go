@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"github.com/davecgh/go-spew/spew"
+	"github.com/hashicorp/hcl2/zcl"
 	"github.com/kylelemons/godebug/pretty"
 	"github.com/zclconf/go-cty/cty"
-	"github.com/zclconf/go-zcl/zcl"
 )
 
 func TestParseConfig(t *testing.T) {

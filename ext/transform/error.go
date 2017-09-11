@@ -1,7 +1,7 @@
 package transform
 
 import (
-	"github.com/zclconf/go-zcl/zcl"
+	"github.com/hashicorp/hcl2/zcl"
 )
 
 // NewErrorBody returns a zcl.Body that returns the given diagnostics whenever

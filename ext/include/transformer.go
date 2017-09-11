@@ -1,9 +1,9 @@
 package include
 
 import (
-	"github.com/zclconf/go-zcl/ext/transform"
-	"github.com/zclconf/go-zcl/gozcl"
-	"github.com/zclconf/go-zcl/zcl"
+	"github.com/hashicorp/hcl2/ext/transform"
+	"github.com/hashicorp/hcl2/gozcl"
+	"github.com/hashicorp/hcl2/zcl"
 )
 
 // Transformer builds a transformer that finds any "include" blocks in a body

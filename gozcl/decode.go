@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/hashicorp/hcl2/zcl"
 	"github.com/zclconf/go-cty/cty/convert"
 	"github.com/zclconf/go-cty/cty/gocty"
-	"github.com/zclconf/go-zcl/zcl"
 )
 
 // DecodeBody extracts the configuration within the given body into the given

@@ -3,9 +3,9 @@ package zcldec
 import (
 	"fmt"
 
+	"github.com/hashicorp/hcl2/zcl"
 	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-cty/cty/convert"
-	"github.com/zclconf/go-zcl/zcl"
 )
 
 // A Spec is a description of how to decode a zcl.Body to a cty.Value.

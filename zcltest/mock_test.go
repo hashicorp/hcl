@@ -5,8 +5,8 @@ import (
 
 	"reflect"
 
+	"github.com/hashicorp/hcl2/zcl"
 	"github.com/zclconf/go-cty/cty"
-	"github.com/zclconf/go-zcl/zcl"
 )
 
 var mockBodyIsBody zcl.Body = mockBody{}

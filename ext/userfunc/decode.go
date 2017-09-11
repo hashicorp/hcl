@@ -1,10 +1,10 @@
 package userfunc
 
 import (
+	"github.com/hashicorp/hcl2/gozcl"
+	"github.com/hashicorp/hcl2/zcl"
 	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-cty/cty/function"
-	"github.com/zclconf/go-zcl/gozcl"
-	"github.com/zclconf/go-zcl/zcl"
 )
 
 var funcBodySchema = &zcl.BodySchema{

@@ -3,11 +3,11 @@ package zclsyntax
 import (
 	"fmt"
 
+	"github.com/hashicorp/hcl2/zcl"
 	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-cty/cty/convert"
 	"github.com/zclconf/go-cty/cty/function"
 	"github.com/zclconf/go-cty/cty/function/stdlib"
-	"github.com/zclconf/go-zcl/zcl"
 )
 
 type Operation struct {

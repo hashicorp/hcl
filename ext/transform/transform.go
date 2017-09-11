@@ -1,7 +1,7 @@
 package transform
 
 import (
-	"github.com/zclconf/go-zcl/zcl"
+	"github.com/hashicorp/hcl2/zcl"
 )
 
 // Shallow is equivalent to calling transformer.TransformBody(body), and

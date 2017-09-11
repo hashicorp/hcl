@@ -1,8 +1,8 @@
 package zcldec
 
 import (
+	"github.com/hashicorp/hcl2/zcl"
 	"github.com/zclconf/go-cty/cty"
-	"github.com/zclconf/go-zcl/zcl"
 )
 
 // Decode interprets the given body using the given specification and returns

@@ -4,7 +4,7 @@ package zclsyntax
 import (
 	"bytes"
 
-	"github.com/zclconf/go-zcl/zcl"
+	"github.com/hashicorp/hcl2/zcl"
 )
 
 // This file is generated from scan_tokens.rl. DO NOT EDIT.

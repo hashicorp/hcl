@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"io"
 
+	"github.com/hashicorp/hcl2/zcl"
 	"github.com/zclconf/go-cty/cty"
-	"github.com/zclconf/go-zcl/zcl"
 )
 
 type Node interface {

@@ -3,7 +3,7 @@ package gozcl
 import (
 	"reflect"
 
-	"github.com/zclconf/go-zcl/zcl"
+	"github.com/hashicorp/hcl2/zcl"
 )
 
 var victimExpr zcl.Expression

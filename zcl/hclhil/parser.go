@@ -3,9 +3,9 @@ package hclhil
 import (
 	"fmt"
 
-	"github.com/zclconf/go-zcl/zcl"
 	"github.com/hashicorp/hcl"
 	hclast "github.com/hashicorp/hcl/hcl/ast"
+	"github.com/hashicorp/hcl2/zcl"
 )
 
 func parse(src []byte, filename string) (*zcl.File, zcl.Diagnostics) {

@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/zclconf/go-zcl/zcl"
-	"github.com/zclconf/go-zcl/zcl/zclsyntax"
+	"github.com/hashicorp/hcl2/zcl"
+	"github.com/hashicorp/hcl2/zcl/zclsyntax"
 )
 
 func TestBodyFindAttribute(t *testing.T) {

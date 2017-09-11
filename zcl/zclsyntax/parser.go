@@ -6,9 +6,9 @@ import (
 	"fmt"
 
 	"github.com/apparentlymart/go-textseg/textseg"
+	"github.com/hashicorp/hcl2/zcl"
 	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-cty/cty/convert"
-	"github.com/zclconf/go-zcl/zcl"
 )
 
 type parser struct {

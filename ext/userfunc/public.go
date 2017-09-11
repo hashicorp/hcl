@@ -1,8 +1,8 @@
 package userfunc
 
 import (
+	"github.com/hashicorp/hcl2/zcl"
 	"github.com/zclconf/go-cty/cty/function"
-	"github.com/zclconf/go-zcl/zcl"
 )
 
 // A ContextFunc is a callback used to produce the base EvalContext for

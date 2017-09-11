@@ -6,10 +6,10 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/zclconf/go-cty/cty"
-	"github.com/zclconf/go-zcl/zcl"
-	zclJSON "github.com/zclconf/go-zcl/zcl/json"
 	"github.com/davecgh/go-spew/spew"
+	"github.com/hashicorp/hcl2/zcl"
+	zclJSON "github.com/hashicorp/hcl2/zcl/json"
+	"github.com/zclconf/go-cty/cty"
 )
 
 func TestDecodeBody(t *testing.T) {

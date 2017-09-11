@@ -1,7 +1,7 @@
 package zclwrite
 
 import (
-	"github.com/zclconf/go-zcl/zcl/zclsyntax"
+	"github.com/hashicorp/hcl2/zcl/zclsyntax"
 )
 
 // placeholder token used when we don't have a token but we don't want

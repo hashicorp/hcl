@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/zclconf/go-zcl/zcl"
+	"github.com/hashicorp/hcl2/zcl"
 )
 
 // ImpliedBodySchema produces a zcl.BodySchema derived from the type of the

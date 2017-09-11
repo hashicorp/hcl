@@ -3,10 +3,10 @@ package zclsyntax
 import (
 	"fmt"
 
+	"github.com/hashicorp/hcl2/zcl"
 	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-cty/cty/convert"
 	"github.com/zclconf/go-cty/cty/function"
-	"github.com/zclconf/go-zcl/zcl"
 )
 
 // Expression is the abstract type for nodes that behave as zcl expressions.

@@ -5,10 +5,10 @@ import (
 	"testing"
 
 	"github.com/davecgh/go-spew/spew"
+	"github.com/hashicorp/hcl2/gozcl"
+	"github.com/hashicorp/hcl2/zcl"
+	"github.com/hashicorp/hcl2/zcltest"
 	"github.com/zclconf/go-cty/cty"
-	"github.com/zclconf/go-zcl/gozcl"
-	"github.com/zclconf/go-zcl/zcl"
-	"github.com/zclconf/go-zcl/zcltest"
 )
 
 func TestTransformer(t *testing.T) {

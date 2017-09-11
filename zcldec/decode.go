@@ -1,8 +1,8 @@
 package zcldec
 
 import (
+	"github.com/hashicorp/hcl2/zcl"
 	"github.com/zclconf/go-cty/cty"
-	"github.com/zclconf/go-zcl/zcl"
 )
 
 func decode(body zcl.Body, block *zcl.Block, ctx *zcl.EvalContext, spec Spec, partial bool) (cty.Value, zcl.Body, zcl.Diagnostics) {

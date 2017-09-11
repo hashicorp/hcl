@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"testing"
 
+	"github.com/hashicorp/hcl2/zcl"
+	"github.com/hashicorp/hcl2/zcl/zclsyntax"
 	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-cty/cty/function"
 	"github.com/zclconf/go-cty/cty/function/stdlib"
-	"github.com/zclconf/go-zcl/zcl"
-	"github.com/zclconf/go-zcl/zcl/zclsyntax"
 )
 
 func TestRoundTripVerbatim(t *testing.T) {

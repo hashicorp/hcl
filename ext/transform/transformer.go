@@ -1,7 +1,7 @@
 package transform
 
 import (
-	"github.com/zclconf/go-zcl/zcl"
+	"github.com/hashicorp/hcl2/zcl"
 )
 
 // A Transformer takes a given body, applies some (possibly no-op)

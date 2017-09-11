@@ -5,11 +5,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/zclconf/go-cty/cty"
-	"github.com/zclconf/go-cty/cty/function"
-	"github.com/zclconf/go-zcl/zcl"
+	"github.com/hashicorp/hcl2/zcl"
 	"github.com/hashicorp/hil"
 	hilast "github.com/hashicorp/hil/ast"
+	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-cty/cty/function"
 )
 
 func parseTemplate(src []byte, filename string, startPos zcl.Pos) (zcl.Expression, zcl.Diagnostics) {

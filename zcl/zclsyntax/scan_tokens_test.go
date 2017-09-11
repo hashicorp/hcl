@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/hashicorp/hcl2/zcl"
 	"github.com/kylelemons/godebug/pretty"
-	"github.com/zclconf/go-zcl/zcl"
 )
 
 func TestScanTokens_normal(t *testing.T) {

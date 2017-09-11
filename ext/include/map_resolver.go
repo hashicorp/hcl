@@ -3,7 +3,7 @@ package include
 import (
 	"fmt"
 
-	"github.com/zclconf/go-zcl/zcl"
+	"github.com/hashicorp/hcl2/zcl"
 )
 
 // MapResolver returns a Resolver that consults the given map for preloaded

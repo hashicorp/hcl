@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/zclconf/go-zcl/zcl"
-	"github.com/zclconf/go-zcl/zcl/hclhil"
-	"github.com/zclconf/go-zcl/zcl/json"
-	"github.com/zclconf/go-zcl/zcl/zclsyntax"
+	"github.com/hashicorp/hcl2/zcl"
+	"github.com/hashicorp/hcl2/zcl/hclhil"
+	"github.com/hashicorp/hcl2/zcl/json"
+	"github.com/hashicorp/hcl2/zcl/zclsyntax"
 )
 
 // NOTE: This is the public interface for parsing. The actual parsers are

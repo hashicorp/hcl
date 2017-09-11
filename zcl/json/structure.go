@@ -3,10 +3,10 @@ package json
 import (
 	"fmt"
 
+	"github.com/hashicorp/hcl2/zcl"
+	"github.com/hashicorp/hcl2/zcl/hclhil"
+	"github.com/hashicorp/hcl2/zcl/zclsyntax"
 	"github.com/zclconf/go-cty/cty"
-	"github.com/zclconf/go-zcl/zcl"
-	"github.com/zclconf/go-zcl/zcl/hclhil"
-	"github.com/zclconf/go-zcl/zcl/zclsyntax"
 )
 
 // body is the implementation of "Body" used for files processed with the JSON

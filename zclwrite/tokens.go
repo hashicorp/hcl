@@ -5,7 +5,7 @@ import (
 	"io"
 
 	"github.com/apparentlymart/go-textseg/textseg"
-	"github.com/zclconf/go-zcl/zcl/zclsyntax"
+	"github.com/hashicorp/hcl2/zcl/zclsyntax"
 )
 
 // TokenGen is an abstract type that can append tokens to a list. It is the

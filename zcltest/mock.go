@@ -3,8 +3,8 @@ package zcltest
 import (
 	"fmt"
 
+	"github.com/hashicorp/hcl2/zcl"
 	"github.com/zclconf/go-cty/cty"
-	"github.com/zclconf/go-zcl/zcl"
 )
 
 // MockBody returns a zcl.Body implementation that works in terms of a

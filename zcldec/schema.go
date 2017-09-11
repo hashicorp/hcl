@@ -1,7 +1,7 @@
 package zcldec
 
 import (
-	"github.com/zclconf/go-zcl/zcl"
+	"github.com/hashicorp/hcl2/zcl"
 )
 
 // ImpliedSchema returns the *zcl.BodySchema implied by the given specification.

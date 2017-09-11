@@ -1,7 +1,7 @@
 package zcled
 
 import (
-	"github.com/zclconf/go-zcl/zcl"
+	"github.com/hashicorp/hcl2/zcl"
 )
 
 type contextStringer interface {

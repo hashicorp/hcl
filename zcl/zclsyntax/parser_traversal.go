@@ -1,8 +1,8 @@
 package zclsyntax
 
 import (
+	"github.com/hashicorp/hcl2/zcl"
 	"github.com/zclconf/go-cty/cty"
-	"github.com/zclconf/go-zcl/zcl"
 )
 
 // ParseTraversalAbs parses an absolute traversal that is assumed to consume

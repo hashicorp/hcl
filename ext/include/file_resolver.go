@@ -4,8 +4,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/zclconf/go-zcl/zcl"
-	"github.com/zclconf/go-zcl/zclparse"
+	"github.com/hashicorp/hcl2/zcl"
+	"github.com/hashicorp/hcl2/zclparse"
 )
 
 // FileResolver creates and returns a Resolver that interprets include paths

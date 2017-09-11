@@ -5,9 +5,9 @@ import (
 
 	"reflect"
 
+	"github.com/hashicorp/hcl2/zcl"
+	"github.com/hashicorp/hcl2/zcltest"
 	"github.com/zclconf/go-cty/cty"
-	"github.com/zclconf/go-zcl/zcl"
-	"github.com/zclconf/go-zcl/zcltest"
 )
 
 // Assert that deepWrapper implements Body

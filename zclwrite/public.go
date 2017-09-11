@@ -3,7 +3,7 @@ package zclwrite
 import (
 	"bytes"
 
-	"github.com/zclconf/go-zcl/zcl"
+	"github.com/hashicorp/hcl2/zcl"
 )
 
 // ParseConfig interprets the given source bytes into a *zclwrite.File. The

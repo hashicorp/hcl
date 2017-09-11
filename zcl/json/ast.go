@@ -3,7 +3,7 @@ package json
 import (
 	"math/big"
 
-	"github.com/zclconf/go-zcl/zcl"
+	"github.com/hashicorp/hcl2/zcl"
 )
 
 type node interface {

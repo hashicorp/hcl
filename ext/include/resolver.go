@@ -1,7 +1,7 @@
 package include
 
 import (
-	"github.com/zclconf/go-zcl/zcl"
+	"github.com/hashicorp/hcl2/zcl"
 )
 
 // A Resolver maps an include path (an arbitrary string, but usually something

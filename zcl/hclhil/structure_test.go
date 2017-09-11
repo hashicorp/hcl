@@ -8,8 +8,8 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	hclast "github.com/hashicorp/hcl/hcl/ast"
 	hcltoken "github.com/hashicorp/hcl/hcl/token"
+	"github.com/hashicorp/hcl2/zcl"
 	"github.com/zclconf/go-cty/cty"
-	"github.com/zclconf/go-zcl/zcl"
 )
 
 func TestBodyPartialContent(t *testing.T) {

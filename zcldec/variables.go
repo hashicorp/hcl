@@ -1,7 +1,7 @@
 package zcldec
 
 import (
-	"github.com/zclconf/go-zcl/zcl"
+	"github.com/hashicorp/hcl2/zcl"
 )
 
 // Variables processes the given body with the given spec and returns a

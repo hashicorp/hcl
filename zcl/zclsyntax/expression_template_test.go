@@ -3,8 +3,8 @@ package zclsyntax
 import (
 	"testing"
 
+	"github.com/hashicorp/hcl2/zcl"
 	"github.com/zclconf/go-cty/cty"
-	"github.com/zclconf/go-zcl/zcl"
 )
 
 func TestTemplateExprParseAndValue(t *testing.T) {

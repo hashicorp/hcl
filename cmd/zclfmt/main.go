@@ -9,9 +9,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/zclconf/go-zcl/zcl"
-	"github.com/zclconf/go-zcl/zclparse"
-	"github.com/zclconf/go-zcl/zclwrite"
+	"github.com/hashicorp/hcl2/zcl"
+	"github.com/hashicorp/hcl2/zclparse"
+	"github.com/hashicorp/hcl2/zclwrite"
 	"golang.org/x/crypto/ssh/terminal"
 )
 

@@ -3,10 +3,10 @@ package zclsyntax
 import (
 	"testing"
 
+	"github.com/hashicorp/hcl2/zcl"
 	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-cty/cty/function"
 	"github.com/zclconf/go-cty/cty/function/stdlib"
-	"github.com/zclconf/go-zcl/zcl"
 )
 
 func TestExpressionParseAndValue(t *testing.T) {
