@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/hcl2/zcl"
-	"github.com/hashicorp/hcl2/zcl/hclhil"
 	"github.com/hashicorp/hcl2/zcl/zclsyntax"
 	"github.com/zclconf/go-cty/cty"
 )
@@ -29,8 +28,7 @@ type body struct {
 // expression is the implementation of "Expression" used for files processed
 // with the JSON parser.
 type expression struct {
-	src    node
-	useHIL bool
+	src node
 }
 
 func (b *body) Content(schema *zcl.BodySchema) (*zcl.BodyContent, zcl.Diagnostics) {
@@ -113,7 +111,7 @@ func (b *body) PartialContent(schema *zcl.BodySchema) (*zcl.BodyContent, zcl.Bod
 		}
 		content.Attributes[attrS.Name] = &zcl.Attribute{
 			Name:      attrS.Name,
-			Expr:      &expression{src: jsonAttr.Value, useHIL: b.useHIL},
+			Expr:      &expression{src: jsonAttr.Value},
 			Range:     zcl.RangeBetween(jsonAttr.NameRange, jsonAttr.Value.Range()),
 			NameRange: jsonAttr.NameRange,
 		}
@@ -157,7 +155,7 @@ func (b *body) JustAttributes() (zcl.Attributes, zcl.Diagnostics) {
 		}
 		attrs[name] = &zcl.Attribute{
 			Name:      name,
-			Expr:      &expression{src: jsonAttr.Value, useHIL: b.useHIL},
+			Expr:      &expression{src: jsonAttr.Value},
 			Range:     zcl.RangeBetween(jsonAttr.NameRange, jsonAttr.Value.Range()),
 			NameRange: jsonAttr.NameRange,
 		}
@@ -270,27 +268,6 @@ func (b *body) unpackBlock(v node, typeName string, typeRange *zcl.Range, labels
 func (e *expression) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
 	switch v := e.src.(type) {
 	case *stringVal:
-		if e.useHIL && ctx != nil {
-			// Legacy interface to parse HCL-style JSON with HIL expressions.
-			templateSrc := v.Value
-			hilExpr, diags := hclhil.ParseTemplateEmbedded(
-				[]byte(templateSrc),
-				v.SrcRange.Filename,
-				zcl.Pos{
-					// skip over the opening quote mark
-					Byte:   v.SrcRange.Start.Byte + 1,
-					Line:   v.SrcRange.Start.Line,
-					Column: v.SrcRange.Start.Column,
-				},
-			)
-			if hilExpr == nil {
-				return cty.DynamicVal, diags
-			}
-			val, evalDiags := hilExpr.Value(ctx)
-			diags = append(diags, evalDiags...)
-			return val, diags
-		}
-
 		if ctx != nil {
 			// Parse string contents as a zcl native language expression.
 			// We only do this if we have a context, so passing a nil context
@@ -330,14 +307,14 @@ func (e *expression) Value(ctx *zcl.EvalContext) (cty.Value, zcl.Diagnostics) {
 	case *arrayVal:
 		vals := []cty.Value{}
 		for _, jsonVal := range v.Values {
-			val, _ := (&expression{src: jsonVal, useHIL: e.useHIL}).Value(ctx)
+			val, _ := (&expression{src: jsonVal}).Value(ctx)
 			vals = append(vals, val)
 		}
 		return cty.TupleVal(vals), nil
 	case *objectVal:
 		attrs := map[string]cty.Value{}
 		for name, jsonAttr := range v.Attrs {
-			val, _ := (&expression{src: jsonAttr.Value, useHIL: e.useHIL}).Value(ctx)
+			val, _ := (&expression{src: jsonAttr.Value}).Value(ctx)
 			attrs[name] = val
 		}
 		return cty.ObjectVal(attrs), nil
@@ -353,34 +330,16 @@ func (e *expression) Variables() []zcl.Traversal {
 
 	switch v := e.src.(type) {
 	case *stringVal:
-		if e.useHIL {
-			// Legacy interface to parse HCL-style JSON with HIL expressions.
-			templateSrc := v.Value
-			hilExpr, _ := hclhil.ParseTemplateEmbedded(
-				[]byte(templateSrc),
-				v.SrcRange.Filename,
-				zcl.Pos{
-					// skip over the opening quote mark
-					Byte:   v.SrcRange.Start.Byte + 1,
-					Line:   v.SrcRange.Start.Line,
-					Column: v.SrcRange.Start.Column,
-				},
-			)
-			if hilExpr != nil {
-				vars = append(vars, hilExpr.Variables()...)
-			}
-		}
-
 		// FIXME: Once the native zcl template language parser is implemented,
 		// parse with that and look for variables in there too,
 
 	case *arrayVal:
 		for _, jsonVal := range v.Values {
-			vars = append(vars, (&expression{src: jsonVal, useHIL: e.useHIL}).Variables()...)
+			vars = append(vars, (&expression{src: jsonVal}).Variables()...)
 		}
 	case *objectVal:
 		for _, jsonAttr := range v.Attrs {
-			vars = append(vars, (&expression{src: jsonAttr.Value, useHIL: e.useHIL}).Variables()...)
+			vars = append(vars, (&expression{src: jsonAttr.Value}).Variables()...)
 		}
 	}
 
