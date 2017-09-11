@@ -1,8 +1,8 @@
-// Package userfunc implements a zcl extension that allows user-defined
-// functions in zcl configuration.
+// Package userfunc implements a HCL extension that allows user-defined
+// functions in HCL configuration.
 //
 // Using this extension requires some integration effort on the part of the
-// calling application, to pass any declared functions into a zcl evaluation
+// calling application, to pass any declared functions into a HCL evaluation
 // context after processing.
 //
 // The function declaration syntax looks like this:

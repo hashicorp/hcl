@@ -1,9 +1,9 @@
 // Package include implements a zcl extension that allows inclusion of
-// one zcl body into another using blocks of type "include", with the following
+// one HCL body into another using blocks of type "include", with the following
 // structure:
 //
 //     include {
-//       path = "./foo.zcl"
+//       path = "./foo.hcl"
 //     }
 //
 // The processing of the given path is delegated to the calling application,

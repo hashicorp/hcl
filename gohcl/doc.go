@@ -1,4 +1,4 @@
-// Package gozcl allows decoding zcl configurations into Go data structures.
+// Package gohcl allows decoding HCL configurations into Go data structures.
 //
 // It provides a convenient and concise way of describing the schema for
 // configuration and then accessing the resulting data via native Go
