@@ -7,7 +7,7 @@
 // A struct field tag scheme is used, similar to other decoding and
 // unmarshalling libraries. The tags are formatted as in the following example:
 //
-//    ThingType string `zcl:"thing_type,attr"`
+//    ThingType string `hcl:"thing_type,attr"`
 //
 // Within each tag there are two comma-separated tokens. The first is the
 // name of the corresponding construct in configuration, while the second

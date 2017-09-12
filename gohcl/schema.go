@@ -66,7 +66,7 @@ func ImpliedBodySchema(val interface{}) (schema *hcl.BodySchema, partial bool) {
 		}
 		if fty.Kind() != reflect.Struct {
 			panic(fmt.Sprintf(
-				"zcl 'block' tag kind cannot be applied to %s field %s: struct required", field.Type.String(), field.Name,
+				"hcl 'block' tag kind cannot be applied to %s field %s: struct required", field.Type.String(), field.Name,
 			))
 		}
 		ftags := getFieldTags(fty)
@@ -113,7 +113,7 @@ func getFieldTags(ty reflect.Type) *fieldTags {
 	ct := ty.NumField()
 	for i := 0; i < ct; i++ {
 		field := ty.Field(i)
-		tag := field.Tag.Get("zcl")
+		tag := field.Tag.Get("hcl")
 		if tag == "" {
 			continue
 		}
@@ -145,7 +145,7 @@ func getFieldTags(ty reflect.Type) *fieldTags {
 			idx := i // copy, because this loop will continue assigning to i
 			ret.Remain = &idx
 		default:
-			panic(fmt.Sprintf("invalid zcl field tag kind %q on %s %q", kind, field.Type.String(), field.Name))
+			panic(fmt.Sprintf("invalid hcl field tag kind %q on %s %q", kind, field.Type.String(), field.Name))
 		}
 	}
 

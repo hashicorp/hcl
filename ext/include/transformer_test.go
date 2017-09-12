@@ -6,8 +6,8 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/hcl2/gohcl"
-	"github.com/hashicorp/hcl2/hcltest"
 	"github.com/hashicorp/hcl2/hcl"
+	"github.com/hashicorp/hcl2/hcltest"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -78,10 +78,10 @@ func TestTransformer(t *testing.T) {
 	merged := transformer.TransformBody(caller)
 
 	type foo struct {
-		From string `zcl:"from,attr"`
+		From string `hcl:"from,attr"`
 	}
 	type result struct {
-		Foos []foo `zcl:"foo,block"`
+		Foos []foo `hcl:"foo,block"`
 	}
 	var got result
 	diags := gohcl.DecodeBody(merged, nil, &got)

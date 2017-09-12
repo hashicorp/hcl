@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/davecgh/go-spew/spew"
-	zclJSON "github.com/hashicorp/hcl2/hcl/json"
 	"github.com/hashicorp/hcl2/hcl"
+	zclJSON "github.com/hashicorp/hcl2/hcl/json"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -34,20 +34,20 @@ func TestDecodeBody(t *testing.T) {
 		{
 			map[string]interface{}{},
 			struct {
-				Name string `zcl:"name"`
+				Name string `hcl:"name"`
 			}{},
 			deepEquals(struct {
-				Name string `zcl:"name"`
+				Name string `hcl:"name"`
 			}{}),
 			1, // name is required
 		},
 		{
 			map[string]interface{}{},
 			struct {
-				Name *string `zcl:"name"`
+				Name *string `hcl:"name"`
 			}{},
 			deepEquals(struct {
-				Name *string `zcl:"name"`
+				Name *string `hcl:"name"`
 			}{}),
 			0,
 		},
@@ -56,10 +56,10 @@ func TestDecodeBody(t *testing.T) {
 				"name": "Ermintrude",
 			},
 			struct {
-				Name string `zcl:"name"`
+				Name string `hcl:"name"`
 			}{},
 			deepEquals(struct {
-				Name string `zcl:"name"`
+				Name string `hcl:"name"`
 			}{"Ermintrude"}),
 			0,
 		},
@@ -69,10 +69,10 @@ func TestDecodeBody(t *testing.T) {
 				"age":  23,
 			},
 			struct {
-				Name string `zcl:"name"`
+				Name string `hcl:"name"`
 			}{},
 			deepEquals(struct {
-				Name string `zcl:"name"`
+				Name string `hcl:"name"`
 			}{"Ermintrude"}),
 			1, // Extraneous "age" property
 		},
@@ -82,13 +82,13 @@ func TestDecodeBody(t *testing.T) {
 				"age":  50,
 			},
 			struct {
-				Name  string         `zcl:"name"`
-				Attrs hcl.Attributes `zcl:",remain"`
+				Name  string         `hcl:"name"`
+				Attrs hcl.Attributes `hcl:",remain"`
 			}{},
 			func(gotI interface{}) bool {
 				got := gotI.(struct {
-					Name  string         `zcl:"name"`
-					Attrs hcl.Attributes `zcl:",remain"`
+					Name  string         `hcl:"name"`
+					Attrs hcl.Attributes `hcl:",remain"`
 				})
 				return got.Name == "Ermintrude" && len(got.Attrs) == 1 && got.Attrs["age"] != nil
 			},
@@ -100,13 +100,13 @@ func TestDecodeBody(t *testing.T) {
 				"age":  50,
 			},
 			struct {
-				Name   string   `zcl:"name"`
-				Remain hcl.Body `zcl:",remain"`
+				Name   string   `hcl:"name"`
+				Remain hcl.Body `hcl:",remain"`
 			}{},
 			func(gotI interface{}) bool {
 				got := gotI.(struct {
-					Name   string   `zcl:"name"`
-					Remain hcl.Body `zcl:",remain"`
+					Name   string   `hcl:"name"`
+					Remain hcl.Body `hcl:",remain"`
 				})
 
 				attrs, _ := got.Remain.JustAttributes()
@@ -121,12 +121,12 @@ func TestDecodeBody(t *testing.T) {
 				"age":  51,
 			},
 			struct {
-				Name   string               `zcl:"name"`
-				Remain map[string]cty.Value `zcl:",remain"`
+				Name   string               `hcl:"name"`
+				Remain map[string]cty.Value `hcl:",remain"`
 			}{},
 			deepEquals(struct {
-				Name   string               `zcl:"name"`
-				Remain map[string]cty.Value `zcl:",remain"`
+				Name   string               `hcl:"name"`
+				Remain map[string]cty.Value `hcl:",remain"`
 			}{
 				Name: "Ermintrude",
 				Remain: map[string]cty.Value{
@@ -140,7 +140,7 @@ func TestDecodeBody(t *testing.T) {
 				"noodle": map[string]interface{}{},
 			},
 			struct {
-				Noodle struct{} `zcl:"noodle,block"`
+				Noodle struct{} `hcl:"noodle,block"`
 			}{},
 			func(gotI interface{}) bool {
 				// Generating no diagnostics is good enough for this one.
@@ -153,7 +153,7 @@ func TestDecodeBody(t *testing.T) {
 				"noodle": []map[string]interface{}{{}},
 			},
 			struct {
-				Noodle struct{} `zcl:"noodle,block"`
+				Noodle struct{} `hcl:"noodle,block"`
 			}{},
 			func(gotI interface{}) bool {
 				// Generating no diagnostics is good enough for this one.
@@ -166,7 +166,7 @@ func TestDecodeBody(t *testing.T) {
 				"noodle": []map[string]interface{}{{}, {}},
 			},
 			struct {
-				Noodle struct{} `zcl:"noodle,block"`
+				Noodle struct{} `hcl:"noodle,block"`
 			}{},
 			func(gotI interface{}) bool {
 				// Generating one diagnostic is good enough for this one.
@@ -177,7 +177,7 @@ func TestDecodeBody(t *testing.T) {
 		{
 			map[string]interface{}{},
 			struct {
-				Noodle struct{} `zcl:"noodle,block"`
+				Noodle struct{} `hcl:"noodle,block"`
 			}{},
 			func(gotI interface{}) bool {
 				// Generating one diagnostic is good enough for this one.
@@ -190,7 +190,7 @@ func TestDecodeBody(t *testing.T) {
 				"noodle": []map[string]interface{}{},
 			},
 			struct {
-				Noodle struct{} `zcl:"noodle,block"`
+				Noodle struct{} `hcl:"noodle,block"`
 			}{},
 			func(gotI interface{}) bool {
 				// Generating one diagnostic is good enough for this one.
@@ -203,11 +203,11 @@ func TestDecodeBody(t *testing.T) {
 				"noodle": map[string]interface{}{},
 			},
 			struct {
-				Noodle *struct{} `zcl:"noodle,block"`
+				Noodle *struct{} `hcl:"noodle,block"`
 			}{},
 			func(gotI interface{}) bool {
 				return gotI.(struct {
-					Noodle *struct{} `zcl:"noodle,block"`
+					Noodle *struct{} `hcl:"noodle,block"`
 				}).Noodle != nil
 			},
 			0,
@@ -217,11 +217,11 @@ func TestDecodeBody(t *testing.T) {
 				"noodle": []map[string]interface{}{{}},
 			},
 			struct {
-				Noodle *struct{} `zcl:"noodle,block"`
+				Noodle *struct{} `hcl:"noodle,block"`
 			}{},
 			func(gotI interface{}) bool {
 				return gotI.(struct {
-					Noodle *struct{} `zcl:"noodle,block"`
+					Noodle *struct{} `hcl:"noodle,block"`
 				}).Noodle != nil
 			},
 			0,
@@ -231,11 +231,11 @@ func TestDecodeBody(t *testing.T) {
 				"noodle": []map[string]interface{}{},
 			},
 			struct {
-				Noodle *struct{} `zcl:"noodle,block"`
+				Noodle *struct{} `hcl:"noodle,block"`
 			}{},
 			func(gotI interface{}) bool {
 				return gotI.(struct {
-					Noodle *struct{} `zcl:"noodle,block"`
+					Noodle *struct{} `hcl:"noodle,block"`
 				}).Noodle == nil
 			},
 			0,
@@ -245,7 +245,7 @@ func TestDecodeBody(t *testing.T) {
 				"noodle": []map[string]interface{}{{}, {}},
 			},
 			struct {
-				Noodle *struct{} `zcl:"noodle,block"`
+				Noodle *struct{} `hcl:"noodle,block"`
 			}{},
 			func(gotI interface{}) bool {
 				// Generating one diagnostic is good enough for this one.
@@ -258,11 +258,11 @@ func TestDecodeBody(t *testing.T) {
 				"noodle": []map[string]interface{}{},
 			},
 			struct {
-				Noodle []struct{} `zcl:"noodle,block"`
+				Noodle []struct{} `hcl:"noodle,block"`
 			}{},
 			func(gotI interface{}) bool {
 				noodle := gotI.(struct {
-					Noodle []struct{} `zcl:"noodle,block"`
+					Noodle []struct{} `hcl:"noodle,block"`
 				}).Noodle
 				return len(noodle) == 0
 			},
@@ -273,11 +273,11 @@ func TestDecodeBody(t *testing.T) {
 				"noodle": []map[string]interface{}{{}},
 			},
 			struct {
-				Noodle []struct{} `zcl:"noodle,block"`
+				Noodle []struct{} `hcl:"noodle,block"`
 			}{},
 			func(gotI interface{}) bool {
 				noodle := gotI.(struct {
-					Noodle []struct{} `zcl:"noodle,block"`
+					Noodle []struct{} `hcl:"noodle,block"`
 				}).Noodle
 				return len(noodle) == 1
 			},
@@ -288,11 +288,11 @@ func TestDecodeBody(t *testing.T) {
 				"noodle": []map[string]interface{}{{}, {}},
 			},
 			struct {
-				Noodle []struct{} `zcl:"noodle,block"`
+				Noodle []struct{} `hcl:"noodle,block"`
 			}{},
 			func(gotI interface{}) bool {
 				noodle := gotI.(struct {
-					Noodle []struct{} `zcl:"noodle,block"`
+					Noodle []struct{} `hcl:"noodle,block"`
 				}).Noodle
 				return len(noodle) == 2
 			},
@@ -304,8 +304,8 @@ func TestDecodeBody(t *testing.T) {
 			},
 			struct {
 				Noodle struct {
-					Name string `zcl:"name,label"`
-				} `zcl:"noodle,block"`
+					Name string `hcl:"name,label"`
+				} `hcl:"noodle,block"`
 			}{},
 			func(gotI interface{}) bool {
 				// Generating two diagnostics is good enough for this one.
@@ -324,14 +324,14 @@ func TestDecodeBody(t *testing.T) {
 			},
 			struct {
 				Noodle struct {
-					Name string `zcl:"name,label"`
-				} `zcl:"noodle,block"`
+					Name string `hcl:"name,label"`
+				} `hcl:"noodle,block"`
 			}{},
 			func(gotI interface{}) bool {
 				noodle := gotI.(struct {
 					Noodle struct {
-						Name string `zcl:"name,label"`
-					} `zcl:"noodle,block"`
+						Name string `hcl:"name,label"`
+					} `hcl:"noodle,block"`
 				}).Noodle
 				return noodle.Name == "foo_foo"
 			},
@@ -346,8 +346,8 @@ func TestDecodeBody(t *testing.T) {
 			},
 			struct {
 				Noodle struct {
-					Name string `zcl:"name,label"`
-				} `zcl:"noodle,block"`
+					Name string `hcl:"name,label"`
+				} `hcl:"noodle,block"`
 			}{},
 			func(gotI interface{}) bool {
 				// One diagnostic is enough for this one.
@@ -364,14 +364,14 @@ func TestDecodeBody(t *testing.T) {
 			},
 			struct {
 				Noodles []struct {
-					Name string `zcl:"name,label"`
-				} `zcl:"noodle,block"`
+					Name string `hcl:"name,label"`
+				} `hcl:"noodle,block"`
 			}{},
 			func(gotI interface{}) bool {
 				noodles := gotI.(struct {
 					Noodles []struct {
-						Name string `zcl:"name,label"`
-					} `zcl:"noodle,block"`
+						Name string `hcl:"name,label"`
+					} `hcl:"noodle,block"`
 				}).Noodles
 				return len(noodles) == 2 && (noodles[0].Name == "foo_foo" || noodles[0].Name == "bar_baz") && (noodles[1].Name == "foo_foo" || noodles[1].Name == "bar_baz") && noodles[0].Name != noodles[1].Name
 			},
@@ -387,16 +387,16 @@ func TestDecodeBody(t *testing.T) {
 			},
 			struct {
 				Noodle struct {
-					Name string `zcl:"name,label"`
-					Type string `zcl:"type"`
-				} `zcl:"noodle,block"`
+					Name string `hcl:"name,label"`
+					Type string `hcl:"type"`
+				} `hcl:"noodle,block"`
 			}{},
 			func(gotI interface{}) bool {
 				noodle := gotI.(struct {
 					Noodle struct {
-						Name string `zcl:"name,label"`
-						Type string `zcl:"type"`
-					} `zcl:"noodle,block"`
+						Name string `hcl:"name,label"`
+						Type string `hcl:"type"`
+					} `hcl:"noodle,block"`
 				}).Noodle
 				return noodle.Name == "foo_foo" && noodle.Type == "rice"
 			},
