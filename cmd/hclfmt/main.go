@@ -119,7 +119,7 @@ func processFile(fn string, in *os.File) error {
 	}
 
 	if *check {
-		_, diags := parser.ParseZCL(inSrc, fn)
+		_, diags := parser.ParseHCL(inSrc, fn)
 		diagWr.WriteDiagnostics(diags)
 		if diags.HasErrors() {
 			checkErrs = true

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	"github.com/hashicorp/hcl2/hcl"
 	"github.com/hashicorp/hcl2/hcl/hclsyntax"
 	"github.com/hashicorp/hcl2/hcl/json"
-	"github.com/hashicorp/hcl2/hcl"
 )
 
 // NOTE: This is the public interface for parsing. The actual parsers are
@@ -34,10 +34,10 @@ func NewParser() *Parser {
 	}
 }
 
-// ParseZCL parses the given buffer (which is assumed to have been loaded from
+// ParseHCL parses the given buffer (which is assumed to have been loaded from
 // the given filename) as a native-syntax configuration file and returns the
 // hcl.File object representing it.
-func (p *Parser) ParseZCL(src []byte, filename string) (*hcl.File, hcl.Diagnostics) {
+func (p *Parser) ParseHCL(src []byte, filename string) (*hcl.File, hcl.Diagnostics) {
 	if existing := p.files[filename]; existing != nil {
 		return existing, nil
 	}
@@ -47,10 +47,10 @@ func (p *Parser) ParseZCL(src []byte, filename string) (*hcl.File, hcl.Diagnosti
 	return file, diags
 }
 
-// ParseZCLFile reads the given filename and parses it as a native-syntax zcl
+// ParseHCLFile reads the given filename and parses it as a native-syntax HCL
 // configuration file. An error diagnostic is returned if the given file
 // cannot be read.
-func (p *Parser) ParseZCLFile(filename string) (*hcl.File, hcl.Diagnostics) {
+func (p *Parser) ParseHCLFile(filename string) (*hcl.File, hcl.Diagnostics) {
 	if existing := p.files[filename]; existing != nil {
 		return existing, nil
 	}
@@ -66,7 +66,7 @@ func (p *Parser) ParseZCLFile(filename string) (*hcl.File, hcl.Diagnostics) {
 		}
 	}
 
-	return p.ParseZCL(src, filename)
+	return p.ParseHCL(src, filename)
 }
 
 // ParseJSON parses the given JSON buffer (which is assumed to have been loaded
