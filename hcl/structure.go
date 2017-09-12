@@ -4,12 +4,12 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
-// File is the top-level node that results from parsing a ZCL file.
+// File is the top-level node that results from parsing a HCL file.
 type File struct {
 	Body  Body
 	Bytes []byte
 
-	// Nav is used to integrate with the "zcled" editor integration package,
+	// Nav is used to integrate with the "hcled" editor integration package,
 	// and with diagnostic information formatters. It is not for direct use
 	// by a calling application.
 	Nav interface{}

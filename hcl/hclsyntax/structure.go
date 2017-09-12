@@ -7,8 +7,8 @@ import (
 	"github.com/hashicorp/hcl2/hcl"
 )
 
-// AsZCLBlock returns the block data expressed as a *hcl.Block.
-func (b *Block) AsZCLBlock() *hcl.Block {
+// AsHCLBlock returns the block data expressed as a *hcl.Block.
+func (b *Block) AsHCLBlock() *hcl.Block {
 	lastHeaderRange := b.TypeRange
 	if len(b.LabelRanges) > 0 {
 		lastHeaderRange = b.LabelRanges[len(b.LabelRanges)-1]
@@ -52,11 +52,11 @@ func (b *Body) Range() hcl.Range {
 }
 
 func (b *Body) Content(schema *hcl.BodySchema) (*hcl.BodyContent, hcl.Diagnostics) {
-	content, remainZCL, diags := b.PartialContent(schema)
+	content, remainHCL, diags := b.PartialContent(schema)
 
 	// No we'll see if anything actually remains, to produce errors about
 	// extraneous items.
-	remain := remainZCL.(*Body)
+	remain := remainHCL.(*Body)
 
 	for name, attr := range b.Attributes {
 		if _, hidden := remain.hiddenAttrs[name]; !hidden {
@@ -156,7 +156,7 @@ func (b *Body) PartialContent(schema *hcl.BodySchema) (*hcl.BodyContent, hcl.Bod
 		}
 
 		hiddenAttrs[name] = struct{}{}
-		attrs[name] = attr.AsZCLAttribute()
+		attrs[name] = attr.AsHCLAttribute()
 	}
 
 	blocksWanted := make(map[string]hcl.BlockHeaderSchema)
@@ -215,7 +215,7 @@ func (b *Body) PartialContent(schema *hcl.BodySchema) (*hcl.BodyContent, hcl.Bod
 			continue
 		}
 
-		blocks = append(blocks, block.AsZCLBlock())
+		blocks = append(blocks, block.AsHCLBlock())
 	}
 
 	// We hide blocks only after we've processed all of them, since otherwise
@@ -268,7 +268,7 @@ func (b *Body) JustAttributes() (hcl.Attributes, hcl.Diagnostics) {
 		if _, hidden := b.hiddenAttrs[name]; hidden {
 			continue
 		}
-		attrs[name] = attr.AsZCLAttribute()
+		attrs[name] = attr.AsHCLAttribute()
 	}
 
 	return attrs, diags
@@ -324,8 +324,8 @@ func (a *Attribute) Range() hcl.Range {
 	return a.SrcRange
 }
 
-// AsZCLAttribute returns the block data expressed as a *hcl.Attribute.
-func (a *Attribute) AsZCLAttribute() *hcl.Attribute {
+// AsHCLAttribute returns the block data expressed as a *hcl.Attribute.
+func (a *Attribute) AsHCLAttribute() *hcl.Attribute {
 	return &hcl.Attribute{
 		Name: a.Name,
 		Expr: a.Expr,

@@ -7,7 +7,7 @@ import (
 	"github.com/hashicorp/hcl2/hcl"
 )
 
-// Token represents a sequence of bytes from some zcl code that has been
+// Token represents a sequence of bytes from some HCL code that has been
 // tagged with a type and its range within the source file.
 type Token struct {
 	Type  TokenType
@@ -82,7 +82,7 @@ const (
 	// The rest are not used in the language but recognized by the scanner so
 	// we can generate good diagnostics in the parser when users try to write
 	// things that might work in other languages they are familiar with, or
-	// simply make incorrect assumptions about the zcl language.
+	// simply make incorrect assumptions about the HCL language.
 
 	TokenBitwiseAnd TokenType = '&'
 	TokenBitwiseOr  TokenType = '|'
@@ -102,7 +102,7 @@ const (
 )
 
 func (t TokenType) GoString() string {
-	return fmt.Sprintf("zclsyntax.%s", t.String())
+	return fmt.Sprintf("hclsyntax.%s", t.String())
 }
 
 type scanMode int
@@ -160,7 +160,7 @@ type heredocInProgress struct {
 }
 
 // checkInvalidTokens does a simple pass across the given tokens and generates
-// diagnostics for tokens that should _never_ appear in ZCL source. This
+// diagnostics for tokens that should _never_ appear in HCL source. This
 // is intended to avoid the need for the parser to have special support
 // for them all over.
 //
