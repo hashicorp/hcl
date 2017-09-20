@@ -179,6 +179,20 @@ func TestImpliedBodySchema(t *testing.T) {
 			},
 			true,
 		},
+		{
+			struct {
+				Expr hcl.Expression `hcl:"expr"`
+			}{},
+			&hcl.BodySchema{
+				Attributes: []hcl.AttributeSchema{
+					{
+						Name:     "expr",
+						Required: false,
+					},
+				},
+			},
+			false,
+		},
 	}
 
 	for _, test := range tests {

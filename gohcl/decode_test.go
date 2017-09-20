@@ -19,6 +19,10 @@ func TestDecodeBody(t *testing.T) {
 		}
 	}
 
+	type withNameExpression struct {
+		Name hcl.Expression `hcl:"name"`
+	}
+
 	tests := []struct {
 		Body      map[string]interface{}
 		Target    interface{}
@@ -49,6 +53,60 @@ func TestDecodeBody(t *testing.T) {
 			deepEquals(struct {
 				Name *string `hcl:"name"`
 			}{}),
+			0,
+		},
+		{
+			map[string]interface{}{},
+			withNameExpression{},
+			func(v interface{}) bool {
+				if v == nil {
+					return false
+				}
+
+				wne, valid := v.(withNameExpression)
+				if !valid {
+					return false
+				}
+
+				if wne.Name == nil {
+					return false
+				}
+
+				nameVal, _ := wne.Name.Value(nil)
+				if !nameVal.IsNull() {
+					return false
+				}
+
+				return true
+			},
+			0,
+		},
+		{
+			map[string]interface{}{
+				"name": "Ermintrude",
+			},
+			withNameExpression{},
+			func(v interface{}) bool {
+				if v == nil {
+					return false
+				}
+
+				wne, valid := v.(withNameExpression)
+				if !valid {
+					return false
+				}
+
+				if wne.Name == nil {
+					return false
+				}
+
+				nameVal, _ := wne.Name.Value(nil)
+				if !nameVal.Equals(cty.StringVal("Ermintrude")).True() {
+					return false
+				}
+
+				return true
+			},
 			0,
 		},
 		{

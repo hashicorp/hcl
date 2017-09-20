@@ -43,9 +43,23 @@ func ImpliedBodySchema(val interface{}) (schema *hcl.BodySchema, partial bool) {
 	for _, n := range attrNames {
 		idx := tags.Attributes[n]
 		field := ty.Field(idx)
+		var required bool
+
+		switch {
+		case field.Type.AssignableTo(exprType):
+			// If we're decoding to hcl.Expression then absense can be
+			// indicated via a null value, so we don't specify that
+			// the field is required during decoding.
+			required = false
+		case field.Type.Kind() != reflect.Ptr:
+			required = true
+		default:
+			required = false
+		}
+
 		attrSchemas = append(attrSchemas, hcl.AttributeSchema{
 			Name:     n,
-			Required: field.Type.Kind() != reflect.Ptr,
+			Required: required,
 		})
 	}
 

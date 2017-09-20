@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/zclconf/go-cty/cty"
+
 	"github.com/hashicorp/hcl2/hcl"
 	"github.com/zclconf/go-cty/cty/convert"
 	"github.com/zclconf/go-cty/cty/gocty"
@@ -81,10 +83,24 @@ func decodeBodyToStruct(body hcl.Body, ctx *hcl.EvalContext, val reflect.Value) 
 		}
 	}
 
-	for name, attr := range content.Attributes {
-		fieldIdx := tags.Attributes[name]
+	for name, fieldIdx := range tags.Attributes {
+		attr := content.Attributes[name]
 		field := val.Type().Field(fieldIdx)
 		fieldV := val.Field(fieldIdx)
+
+		if attr == nil {
+			if !exprType.AssignableTo(field.Type) {
+				continue
+			}
+
+			// As a special case, if the target is of type hcl.Expression then
+			// we'll assign an actual expression that evalues to a cty null,
+			// so the caller can deal with it within the cty realm rather
+			// than within the Go realm.
+			synthExpr := hcl.StaticExpr(cty.NullVal(cty.DynamicPseudoType), body.MissingItemRange())
+			fieldV.Set(reflect.ValueOf(synthExpr))
+			continue
+		}
 
 		switch {
 		case attrType.AssignableTo(field.Type):
