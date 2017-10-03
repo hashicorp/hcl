@@ -193,7 +193,7 @@ b {
 				},
 			},
 			nil,
-			cty.NullVal(cty.DynamicPseudoType),
+			cty.NullVal(cty.String),
 			1, // missing name label
 		},
 		{
@@ -203,7 +203,7 @@ b {
 				Nested:   ObjectSpec{},
 			},
 			nil,
-			cty.NullVal(cty.DynamicPseudoType),
+			cty.NullVal(cty.EmptyObject),
 			0,
 		},
 		{
@@ -213,7 +213,7 @@ b {
 				Nested:   ObjectSpec{},
 			},
 			nil,
-			cty.NullVal(cty.DynamicPseudoType),
+			cty.NullVal(cty.EmptyObject),
 			1, // blocks of type "a" are not supported
 		},
 		{
@@ -224,7 +224,7 @@ b {
 				Required: true,
 			},
 			nil,
-			cty.NullVal(cty.DynamicPseudoType),
+			cty.NullVal(cty.EmptyObject),
 			1, // a block of type "b" is required
 		},
 		{
@@ -261,7 +261,7 @@ b {}
 				Nested:   ObjectSpec{},
 			},
 			nil,
-			cty.ListValEmpty(cty.DynamicPseudoType),
+			cty.ListValEmpty(cty.EmptyObject),
 			0,
 		},
 		{
@@ -433,7 +433,7 @@ b "foo" "bar" {}
 				Nested:     ObjectSpec{},
 			},
 			nil,
-			cty.MapValEmpty(cty.DynamicPseudoType),
+			cty.MapValEmpty(cty.EmptyObject),
 			1, // too many labels
 		},
 		{
@@ -446,7 +446,7 @@ b "bar" {}
 				Nested:     ObjectSpec{},
 			},
 			nil,
-			cty.MapValEmpty(cty.DynamicPseudoType),
+			cty.MapValEmpty(cty.EmptyObject),
 			1, // not enough labels
 		},
 		{
@@ -510,7 +510,7 @@ b "foo" {}
 				},
 			},
 			nil,
-			cty.MapValEmpty(cty.DynamicPseudoType),
+			cty.MapValEmpty(cty.String),
 			1, // missing name
 		},
 	}

@@ -24,6 +24,10 @@ func decode(body hcl.Body, blockLabels []blockLabel, ctx *hcl.EvalContext, spec 
 	return val, leftovers, diags
 }
 
+func impliedType(spec Spec) cty.Type {
+	return spec.impliedType()
+}
+
 func sourceRange(body hcl.Body, blockLabels []blockLabel, spec Spec) hcl.Range {
 	schema := ImpliedSchema(spec)
 	content, _, _ := body.PartialContent(schema)

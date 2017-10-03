@@ -22,6 +22,10 @@ type Spec interface {
 	// types that work on block bodies.
 	decode(content *hcl.BodyContent, blockLabels []blockLabel, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics)
 
+	// Return the cty.Type that should be returned when decoding a body with
+	// this spec.
+	impliedType() cty.Type
+
 	// Call the given callback once for each of the nested specs that would
 	// get decoded with the same body and block as the receiver. This should
 	// not descend into the nested specs used when decoding blocks.
@@ -75,6 +79,18 @@ func (s ObjectSpec) decode(content *hcl.BodyContent, blockLabels []blockLabel, c
 	return cty.ObjectVal(vals), diags
 }
 
+func (s ObjectSpec) impliedType() cty.Type {
+	if len(s) == 0 {
+		return cty.EmptyObject
+	}
+
+	attrTypes := make(map[string]cty.Type)
+	for k, childSpec := range s {
+		attrTypes[k] = childSpec.impliedType()
+	}
+	return cty.Object(attrTypes)
+}
+
 func (s ObjectSpec) sourceRange(content *hcl.BodyContent, blockLabels []blockLabel) hcl.Range {
 	// This is not great, but the best we can do. In practice, it's rather
 	// strange to ask for the source range of an entire top-level body, since
@@ -103,6 +119,18 @@ func (s TupleSpec) decode(content *hcl.BodyContent, blockLabels []blockLabel, ct
 	}
 
 	return cty.TupleVal(vals), diags
+}
+
+func (s TupleSpec) impliedType() cty.Type {
+	if len(s) == 0 {
+		return cty.EmptyTuple
+	}
+
+	attrTypes := make([]cty.Type, len(s))
+	for i, childSpec := range s {
+		attrTypes[i] = childSpec.impliedType()
+	}
+	return cty.Tuple(attrTypes)
 }
 
 func (s TupleSpec) sourceRange(content *hcl.BodyContent, blockLabels []blockLabel) hcl.Range {
@@ -186,6 +214,10 @@ func (s *AttrSpec) decode(content *hcl.BodyContent, blockLabels []blockLabel, ct
 	return val, diags
 }
 
+func (s *AttrSpec) impliedType() cty.Type {
+	return s.Type
+}
+
 // A LiteralSpec is a Spec that produces the given literal value, ignoring
 // the given body.
 type LiteralSpec struct {
@@ -198,6 +230,10 @@ func (s *LiteralSpec) visitSameBodyChildren(cb visitFunc) {
 
 func (s *LiteralSpec) decode(content *hcl.BodyContent, blockLabels []blockLabel, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	return s.Value, nil
+}
+
+func (s *LiteralSpec) impliedType() cty.Type {
+	return s.Value.Type()
 }
 
 func (s *LiteralSpec) sourceRange(content *hcl.BodyContent, blockLabels []blockLabel) hcl.Range {
@@ -225,6 +261,11 @@ func (s *ExprSpec) variablesNeeded(content *hcl.BodyContent) []hcl.Traversal {
 
 func (s *ExprSpec) decode(content *hcl.BodyContent, blockLabels []blockLabel, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	return s.Expr.Value(ctx)
+}
+
+func (s *ExprSpec) impliedType() cty.Type {
+	// We can't know the type of our expression until we evaluate it
+	return cty.DynamicPseudoType
 }
 
 func (s *ExprSpec) sourceRange(content *hcl.BodyContent, blockLabels []blockLabel) hcl.Range {
@@ -312,7 +353,7 @@ func (s *BlockSpec) decode(content *hcl.BodyContent, blockLabels []blockLabel, c
 				Subject: &content.MissingItemRange,
 			})
 		}
-		return cty.NullVal(cty.DynamicPseudoType), diags
+		return cty.NullVal(s.Nested.impliedType()), diags
 	}
 
 	if s.Nested == nil {
@@ -321,6 +362,10 @@ func (s *BlockSpec) decode(content *hcl.BodyContent, blockLabels []blockLabel, c
 	val, _, childDiags := decode(childBlock.Body, labelsForBlock(childBlock), ctx, s.Nested, false)
 	diags = append(diags, childDiags...)
 	return val, diags
+}
+
+func (s *BlockSpec) impliedType() cty.Type {
+	return s.Nested.impliedType()
 }
 
 func (s *BlockSpec) sourceRange(content *hcl.BodyContent, blockLabels []blockLabel) hcl.Range {
@@ -418,14 +463,16 @@ func (s *BlockListSpec) decode(content *hcl.BodyContent, blockLabels []blockLabe
 	var ret cty.Value
 
 	if len(elems) == 0 {
-		// FIXME: We don't currently have enough info to construct a type for
-		// an empty list, so we'll just stub it out.
-		ret = cty.ListValEmpty(cty.DynamicPseudoType)
+		ret = cty.ListValEmpty(s.Nested.impliedType())
 	} else {
 		ret = cty.ListVal(elems)
 	}
 
 	return ret, diags
+}
+
+func (s *BlockListSpec) impliedType() cty.Type {
+	return cty.List(s.Nested.impliedType())
 }
 
 func (s *BlockListSpec) sourceRange(content *hcl.BodyContent, blockLabels []blockLabel) hcl.Range {
@@ -526,14 +573,16 @@ func (s *BlockSetSpec) decode(content *hcl.BodyContent, blockLabels []blockLabel
 	var ret cty.Value
 
 	if len(elems) == 0 {
-		// FIXME: We don't currently have enough info to construct a type for
-		// an empty list, so we'll just stub it out.
-		ret = cty.SetValEmpty(cty.DynamicPseudoType)
+		ret = cty.SetValEmpty(s.Nested.impliedType())
 	} else {
 		ret = cty.SetVal(elems)
 	}
 
 	return ret, diags
+}
+
+func (s *BlockSetSpec) impliedType() cty.Type {
+	return cty.Set(s.Nested.impliedType())
 }
 
 func (s *BlockSetSpec) sourceRange(content *hcl.BodyContent, blockLabels []blockLabel) hcl.Range {
@@ -643,13 +692,12 @@ func (s *BlockMapSpec) decode(content *hcl.BodyContent, blockLabels []blockLabel
 		targetMap[key] = val
 	}
 
+	if len(elems) == 0 {
+		return cty.MapValEmpty(s.Nested.impliedType()), diags
+	}
+
 	var ctyMap func(map[string]interface{}, int) cty.Value
 	ctyMap = func(raw map[string]interface{}, depth int) cty.Value {
-		if len(raw) == 0 {
-			// FIXME: We don't currently have enough info to construct a type for
-			// an empty map, so we'll just stub it out.
-			return cty.MapValEmpty(cty.DynamicPseudoType)
-		}
 		vals := make(map[string]cty.Value, len(raw))
 		if depth == 1 {
 			for k, v := range raw {
@@ -664,6 +712,14 @@ func (s *BlockMapSpec) decode(content *hcl.BodyContent, blockLabels []blockLabel
 	}
 
 	return ctyMap(elems, len(s.LabelNames)), diags
+}
+
+func (s *BlockMapSpec) impliedType() cty.Type {
+	ret := s.Nested.impliedType()
+	for _ = range s.LabelNames {
+		ret = cty.Map(ret)
+	}
+	return ret
 }
 
 func (s *BlockMapSpec) sourceRange(content *hcl.BodyContent, blockLabels []blockLabel) hcl.Range {
@@ -715,6 +771,10 @@ func (s *BlockLabelSpec) decode(content *hcl.BodyContent, blockLabels []blockLab
 	return cty.StringVal(blockLabels[s.Index].Value), nil
 }
 
+func (s *BlockLabelSpec) impliedType() cty.Type {
+	return cty.String // labels are always strings
+}
+
 func (s *BlockLabelSpec) sourceRange(content *hcl.BodyContent, blockLabels []blockLabel) hcl.Range {
 	if s.Index >= len(blockLabels) {
 		panic("BlockListSpec used in non-block context")
@@ -763,6 +823,9 @@ func findLabelSpecs(spec Spec) []string {
 
 // DefaultSpec is a spec that wraps two specs, evaluating the primary first
 // and then evaluating the default if the primary returns a null value.
+//
+// The two specifications must have the same implied result type for correct
+// operation. If not, the result is undefined.
 type DefaultSpec struct {
 	Primary Spec
 	Default Spec
@@ -781,6 +844,10 @@ func (s *DefaultSpec) decode(content *hcl.BodyContent, blockLabels []blockLabel,
 		diags = append(diags, moreDiags...)
 	}
 	return val, diags
+}
+
+func (s *DefaultSpec) impliedType() cty.Type {
+	return s.Primary.impliedType()
 }
 
 func (s *DefaultSpec) sourceRange(content *hcl.BodyContent, blockLabels []blockLabel) hcl.Range {
