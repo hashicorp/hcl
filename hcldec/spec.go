@@ -20,7 +20,7 @@ type Spec interface {
 	//
 	// "block" is provided only by the nested calls performed by the spec
 	// types that work on block bodies.
-	decode(content *hcl.BodyContent, block *hcl.Block, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics)
+	decode(content *hcl.BodyContent, blockLabels []blockLabel, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics)
 
 	// Call the given callback once for each of the nested specs that would
 	// get decoded with the same body and block as the receiver. This should
@@ -31,7 +31,7 @@ type Spec interface {
 	// spec in the given content, in the context of the given block
 	// (which might be null). If the corresponding item is missing, return
 	// a place where it might be inserted.
-	sourceRange(content *hcl.BodyContent, block *hcl.Block) hcl.Range
+	sourceRange(content *hcl.BodyContent, blockLabels []blockLabel) hcl.Range
 }
 
 type visitFunc func(spec Spec)
@@ -62,24 +62,20 @@ func (s ObjectSpec) visitSameBodyChildren(cb visitFunc) {
 	}
 }
 
-func (s ObjectSpec) decode(content *hcl.BodyContent, block *hcl.Block, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
+func (s ObjectSpec) decode(content *hcl.BodyContent, blockLabels []blockLabel, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	vals := make(map[string]cty.Value, len(s))
 	var diags hcl.Diagnostics
 
 	for k, spec := range s {
 		var kd hcl.Diagnostics
-		vals[k], kd = spec.decode(content, block, ctx)
+		vals[k], kd = spec.decode(content, blockLabels, ctx)
 		diags = append(diags, kd...)
 	}
 
 	return cty.ObjectVal(vals), diags
 }
 
-func (s ObjectSpec) sourceRange(content *hcl.BodyContent, block *hcl.Block) hcl.Range {
-	if block != nil {
-		return block.DefRange
-	}
-
+func (s ObjectSpec) sourceRange(content *hcl.BodyContent, blockLabels []blockLabel) hcl.Range {
 	// This is not great, but the best we can do. In practice, it's rather
 	// strange to ask for the source range of an entire top-level body, since
 	// that's already readily available to the caller.
@@ -96,24 +92,20 @@ func (s TupleSpec) visitSameBodyChildren(cb visitFunc) {
 	}
 }
 
-func (s TupleSpec) decode(content *hcl.BodyContent, block *hcl.Block, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
+func (s TupleSpec) decode(content *hcl.BodyContent, blockLabels []blockLabel, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	vals := make([]cty.Value, len(s))
 	var diags hcl.Diagnostics
 
 	for i, spec := range s {
 		var ed hcl.Diagnostics
-		vals[i], ed = spec.decode(content, block, ctx)
+		vals[i], ed = spec.decode(content, blockLabels, ctx)
 		diags = append(diags, ed...)
 	}
 
 	return cty.TupleVal(vals), diags
 }
 
-func (s TupleSpec) sourceRange(content *hcl.BodyContent, block *hcl.Block) hcl.Range {
-	if block != nil {
-		return block.DefRange
-	}
-
+func (s TupleSpec) sourceRange(content *hcl.BodyContent, blockLabels []blockLabel) hcl.Range {
 	// This is not great, but the best we can do. In practice, it's rather
 	// strange to ask for the source range of an entire top-level body, since
 	// that's already readily available to the caller.
@@ -153,7 +145,7 @@ func (s *AttrSpec) attrSchemata() []hcl.AttributeSchema {
 	}
 }
 
-func (s *AttrSpec) sourceRange(content *hcl.BodyContent, block *hcl.Block) hcl.Range {
+func (s *AttrSpec) sourceRange(content *hcl.BodyContent, blockLabels []blockLabel) hcl.Range {
 	attr, exists := content.Attributes[s.Name]
 	if !exists {
 		return content.MissingItemRange
@@ -162,7 +154,7 @@ func (s *AttrSpec) sourceRange(content *hcl.BodyContent, block *hcl.Block) hcl.R
 	return attr.Expr.Range()
 }
 
-func (s *AttrSpec) decode(content *hcl.BodyContent, block *hcl.Block, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
+func (s *AttrSpec) decode(content *hcl.BodyContent, blockLabels []blockLabel, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	attr, exists := content.Attributes[s.Name]
 	if !exists {
 		// We don't need to check required and emit a diagnostic here, because
@@ -204,11 +196,11 @@ func (s *LiteralSpec) visitSameBodyChildren(cb visitFunc) {
 	// leaf node
 }
 
-func (s *LiteralSpec) decode(content *hcl.BodyContent, block *hcl.Block, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
+func (s *LiteralSpec) decode(content *hcl.BodyContent, blockLabels []blockLabel, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	return s.Value, nil
 }
 
-func (s *LiteralSpec) sourceRange(content *hcl.BodyContent, block *hcl.Block) hcl.Range {
+func (s *LiteralSpec) sourceRange(content *hcl.BodyContent, blockLabels []blockLabel) hcl.Range {
 	// No sensible range to return for a literal, so the caller had better
 	// ensure it doesn't cause any diagnostics.
 	return hcl.Range{
@@ -231,11 +223,11 @@ func (s *ExprSpec) variablesNeeded(content *hcl.BodyContent) []hcl.Traversal {
 	return s.Expr.Variables()
 }
 
-func (s *ExprSpec) decode(content *hcl.BodyContent, block *hcl.Block, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
+func (s *ExprSpec) decode(content *hcl.BodyContent, blockLabels []blockLabel, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	return s.Expr.Value(ctx)
 }
 
-func (s *ExprSpec) sourceRange(content *hcl.BodyContent, block *hcl.Block) hcl.Range {
+func (s *ExprSpec) sourceRange(content *hcl.BodyContent, blockLabels []blockLabel) hcl.Range {
 	return s.Expr.Range()
 }
 
@@ -259,7 +251,8 @@ func (s *BlockSpec) visitSameBodyChildren(cb visitFunc) {
 func (s *BlockSpec) blockHeaderSchemata() []hcl.BlockHeaderSchema {
 	return []hcl.BlockHeaderSchema{
 		{
-			Type: s.TypeName,
+			Type:       s.TypeName,
+			LabelNames: findLabelSpecs(s.Nested),
 		},
 	}
 }
@@ -283,7 +276,7 @@ func (s *BlockSpec) variablesNeeded(content *hcl.BodyContent) []hcl.Traversal {
 	return Variables(childBlock.Body, s.Nested)
 }
 
-func (s *BlockSpec) decode(content *hcl.BodyContent, block *hcl.Block, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
+func (s *BlockSpec) decode(content *hcl.BodyContent, blockLabels []blockLabel, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	var diags hcl.Diagnostics
 
 	var childBlock *hcl.Block
@@ -325,12 +318,12 @@ func (s *BlockSpec) decode(content *hcl.BodyContent, block *hcl.Block, ctx *hcl.
 	if s.Nested == nil {
 		panic("BlockSpec with no Nested Spec")
 	}
-	val, _, childDiags := decode(childBlock.Body, childBlock, ctx, s.Nested, false)
+	val, _, childDiags := decode(childBlock.Body, labelsForBlock(childBlock), ctx, s.Nested, false)
 	diags = append(diags, childDiags...)
 	return val, diags
 }
 
-func (s *BlockSpec) sourceRange(content *hcl.BodyContent, block *hcl.Block) hcl.Range {
+func (s *BlockSpec) sourceRange(content *hcl.BodyContent, blockLabels []blockLabel) hcl.Range {
 	var childBlock *hcl.Block
 	for _, candidate := range content.Blocks {
 		if candidate.Type != s.TypeName {
@@ -345,7 +338,7 @@ func (s *BlockSpec) sourceRange(content *hcl.BodyContent, block *hcl.Block) hcl.
 		return content.MissingItemRange
 	}
 
-	return sourceRange(childBlock.Body, childBlock, s.Nested)
+	return sourceRange(childBlock.Body, labelsForBlock(childBlock), s.Nested)
 }
 
 // A BlockListSpec is a Spec that produces a cty list of the results of
@@ -365,10 +358,8 @@ func (s *BlockListSpec) visitSameBodyChildren(cb visitFunc) {
 func (s *BlockListSpec) blockHeaderSchemata() []hcl.BlockHeaderSchema {
 	return []hcl.BlockHeaderSchema{
 		{
-			Type: s.TypeName,
-			// FIXME: Need to peek into s.Nested to see if it has any
-			// BlockLabelSpec instances, which will define then how many
-			// labels we need.
+			Type:       s.TypeName,
+			LabelNames: findLabelSpecs(s.Nested),
 		},
 	}
 }
@@ -388,7 +379,7 @@ func (s *BlockListSpec) variablesNeeded(content *hcl.BodyContent) []hcl.Traversa
 	return ret
 }
 
-func (s *BlockListSpec) decode(content *hcl.BodyContent, block *hcl.Block, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
+func (s *BlockListSpec) decode(content *hcl.BodyContent, blockLabels []blockLabel, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	var diags hcl.Diagnostics
 
 	if s.Nested == nil {
@@ -402,10 +393,10 @@ func (s *BlockListSpec) decode(content *hcl.BodyContent, block *hcl.Block, ctx *
 			continue
 		}
 
-		val, _, childDiags := decode(childBlock.Body, childBlock, ctx, s.Nested, false)
+		val, _, childDiags := decode(childBlock.Body, labelsForBlock(childBlock), ctx, s.Nested, false)
 		diags = append(diags, childDiags...)
 		elems = append(elems, val)
-		sourceRanges = append(sourceRanges, sourceRange(childBlock.Body, childBlock, s.Nested))
+		sourceRanges = append(sourceRanges, sourceRange(childBlock.Body, labelsForBlock(childBlock), s.Nested))
 	}
 
 	if len(elems) < s.MinItems {
@@ -437,7 +428,7 @@ func (s *BlockListSpec) decode(content *hcl.BodyContent, block *hcl.Block, ctx *
 	return ret, diags
 }
 
-func (s *BlockListSpec) sourceRange(content *hcl.BodyContent, block *hcl.Block) hcl.Range {
+func (s *BlockListSpec) sourceRange(content *hcl.BodyContent, blockLabels []blockLabel) hcl.Range {
 	// We return the source range of the _first_ block of the given type,
 	// since they are not guaranteed to form a contiguous range.
 
@@ -455,7 +446,7 @@ func (s *BlockListSpec) sourceRange(content *hcl.BodyContent, block *hcl.Block) 
 		return content.MissingItemRange
 	}
 
-	return sourceRange(childBlock.Body, childBlock, s.Nested)
+	return sourceRange(childBlock.Body, labelsForBlock(childBlock), s.Nested)
 }
 
 // A BlockSetSpec is a Spec that produces a cty set of the results of
@@ -475,7 +466,8 @@ func (s *BlockSetSpec) visitSameBodyChildren(cb visitFunc) {
 func (s *BlockSetSpec) blockHeaderSchemata() []hcl.BlockHeaderSchema {
 	return []hcl.BlockHeaderSchema{
 		{
-			Type: s.TypeName,
+			Type:       s.TypeName,
+			LabelNames: findLabelSpecs(s.Nested),
 		},
 	}
 }
@@ -495,7 +487,7 @@ func (s *BlockSetSpec) variablesNeeded(content *hcl.BodyContent) []hcl.Traversal
 	return ret
 }
 
-func (s *BlockSetSpec) decode(content *hcl.BodyContent, block *hcl.Block, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
+func (s *BlockSetSpec) decode(content *hcl.BodyContent, blockLabels []blockLabel, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	var diags hcl.Diagnostics
 
 	if s.Nested == nil {
@@ -509,10 +501,10 @@ func (s *BlockSetSpec) decode(content *hcl.BodyContent, block *hcl.Block, ctx *h
 			continue
 		}
 
-		val, _, childDiags := decode(childBlock.Body, childBlock, ctx, s.Nested, false)
+		val, _, childDiags := decode(childBlock.Body, labelsForBlock(childBlock), ctx, s.Nested, false)
 		diags = append(diags, childDiags...)
 		elems = append(elems, val)
-		sourceRanges = append(sourceRanges, sourceRange(childBlock.Body, childBlock, s.Nested))
+		sourceRanges = append(sourceRanges, sourceRange(childBlock.Body, labelsForBlock(childBlock), s.Nested))
 	}
 
 	if len(elems) < s.MinItems {
@@ -544,7 +536,7 @@ func (s *BlockSetSpec) decode(content *hcl.BodyContent, block *hcl.Block, ctx *h
 	return ret, diags
 }
 
-func (s *BlockSetSpec) sourceRange(content *hcl.BodyContent, block *hcl.Block) hcl.Range {
+func (s *BlockSetSpec) sourceRange(content *hcl.BodyContent, blockLabels []blockLabel) hcl.Range {
 	// We return the source range of the _first_ block of the given type,
 	// since they are not guaranteed to form a contiguous range.
 
@@ -562,7 +554,7 @@ func (s *BlockSetSpec) sourceRange(content *hcl.BodyContent, block *hcl.Block) h
 		return content.MissingItemRange
 	}
 
-	return sourceRange(childBlock.Body, childBlock, s.Nested)
+	return sourceRange(childBlock.Body, labelsForBlock(childBlock), s.Nested)
 }
 
 // A BlockMapSpec is a Spec that produces a cty map of the results of
@@ -585,7 +577,7 @@ func (s *BlockMapSpec) blockHeaderSchemata() []hcl.BlockHeaderSchema {
 	return []hcl.BlockHeaderSchema{
 		{
 			Type:       s.TypeName,
-			LabelNames: s.LabelNames,
+			LabelNames: append(s.LabelNames, findLabelSpecs(s.Nested)...),
 		},
 	}
 }
@@ -605,7 +597,7 @@ func (s *BlockMapSpec) variablesNeeded(content *hcl.BodyContent) []hcl.Traversal
 	return ret
 }
 
-func (s *BlockMapSpec) decode(content *hcl.BodyContent, block *hcl.Block, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
+func (s *BlockMapSpec) decode(content *hcl.BodyContent, blockLabels []blockLabel, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	var diags hcl.Diagnostics
 
 	if s.Nested == nil {
@@ -618,9 +610,10 @@ func (s *BlockMapSpec) decode(content *hcl.BodyContent, block *hcl.Block, ctx *h
 			continue
 		}
 
-		val, _, childDiags := decode(childBlock.Body, childBlock, ctx, s.Nested, false)
+		childLabels := labelsForBlock(childBlock)
+		val, _, childDiags := decode(childBlock.Body, childLabels[len(s.LabelNames):], ctx, s.Nested, false)
 		targetMap := elems
-		for _, key := range childBlock.Labels[:len(childBlock.LabelRanges)-1] {
+		for _, key := range childBlock.Labels[:len(s.LabelNames)-1] {
 			if _, exists := targetMap[key]; !exists {
 				targetMap[key] = make(map[string]interface{})
 			}
@@ -629,7 +622,7 @@ func (s *BlockMapSpec) decode(content *hcl.BodyContent, block *hcl.Block, ctx *h
 
 		diags = append(diags, childDiags...)
 
-		key := childBlock.Labels[len(childBlock.Labels)-1]
+		key := childBlock.Labels[len(s.LabelNames)-1]
 		if _, exists := targetMap[key]; exists {
 			labelsBuf := bytes.Buffer{}
 			for _, label := range childBlock.Labels {
@@ -673,7 +666,7 @@ func (s *BlockMapSpec) decode(content *hcl.BodyContent, block *hcl.Block, ctx *h
 	return ctyMap(elems, len(s.LabelNames)), diags
 }
 
-func (s *BlockMapSpec) sourceRange(content *hcl.BodyContent, block *hcl.Block) hcl.Range {
+func (s *BlockMapSpec) sourceRange(content *hcl.BodyContent, blockLabels []blockLabel) hcl.Range {
 	// We return the source range of the _first_ block of the given type,
 	// since they are not guaranteed to form a contiguous range.
 
@@ -691,7 +684,7 @@ func (s *BlockMapSpec) sourceRange(content *hcl.BodyContent, block *hcl.Block) h
 		return content.MissingItemRange
 	}
 
-	return sourceRange(childBlock.Body, childBlock, s.Nested)
+	return sourceRange(childBlock.Body, labelsForBlock(childBlock), s.Nested)
 }
 
 // A BlockLabelSpec is a Spec that returns a cty.String representing the
@@ -714,16 +707,58 @@ func (s *BlockLabelSpec) visitSameBodyChildren(cb visitFunc) {
 	// leaf node
 }
 
-func (s *BlockLabelSpec) decode(content *hcl.BodyContent, block *hcl.Block, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
-	panic("BlockLabelSpec.decode not yet implemented")
-}
-
-func (s *BlockLabelSpec) sourceRange(content *hcl.BodyContent, block *hcl.Block) hcl.Range {
-	if block == nil {
+func (s *BlockLabelSpec) decode(content *hcl.BodyContent, blockLabels []blockLabel, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
+	if s.Index >= len(blockLabels) {
 		panic("BlockListSpec used in non-block context")
 	}
 
-	return block.LabelRanges[s.Index]
+	return cty.StringVal(blockLabels[s.Index].Value), nil
+}
+
+func (s *BlockLabelSpec) sourceRange(content *hcl.BodyContent, blockLabels []blockLabel) hcl.Range {
+	if s.Index >= len(blockLabels) {
+		panic("BlockListSpec used in non-block context")
+	}
+
+	return blockLabels[s.Index].Range
+}
+
+func findLabelSpecs(spec Spec) []string {
+	maxIdx := -1
+	var names map[int]string
+
+	var visit visitFunc
+	visit = func(s Spec) {
+		if ls, ok := s.(*BlockLabelSpec); ok {
+			if maxIdx < ls.Index {
+				maxIdx = ls.Index
+			}
+			if names == nil {
+				names = make(map[int]string)
+			}
+			names[ls.Index] = ls.Name
+		}
+		s.visitSameBodyChildren(visit)
+	}
+
+	visit(spec)
+
+	if maxIdx < 0 {
+		return nil // no labels at all
+	}
+
+	ret := make([]string, maxIdx+1)
+	for i := range ret {
+		name := names[i]
+		if name == "" {
+			// Should never happen if the spec is conformant, since we require
+			// consecutive indices starting at zero.
+			name = fmt.Sprintf("missing%02d", i)
+		}
+		ret[i] = name
+	}
+
+	return ret
 }
 
 // DefaultSpec is a spec that wraps two specs, evaluating the primary first
@@ -738,20 +773,20 @@ func (s *DefaultSpec) visitSameBodyChildren(cb visitFunc) {
 	cb(s.Default)
 }
 
-func (s *DefaultSpec) decode(content *hcl.BodyContent, block *hcl.Block, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
-	val, diags := s.Primary.decode(content, block, ctx)
+func (s *DefaultSpec) decode(content *hcl.BodyContent, blockLabels []blockLabel, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
+	val, diags := s.Primary.decode(content, blockLabels, ctx)
 	if val.IsNull() {
 		var moreDiags hcl.Diagnostics
-		val, moreDiags = s.Default.decode(content, block, ctx)
+		val, moreDiags = s.Default.decode(content, blockLabels, ctx)
 		diags = append(diags, moreDiags...)
 	}
 	return val, diags
 }
 
-func (s *DefaultSpec) sourceRange(content *hcl.BodyContent, block *hcl.Block) hcl.Range {
+func (s *DefaultSpec) sourceRange(content *hcl.BodyContent, blockLabels []blockLabel) hcl.Range {
 	// We can't tell from here which of the two specs will ultimately be used
 	// in our result, so we'll just assume the first. This is usually the right
 	// choice because the default is often a literal spec that doesn't have a
 	// reasonable source range to return anyway.
-	return s.Primary.sourceRange(content, block)
+	return s.Primary.sourceRange(content, blockLabels)
 }

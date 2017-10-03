@@ -149,6 +149,54 @@ b {
 			0,
 		},
 		{
+			`
+b "baz" {
+}
+`,
+			&BlockSpec{
+				TypeName: "b",
+				Nested: &BlockLabelSpec{
+					Index: 0,
+					Name:  "name",
+				},
+			},
+			nil,
+			cty.StringVal("baz"),
+			0,
+		},
+		{
+			`
+b "baz" {}
+b "foo" {}
+`,
+			&BlockSpec{
+				TypeName: "b",
+				Nested: &BlockLabelSpec{
+					Index: 0,
+					Name:  "name",
+				},
+			},
+			nil,
+			cty.StringVal("baz"),
+			1, // duplicate "b" block
+		},
+		{
+			`
+b {
+}
+`,
+			&BlockSpec{
+				TypeName: "b",
+				Nested: &BlockLabelSpec{
+					Index: 0,
+					Name:  "name",
+				},
+			},
+			nil,
+			cty.NullVal(cty.DynamicPseudoType),
+			1, // missing name label
+		},
+		{
 			``,
 			&BlockSpec{
 				TypeName: "b",
@@ -218,6 +266,22 @@ b {}
 		},
 		{
 			`
+b "foo" {}
+b "bar" {}
+`,
+			&BlockListSpec{
+				TypeName: "b",
+				Nested: &BlockLabelSpec{
+					Name:  "name",
+					Index: 0,
+				},
+			},
+			nil,
+			cty.ListVal([]cty.Value{cty.StringVal("foo"), cty.StringVal("bar")}),
+			0,
+		},
+		{
+			`
 b {}
 b {}
 b {}
@@ -257,6 +321,31 @@ b {}
 			},
 			nil,
 			cty.SetVal([]cty.Value{cty.EmptyObjectVal, cty.EmptyObjectVal}),
+			0,
+		},
+		{
+			`
+b "foo" "bar" {}
+b "bar" "baz" {}
+`,
+			&BlockSetSpec{
+				TypeName: "b",
+				Nested: TupleSpec{
+					&BlockLabelSpec{
+						Name:  "name",
+						Index: 1,
+					},
+					&BlockLabelSpec{
+						Name:  "type",
+						Index: 0,
+					},
+				},
+			},
+			nil,
+			cty.SetVal([]cty.Value{
+				cty.TupleVal([]cty.Value{cty.StringVal("bar"), cty.StringVal("foo")}),
+				cty.TupleVal([]cty.Value{cty.StringVal("baz"), cty.StringVal("bar")}),
+			}),
 			0,
 		},
 		{
@@ -387,6 +476,42 @@ b "foo" "bar" {}
 			nil,
 			cty.MapVal(map[string]cty.Value{"foo": cty.MapVal(map[string]cty.Value{"bar": cty.EmptyObjectVal})}),
 			1, // duplicate b block
+		},
+		{
+			`
+b "foo" "bar" {}
+b "bar" "baz" {}
+`,
+			&BlockMapSpec{
+				TypeName:   "b",
+				LabelNames: []string{"type"},
+				Nested: &BlockLabelSpec{
+					Name:  "name",
+					Index: 0,
+				},
+			},
+			nil,
+			cty.MapVal(map[string]cty.Value{
+				"foo": cty.StringVal("bar"),
+				"bar": cty.StringVal("baz"),
+			}),
+			0,
+		},
+		{
+			`
+b "foo" {}
+`,
+			&BlockMapSpec{
+				TypeName:   "b",
+				LabelNames: []string{"type"},
+				Nested: &BlockLabelSpec{
+					Name:  "name",
+					Index: 0,
+				},
+			},
+			nil,
+			cty.MapValEmpty(cty.DynamicPseudoType),
+			1, // missing name
 		},
 	}
 
