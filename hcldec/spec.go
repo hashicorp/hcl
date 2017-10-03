@@ -1,6 +1,7 @@
 package hcldec
 
 import (
+	"bytes"
 	"fmt"
 
 	"github.com/hashicorp/hcl2/hcl"
@@ -391,7 +392,7 @@ func (s *BlockListSpec) decode(content *hcl.BodyContent, block *hcl.Block, ctx *
 	var diags hcl.Diagnostics
 
 	if s.Nested == nil {
-		panic("BlockSpec with no Nested Spec")
+		panic("BlockListSpec with no Nested Spec")
 	}
 
 	var elems []cty.Value
@@ -470,8 +471,77 @@ func (s *BlockSetSpec) visitSameBodyChildren(cb visitFunc) {
 	// leaf node ("Nested" does not use the same body)
 }
 
+// blockSpec implementation
+func (s *BlockSetSpec) blockHeaderSchemata() []hcl.BlockHeaderSchema {
+	return []hcl.BlockHeaderSchema{
+		{
+			Type: s.TypeName,
+		},
+	}
+}
+
+// specNeedingVariables implementation
+func (s *BlockSetSpec) variablesNeeded(content *hcl.BodyContent) []hcl.Traversal {
+	var ret []hcl.Traversal
+
+	for _, childBlock := range content.Blocks {
+		if childBlock.Type != s.TypeName {
+			continue
+		}
+
+		ret = append(ret, Variables(childBlock.Body, s.Nested)...)
+	}
+
+	return ret
+}
+
 func (s *BlockSetSpec) decode(content *hcl.BodyContent, block *hcl.Block, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
-	panic("BlockSetSpec.decode not yet implemented")
+	var diags hcl.Diagnostics
+
+	if s.Nested == nil {
+		panic("BlockSetSpec with no Nested Spec")
+	}
+
+	var elems []cty.Value
+	var sourceRanges []hcl.Range
+	for _, childBlock := range content.Blocks {
+		if childBlock.Type != s.TypeName {
+			continue
+		}
+
+		val, _, childDiags := decode(childBlock.Body, childBlock, ctx, s.Nested, false)
+		diags = append(diags, childDiags...)
+		elems = append(elems, val)
+		sourceRanges = append(sourceRanges, sourceRange(childBlock.Body, childBlock, s.Nested))
+	}
+
+	if len(elems) < s.MinItems {
+		diags = append(diags, &hcl.Diagnostic{
+			Severity: hcl.DiagError,
+			Summary:  fmt.Sprintf("Insufficient %s blocks", s.TypeName),
+			Detail:   fmt.Sprintf("At least %d %q blocks are required.", s.MinItems, s.TypeName),
+			Subject:  &content.MissingItemRange,
+		})
+	} else if s.MaxItems > 0 && len(elems) > s.MaxItems {
+		diags = append(diags, &hcl.Diagnostic{
+			Severity: hcl.DiagError,
+			Summary:  fmt.Sprintf("Too many %s blocks", s.TypeName),
+			Detail:   fmt.Sprintf("No more than %d %q blocks are allowed", s.MaxItems, s.TypeName),
+			Subject:  &sourceRanges[s.MaxItems],
+		})
+	}
+
+	var ret cty.Value
+
+	if len(elems) == 0 {
+		// FIXME: We don't currently have enough info to construct a type for
+		// an empty list, so we'll just stub it out.
+		ret = cty.SetValEmpty(cty.DynamicPseudoType)
+	} else {
+		ret = cty.SetVal(elems)
+	}
+
+	return ret, diags
 }
 
 func (s *BlockSetSpec) sourceRange(content *hcl.BodyContent, block *hcl.Block) hcl.Range {
@@ -510,8 +580,97 @@ func (s *BlockMapSpec) visitSameBodyChildren(cb visitFunc) {
 	// leaf node ("Nested" does not use the same body)
 }
 
+// blockSpec implementation
+func (s *BlockMapSpec) blockHeaderSchemata() []hcl.BlockHeaderSchema {
+	return []hcl.BlockHeaderSchema{
+		{
+			Type:       s.TypeName,
+			LabelNames: s.LabelNames,
+		},
+	}
+}
+
+// specNeedingVariables implementation
+func (s *BlockMapSpec) variablesNeeded(content *hcl.BodyContent) []hcl.Traversal {
+	var ret []hcl.Traversal
+
+	for _, childBlock := range content.Blocks {
+		if childBlock.Type != s.TypeName {
+			continue
+		}
+
+		ret = append(ret, Variables(childBlock.Body, s.Nested)...)
+	}
+
+	return ret
+}
+
 func (s *BlockMapSpec) decode(content *hcl.BodyContent, block *hcl.Block, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
-	panic("BlockMapSpec.decode not yet implemented")
+	var diags hcl.Diagnostics
+
+	if s.Nested == nil {
+		panic("BlockSetSpec with no Nested Spec")
+	}
+
+	elems := map[string]interface{}{}
+	for _, childBlock := range content.Blocks {
+		if childBlock.Type != s.TypeName {
+			continue
+		}
+
+		val, _, childDiags := decode(childBlock.Body, childBlock, ctx, s.Nested, false)
+		targetMap := elems
+		for _, key := range childBlock.Labels[:len(childBlock.LabelRanges)-1] {
+			if _, exists := targetMap[key]; !exists {
+				targetMap[key] = make(map[string]interface{})
+			}
+			targetMap = targetMap[key].(map[string]interface{})
+		}
+
+		diags = append(diags, childDiags...)
+
+		key := childBlock.Labels[len(childBlock.Labels)-1]
+		if _, exists := targetMap[key]; exists {
+			labelsBuf := bytes.Buffer{}
+			for _, label := range childBlock.Labels {
+				fmt.Fprintf(&labelsBuf, " %q", label)
+			}
+			diags = append(diags, &hcl.Diagnostic{
+				Severity: hcl.DiagError,
+				Summary:  fmt.Sprintf("Duplicate %s block", s.TypeName),
+				Detail: fmt.Sprintf(
+					"A block for %s%s was already defined. The %s labels must be unique.",
+					s.TypeName, labelsBuf.String(), s.TypeName,
+				),
+				Subject: &childBlock.DefRange,
+			})
+			continue
+		}
+
+		targetMap[key] = val
+	}
+
+	var ctyMap func(map[string]interface{}, int) cty.Value
+	ctyMap = func(raw map[string]interface{}, depth int) cty.Value {
+		if len(raw) == 0 {
+			// FIXME: We don't currently have enough info to construct a type for
+			// an empty map, so we'll just stub it out.
+			return cty.MapValEmpty(cty.DynamicPseudoType)
+		}
+		vals := make(map[string]cty.Value, len(raw))
+		if depth == 1 {
+			for k, v := range raw {
+				vals[k] = v.(cty.Value)
+			}
+		} else {
+			for k, v := range raw {
+				vals[k] = ctyMap(v.(map[string]interface{}), depth-1)
+			}
+		}
+		return cty.MapVal(vals)
+	}
+
+	return ctyMap(elems, len(s.LabelNames)), diags
 }
 
 func (s *BlockMapSpec) sourceRange(content *hcl.BodyContent, block *hcl.Block) hcl.Range {

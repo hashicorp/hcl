@@ -245,6 +245,149 @@ b {}
 			cty.ListVal([]cty.Value{cty.EmptyObjectVal, cty.EmptyObjectVal}),
 			1, // insufficient b blocks
 		},
+		{
+			`
+b {}
+b {}
+`,
+			&BlockSetSpec{
+				TypeName: "b",
+				Nested:   ObjectSpec{},
+				MaxItems: 2,
+			},
+			nil,
+			cty.SetVal([]cty.Value{cty.EmptyObjectVal, cty.EmptyObjectVal}),
+			0,
+		},
+		{
+			`
+b "foo" {}
+b "bar" {}
+`,
+			&BlockMapSpec{
+				TypeName:   "b",
+				LabelNames: []string{"key"},
+				Nested:     ObjectSpec{},
+			},
+			nil,
+			cty.MapVal(map[string]cty.Value{"foo": cty.EmptyObjectVal, "bar": cty.EmptyObjectVal}),
+			0,
+		},
+		{
+			`
+b "foo" "bar" {}
+b "bar" "baz" {}
+`,
+			&BlockMapSpec{
+				TypeName:   "b",
+				LabelNames: []string{"key1", "key2"},
+				Nested:     ObjectSpec{},
+			},
+			nil,
+			cty.MapVal(map[string]cty.Value{
+				"foo": cty.MapVal(map[string]cty.Value{
+					"bar": cty.EmptyObjectVal,
+				}),
+				"bar": cty.MapVal(map[string]cty.Value{
+					"baz": cty.EmptyObjectVal,
+				}),
+			}),
+			0,
+		},
+		{
+			`
+b "foo" "bar" {}
+b "bar" "bar" {}
+`,
+			&BlockMapSpec{
+				TypeName:   "b",
+				LabelNames: []string{"key1", "key2"},
+				Nested:     ObjectSpec{},
+			},
+			nil,
+			cty.MapVal(map[string]cty.Value{
+				"foo": cty.MapVal(map[string]cty.Value{
+					"bar": cty.EmptyObjectVal,
+				}),
+				"bar": cty.MapVal(map[string]cty.Value{
+					"bar": cty.EmptyObjectVal,
+				}),
+			}),
+			0,
+		},
+		{
+			`
+b "foo" "bar" {}
+b "foo" "baz" {}
+`,
+			&BlockMapSpec{
+				TypeName:   "b",
+				LabelNames: []string{"key1", "key2"},
+				Nested:     ObjectSpec{},
+			},
+			nil,
+			cty.MapVal(map[string]cty.Value{
+				"foo": cty.MapVal(map[string]cty.Value{
+					"bar": cty.EmptyObjectVal,
+					"baz": cty.EmptyObjectVal,
+				}),
+			}),
+			0,
+		},
+		{
+			`
+b "foo" "bar" {}
+`,
+			&BlockMapSpec{
+				TypeName:   "b",
+				LabelNames: []string{"key"},
+				Nested:     ObjectSpec{},
+			},
+			nil,
+			cty.MapValEmpty(cty.DynamicPseudoType),
+			1, // too many labels
+		},
+		{
+			`
+b "bar" {}
+`,
+			&BlockMapSpec{
+				TypeName:   "b",
+				LabelNames: []string{"key1", "key2"},
+				Nested:     ObjectSpec{},
+			},
+			nil,
+			cty.MapValEmpty(cty.DynamicPseudoType),
+			1, // not enough labels
+		},
+		{
+			`
+b "foo" {}
+b "foo" {}
+`,
+			&BlockMapSpec{
+				TypeName:   "b",
+				LabelNames: []string{"key"},
+				Nested:     ObjectSpec{},
+			},
+			nil,
+			cty.MapVal(map[string]cty.Value{"foo": cty.EmptyObjectVal}),
+			1, // duplicate b block
+		},
+		{
+			`
+b "foo" "bar" {}
+b "foo" "bar" {}
+`,
+			&BlockMapSpec{
+				TypeName:   "b",
+				LabelNames: []string{"key1", "key2"},
+				Nested:     ObjectSpec{},
+			},
+			nil,
+			cty.MapVal(map[string]cty.Value{"foo": cty.MapVal(map[string]cty.Value{"bar": cty.EmptyObjectVal})}),
+			1, // duplicate b block
+		},
 	}
 
 	for i, test := range tests {
