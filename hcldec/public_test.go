@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/hashicorp/hcl2/hcl/hclsyntax"
 	"github.com/hashicorp/hcl2/hcl"
+	"github.com/hashicorp/hcl2/hcl/hclsyntax"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -54,6 +54,36 @@ func TestDecode(t *testing.T) {
 			},
 			nil,
 			cty.NumberIntVal(1),
+			0,
+		},
+		{
+			"a = 1\n",
+			&DefaultSpec{
+				Primary: &AttrSpec{
+					Name: "a",
+					Type: cty.Number,
+				},
+				Default: &LiteralSpec{
+					Value: cty.NumberIntVal(10),
+				},
+			},
+			nil,
+			cty.NumberIntVal(1),
+			0,
+		},
+		{
+			"",
+			&DefaultSpec{
+				Primary: &AttrSpec{
+					Name: "a",
+					Type: cty.Number,
+				},
+				Default: &LiteralSpec{
+					Value: cty.NumberIntVal(10),
+				},
+			},
+			nil,
+			cty.NumberIntVal(10),
 			0,
 		},
 		{

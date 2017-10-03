@@ -566,3 +566,33 @@ func (s *BlockLabelSpec) sourceRange(content *hcl.BodyContent, block *hcl.Block)
 
 	return block.LabelRanges[s.Index]
 }
+
+// DefaultSpec is a spec that wraps two specs, evaluating the primary first
+// and then evaluating the default if the primary returns a null value.
+type DefaultSpec struct {
+	Primary Spec
+	Default Spec
+}
+
+func (s *DefaultSpec) visitSameBodyChildren(cb visitFunc) {
+	cb(s.Primary)
+	cb(s.Default)
+}
+
+func (s *DefaultSpec) decode(content *hcl.BodyContent, block *hcl.Block, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
+	val, diags := s.Primary.decode(content, block, ctx)
+	if val.IsNull() {
+		var moreDiags hcl.Diagnostics
+		val, moreDiags = s.Default.decode(content, block, ctx)
+		diags = append(diags, moreDiags...)
+	}
+	return val, diags
+}
+
+func (s *DefaultSpec) sourceRange(content *hcl.BodyContent, block *hcl.Block) hcl.Range {
+	// We can't tell from here which of the two specs will ultimately be used
+	// in our result, so we'll just assume the first. This is usually the right
+	// choice because the default is often a literal spec that doesn't have a
+	// reasonable source range to return anyway.
+	return s.Primary.sourceRange(content, block)
+}
