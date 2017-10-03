@@ -410,15 +410,15 @@ func (s *BlockListSpec) decode(content *hcl.BodyContent, block *hcl.Block, ctx *
 	if len(elems) < s.MinItems {
 		diags = append(diags, &hcl.Diagnostic{
 			Severity: hcl.DiagError,
-			Summary:  fmt.Sprintf("insufficient %s blocks", s.TypeName),
-			Detail:   fmt.Sprintf("at least %d blocks are required", s.MinItems),
+			Summary:  fmt.Sprintf("Insufficient %s blocks", s.TypeName),
+			Detail:   fmt.Sprintf("At least %d %q blocks are required.", s.MinItems, s.TypeName),
 			Subject:  &content.MissingItemRange,
 		})
 	} else if s.MaxItems > 0 && len(elems) > s.MaxItems {
 		diags = append(diags, &hcl.Diagnostic{
 			Severity: hcl.DiagError,
-			Summary:  fmt.Sprintf("too many %s blocks", s.TypeName),
-			Detail:   fmt.Sprintf("no more than %d blocks are allowed", s.MaxItems),
+			Summary:  fmt.Sprintf("Too many %s blocks", s.TypeName),
+			Detail:   fmt.Sprintf("No more than %d %q blocks are allowed", s.MaxItems, s.TypeName),
 			Subject:  &sourceRanges[s.MaxItems],
 		})
 	}
