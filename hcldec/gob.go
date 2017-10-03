@@ -18,5 +18,5 @@ func init() {
 	gob.Register((*BlockListSpec)(nil))
 	gob.Register((*BlockSetSpec)(nil))
 	gob.Register((*BlockMapSpec)(nil))
-	gob.Register((*BlockLabelSpec)(nil))
+	gob.Register((*DefaultSpec)(nil))
 }
