@@ -87,6 +87,23 @@ func TestDecode(t *testing.T) {
 			0,
 		},
 		{
+			"a = 1\n",
+			ObjectSpec{
+				"foo": &DefaultSpec{
+					Primary: &AttrSpec{
+						Name: "a",
+						Type: cty.Number,
+					},
+					Default: &LiteralSpec{
+						Value: cty.NumberIntVal(10),
+					},
+				},
+			},
+			nil,
+			cty.ObjectVal(map[string]cty.Value{"foo": cty.NumberIntVal(1)}),
+			0,
+		},
+		{
 			"a = \"1\"\n",
 			&AttrSpec{
 				Name: "a",
