@@ -457,7 +457,9 @@ func (d *decoder) decodePtr(name string, node ast.Node, result reflect.Value) er
 				Err: fmt.Errorf("unknown type for Unmarshaler: %T", node),
 			}
 		}
-		i.UnmarshalHcl(bytes.NewBufferString(literal.Token.Text).Bytes())
+		if err := i.UnmarshalHcl(bytes.NewBufferString(literal.Token.Text).Bytes()); err != nil {
+			return err
+		}
 	} else if err := d.decode(name, node, reflect.Indirect(val)); err != nil {
 		return err
 	}
