@@ -15,4 +15,4 @@ generate:
 updatedeps:
 	go get -u golang.org/x/tools/cmd/stringer
 
-.PHONY: default generate test updatedeps
+.PHONY: default fmt test generate updatedeps
