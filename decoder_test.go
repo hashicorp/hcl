@@ -1264,3 +1264,38 @@ func TestDecode_flattenedJSON(t *testing.T) {
 		}
 	}
 }
+
+func TestDecode_sliceIntoSameObject(t *testing.T) {
+	type Bar struct {
+		Val  string
+		Val2 string
+	}
+	type Feat struct {
+		Bars []Bar `hcl:"bar"`
+	}
+
+	var actual Feat
+
+	err := Decode(&actual, `
+bar {
+  val = "hello"
+  val2 = "world"
+}
+`)
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	expected := Feat{
+		Bars: []Bar{
+			Bar{
+				Val:  "hello",
+				Val2: "world",
+			},
+		},
+	}
+
+	if !reflect.DeepEqual(actual, expected) {
+		t.Fatalf("Actual, Expected.\n\n%s\n\n%s", spew.Sdump(actual), spew.Sdump(expected))
+	}
+}
