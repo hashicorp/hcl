@@ -695,9 +695,6 @@ func (d *decoder) decodeStruct(name string, node ast.Node, result reflect.Value)
 		}
 		for _, match := range matches.Items {
 			var decodeNode ast.Node = match.Val
-			if ot, ok := decodeNode.(*ast.ObjectType); ok {
-				decodeNode = &ast.ObjectList{Items: ot.List.Items}
-			}
 
 			if err := d.decode(fieldName, decodeNode, fieldValue); err != nil {
 				return err
