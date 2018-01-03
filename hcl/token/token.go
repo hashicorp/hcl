@@ -191,7 +191,7 @@ func unindentHeredoc(heredoc string) string {
 
 	isIndented := true
 	for _, v := range lines {
-		if strings.HasPrefix(v, whitespacePrefix) {
+		if strings.HasPrefix(v, whitespacePrefix) || v == "" {
 			continue
 		}
 
