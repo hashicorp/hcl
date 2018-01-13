@@ -330,8 +330,26 @@ func (e *expression) Variables() []hcl.Traversal {
 
 	switch v := e.src.(type) {
 	case *stringVal:
-		// FIXME: Once the native zcl template language parser is implemented,
-		// parse with that and look for variables in there too,
+		templateSrc := v.Value
+		expr, diags := hclsyntax.ParseTemplate(
+			[]byte(templateSrc),
+			v.SrcRange.Filename,
+
+			// This won't produce _exactly_ the right result, since
+			// the zclsyntax parser can't "see" any escapes we removed
+			// while parsing JSON, but it's better than nothing.
+			hcl.Pos{
+				Line: v.SrcRange.Start.Line,
+
+				// skip over the opening quote mark
+				Byte:   v.SrcRange.Start.Byte + 1,
+				Column: v.SrcRange.Start.Column + 1,
+			},
+		)
+		if diags.HasErrors() {
+			return vars
+		}
+		return expr.Variables()
 
 	case *arrayVal:
 		for _, jsonVal := range v.Values {
