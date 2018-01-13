@@ -741,3 +741,15 @@ func TestJustAttributes(t *testing.T) {
 		})
 	}
 }
+
+func TestExpressionAsTraversal(t *testing.T) {
+	e := &expression{
+		src: &stringVal{
+			Value: "foo.bar[0]",
+		},
+	}
+	traversal := e.AsTraversal()
+	if len(traversal) != 3 {
+		t.Fatalf("incorrect traversal %#v; want length 3", traversal)
+	}
+}

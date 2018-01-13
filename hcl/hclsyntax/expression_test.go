@@ -1087,3 +1087,17 @@ func TestFunctionCallExprValue(t *testing.T) {
 		})
 	}
 }
+
+func TestExpressionAsTraversal(t *testing.T) {
+	expr, _ := ParseExpression([]byte("a.b[0]"), "", hcl.Pos{})
+	traversal, diags := hcl.AbsTraversalForExpr(expr)
+	if len(diags) != 0 {
+		t.Fatalf("unexpected diagnostics")
+	}
+	if len(traversal) != 3 {
+		t.Fatalf("wrong traversal %#v; want length 3", traversal)
+	}
+	if traversal.RootName() != "a" {
+		t.Fatalf("wrong root name %q; want %q", traversal.RootName(), "a")
+	}
+}

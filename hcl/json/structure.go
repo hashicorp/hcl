@@ -3,8 +3,8 @@ package json
 import (
 	"fmt"
 
-	"github.com/hashicorp/hcl2/hcl/hclsyntax"
 	"github.com/hashicorp/hcl2/hcl"
+	"github.com/hashicorp/hcl2/hcl/hclsyntax"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -352,4 +352,21 @@ func (e *expression) Range() hcl.Range {
 
 func (e *expression) StartRange() hcl.Range {
 	return e.src.StartRange()
+}
+
+// Implementation for hcl.AbsTraversalForExpr.
+func (e *expression) AsTraversal() hcl.Traversal {
+	// In JSON-based syntax a traversal is given as a string containing
+	// traversal syntax as defined by hclsyntax.ParseTraversalAbs.
+
+	switch v := e.src.(type) {
+	case *stringVal:
+		traversal, diags := hclsyntax.ParseTraversalAbs([]byte(v.Value), v.SrcRange.Filename, v.SrcRange.Start)
+		if diags.HasErrors() {
+			return nil
+		}
+		return traversal
+	default:
+		return nil
+	}
 }

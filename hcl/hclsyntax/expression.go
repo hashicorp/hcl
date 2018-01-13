@@ -70,6 +70,11 @@ func (e *ScopeTraversalExpr) StartRange() hcl.Range {
 	return e.SrcRange
 }
 
+// Implementation for hcl.AbsTraversalForExpr.
+func (e *ScopeTraversalExpr) AsTraversal() hcl.Traversal {
+	return e.Traversal
+}
+
 // RelativeTraversalExpr is an Expression that retrieves a value from another
 // value using a _relative_ traversal.
 type RelativeTraversalExpr struct {
