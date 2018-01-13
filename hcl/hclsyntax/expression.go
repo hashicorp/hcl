@@ -544,6 +544,15 @@ func (e *TupleConsExpr) StartRange() hcl.Range {
 	return e.OpenRange
 }
 
+// Implementation for hcl.ExprList
+func (e *TupleConsExpr) ExprList() []hcl.Expression {
+	ret := make([]hcl.Expression, len(e.Exprs))
+	for i, expr := range e.Exprs {
+		ret[i] = expr
+	}
+	return ret
+}
+
 type ObjectConsExpr struct {
 	Items []ObjectConsItem
 

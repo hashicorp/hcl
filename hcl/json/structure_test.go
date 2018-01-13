@@ -753,3 +753,22 @@ func TestExpressionAsTraversal(t *testing.T) {
 		t.Fatalf("incorrect traversal %#v; want length 3", traversal)
 	}
 }
+
+func TestStaticExpressionList(t *testing.T) {
+	e := &expression{
+		src: &arrayVal{
+			Values: []node{
+				&stringVal{
+					Value: "hello",
+				},
+			},
+		},
+	}
+	exprs := e.ExprList()
+	if len(exprs) != 1 {
+		t.Fatalf("incorrect exprs %#v; want length 1", exprs)
+	}
+	if exprs[0].(*expression).src != e.src.(*arrayVal).Values[0] {
+		t.Fatalf("wrong first expression node")
+	}
+}

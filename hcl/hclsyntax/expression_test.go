@@ -1101,3 +1101,21 @@ func TestExpressionAsTraversal(t *testing.T) {
 		t.Fatalf("wrong root name %q; want %q", traversal.RootName(), "a")
 	}
 }
+
+func TestStaticExpressionList(t *testing.T) {
+	expr, _ := ParseExpression([]byte("[0, a, true]"), "", hcl.Pos{})
+	exprs, diags := hcl.ExprList(expr)
+	if len(diags) != 0 {
+		t.Fatalf("unexpected diagnostics")
+	}
+	if len(exprs) != 3 {
+		t.Fatalf("wrong result %#v; want length 3", exprs)
+	}
+	first, ok := exprs[0].(*LiteralValueExpr)
+	if !ok {
+		t.Fatalf("first expr has wrong type %T; want *zclsyntax.LiteralValueExpr", exprs[0])
+	}
+	if !first.Val.RawEquals(cty.Zero) {
+		t.Fatalf("wrong first value %#v; want cty.Zero", first.Val)
+	}
+}

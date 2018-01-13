@@ -370,3 +370,17 @@ func (e *expression) AsTraversal() hcl.Traversal {
 		return nil
 	}
 }
+
+// Implementation for hcl.ExprList.
+func (e *expression) ExprList() []hcl.Expression {
+	switch v := e.src.(type) {
+	case *arrayVal:
+		ret := make([]hcl.Expression, len(v.Values))
+		for i, node := range v.Values {
+			ret[i] = &expression{src: node}
+		}
+		return ret
+	default:
+		return nil
+	}
+}
