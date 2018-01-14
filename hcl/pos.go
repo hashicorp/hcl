@@ -231,3 +231,32 @@ func (r Range) Overlap(other Range) Range {
 		End:      end,
 	}
 }
+
+// PartitionAround finds the portion of the given range that overlaps with
+// the reciever and returns three ranges: the portion of the reciever that
+// precedes the overlap, the overlap itself, and then the portion of the
+// reciever that comes after the overlap.
+//
+// If the two ranges do not overlap then all three returned ranges are empty.
+//
+// If the given range aligns with or extends beyond either extent of the
+// reciever then the corresponding outer range will be empty.
+func (r Range) PartitionAround(other Range) (before, overlap, after Range) {
+	overlap = r.Overlap(other)
+	if overlap.Empty() {
+		return overlap, overlap, overlap
+	}
+
+	before = Range{
+		Filename: r.Filename,
+		Start:    r.Start,
+		End:      overlap.Start,
+	}
+	after = Range{
+		Filename: r.Filename,
+		Start:    overlap.End,
+		End:      r.End,
+	}
+
+	return before, overlap, after
+}
