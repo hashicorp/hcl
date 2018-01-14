@@ -45,10 +45,12 @@ All splines must be pre-reticulated.
 				Detail:   `"baz" is not a supported top-level attribute. Did you mean "bam"?`,
 				Subject: &Range{
 					Start: Pos{
+						Byte:   16,
 						Column: 1,
 						Line:   3,
 					},
 					End: Pos{
+						Byte:   19,
 						Column: 4,
 						Line:   3,
 					},
@@ -71,10 +73,12 @@ attribute. Did you mean "bam"?
 				Detail:   `"pizza" is not a supported attribute. Did you mean "pizzetta"?`,
 				Subject: &Range{
 					Start: Pos{
+						Byte:   42,
 						Column: 3,
 						Line:   5,
 					},
 					End: Pos{
+						Byte:   47,
 						Column: 8,
 						Line:   5,
 					},
@@ -83,10 +87,12 @@ attribute. Did you mean "bam"?
 				// whether we're able to show a multi-line context when needed.
 				Context: &Range{
 					Start: Pos{
+						Byte:   24,
 						Column: 1,
 						Line:   4,
 					},
 					End: Pos{
+						Byte:   60,
 						Column: 2,
 						Line:   6,
 					},

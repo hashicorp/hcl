@@ -2,7 +2,6 @@ package hcl
 
 import (
 	"bufio"
-	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -70,21 +69,15 @@ func (w *diagnosticTextWriter) WriteDiagnostic(diag *Diagnostic) error {
 	if diag.Subject != nil {
 
 		file := w.files[diag.Subject.Filename]
-		if file == nil || file.Bytes == nil {
+		if file == nil || file.Bytes == nil || diag.Subject.Empty() {
 			fmt.Fprintf(w.wr, "  on %s line %d:\n  (source code not available)\n\n", diag.Subject.Filename, diag.Subject.Start.Line)
 		} else {
-			src := file.Bytes
-			r := bytes.NewReader(src)
-			sc := bufio.NewScanner(r)
-			sc.Split(bufio.ScanLines)
-
-			var startLine, endLine int
+			snipRange := *diag.Subject
 			if diag.Context != nil {
-				startLine = diag.Context.Start.Line
-				endLine = diag.Context.End.Line
-			} else {
-				startLine = diag.Subject.Start.Line
-				endLine = diag.Subject.End.Line
+				// Show enough of the source code to include both the subject
+				// and context ranges, which overlap in all reasonable
+				// situations.
+				snipRange = RangeOver(snipRange, *diag.Context)
 			}
 
 			var contextLine string
@@ -95,35 +88,18 @@ func (w *diagnosticTextWriter) WriteDiagnostic(diag *Diagnostic) error {
 				}
 			}
 
-			li := 1
-			var ls string
-			for sc.Scan() {
-				ls = sc.Text()
-
-				if li == startLine {
-					break
-				}
-				li++
-			}
-
 			fmt.Fprintf(w.wr, "  on %s line %d%s:\n", diag.Subject.Filename, diag.Subject.Start.Line, contextLine)
 
-			// TODO: Generate markers for the specific characters that are in the Context and Subject ranges.
-			// For now, we just print out the lines.
+			src := file.Bytes
+			sc := NewRangeScanner(src, diag.Subject.Filename, bufio.ScanLines)
 
-			fmt.Fprintf(w.wr, "%4d: %s\n", li, ls)
-
-			if endLine > li {
-				for sc.Scan() {
-					ls = sc.Text()
-					li++
-
-					fmt.Fprintf(w.wr, "%4d: %s\n", li, ls)
-
-					if li == endLine {
-						break
-					}
+			for sc.Scan() {
+				lineRange := sc.Range()
+				if !lineRange.Overlaps(snipRange) {
+					continue
 				}
+
+				fmt.Fprintf(w.wr, "%4d: %s\n", lineRange.Start.Line, sc.Bytes())
 			}
 
 			w.wr.Write([]byte{'\n'})
