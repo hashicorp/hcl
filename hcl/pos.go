@@ -60,6 +60,40 @@ func RangeBetween(start, end Range) Range {
 	}
 }
 
+// RangeOver returns a new range that covers both of the given ranges and
+// possibly additional content between them if the two ranges do not overlap.
+//
+// If either range is empty then it is ignored. The result is empty if both
+// given ranges are empty.
+//
+// The result is meaningless if the two ranges to not belong to the same
+// source file.
+func RangeOver(a, b Range) Range {
+	if a.Empty() {
+		return b
+	}
+	if b.Empty() {
+		return a
+	}
+
+	var start, end Pos
+	if a.Start.Byte < b.Start.Byte {
+		start = a.Start
+	} else {
+		start = b.Start
+	}
+	if a.End.Byte > b.End.Byte {
+		end = a.End
+	} else {
+		end = b.End
+	}
+	return Range{
+		Filename: a.Filename,
+		Start:    start,
+		End:      end,
+	}
+}
+
 // ContainsOffset returns true if and only if the given byte offset is within
 // the receiving Range.
 func (r Range) ContainsOffset(offset int) bool {
