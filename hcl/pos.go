@@ -94,3 +94,106 @@ func (r Range) String() string {
 		)
 	}
 }
+
+func (r Range) Empty() bool {
+	return r.Start.Byte == r.End.Byte
+}
+
+// CanSliceBytes returns true if SliceBytes could return an accurate
+// sub-slice of the given slice.
+//
+// This effectively tests whether the start and end offsets of the range
+// are within the bounds of the slice, and thus whether SliceBytes can be
+// trusted to produce an accurate start and end position within that slice.
+func (r Range) CanSliceBytes(b []byte) bool {
+	switch {
+	case r.Start.Byte < 0 || r.Start.Byte > len(b):
+		return false
+	case r.End.Byte < 0 || r.End.Byte > len(b):
+		return false
+	case r.End.Byte < r.Start.Byte:
+		return false
+	default:
+		return true
+	}
+}
+
+// SliceBytes returns a sub-slice of the given slice that is covered by the
+// receiving range, assuming that the given slice is the source code of the
+// file indicated by r.Filename.
+//
+// If the receiver refers to any byte offsets that are outside of the slice
+// then the result is constrained to the overlapping portion only, to avoid
+// a panic. Use CanSliceBytes to determine if the result is guaranteed to
+// be an accurate span of the requested range.
+func (r Range) SliceBytes(b []byte) []byte {
+	start := r.Start.Byte
+	end := r.End.Byte
+	if start < 0 {
+		start = 0
+	} else if start > len(b) {
+		start = len(b)
+	}
+	if end < 0 {
+		end = 0
+	} else if end > len(b) {
+		end = len(b)
+	}
+	if end < start {
+		end = start
+	}
+	return b[start:end]
+}
+
+// Overlaps returns true if the receiver and the other given range share any
+// characters in common.
+func (r Range) Overlaps(other Range) bool {
+	switch {
+	case r.Filename != other.Filename:
+		// If the ranges are in different files then they can't possibly overlap
+		return false
+	case r.Empty() || other.Empty():
+		// Empty ranges can never overlap
+		return false
+	case r.ContainsOffset(other.Start.Byte) || r.ContainsOffset(other.End.Byte):
+		return true
+	case other.ContainsOffset(r.Start.Byte) || other.ContainsOffset(r.End.Byte):
+		return true
+	default:
+		return false
+	}
+}
+
+// Overlap finds a range that is either identical to or a sub-range of both
+// the receiver and the other given range. It returns an empty range
+// within the receiver if there is no overlap between the two ranges.
+//
+// A non-empty result is either identical to or a subset of the receiver.
+func (r Range) Overlap(other Range) Range {
+	if !r.Overlaps(other) {
+		// Start == End indicates an empty range
+		return Range{
+			Filename: r.Filename,
+			Start:    r.Start,
+			End:      r.Start,
+		}
+	}
+
+	var start, end Pos
+	if r.Start.Byte > other.Start.Byte {
+		start = r.Start
+	} else {
+		start = other.Start
+	}
+	if r.End.Byte < other.End.Byte {
+		end = r.End
+	} else {
+		end = other.End
+	}
+
+	return Range{
+		Filename: r.Filename,
+		Start:    start,
+		End:      end,
+	}
+}
