@@ -29,7 +29,7 @@ type Options struct {
 }
 
 func isValidFile(f os.FileInfo, extensions []string) bool {
-	if !f.IsDir() && !strings.HasPrefix(f.Name(), ".") {
+	if !strings.HasPrefix(f.Name(), ".") {
 		for _, ext := range extensions {
 			if strings.HasSuffix(f.Name(), "."+ext) {
 				return true
