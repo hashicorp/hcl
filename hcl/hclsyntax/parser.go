@@ -627,7 +627,7 @@ Traversal:
 			if lit, isLit := keyExpr.(*LiteralValueExpr); isLit {
 				litKey, _ := lit.Value(nil)
 				rng := hcl.RangeBetween(open.Range, close.Range)
-				step := &hcl.TraverseIndex{
+				step := hcl.TraverseIndex{
 					Key:      litKey,
 					SrcRange: rng,
 				}
