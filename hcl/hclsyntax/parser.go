@@ -1531,7 +1531,7 @@ Character:
 
 				var detail string
 				switch {
-				case len(ch) == 1 && (ch[0] == '$' || ch[0] == '!'):
+				case len(ch) == 1 && (ch[0] == '$' || ch[0] == '%'):
 					detail = fmt.Sprintf(
 						"The characters \"\\%s\" do not form a recognized escape sequence. To escape a \"%s{\" template sequence, use \"%s%s{\".",
 						ch, ch, ch, ch,
@@ -1562,7 +1562,7 @@ Character:
 				esc = esc[:0]
 				continue Character
 
-			case '$', '!':
+			case '$', '%':
 				switch len(esc) {
 				case 1:
 					if len(ch) == 1 && ch[0] == esc[0] {
@@ -1602,13 +1602,49 @@ Character:
 				case '$':
 					esc = append(esc, '$')
 					continue Character
-				case '!':
-					esc = append(esc, '!')
+				case '%':
+					esc = append(esc, '%')
 					continue Character
 				}
 			}
 			ret = append(ret, ch...)
 		}
+	}
+
+	// if we still have an outstanding "esc" when we fall out here then
+	// the literal ended with an unterminated escape sequence, which we
+	// must now deal with.
+	if len(esc) > 0 {
+		if esc[0] == '\\' {
+			// An incomplete backslash sequence is an error, since it suggests
+			// that e.g. the user started writing a \uXXXX sequence but didn't
+			// provide enough hex digits.
+			diags = append(diags, &hcl.Diagnostic{
+				Severity: hcl.DiagError,
+				Summary:  "Invalid escape sequence",
+				Detail:   fmt.Sprintf("The characters %q do not form a recognized escape sequence.", esc),
+				Subject: &hcl.Range{
+					Filename: tok.Range.Filename,
+					Start: hcl.Pos{
+						Line:   pos.Line,
+						Column: pos.Column,
+						Byte:   pos.Byte,
+					},
+					End: hcl.Pos{
+						Line:   pos.Line,
+						Column: pos.Column + len(esc),
+						Byte:   pos.Byte + len(esc),
+					},
+				},
+			})
+
+		}
+		// This might also be an incomplete $${ or %%{ escape sequence, but
+		// that's treated as a literal rather than an error since those only
+		// count as escape sequences when all three characters are present.
+
+		ret = append(ret, esc...)
+		esc = nil
 	}
 
 	return string(ret), diags
