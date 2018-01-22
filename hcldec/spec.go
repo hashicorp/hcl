@@ -52,6 +52,7 @@ type attrSpec interface {
 // blockSpec is implemented by specs that require blocks from the body.
 type blockSpec interface {
 	blockHeaderSchemata() []hcl.BlockHeaderSchema
+	nestedSpec() Spec
 }
 
 // specNeedingVariables is implemented by specs that can use variables
@@ -298,6 +299,11 @@ func (s *BlockSpec) blockHeaderSchemata() []hcl.BlockHeaderSchema {
 	}
 }
 
+// blockSpec implementation
+func (s *BlockSpec) nestedSpec() Spec {
+	return s.Nested
+}
+
 // specNeedingVariables implementation
 func (s *BlockSpec) variablesNeeded(content *hcl.BodyContent) []hcl.Traversal {
 	var childBlock *hcl.Block
@@ -407,6 +413,11 @@ func (s *BlockListSpec) blockHeaderSchemata() []hcl.BlockHeaderSchema {
 			LabelNames: findLabelSpecs(s.Nested),
 		},
 	}
+}
+
+// blockSpec implementation
+func (s *BlockListSpec) nestedSpec() Spec {
+	return s.Nested
 }
 
 // specNeedingVariables implementation
@@ -519,6 +530,11 @@ func (s *BlockSetSpec) blockHeaderSchemata() []hcl.BlockHeaderSchema {
 	}
 }
 
+// blockSpec implementation
+func (s *BlockSetSpec) nestedSpec() Spec {
+	return s.Nested
+}
+
 // specNeedingVariables implementation
 func (s *BlockSetSpec) variablesNeeded(content *hcl.BodyContent) []hcl.Traversal {
 	var ret []hcl.Traversal
@@ -629,6 +645,11 @@ func (s *BlockMapSpec) blockHeaderSchemata() []hcl.BlockHeaderSchema {
 			LabelNames: append(s.LabelNames, findLabelSpecs(s.Nested)...),
 		},
 	}
+}
+
+// blockSpec implementation
+func (s *BlockMapSpec) nestedSpec() Spec {
+	return s.Nested
 }
 
 // specNeedingVariables implementation
