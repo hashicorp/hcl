@@ -83,12 +83,61 @@ within the `content` block are evaluated separately and so can be passed a
 separate `EvalContext` if desired, during normal attribute expression
 evaluation.
 
+## Detecting Variables
+
 Some applications dynamically generate an `EvalContext` by analyzing which
-variables are referenced by an expression before evaluating it. This can be
-achieved for a block that might contain `dynamic` blocks by calling
-`ForEachVariables`, which returns the variables required by the `for_each`
-and `labels` attributes in all `dynamic` blocks within the given body,
-including any nested `dynamic` blocks.
+variables are referenced by an expression before evaluating it.
+
+This unfortunately requires some extra effort when this analysis is required
+for the context passed to `Expand`: the HCL API requires a schema to be
+provided in order to do any analysis of the blocks in a body, but the low-level
+schema model provides a description of only one level of nested blocks at
+a time, and thus a new schema must be provided for each additional level of
+nesting.
+
+To make this arduous process as convenient as possbile, this package provides
+a helper function `WalkForEachVariables`, which returns a `WalkVariablesNode`
+instance that can be used to find variables directly in a given body and also
+determine which nested blocks require recursive calls. Using this mechanism
+requires that the caller be able to look up a schema given a nested block type.
+For _simple_ formats where a specific block type name always has the same schema
+regardless of context, a walk can be implemented as follows:
+
+```
+func walkVariables(node dynblock.WalkVariablesNode, schema *hcl.BodySchema) []hcl.Traversal {
+	vars, children := node.Visit(schema)
+
+	for _, child := range children {
+		var childSchema *hcl.BodySchema
+		switch child.BlockTypeName {
+		case "a":
+			childSchema = &hcl.BodySchema{
+				Blocks: []hcl.BlockHeaderSchema{
+					{
+						Type:       "b",
+						LabelNames: []string{"key"},
+					},
+				},
+			}
+		case "b":
+			childSchema = &hcl.BodySchema{
+				Attributes: []hcl.AttributeSchema{
+					{
+						Name:     "val",
+						Required: true,
+					},
+				},
+			}
+		default:
+			// Should never happen, because the above cases should be exhaustive
+			// for the application's configuration format.
+			panic(fmt.Errorf("can't find schema for unknown block type %q", child.BlockTypeName))
+		}
+
+		vars = append(vars, testWalkAndAccumVars(child.Node, childSchema)...)
+	}
+}
+```
 
 # Performance
 
