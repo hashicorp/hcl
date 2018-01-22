@@ -5,17 +5,14 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/zclconf/go-cty/cty"
-
-	"github.com/hashicorp/hcl2/hcldec"
-
 	"github.com/davecgh/go-spew/spew"
-
+	"github.com/hashicorp/hcl2/ext/dynblock"
 	"github.com/hashicorp/hcl2/gohcl"
-
 	"github.com/hashicorp/hcl2/hcl"
 	"github.com/hashicorp/hcl2/hcl/hclsyntax"
 	"github.com/hashicorp/hcl2/hcl/json"
+	"github.com/hashicorp/hcl2/hcldec"
+	"github.com/zclconf/go-cty/cty"
 )
 
 // TestTerraformLike parses both a native syntax and a JSON representation
@@ -127,7 +124,22 @@ func TestTerraformLike(t *testing.T) {
 					t.Errorf("wrong type %q; want %q", got, want)
 				}
 
-				cfg, diags := hcldec.Decode(r.Config, securityGroupDecode, nil)
+				// For this one we're including support for the dynamic block
+				// extension, since Terraform uses this to allow dynamic
+				// generation of blocks within resource configuration.
+				forEachCtx := &hcl.EvalContext{
+					Variables: map[string]cty.Value{
+						"var": cty.ObjectVal(map[string]cty.Value{
+							"extra_private_cidr_blocks": cty.ListVal([]cty.Value{
+								cty.StringVal("172.16.0.0/12"),
+								cty.StringVal("169.254.0.0/16"),
+							}),
+						}),
+					},
+				}
+				dynBody := dynblock.Expand(r.Config, forEachCtx)
+
+				cfg, diags := hcldec.Decode(dynBody, securityGroupDecode, nil)
 				if len(diags) != 0 {
 					t.Errorf("unexpected diagnostics decoding Config")
 					for _, diag := range diags {
@@ -142,6 +154,12 @@ func TestTerraformLike(t *testing.T) {
 						}),
 						cty.ObjectVal(map[string]cty.Value{
 							"cidr_block": cty.StringVal("192.168.0.0/16"),
+						}),
+						cty.ObjectVal(map[string]cty.Value{
+							"cidr_block": cty.StringVal("172.16.0.0/12"),
+						}),
+						cty.ObjectVal(map[string]cty.Value{
+							"cidr_block": cty.StringVal("169.254.0.0/16"),
 						}),
 					}),
 				})
@@ -280,6 +298,12 @@ resource "happycloud_security_group" "private" {
   ingress {
     cidr_block = "192.168.0.0/16"
   }
+  dynamic "ingress" {
+    for_each = var.extra_private_cidr_blocks
+    content {
+      cidr_block = ingress.value
+    }
+  }
 }
 
 `
@@ -313,7 +337,16 @@ const terraformLikeJSON = `
           {
             "cidr_block": "192.168.0.0/16"
           }
-        ]
+        ],
+        "dynamic": {
+          "ingress": {
+            "for_each": "${var.extra_private_cidr_blocks}",
+            "iterator": "block",
+            "content": {
+              "cidr_block": "${block.value}"
+            }
+          }
+        }
       }
     }
   }
