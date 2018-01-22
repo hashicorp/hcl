@@ -103,7 +103,7 @@ requires that the caller be able to look up a schema given a nested block type.
 For _simple_ formats where a specific block type name always has the same schema
 regardless of context, a walk can be implemented as follows:
 
-```
+```go
 func walkVariables(node dynblock.WalkVariablesNode, schema *hcl.BodySchema) []hcl.Traversal {
 	vars, children := node.Visit(schema)
 
@@ -136,6 +136,42 @@ func walkVariables(node dynblock.WalkVariablesNode, schema *hcl.BodySchema) []hc
 
 		vars = append(vars, testWalkAndAccumVars(child.Node, childSchema)...)
 	}
+}
+```
+
+### Detecting Variables with `hcldec` Specifications
+
+For applications that use the higher-level `hcldec` package to decode nested
+configuration structures into `cty` values, the same specification can be used
+to automatically drive the recursive variable-detection walk described above.
+
+The helper function `ForEachVariablesHCLDec` allows an entire recursive
+configuration structure to be analyzed in a single call given a `hcldec.Spec`
+that describes the nested block structure. This means a `hcldec`-based
+application can support dynamic blocks with only a little additional effort:
+
+```go
+func decodeBody(body hcl.Body, spec hcldec.Spec) (cty.Value, hcl.Diagnostics) {
+	// Determine which variables are needed to expand dynamic blocks
+	neededForDynamic := dynblock.ForEachVariablesHCLDec(body, spec)
+
+	// Build a suitable EvalContext and expand dynamic blocks
+	dynCtx := buildEvalContext(neededForDynamic)
+	dynBody := dynblock.Expand(body, dynCtx)
+
+	// Determine which variables are needed to fully decode the expanded body
+	// This will analyze expressions that came both from static blocks in the
+	// original body and from blocks that were dynamically added by Expand.
+	neededForDecode := hcldec.Variables(dynBody, spec)
+
+	// Build a suitable EvalContext and then fully decode the body as per the
+	// hcldec specification.
+	decCtx := buildEvalContext(neededForDecode)
+	return hcldec.Decode(dynBody, spec, decCtx)
+}
+
+func buildEvalContext(needed []hcl.Traversal) *hcl.EvalContext {
+	// (to be implemented by your application)
 }
 ```
 

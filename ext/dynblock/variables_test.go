@@ -1,9 +1,11 @@
 package dynblock
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
+
+	"github.com/hashicorp/hcl2/hcldec"
+	"github.com/zclconf/go-cty/cty"
 
 	"github.com/davecgh/go-spew/spew"
 
@@ -77,15 +79,18 @@ dynamic "a" {
 		return
 	}
 
-	rootNode := WalkForEachVariables(f.Body)
-	traversals := testWalkAndAccumVars(rootNode, &hcl.BodySchema{
-		Blocks: []hcl.BlockHeaderSchema{
-			{
-				Type: "a",
+	spec := &hcldec.BlockListSpec{
+		TypeName: "a",
+		Nested: &hcldec.BlockListSpec{
+			TypeName: "b",
+			Nested: &hcldec.AttrSpec{
+				Name: "val",
+				Type: cty.String,
 			},
 		},
-	})
+	}
 
+	traversals := ForEachVariablesHCLDec(f.Body, spec)
 	got := make([]string, len(traversals))
 	for i, traversal := range traversals {
 		got[i] = traversal.RootName()
@@ -111,40 +116,4 @@ dynamic "a" {
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("wrong result\ngot: %swant: %s", spew.Sdump(got), spew.Sdump(want))
 	}
-}
-
-func testWalkAndAccumVars(node WalkVariablesNode, schema *hcl.BodySchema) []hcl.Traversal {
-	vars, children := node.Visit(schema)
-
-	for _, child := range children {
-		var childSchema *hcl.BodySchema
-		switch child.BlockTypeName {
-		case "a":
-			childSchema = &hcl.BodySchema{
-				Blocks: []hcl.BlockHeaderSchema{
-					{
-						Type:       "b",
-						LabelNames: []string{"key"},
-					},
-				},
-			}
-		case "b":
-			childSchema = &hcl.BodySchema{
-				Attributes: []hcl.AttributeSchema{
-					{
-						Name:     "val",
-						Required: true,
-					},
-				},
-			}
-		default:
-			// Should never happen, because we have no other block types
-			// in our test input.
-			panic(fmt.Errorf("can't find schema for unknown block type %q", child.BlockTypeName))
-		}
-
-		vars = append(vars, testWalkAndAccumVars(child.Node, childSchema)...)
-	}
-
-	return vars
 }
