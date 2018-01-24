@@ -1113,7 +1113,7 @@ func TestStaticExpressionList(t *testing.T) {
 	}
 	first, ok := exprs[0].(*LiteralValueExpr)
 	if !ok {
-		t.Fatalf("first expr has wrong type %T; want *zclsyntax.LiteralValueExpr", exprs[0])
+		t.Fatalf("first expr has wrong type %T; want *hclsyntax.LiteralValueExpr", exprs[0])
 	}
 	if !first.Val.RawEquals(cty.Zero) {
 		t.Fatalf("wrong first value %#v; want cty.Zero", first.Val)

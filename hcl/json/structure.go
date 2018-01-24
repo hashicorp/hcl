@@ -279,7 +279,7 @@ func (e *expression) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 				v.SrcRange.Filename,
 
 				// This won't produce _exactly_ the right result, since
-				// the zclsyntax parser can't "see" any escapes we removed
+				// the hclsyntax parser can't "see" any escapes we removed
 				// while parsing JSON, but it's better than nothing.
 				hcl.Pos{
 					Line: v.SrcRange.Start.Line,
@@ -336,7 +336,7 @@ func (e *expression) Variables() []hcl.Traversal {
 			v.SrcRange.Filename,
 
 			// This won't produce _exactly_ the right result, since
-			// the zclsyntax parser can't "see" any escapes we removed
+			// the hclsyntax parser can't "see" any escapes we removed
 			// while parsing JSON, but it's better than nothing.
 			hcl.Pos{
 				Line: v.SrcRange.Start.Line,

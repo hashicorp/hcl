@@ -1,4 +1,4 @@
-package zclsyntax
+package hclsyntax
 
 import (
     "bytes"

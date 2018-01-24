@@ -22,7 +22,7 @@ type TokenGen interface {
 type TokenCallback func(*Token)
 
 // Token is a single sequence of bytes annotated with a type. It is similar
-// in purpose to zclsyntax.Token, but discards the source position information
+// in purpose to hclsyntax.Token, but discards the source position information
 // since that is not useful in code generation.
 type Token struct {
 	Type  hclsyntax.TokenType

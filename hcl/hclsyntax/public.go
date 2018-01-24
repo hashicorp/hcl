@@ -9,8 +9,8 @@ import (
 // diagnostics returns true, the returned body is likely to be incomplete
 // and should therefore be used with care.
 //
-// The body in the returned file has dynamic type *zclsyntax.Body, so callers
-// may freely type-assert this to get access to the full zclsyntax API in
+// The body in the returned file has dynamic type *hclsyntax.Body, so callers
+// may freely type-assert this to get access to the full hclsyntax API in
 // situations where detailed access is required. However, most common use-cases
 // should be served using the hcl.Body interface to ensure compatibility with
 // other configurationg syntaxes, such as JSON.
