@@ -35,26 +35,8 @@ func (e exprWrap) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	return e.Expression.Value(extCtx)
 }
 
-// Passthrough implementation for hcl.ExprList
-func (e exprWrap) ExprList() []hcl.Expression {
-	type exprList interface {
-		ExprList() []hcl.Expression
-	}
-
-	if el, supported := e.Expression.(exprList); supported {
-		return el.ExprList()
-	}
-	return nil
-}
-
-// Passthrough implementation for hcl.AbsTraversalForExpr and hcl.RelTraversalForExpr
-func (e exprWrap) AsTraversal() hcl.Traversal {
-	type asTraversal interface {
-		AsTraversal() hcl.Traversal
-	}
-
-	if at, supported := e.Expression.(asTraversal); supported {
-		return at.AsTraversal()
-	}
-	return nil
+// UnwrapExpression returns the expression being wrapped by this instance.
+// This allows the original expression to be recovered by hcl.UnwrapExpression.
+func (e exprWrap) UnwrapExpression() hcl.Expression {
+	return e.Expression
 }

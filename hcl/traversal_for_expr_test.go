@@ -17,6 +17,11 @@ type asTraversalDeclined struct {
 	staticExpr
 }
 
+type asTraversalWrappedDelegated struct {
+	original Expression
+	staticExpr
+}
+
 func (e asTraversalSupported) AsTraversal() Traversal {
 	return Traversal{
 		TraverseRoot{
@@ -27,6 +32,10 @@ func (e asTraversalSupported) AsTraversal() Traversal {
 
 func (e asTraversalDeclined) AsTraversal() Traversal {
 	return nil
+}
+
+func (e asTraversalWrappedDelegated) UnwrapExpression() Expression {
+	return e.original
 }
 
 func TestAbsTraversalForExpr(t *testing.T) {
@@ -45,6 +54,20 @@ func TestAbsTraversalForExpr(t *testing.T) {
 		{
 			asTraversalDeclined{},
 			"",
+		},
+		{
+			asTraversalWrappedDelegated{
+				original: asTraversalSupported{RootName: "foo"},
+			},
+			"foo",
+		},
+		{
+			asTraversalWrappedDelegated{
+				original: asTraversalWrappedDelegated{
+					original: asTraversalSupported{RootName: "foo"},
+				},
+			},
+			"foo",
 		},
 	}
 

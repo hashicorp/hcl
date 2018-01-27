@@ -7,7 +7,9 @@ package hcl
 // A particular Expression implementation can support this function by
 // offering a method called AsTraversal that takes no arguments and
 // returns either a valid absolute traversal or nil to indicate that
-// no traversal is possible.
+// no traversal is possible. Alternatively, an implementation can support
+// UnwrapExpression to delegate handling of this function to a wrapped
+// Expression object.
 //
 // In most cases the calling application is interested in the value
 // that results from an expression, but in rarer cases the application
@@ -20,7 +22,12 @@ func AbsTraversalForExpr(expr Expression) (Traversal, Diagnostics) {
 		AsTraversal() Traversal
 	}
 
-	if asT, supported := expr.(asTraversal); supported {
+	physExpr := UnwrapExpressionUntil(expr, func(expr Expression) bool {
+		_, supported := expr.(asTraversal)
+		return supported
+	})
+
+	if asT, supported := physExpr.(asTraversal); supported {
 		if traversal := asT.AsTraversal(); traversal != nil {
 			return traversal, nil
 		}

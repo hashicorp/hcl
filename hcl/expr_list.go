@@ -8,13 +8,20 @@ package hcl
 // A particular Expression implementation can support this function by
 // offering a method called ExprList that takes no arguments and returns
 // []Expression. This method should return nil if a static list cannot
-// be extracted.
+// be extracted.  Alternatively, an implementation can support
+// UnwrapExpression to delegate handling of this function to a wrapped
+// Expression object.
 func ExprList(expr Expression) ([]Expression, Diagnostics) {
 	type exprList interface {
 		ExprList() []Expression
 	}
 
-	if exL, supported := expr.(exprList); supported {
+	physExpr := UnwrapExpressionUntil(expr, func(expr Expression) bool {
+		_, supported := expr.(exprList)
+		return supported
+	})
+
+	if exL, supported := physExpr.(exprList); supported {
 		if list := exL.ExprList(); list != nil {
 			return list, nil
 		}
