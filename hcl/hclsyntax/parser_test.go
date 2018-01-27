@@ -1010,12 +1010,12 @@ block "valid" {}
 
 		{
 			`	`,
-			2, // tabs not allowed, and body item is required here
+			0, // the tab character is treated as a single whitespace character
 			&Body{
 				Attributes: Attributes{},
 				Blocks:     Blocks{},
 				SrcRange: hcl.Range{
-					Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+					Start: hcl.Pos{Line: 1, Column: 2, Byte: 1},
 					End:   hcl.Pos{Line: 1, Column: 2, Byte: 1},
 				},
 				EndRange: hcl.Range{

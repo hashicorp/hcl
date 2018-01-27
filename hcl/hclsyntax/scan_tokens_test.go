@@ -1265,14 +1265,6 @@ EOF
 			"\t\t",
 			[]Token{
 				{
-					Type:  TokenTabs,
-					Bytes: []byte{0x09, 0x09},
-					Range: hcl.Range{
-						Start: hcl.Pos{Byte: 0, Line: 1, Column: 1},
-						End:   hcl.Pos{Byte: 2, Line: 1, Column: 3},
-					},
-				},
-				{
 					Type:  TokenEOF,
 					Bytes: []byte{},
 					Range: hcl.Range{
