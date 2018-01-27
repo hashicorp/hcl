@@ -1,11 +1,11 @@
-# zcl User Functions Extension
+# HCL User Functions Extension
 
-This zcl extension allows a calling application to support user-defined
+This HCL extension allows a calling application to support user-defined
 functions.
 
 Functions are defined via a specific block type, like this:
 
-```zcl
+```hcl
 function "add" {
   params = ["a", "b"]
   result = a + b
@@ -19,4 +19,4 @@ inclusion in a `hcl.EvalContext`. It also returns a new `cty.Body` that
 contains the remainder of the content from the given body, allowing for
 further processing of remaining content.
 
-For more information, see [the godoc reference](http://godoc.org/github.com/zclconf/go-zcl/ext/userfunc).
+For more information, see [the godoc reference](http://godoc.org/github.com/hashicorp/hcl2/ext/userfunc).
