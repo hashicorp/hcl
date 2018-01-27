@@ -43,7 +43,7 @@ func AbsTraversalForExpr(expr Expression) (Traversal, Diagnostics) {
 }
 
 // RelTraversalForExpr is similar to AbsTraversalForExpr but it returns
-// a relative traversal instead. Due to the nature of ZCL expressions, the
+// a relative traversal instead. Due to the nature of HCL expressions, the
 // first element of the returned traversal is always a TraverseAttr, and
 // then it will be followed by zero or more other expressions.
 //
