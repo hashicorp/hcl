@@ -9,7 +9,7 @@ import (
 )
 
 // TokenGen is an abstract type that can append tokens to a list. It is the
-// low-level foundation underlying the zclwrite AST; the AST provides a
+// low-level foundation underlying the hclwrite AST; the AST provides a
 // convenient abstraction over raw token sequences to facilitate common tasks,
 // but it's also possible to directly manipulate the tree of token generators
 // to make changes that the AST API doesn't directly allow.
