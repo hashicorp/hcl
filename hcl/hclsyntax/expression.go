@@ -9,7 +9,7 @@ import (
 	"github.com/zclconf/go-cty/cty/function"
 )
 
-// Expression is the abstract type for nodes that behave as zcl expressions.
+// Expression is the abstract type for nodes that behave as HCL expressions.
 type Expression interface {
 	Node
 

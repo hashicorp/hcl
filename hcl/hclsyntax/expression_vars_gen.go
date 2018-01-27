@@ -45,12 +45,12 @@ func main() {
 			valResult := fd.Type.Results.List[0].Type.(*ast.SelectorExpr).X.(*ast.Ident)
 			diagsResult := fd.Type.Results.List[1].Type.(*ast.SelectorExpr).X.(*ast.Ident)
 
-			if valResult.Name != "cty" && diagsResult.Name != "zcl" {
+			if valResult.Name != "cty" && diagsResult.Name != "hcl" {
 				continue
 			}
 
-			// If we have a method called Value and its returns something in
-			// cty followed by something in zcl then that's specific enough
+			// If we have a method called Value and it returns something in
+			// "cty" followed by something in "hcl" then that's specific enough
 			// for now, even though this is not 100% exact as a correct
 			// implementation of Value.
 
