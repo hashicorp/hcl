@@ -3,7 +3,7 @@ package hclsyntax
 import (
     "bytes"
 
-    "github.com/zclconf/go-zcl/zcl"
+    "github.com/hashicorp/hcl2/hcl"
 )
 
 // This file is generated from scan_tokens.rl. DO NOT EDIT.
@@ -62,15 +62,13 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
             ("/*" any* "*/")
         );
 
-        # Tabs are not valid, but we accept them in the scanner and mark them
-        # as tokens so that we can produce diagnostics advising the user to
-        # use spaces instead.
-        Tabs = 0x09+;
-
         # Note: zclwrite assumes that only ASCII spaces appear between tokens,
         # and uses this assumption to recreate the spaces between tokens by
-        # looking at byte offset differences.
-        Spaces = ' '+;
+        # looking at byte offset differences. This means it will produce
+        # incorrect results in the presence of tabs, but that's acceptable
+        # because the canonical style (which zclwrite itself can impose
+        # automatically is to never use tabs).
+        Spaces = (' ' | 0x09)+;
 
         action beginStringTemplate {
             token(TokenOQuote);
@@ -264,7 +262,6 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
             BeginStringTmpl  => beginStringTemplate;
             BeginHeredocTmpl => beginHeredocTemplate;
 
-            Tabs             => { token(TokenTabs) };
             BrokenUTF8       => { token(TokenBadUTF8) };
             AnyUTF8          => { token(TokenInvalid) };
         *|;
