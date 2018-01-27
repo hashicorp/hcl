@@ -9,10 +9,10 @@ import (
 )
 
 // Parse attempts to parse the given buffer as JSON and, if successful, returns
-// a hcl.File for the zcl configuration represented by it.
+// a hcl.File for the HCL configuration represented by it.
 //
 // This is not a generic JSON parser. Instead, it deals only with the profile
-// of JSON used to express zcl configuration.
+// of JSON used to express HCL configuration.
 //
 // The returned file is valid only if the returned diagnostics returns false
 // from its HasErrors method. If HasErrors returns true, the file represents

@@ -260,7 +260,7 @@ func (e *expression) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	switch v := e.src.(type) {
 	case *stringVal:
 		if ctx != nil {
-			// Parse string contents as a zcl native language expression.
+			// Parse string contents as a HCL native language expression.
 			// We only do this if we have a context, so passing a nil context
 			// is how the caller specifies that interpolations are not allowed
 			// and that the string should just be returned verbatim.
@@ -288,8 +288,6 @@ func (e *expression) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 			return val, diags
 		}
 
-		// FIXME: Once the native zcl template language parser is implemented,
-		// parse string values as templates and evaluate them.
 		return cty.StringVal(v.Value), nil
 	case *numberVal:
 		return cty.NumberVal(v.Value), nil
