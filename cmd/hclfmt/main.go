@@ -91,7 +91,7 @@ func processFiles() error {
 		case dir.IsDir():
 			// This tool can't walk a whole directory because it doesn't
 			// know what file naming schemes will be used by different
-			// zcl-embedding applications, so it'll leave that sort of
+			// HCL-embedding applications, so it'll leave that sort of
 			// functionality for apps themselves to implement.
 			return fmt.Errorf("can't format directory %s", path)
 		default:
@@ -142,7 +142,7 @@ func processFile(fn string, in *os.File) error {
 }
 
 func usage() {
-	fmt.Fprintf(os.Stderr, "usage: zclfmt [flags] [path ...]\n")
+	fmt.Fprintf(os.Stderr, "usage: hclfmt [flags] [path ...]\n")
 	flag.PrintDefaults()
 	os.Exit(2)
 }
