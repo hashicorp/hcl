@@ -10,7 +10,7 @@ import (
 // This file is generated from scan_tokens.rl. DO NOT EDIT.
 
 // line 14 "scan_tokens.go"
-var _zcltok_actions []byte = []byte{
+var _hcltok_actions []byte = []byte{
 	0, 1, 0, 1, 2, 1, 3, 1, 4,
 	1, 5, 1, 6, 1, 7, 1, 8,
 	1, 9, 1, 10, 1, 11, 1, 12,
@@ -33,7 +33,7 @@ var _zcltok_actions []byte = []byte{
 	3, 42, 2, 3, 43, 2, 3, 44,
 }
 
-var _zcltok_key_offsets []int16 = []int16{
+var _hcltok_key_offsets []int16 = []int16{
 	0, 0, 1, 2, 3, 5, 10, 14,
 	16, 57, 97, 143, 144, 148, 154, 154,
 	156, 158, 167, 173, 180, 181, 184, 185,
@@ -165,7 +165,7 @@ var _zcltok_key_offsets []int16 = []int16{
 	6625, 6626, 6628, 6630,
 }
 
-var _zcltok_trans_keys []byte = []byte{
+var _hcltok_trans_keys []byte = []byte{
 	10, 46, 42, 42, 47, 46, 69, 101,
 	48, 57, 43, 45, 48, 57, 48, 57,
 	45, 194, 195, 198, 199, 203, 205, 206,
@@ -997,7 +997,7 @@ var _zcltok_trans_keys []byte = []byte{
 	126, 126, 128, 191, 128, 191, 128, 191,
 }
 
-var _zcltok_single_lengths []byte = []byte{
+var _hcltok_single_lengths []byte = []byte{
 	0, 1, 1, 1, 2, 3, 2, 0,
 	31, 30, 36, 1, 4, 0, 0, 0,
 	0, 1, 2, 1, 1, 1, 1, 0,
@@ -1129,7 +1129,7 @@ var _zcltok_single_lengths []byte = []byte{
 	1, 0, 0, 0,
 }
 
-var _zcltok_range_lengths []byte = []byte{
+var _hcltok_range_lengths []byte = []byte{
 	0, 0, 0, 0, 0, 1, 1, 1,
 	5, 5, 5, 0, 0, 3, 0, 1,
 	1, 4, 2, 3, 0, 1, 0, 2,
@@ -1261,7 +1261,7 @@ var _zcltok_range_lengths []byte = []byte{
 	0, 1, 1, 1,
 }
 
-var _zcltok_index_offsets []int16 = []int16{
+var _hcltok_index_offsets []int16 = []int16{
 	0, 0, 2, 4, 6, 9, 14, 18,
 	20, 57, 93, 135, 137, 142, 146, 147,
 	149, 151, 157, 162, 167, 169, 172, 174,
@@ -1393,7 +1393,7 @@ var _zcltok_index_offsets []int16 = []int16{
 	5331, 5333, 5335, 5337,
 }
 
-var _zcltok_indicies []int16 = []int16{
+var _hcltok_indicies []int16 = []int16{
 	2, 1, 4, 3, 6, 5, 6, 7,
 	5, 9, 11, 11, 10, 8, 12, 12,
 	10, 8, 10, 8, 13, 15, 16, 18,
@@ -2064,7 +2064,7 @@ var _zcltok_indicies []int16 = []int16{
 	1084, 787, 1084,
 }
 
-var _zcltok_trans_targs []int16 = []int16{
+var _hcltok_trans_targs []int16 = []int16{
 	949, 1, 949, 949, 949, 3, 4, 957,
 	949, 5, 958, 6, 7, 9, 10, 287,
 	13, 14, 15, 16, 17, 288, 289, 20,
@@ -2203,7 +2203,7 @@ var _zcltok_trans_targs []int16 = []int16{
 	1021, 1021, 1021, 1021, 1021,
 }
 
-var _zcltok_trans_actions []byte = []byte{
+var _hcltok_trans_actions []byte = []byte{
 	129, 0, 71, 125, 87, 0, 0, 149,
 	121, 0, 5, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
@@ -2342,7 +2342,7 @@ var _zcltok_trans_actions []byte = []byte{
 	59, 51, 61, 53, 65,
 }
 
-var _zcltok_to_state_actions []byte = []byte{
+var _hcltok_to_state_actions []byte = []byte{
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
@@ -2474,7 +2474,7 @@ var _zcltok_to_state_actions []byte = []byte{
 	0, 0, 0, 0,
 }
 
-var _zcltok_from_state_actions []byte = []byte{
+var _hcltok_from_state_actions []byte = []byte{
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
@@ -2606,7 +2606,7 @@ var _zcltok_from_state_actions []byte = []byte{
 	0, 0, 0, 0,
 }
 
-var _zcltok_eof_trans []int16 = []int16{
+var _hcltok_eof_trans []int16 = []int16{
 	0, 1, 4, 1, 1, 9, 9, 9,
 	4, 4, 4, 4, 4, 4, 4, 4,
 	4, 4, 4, 4, 4, 4, 4, 4,
@@ -2738,14 +2738,14 @@ var _zcltok_eof_trans []int16 = []int16{
 	1083, 1085, 1085, 1085,
 }
 
-const zcltok_start int = 949
-const zcltok_first_final int = 949
-const zcltok_error int = 0
+const hcltok_start int = 949
+const hcltok_first_final int = 949
+const hcltok_error int = 0
 
-const zcltok_en_stringTemplate int = 1000
-const zcltok_en_heredocTemplate int = 1014
-const zcltok_en_bareTemplate int = 1021
-const zcltok_en_main int = 949
+const hcltok_en_stringTemplate int = 1000
+const hcltok_en_heredocTemplate int = 1014
+const hcltok_en_bareTemplate int = 1021
+const hcltok_en_main int = 949
 
 // line 15 "scan_tokens.rl"
 
@@ -2771,9 +2771,9 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 	var cs int // current state
 	switch mode {
 	case scanNormal:
-		cs = zcltok_en_main
+		cs = hcltok_en_main
 	case scanTemplate:
-		cs = zcltok_en_bareTemplate
+		cs = hcltok_en_bareTemplate
 	default:
 		panic("invalid scanMode")
 	}
@@ -2824,12 +2824,12 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 			goto _out
 		}
 	_resume:
-		_acts = int(_zcltok_from_state_actions[cs])
-		_nacts = uint(_zcltok_actions[_acts])
+		_acts = int(_hcltok_from_state_actions[cs])
+		_nacts = uint(_hcltok_actions[_acts])
 		_acts++
 		for ; _nacts > 0; _nacts-- {
 			_acts++
-			switch _zcltok_actions[_acts-1] {
+			switch _hcltok_actions[_acts-1] {
 			case 2:
 				// line 1 "NONE"
 
@@ -2839,10 +2839,10 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 			}
 		}
 
-		_keys = int(_zcltok_key_offsets[cs])
-		_trans = int(_zcltok_index_offsets[cs])
+		_keys = int(_hcltok_key_offsets[cs])
+		_trans = int(_hcltok_index_offsets[cs])
 
-		_klen = int(_zcltok_single_lengths[cs])
+		_klen = int(_hcltok_single_lengths[cs])
 		if _klen > 0 {
 			_lower := int(_keys)
 			var _mid int
@@ -2854,9 +2854,9 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 
 				_mid = _lower + ((_upper - _lower) >> 1)
 				switch {
-				case data[p] < _zcltok_trans_keys[_mid]:
+				case data[p] < _hcltok_trans_keys[_mid]:
 					_upper = _mid - 1
-				case data[p] > _zcltok_trans_keys[_mid]:
+				case data[p] > _hcltok_trans_keys[_mid]:
 					_lower = _mid + 1
 				default:
 					_trans += int(_mid - int(_keys))
@@ -2867,7 +2867,7 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 			_trans += _klen
 		}
 
-		_klen = int(_zcltok_range_lengths[cs])
+		_klen = int(_hcltok_range_lengths[cs])
 		if _klen > 0 {
 			_lower := int(_keys)
 			var _mid int
@@ -2879,9 +2879,9 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 
 				_mid = _lower + (((_upper - _lower) >> 1) & ^1)
 				switch {
-				case data[p] < _zcltok_trans_keys[_mid]:
+				case data[p] < _hcltok_trans_keys[_mid]:
 					_upper = _mid - 2
-				case data[p] > _zcltok_trans_keys[_mid+1]:
+				case data[p] > _hcltok_trans_keys[_mid+1]:
 					_lower = _mid + 2
 				default:
 					_trans += int((_mid - int(_keys)) >> 1)
@@ -2892,20 +2892,20 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 		}
 
 	_match:
-		_trans = int(_zcltok_indicies[_trans])
+		_trans = int(_hcltok_indicies[_trans])
 	_eof_trans:
-		cs = int(_zcltok_trans_targs[_trans])
+		cs = int(_hcltok_trans_targs[_trans])
 
-		if _zcltok_trans_actions[_trans] == 0 {
+		if _hcltok_trans_actions[_trans] == 0 {
 			goto _again
 		}
 
-		_acts = int(_zcltok_trans_actions[_trans])
-		_nacts = uint(_zcltok_actions[_acts])
+		_acts = int(_hcltok_trans_actions[_trans])
+		_nacts = uint(_hcltok_actions[_acts])
 		_acts++
 		for ; _nacts > 0; _nacts-- {
 			_acts++
-			switch _zcltok_actions[_acts-1] {
+			switch _hcltok_actions[_acts-1] {
 			case 3:
 				// line 1 "NONE"
 
@@ -3711,12 +3711,12 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 		}
 
 	_again:
-		_acts = int(_zcltok_to_state_actions[cs])
-		_nacts = uint(_zcltok_actions[_acts])
+		_acts = int(_hcltok_to_state_actions[cs])
+		_nacts = uint(_hcltok_actions[_acts])
 		_acts++
 		for ; _nacts > 0; _nacts-- {
 			_acts++
-			switch _zcltok_actions[_acts-1] {
+			switch _hcltok_actions[_acts-1] {
 			case 0:
 				// line 1 "NONE"
 
@@ -3742,8 +3742,8 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 		{
 		}
 		if p == eof {
-			if _zcltok_eof_trans[cs] > 0 {
-				_trans = int(_zcltok_eof_trans[cs] - 1)
+			if _hcltok_eof_trans[cs] > 0 {
+				_trans = int(_hcltok_eof_trans[cs] - 1)
 				goto _eof_trans
 			}
 		}
@@ -3758,7 +3758,7 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 	// If we fall out here without being in a final state then we've
 	// encountered something that the scanner can't match, which we'll
 	// deal with as an invalid.
-	if cs < zcltok_first_final {
+	if cs < hcltok_first_final {
 		f.emitToken(TokenInvalid, p, len(data))
 	}
 
