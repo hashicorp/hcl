@@ -88,28 +88,3 @@ func ParseFile(filename string) (*hcl.File, hcl.Diagnostics) {
 
 	return Parse(src, filename)
 }
-
-// ParseWithHIL is like Parse except the returned file will use the HIL
-// template syntax for expressions in strings, rather than the native zcl
-// template syntax.
-//
-// This is intended for providing backward compatibility for applications that
-// used to use HCL/HIL and thus had a JSON-based format with HIL
-// interpolations.
-func ParseWithHIL(src []byte, filename string) (*hcl.File, hcl.Diagnostics) {
-	file, diags := Parse(src, filename)
-	if file != nil && file.Body != nil {
-		file.Body.(*body).useHIL = true
-	}
-	return file, diags
-}
-
-// ParseFileWithHIL is like ParseWithHIL but it reads data from a file before
-// parsing it.
-func ParseFileWithHIL(filename string) (*hcl.File, hcl.Diagnostics) {
-	file, diags := ParseFile(filename)
-	if file != nil && file.Body != nil {
-		file.Body.(*body).useHIL = true
-	}
-	return file, diags
-}

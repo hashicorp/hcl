@@ -17,12 +17,6 @@ type body struct {
 	// be treated as non-existing. This is used when Body.PartialContent is
 	// called, to produce the "remaining content" Body.
 	hiddenAttrs map[string]struct{}
-
-	// If set, string values are turned into expressions using HIL's template
-	// language, rather than the native zcl language. This is intended to
-	// allow applications moving from HCL to zcl to continue to parse the
-	// JSON variant of their config that HCL handled previously.
-	useHIL bool
 }
 
 // expression is the implementation of "Expression" used for files processed
@@ -133,7 +127,6 @@ func (b *body) PartialContent(schema *hcl.BodySchema) (*hcl.BodyContent, hcl.Bod
 	unusedBody := &body{
 		obj:         b.obj,
 		hiddenAttrs: usedNames,
-		useHIL:      b.useHIL,
 	}
 
 	return content, unusedBody, diags
@@ -219,8 +212,7 @@ func (b *body) unpackBlock(v node, typeName string, typeRange *hcl.Range, labels
 			Type:   typeName,
 			Labels: labels,
 			Body: &body{
-				obj:    tv,
-				useHIL: b.useHIL,
+				obj: tv,
 			},
 
 			DefRange:    tv.OpenRange,
@@ -245,8 +237,7 @@ func (b *body) unpackBlock(v node, typeName string, typeRange *hcl.Range, labels
 				Type:   typeName,
 				Labels: labels,
 				Body: &body{
-					obj:    ov,
-					useHIL: b.useHIL,
+					obj: ov,
 				},
 
 				DefRange:    tv.OpenRange,
