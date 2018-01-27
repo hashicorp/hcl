@@ -1,4 +1,4 @@
-// Package include implements a zcl extension that allows inclusion of
+// Package include implements a HCL extension that allows inclusion of
 // one HCL body into another using blocks of type "include", with the following
 // structure:
 //
