@@ -8,7 +8,7 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/hcl2/hcl"
-	zclJSON "github.com/hashicorp/hcl2/hcl/json"
+	hclJSON "github.com/hashicorp/hcl2/hcl/json"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -520,7 +520,7 @@ func TestDecodeBody(t *testing.T) {
 		}
 
 		t.Run(string(buf), func(t *testing.T) {
-			file, diags := zclJSON.Parse(buf, "test.json")
+			file, diags := hclJSON.Parse(buf, "test.json")
 			if len(diags) != 0 {
 				t.Fatalf("diagnostics while parsing: %s", diags.Error())
 			}
