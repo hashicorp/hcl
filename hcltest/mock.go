@@ -11,7 +11,7 @@ import (
 
 // MockBody returns a hcl.Body implementation that works in terms of a
 // caller-constructed hcl.BodyContent, thus avoiding the need to parse
-// a "real" zcl config file to use as input to a test.
+// a "real" HCL config file to use as input to a test.
 func MockBody(content *hcl.BodyContent) hcl.Body {
 	return mockBody{content}
 }
