@@ -236,6 +236,12 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
             BrokenUTF8            => { token(TokenBadUTF8); };
         *|;
 
+        identOnly := |*
+            Ident            => { token(TokenIdent) };
+            BrokenUTF8       => { token(TokenBadUTF8) };
+            AnyUTF8          => { token(TokenInvalid) };
+        *|;
+
         main := |*
             Spaces           => {};
             NumberLit        => { token(TokenNumberLit) };
@@ -284,6 +290,8 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
         cs = hcltok_en_main
     case scanTemplate:
         cs = hcltok_en_bareTemplate
+    case scanIdentOnly:
+        cs = hcltok_en_identOnly
     default:
         panic("invalid scanMode")
     }
