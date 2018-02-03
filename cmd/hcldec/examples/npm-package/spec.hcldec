@@ -1,0 +1,136 @@
+object {
+  attr "name" {
+    type     = string
+    required = true
+  }
+  attr "version" {
+    type     = string
+    required = true
+  }
+  attr "description" {
+    type = string
+  }
+  attr "keywords" {
+    type = list(string)
+  }
+  attr "homepage" {
+    # "homepage_url" in input file is translated to "homepage" in output
+    name = "homepage_url"
+  }
+  block "bugs" {
+    object {
+      attr "url" {
+        type = string
+      }
+      attr "email" {
+        type = string
+      }
+    }
+  }
+  attr "license" {
+    type = string
+  }
+  block "author" {
+    object {
+      attr "name" {
+        type = string
+      }
+      attr "email" {
+        type = string
+      }
+      attr "url" {
+        type = string
+      }
+    }
+  }
+  block_list "contributors" {
+    block_type = "contributor"
+    object {
+      attr "name" {
+        type = string
+      }
+      attr "email" {
+        type = string
+      }
+      attr "url" {
+        type = string
+      }
+    }
+  }
+  attr "files" {
+    type = list(string)
+  }
+  attr "main" {
+    type = string
+  }
+  attr "bin" {
+    type = map(string)
+  }
+  attr "man" {
+    type = list(string)
+  }
+  attr "directories" {
+    type = map(string)
+  }
+  block "repository" {
+    object {
+      attr "type" {
+        type     = string
+        required = true
+      }
+      attr "url" {
+        type     = string
+        required = true
+      }
+    }
+  }
+  attr "scripts" {
+    type = map(string)
+  }
+  attr "config" {
+    type = map(string)
+  }
+  attr "dependencies" {
+    type = map(string)
+  }
+  attr "devDependencies" {
+    name = "dev_dependencies"
+    type = map(string)
+  }
+  attr "peerDependencies" {
+    name = "peer_dependencies"
+    type = map(string)
+  }
+  attr "bundledDependencies" {
+    name = "bundled_dependencies"
+    type = map(string)
+  }
+  attr "optionalDependencies" {
+    name = "optional_dependencies"
+    type = map(string)
+  }
+  attr "engines" {
+    type = map(string)
+  }
+  attr "os" {
+    type = list(string)
+  }
+  attr "cpu" {
+    type = list(string)
+  }
+  attr "prefer_global" {
+    type = bool
+  }
+  default "private" {
+    attr {
+      name = "private"
+      type = bool
+    }
+    literal {
+      value = false
+    }
+  }
+  attr "publishConfig" {
+    type = map(any)
+  }
+}

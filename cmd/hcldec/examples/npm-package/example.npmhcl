@@ -1,0 +1,14 @@
+name    = "hello-world"
+version = "v0.0.1"
+
+author {
+  name = "Иван Петрович Сидоров"
+}
+
+contributor {
+  name = "Juan Pérez"
+}
+
+dependencies = {
+    left-pad = "1.2.0"
+}
