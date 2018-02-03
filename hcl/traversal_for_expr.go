@@ -60,3 +60,62 @@ func RelTraversalForExpr(expr Expression) (Traversal, Diagnostics) {
 	}
 	return traversal, diags
 }
+
+// ExprAsKeyword attempts to interpret the given expression as a static keyword,
+// returning the keyword string if possible, and the empty string if not.
+//
+// A static keyword, for the sake of this function, is a single identifier.
+// For example, the following attribute has an expression that would produce
+// the keyword "foo":
+//
+//     example = foo
+//
+// This function is a variant of AbsTraversalForExpr, which uses the same
+// interface on the given expression. This helper constrains the result
+// further by requiring only a single root identifier.
+//
+// This function is intended to be used with the following idiom, to recognize
+// situations where one of a fixed set of keywords is required and arbitrary
+// expressions are not allowed:
+//
+//     switch hcl.ExprAsKeyword(expr) {
+//     case "allow":
+//         // (take suitable action for keyword "allow")
+//     case "deny":
+//         // (take suitable action for keyword "deny")
+//     default:
+//         diags = append(diags, &hcl.Diagnostic{
+//             // ... "invalid keyword" diagnostic message ...
+//         })
+//     }
+//
+// The above approach will generate the same message for both the use of an
+// unrecognized keyword and for not using a keyword at all, which is usually
+// reasonable if the message specifies that the given value must be a keyword
+// from that fixed list.
+//
+// Note that in the native syntax the keywords "true", "false", and "null" are
+// recognized as literal values during parsing and so these reserved words
+// cannot not be accepted as keywords by this function.
+//
+// Since interpreting an expression as a keyword bypasses usual expression
+// evaluation, it should be used sparingly for situations where e.g. one of
+// a fixed set of keywords is used in a structural way in a special attribute
+// to affect the further processing of a block.
+func ExprAsKeyword(expr Expression) string {
+	type asTraversal interface {
+		AsTraversal() Traversal
+	}
+
+	physExpr := UnwrapExpressionUntil(expr, func(expr Expression) bool {
+		_, supported := expr.(asTraversal)
+		return supported
+	})
+
+	if asT, supported := physExpr.(asTraversal); supported {
+		if traversal := asT.AsTraversal(); len(traversal) == 1 {
+			return traversal.RootName()
+		}
+	}
+	return ""
+}
