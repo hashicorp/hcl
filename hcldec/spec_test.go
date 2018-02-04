@@ -12,6 +12,8 @@ var _ Spec = (*BlockSetSpec)(nil)
 var _ Spec = (*BlockMapSpec)(nil)
 var _ Spec = (*BlockLabelSpec)(nil)
 var _ Spec = (*DefaultSpec)(nil)
+var _ Spec = (*TransformExprSpec)(nil)
+var _ Spec = (*TransformFuncSpec)(nil)
 
 var _ attrSpec = (*AttrSpec)(nil)
 

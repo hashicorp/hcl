@@ -85,6 +85,9 @@ func decodeSpecBlock(block *hcl.Block) (hcldec.Spec, hcl.Diagnostics) {
 	case "default":
 		return decodeDefaultSpec(block.Body)
 
+	case "transform":
+		return decodeTransformSpec(block.Body)
+
 	case "literal":
 		return decodeLiteralSpec(block.Body)
 
@@ -439,6 +442,50 @@ func decodeDefaultSpec(body hcl.Body) (hcldec.Spec, hcl.Diagnostics) {
 	return spec, diags
 }
 
+func decodeTransformSpec(body hcl.Body) (hcldec.Spec, hcl.Diagnostics) {
+	type content struct {
+		Result hcl.Expression `hcl:"result"`
+		Nested hcl.Body       `hcl:",remain"`
+	}
+
+	var args content
+	diags := gohcl.DecodeBody(body, nil, &args)
+	if diags.HasErrors() {
+		return errSpec, diags
+	}
+
+	spec := &hcldec.TransformExprSpec{
+		Expr:    args.Result,
+		VarName: "nested",
+	}
+
+	nestedContent, nestedDiags := args.Nested.Content(specSchemaUnlabelled)
+	diags = append(diags, nestedDiags...)
+
+	if len(nestedContent.Blocks) != 1 {
+		if nestedDiags.HasErrors() {
+			// If we already have errors then they probably explain
+			// why we have the wrong number of blocks, so we'll skip our
+			// additional error message added below.
+			return errSpec, diags
+		}
+
+		diags = append(diags, &hcl.Diagnostic{
+			Severity: hcl.DiagError,
+			Summary:  "Invalid transform spec",
+			Detail:   "A transform spec block must have exactly one nested spec block.",
+			Subject:  body.MissingItemRange().Ptr(),
+		})
+		return errSpec, diags
+	}
+
+	nestedSpec, nestedDiags := decodeSpecBlock(nestedContent.Blocks[0])
+	diags = append(diags, nestedDiags...)
+	spec.Wrapped = nestedSpec
+
+	return spec, diags
+}
+
 var errSpec = &hcldec.LiteralSpec{
 	Value: cty.NullVal(cty.DynamicPseudoType),
 }
@@ -457,6 +504,7 @@ var specBlockTypes = []string{
 	"block_set",
 
 	"default",
+	"transform",
 }
 
 var specSchemaUnlabelled *hcl.BodySchema

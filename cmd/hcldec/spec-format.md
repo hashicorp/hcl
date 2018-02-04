@@ -305,6 +305,31 @@ their usual behavior but are not able to impose validation constraints on the
 current body since they are not evaluated unless all prior specs produce
 `null` as their result.
 
+## `transform` spec blocks
+
+The `transform` spec type evaluates one nested spec and then evaluates a given
+expression with that nested spec result to produce a final value.
+It creates no validation constraints of its own, but passes on the validation
+constraints from its nested block.
+
+```hcl
+transform {
+  attr {
+    name = "size_in_mb"
+    type = number
+  }
+
+  # Convert result to a size in bytes
+  result = nested * 1024 * 1024
+}
+```
+
+`transform` spec blocks accept the following argument:
+
+* `result` (required) - The expression to evaluate on the result of the nested
+  spec. The variable `nested` is defined when evaluating this expression, with
+  the result value of the nested spec.
+
 ## Type Expressions
 
 Type expressions are used to describe the expected type of an attribute, as
