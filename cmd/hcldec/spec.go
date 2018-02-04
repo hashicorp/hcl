@@ -9,6 +9,10 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
+var specCtx = &hcl.EvalContext{
+	Functions: specFuncs,
+}
+
 func loadSpecFile(filename string) (hcldec.Spec, hcl.Diagnostics) {
 	file, diags := parser.ParseHCLFile(filename)
 	if diags.HasErrors() {
@@ -382,7 +386,7 @@ func decodeLiteralSpec(body hcl.Body) (hcldec.Spec, hcl.Diagnostics) {
 	}
 
 	var args content
-	diags := gohcl.DecodeBody(body, nil, &args)
+	diags := gohcl.DecodeBody(body, specCtx, &args)
 	if diags.HasErrors() {
 		return errSpec, diags
 	}
@@ -455,8 +459,9 @@ func decodeTransformSpec(body hcl.Body) (hcldec.Spec, hcl.Diagnostics) {
 	}
 
 	spec := &hcldec.TransformExprSpec{
-		Expr:    args.Result,
-		VarName: "nested",
+		Expr:         args.Result,
+		VarName:      "nested",
+		TransformCtx: specCtx,
 	}
 
 	nestedContent, nestedDiags := args.Nested.Content(specSchemaUnlabelled)
