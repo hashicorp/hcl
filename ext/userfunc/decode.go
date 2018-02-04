@@ -1,7 +1,6 @@
 package userfunc
 
 import (
-	"github.com/hashicorp/hcl2/gohcl"
 	"github.com/hashicorp/hcl2/hcl"
 	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-cty/cty/function"
@@ -54,6 +53,7 @@ func decodeUserFunctions(body hcl.Body, blockType string, contextFunc ContextFun
 	}
 
 	funcs = make(map[string]function.Function)
+Blocks:
 	for _, block := range content.Blocks {
 		name := block.Labels[0]
 		funcContent, funcDiags := block.Body.Content(funcBodySchema)
@@ -72,15 +72,34 @@ func decodeUserFunctions(body hcl.Body, blockType string, contextFunc ContextFun
 		var params []string
 		var varParam string
 
-		paramsDiags := gohcl.DecodeExpression(paramsExpr, nil, &params)
+		paramExprs, paramsDiags := hcl.ExprList(paramsExpr)
 		diags = append(diags, paramsDiags...)
 		if paramsDiags.HasErrors() {
 			continue
 		}
+		for _, paramExpr := range paramExprs {
+			param := hcl.ExprAsKeyword(paramExpr)
+			if param == "" {
+				diags = append(diags, &hcl.Diagnostic{
+					Severity: hcl.DiagError,
+					Summary:  "Invalid param element",
+					Detail:   "Each parameter name must be an identifier.",
+					Subject:  paramExpr.Range().Ptr(),
+				})
+				continue Blocks
+			}
+			params = append(params, param)
+		}
+
 		if varParamExpr != nil {
-			paramsDiags := gohcl.DecodeExpression(varParamExpr, nil, &varParam)
-			diags = append(diags, paramsDiags...)
-			if paramsDiags.HasErrors() {
+			varParam = hcl.ExprAsKeyword(varParamExpr)
+			if varParam == "" {
+				diags = append(diags, &hcl.Diagnostic{
+					Severity: hcl.DiagError,
+					Summary:  "Invalid variadic_param",
+					Detail:   "The variadic parameter name must be an identifier.",
+					Subject:  varParamExpr.Range().Ptr(),
+				})
 				continue
 			}
 		}

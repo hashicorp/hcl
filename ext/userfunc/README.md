@@ -7,8 +7,14 @@ Functions are defined via a specific block type, like this:
 
 ```hcl
 function "add" {
-  params = ["a", "b"]
+  params = [a, b]
   result = a + b
+}
+
+function "list" {
+  params         = []
+  variadic_param = items
+  result         = items
 }
 ```
 

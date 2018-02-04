@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/hcl2/hcl/hclsyntax"
 	"github.com/hashicorp/hcl2/hcl"
+	"github.com/hashicorp/hcl2/hcl/hclsyntax"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -20,7 +20,7 @@ func TestDecodeUserFunctions(t *testing.T) {
 		{
 			`
 function "greet" {
-  params = ["name"]
+  params = [name]
   result = "Hello, ${name}."
 }
 `,
@@ -32,7 +32,7 @@ function "greet" {
 		{
 			`
 function "greet" {
-  params = ["name"]
+  params = [name]
   result = "Hello, ${name}."
 }
 `,
@@ -44,7 +44,7 @@ function "greet" {
 		{
 			`
 function "greet" {
-  params = ["name"]
+  params = [name]
   result = "Hello, ${name}."
 }
 `,
@@ -56,7 +56,7 @@ function "greet" {
 		{
 			`
 function "add" {
-  params = ["a", "b"]
+  params = [a, b]
   result = a + b
 }
 `,
@@ -69,7 +69,7 @@ function "add" {
 			`
 function "argstuple" {
   params = []
-  variadic_param = "args"
+  variadic_param = args
   result = args
 }
 `,
@@ -109,11 +109,11 @@ function "closure" {
 		{
 			`
 function "neg" {
-  params = ["val"]
+  params = [val]
   result = -val
 }
 function "add" {
-  params = ["a", "b"]
+  params = [a, b]
   result = a + b
 }
 `,
@@ -125,7 +125,7 @@ function "add" {
 		{
 			`
 function "neg" {
-  parrams = ["val"]
+  parrams = [val]
   result = -val
 }
 `,

@@ -364,7 +364,7 @@ block type:
 
 ```
 function "add_one" {
-  params = ["n"]
+  params = [n]
   result = n + 1
 }
 ```
@@ -379,8 +379,14 @@ input file:
 
 ```
 function "upper" {
-  params = ["str"]
+  params = [str]
   result = upper(str)
+}
+
+function "min" {
+  params         = []
+  variadic_param = nums
+  result         = min(nums...)
 }
 ```
 
