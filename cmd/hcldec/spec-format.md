@@ -275,7 +275,7 @@ literal {
 `literal` spec blocks accept the following argument:
 
 * `value` (required) - The value to return. This attribute may be an expression
-  that uses [functions](#functions).
+  that uses [functions](#spec-definition-functions).
 
 `literal` is a leaf spec type, so no nested spec blocks are permitted.
 
@@ -331,9 +331,62 @@ transform {
   spec. The variable `nested` is defined when evaluating this expression, with
   the result value of the nested spec.
 
-The `result` expression may use [functions](#functions).
+The `result` expression may use [functions](#spec-definition-functions).
 
-## Functions
+## Predefined Variables
+
+`hcldec` accepts values for variables to expose into the input file's
+expression scope as CLI options, and this is the most common way to pass
+values since it allows them to be dynamically populated by the calling
+application.
+
+However, it's also possible to pre-define variables with constant values
+within a spec file, using the top-level `variables` block type:
+
+```hcl
+variables {
+  name = "Stephen"
+}
+```
+
+Variables of the same name defined via the `hcldec` command line with override
+predefined variables of the same name, so this mechanism can also be used to
+provide defaults for variables that are overridden only in certain contexts.
+
+## Custom Functions
+
+The spec can make arbitrary HCL functions available in the input file's
+expression scope, and thus allow simple computation within the input file,
+in addition to HCL's built-in operators.
+
+Custom functions are defined in the spec file with the top-level `function`
+block type:
+
+```
+function "add_one" {
+  params = ["n"]
+  result = n + 1
+}
+```
+
+Functions behave in a similar way to the `transform` spec type in that the
+given `result` attribute expression is evaluated with additional variables
+defined with the same names as the defined `params`.
+
+The [spec definition functions](#spec-definition-functions) can be used within
+custom function expressions, allowing them to be optionally exposed into the
+input file:
+
+```
+function "upper" {
+  params = ["str"]
+  result = upper(str)
+}
+```
+
+Custom functions defined in the spec cannot be called from the spec itself.
+
+## Spec Definition Functions
 
 Certain expressions within a specification may use the following functions.
 The documentation for each spec type above specifies where functions may
@@ -354,6 +407,11 @@ be used.
 * `strlen(string)` returns the number of characters in the given string.
 * `substr(string, offset, length)` returns the requested substring of the given string.
 * `upper(string)` returns the given string with all lowercase letters converted to uppercase.
+
+Note that these expressions are valid in the context of the _spec_ file, not
+the _input_. Functions can be exposed into the input file using
+[Custom Functions](#custom-functions) within the spec, which may in turn
+refer to these spec definition functions.
 
 ## Type Expressions
 

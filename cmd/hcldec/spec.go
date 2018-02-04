@@ -3,23 +3,72 @@ package main
 import (
 	"fmt"
 
+	"github.com/hashicorp/hcl2/ext/userfunc"
 	"github.com/hashicorp/hcl2/gohcl"
 	"github.com/hashicorp/hcl2/hcl"
 	"github.com/hashicorp/hcl2/hcldec"
 	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-cty/cty/function"
 )
+
+type specFileContent struct {
+	Variables map[string]cty.Value
+	Functions map[string]function.Function
+	RootSpec  hcldec.Spec
+}
 
 var specCtx = &hcl.EvalContext{
 	Functions: specFuncs,
 }
 
-func loadSpecFile(filename string) (hcldec.Spec, hcl.Diagnostics) {
+func loadSpecFile(filename string) (specFileContent, hcl.Diagnostics) {
 	file, diags := parser.ParseHCLFile(filename)
 	if diags.HasErrors() {
-		return errSpec, diags
+		return specFileContent{RootSpec: errSpec}, diags
 	}
 
-	return decodeSpecRoot(file.Body)
+	vars, funcs, specBody, declDiags := decodeSpecDecls(file.Body)
+	diags = append(diags, declDiags...)
+
+	spec, specDiags := decodeSpecRoot(specBody)
+	diags = append(diags, specDiags...)
+
+	return specFileContent{
+		Variables: vars,
+		Functions: funcs,
+		RootSpec:  spec,
+	}, diags
+}
+
+func decodeSpecDecls(body hcl.Body) (map[string]cty.Value, map[string]function.Function, hcl.Body, hcl.Diagnostics) {
+	funcs, body, diags := userfunc.DecodeUserFunctions(body, "function", func() *hcl.EvalContext {
+		return specCtx
+	})
+
+	content, body, moreDiags := body.PartialContent(&hcl.BodySchema{
+		Blocks: []hcl.BlockHeaderSchema{
+			{
+				Type: "variables",
+			},
+		},
+	})
+	diags = append(diags, moreDiags...)
+
+	vars := make(map[string]cty.Value)
+	for _, block := range content.Blocks {
+		// We only have one block type in our schema, so we can assume all
+		// blocks are of that type.
+		attrs, moreDiags := block.Body.JustAttributes()
+		diags = append(diags, moreDiags...)
+
+		for name, attr := range attrs {
+			val, moreDiags := attr.Expr.Value(specCtx)
+			diags = append(diags, moreDiags...)
+			vars[name] = val
+		}
+	}
+
+	return vars, funcs, body, diags
 }
 
 func decodeSpecRoot(body hcl.Body) (hcldec.Spec, hcl.Diagnostics) {

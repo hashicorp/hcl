@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/hcl2/hclparse"
 	flag "github.com/spf13/pflag"
 	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-cty/cty/function"
 	ctyjson "github.com/zclconf/go-cty/cty/json"
 	"golang.org/x/crypto/ssh/terminal"
 )
@@ -69,18 +70,26 @@ func realmain(args []string) error {
 
 	var diags hcl.Diagnostics
 
-	spec, specDiags := loadSpecFile(*specFile)
+	specContent, specDiags := loadSpecFile(*specFile)
 	diags = append(diags, specDiags...)
 	if specDiags.HasErrors() {
 		diagWr.WriteDiagnostics(diags)
 		os.Exit(2)
 	}
 
-	var ctx *hcl.EvalContext
+	spec := specContent.RootSpec
+
+	ctx := &hcl.EvalContext{
+		Variables: map[string]cty.Value{},
+		Functions: map[string]function.Function{},
+	}
+	for name, val := range specContent.Variables {
+		ctx.Variables[name] = val
+	}
+	for name, f := range specContent.Functions {
+		ctx.Functions[name] = f
+	}
 	if len(*vars) != 0 {
-		ctx = &hcl.EvalContext{
-			Variables: map[string]cty.Value{},
-		}
 		for i, varsSpec := range *vars {
 			var vals map[string]cty.Value
 			var valsDiags hcl.Diagnostics
@@ -96,6 +105,19 @@ func realmain(args []string) error {
 				ctx.Variables[k] = v
 			}
 		}
+	}
+
+	// If we have empty context elements then we'll nil them out so that
+	// we'll produce e.g. "variables are not allowed" errors instead of
+	// "variable not found" errors.
+	if len(ctx.Variables) == 0 {
+		ctx.Variables = nil
+	}
+	if len(ctx.Functions) == 0 {
+		ctx.Functions = nil
+	}
+	if ctx.Variables == nil && ctx.Functions == nil {
+		ctx = nil
 	}
 
 	var bodies []hcl.Body
