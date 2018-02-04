@@ -64,6 +64,9 @@ func decodeSpecBlock(block *hcl.Block) (hcldec.Spec, hcl.Diagnostics) {
 	case "object":
 		return decodeObjectSpec(block.Body)
 
+	case "array":
+		return decodeArraySpec(block.Body)
+
 	case "attr":
 		return decodeAttrSpec(block.Body, impliedName)
 
@@ -107,6 +110,19 @@ func decodeObjectSpec(body hcl.Body) (hcldec.Spec, hcl.Diagnostics) {
 		propSpec, propDiags := decodeSpecBlock(block)
 		diags = append(diags, propDiags...)
 		spec[block.Labels[0]] = propSpec
+	}
+
+	return spec, diags
+}
+
+func decodeArraySpec(body hcl.Body) (hcldec.Spec, hcl.Diagnostics) {
+	content, diags := body.Content(specSchemaUnlabelled)
+
+	spec := make(hcldec.TupleSpec, 0, len(content.Blocks))
+	for _, block := range content.Blocks {
+		elemSpec, elemDiags := decodeSpecBlock(block)
+		diags = append(diags, elemDiags...)
+		spec = append(spec, elemSpec)
 	}
 
 	return spec, diags
@@ -429,7 +445,7 @@ var errSpec = &hcldec.LiteralSpec{
 
 var specBlockTypes = []string{
 	"object",
-	"tuple",
+	"array",
 
 	"literal",
 
