@@ -766,6 +766,56 @@ block "valid" {}
 			},
 		},
 		{
+			"a = \"\\uu2022\"\n",
+			1, // \u must be followed by four hex digits
+			&Body{
+				Attributes: Attributes{
+					"a": {
+						Name: "a",
+						Expr: &TemplateExpr{
+							Parts: []Expression{
+								&LiteralValueExpr{
+									Val: cty.StringVal("\\uu2022"),
+
+									SrcRange: hcl.Range{
+										Start: hcl.Pos{Line: 1, Column: 6, Byte: 5},
+										End:   hcl.Pos{Line: 1, Column: 13, Byte: 12},
+									},
+								},
+							},
+
+							SrcRange: hcl.Range{
+								Start: hcl.Pos{Line: 1, Column: 5, Byte: 4},
+								End:   hcl.Pos{Line: 1, Column: 14, Byte: 13},
+							},
+						},
+
+						SrcRange: hcl.Range{
+							Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   hcl.Pos{Line: 1, Column: 14, Byte: 13},
+						},
+						NameRange: hcl.Range{
+							Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   hcl.Pos{Line: 1, Column: 2, Byte: 1},
+						},
+						EqualsRange: hcl.Range{
+							Start: hcl.Pos{Line: 1, Column: 3, Byte: 2},
+							End:   hcl.Pos{Line: 1, Column: 4, Byte: 3},
+						},
+					},
+				},
+				Blocks: Blocks{},
+				SrcRange: hcl.Range{
+					Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   hcl.Pos{Line: 2, Column: 1, Byte: 14},
+				},
+				EndRange: hcl.Range{
+					Start: hcl.Pos{Line: 2, Column: 1, Byte: 14},
+					End:   hcl.Pos{Line: 2, Column: 1, Byte: 14},
+				},
+			},
+		},
+		{
 			"a = \"\\U0001d11e\"\n",
 			0,
 			&Body{
@@ -965,6 +1015,106 @@ block "valid" {}
 				EndRange: hcl.Range{
 					Start: hcl.Pos{Line: 2, Column: 1, Byte: 13},
 					End:   hcl.Pos{Line: 2, Column: 1, Byte: 13},
+				},
+			},
+		},
+		{
+			"a = \"\\U00300000\"\n",
+			1, // Invalid unicode character (can't encode in UTF-8)
+			&Body{
+				Attributes: Attributes{
+					"a": {
+						Name: "a",
+						Expr: &TemplateExpr{
+							Parts: []Expression{
+								&LiteralValueExpr{
+									Val: cty.StringVal("\\U00300000"),
+
+									SrcRange: hcl.Range{
+										Start: hcl.Pos{Line: 1, Column: 6, Byte: 5},
+										End:   hcl.Pos{Line: 1, Column: 16, Byte: 15},
+									},
+								},
+							},
+
+							SrcRange: hcl.Range{
+								Start: hcl.Pos{Line: 1, Column: 5, Byte: 4},
+								End:   hcl.Pos{Line: 1, Column: 17, Byte: 16},
+							},
+						},
+
+						SrcRange: hcl.Range{
+							Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   hcl.Pos{Line: 1, Column: 17, Byte: 16},
+						},
+						NameRange: hcl.Range{
+							Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   hcl.Pos{Line: 1, Column: 2, Byte: 1},
+						},
+						EqualsRange: hcl.Range{
+							Start: hcl.Pos{Line: 1, Column: 3, Byte: 2},
+							End:   hcl.Pos{Line: 1, Column: 4, Byte: 3},
+						},
+					},
+				},
+				Blocks: Blocks{},
+				SrcRange: hcl.Range{
+					Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   hcl.Pos{Line: 2, Column: 1, Byte: 17},
+				},
+				EndRange: hcl.Range{
+					Start: hcl.Pos{Line: 2, Column: 1, Byte: 17},
+					End:   hcl.Pos{Line: 2, Column: 1, Byte: 17},
+				},
+			},
+		},
+		{
+			"a = \"\\Ub2705550\"\n",
+			1, // Invalid unicode character (can't encode in UTF-8)
+			&Body{
+				Attributes: Attributes{
+					"a": {
+						Name: "a",
+						Expr: &TemplateExpr{
+							Parts: []Expression{
+								&LiteralValueExpr{
+									Val: cty.StringVal("\\Ub2705550"),
+
+									SrcRange: hcl.Range{
+										Start: hcl.Pos{Line: 1, Column: 6, Byte: 5},
+										End:   hcl.Pos{Line: 1, Column: 16, Byte: 15},
+									},
+								},
+							},
+
+							SrcRange: hcl.Range{
+								Start: hcl.Pos{Line: 1, Column: 5, Byte: 4},
+								End:   hcl.Pos{Line: 1, Column: 17, Byte: 16},
+							},
+						},
+
+						SrcRange: hcl.Range{
+							Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   hcl.Pos{Line: 1, Column: 17, Byte: 16},
+						},
+						NameRange: hcl.Range{
+							Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   hcl.Pos{Line: 1, Column: 2, Byte: 1},
+						},
+						EqualsRange: hcl.Range{
+							Start: hcl.Pos{Line: 1, Column: 3, Byte: 2},
+							End:   hcl.Pos{Line: 1, Column: 4, Byte: 3},
+						},
+					},
+				},
+				Blocks: Blocks{},
+				SrcRange: hcl.Range{
+					Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   hcl.Pos{Line: 2, Column: 1, Byte: 17},
+				},
+				EndRange: hcl.Range{
+					Start: hcl.Pos{Line: 2, Column: 1, Byte: 17},
+					End:   hcl.Pos{Line: 2, Column: 1, Byte: 17},
 				},
 			},
 		},

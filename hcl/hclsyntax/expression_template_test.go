@@ -217,6 +217,18 @@ trim`,
 			cty.StringVal("a\nb\nc\n"),
 			0,
 		},
+		{
+			`\n`, // backslash escapes are not interpreted in template literals
+			nil,
+			cty.StringVal("\\n"),
+			0,
+		},
+		{
+			`\uu1234`, // backslash escapes are not interpreted in template literals
+			nil,       // (this is intentionally an invalid one to ensure we don't produce an error)
+			cty.StringVal("\\uu1234"),
+			0,
+		},
 	}
 
 	for _, test := range tests {

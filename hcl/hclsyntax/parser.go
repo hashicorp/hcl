@@ -1,7 +1,6 @@
 package hclsyntax
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
 	"strconv"
@@ -1478,256 +1477,149 @@ func (p *parser) decodeStringLit(tok Token) (string, hcl.Diagnostics) {
 	var diags hcl.Diagnostics
 
 	ret := make([]byte, 0, len(tok.Bytes))
-	var esc []byte
+	slices := scanStringLit(tok.Bytes, quoted)
 
-	sc := bufio.NewScanner(bytes.NewReader(tok.Bytes))
-	sc.Split(textseg.ScanGraphemeClusters)
+	// We will mutate rng constantly as we walk through our token slices below.
+	// Any diagnostics must take a copy of this rng rather than simply pointing
+	// to it, e.g. by using rng.Ptr() rather than &rng.
+	rng := tok.Range
+	rng.End = rng.Start
 
-	pos := tok.Range.Start
-	newPos := pos
-Character:
-	for sc.Scan() {
-		pos = newPos
-		ch := sc.Bytes()
-
-		// Adjust position based on our new character.
-		// \r\n is considered to be a single character in text segmentation,
-		if (len(ch) == 1 && ch[0] == '\n') || (len(ch) == 2 && ch[1] == '\n') {
-			newPos.Line++
-			newPos.Column = 0
-		} else {
-			newPos.Column++
+Slices:
+	for _, slice := range slices {
+		if len(slice) == 0 {
+			continue
 		}
-		newPos.Byte += len(ch)
 
-		if len(esc) > 0 {
-			switch esc[0] {
-			case '\\':
+		// Advance the start of our range to where the previous token ended
+		rng.Start = rng.End
 
-				if len(esc) >= 2 {
-					switch esc[1] {
-					case 'u', 'U':
-						// Our new character must be an ASCII hex digit
-						_, err := strconv.ParseInt(string(ch), 16, 0)
-						if err != nil {
-							var detail string
-							switch esc[1] {
-							case 'u':
-								detail = "Escape sequence \\u must be followed by exactly four hexidecimal digits."
-							case 'U':
-								detail = "Escape sequence \\U must be followed by exactly eight hexidecimal digits."
-							}
-							diags = append(diags, &hcl.Diagnostic{
-								Severity: hcl.DiagError,
-								Summary:  "Invalid escape sequence",
-								Detail:   detail,
-								Subject: &hcl.Range{
-									Filename: tok.Range.Filename,
-									Start: hcl.Pos{
-										Line:   pos.Line,
-										Column: pos.Column,
-										Byte:   pos.Byte,
-									},
-									End: hcl.Pos{
-										Line:   pos.Line,
-										Column: pos.Column + 1,
-										Byte:   pos.Byte + len(ch),
-									},
-								},
-							})
-							ret = append(ret, esc...)
-							ret = append(ret, ch...)
-							esc = esc[:0]
-							continue Character
-						}
+		// Advance the end of our range to after our token.
+		b := slice
+		for len(b) > 0 {
+			adv, ch, _ := textseg.ScanGraphemeClusters(b, true)
+			rng.End.Byte += adv
+			switch ch[0] {
+			case '\r', '\n':
+				rng.End.Line++
+				rng.End.Column = 1
+			default:
+				rng.End.Column++
+			}
+			b = b[adv:]
+		}
 
-						esc = append(esc, ch...)
-
-						var complete bool
-						switch esc[1] {
-						case 'u':
-							complete = (len(esc) == 6) // four digits plus our \u introducer
-						case 'U':
-							complete = (len(esc) == 10) // eight digits plus our \U introducer
-						}
-						if !complete {
-							// Keep accumulating more digits, then
-							continue Character
-						}
-
-						digits := string(esc[2:])
-						valInt, err := strconv.ParseInt(digits, 16, 32)
-						if err != nil {
-							// Should never happen because we validated our digits
-							// as they arrived, above.
-							panic(err)
-						}
-						r := rune(valInt)
-						rl := utf8.RuneLen(r)
-
-						// Make room in our ret buffer for the extra characters
-						for i := 0; i < rl; i++ {
-							ret = append(ret, 0)
-						}
-
-						// Fill those extra characters with the canonical UTF-8
-						// representation of our rune.
-						utf8.EncodeRune(ret[len(ret)-rl:], r)
-
-						// ...and now finally we're finished escaping!
-						esc = esc[:0]
-
-						continue Character
-					}
-				}
-
-				if len(ch) == 1 {
-					switch ch[0] {
-
-					case 'n':
-						ret = append(ret, '\n')
-						esc = esc[:0]
-						continue Character
-					case 'r':
-						ret = append(ret, '\r')
-						esc = esc[:0]
-						continue Character
-					case 't':
-						ret = append(ret, '\t')
-						esc = esc[:0]
-						continue Character
-					case '"':
-						ret = append(ret, '"')
-						esc = esc[:0]
-						continue Character
-					case '\\':
-						ret = append(ret, '\\')
-						esc = esc[:0]
-						continue Character
-					case 'u', 'U':
-						// For these, we'll continue working on them until
-						// we accumulate the expected number of digits.
-						esc = append(esc, ch...)
-						continue Character
-					}
-				}
-
-				var detail string
-				switch {
-				case len(ch) == 1 && (ch[0] == '$' || ch[0] == '%'):
-					detail = fmt.Sprintf(
-						"The characters \"\\%s\" do not form a recognized escape sequence. To escape a \"%s{\" template sequence, use \"%s%s{\".",
-						ch, ch, ch, ch,
-					)
-				default:
-					detail = fmt.Sprintf("The characters \"\\%s\" do not form a recognized escape sequence.", ch)
-				}
-
+	TokenType:
+		switch slice[0] {
+		case '\\':
+			if !quoted {
+				// If we're not in quoted mode then just treat this token as
+				// normal. (Slices can still start with backslash even if we're
+				// not specifically looking for backslash sequences.)
+				break TokenType
+			}
+			if len(slice) < 2 {
 				diags = append(diags, &hcl.Diagnostic{
 					Severity: hcl.DiagError,
 					Summary:  "Invalid escape sequence",
-					Detail:   detail,
-					Subject: &hcl.Range{
-						Filename: tok.Range.Filename,
-						Start: hcl.Pos{
-							Line:   pos.Line,
-							Column: pos.Column - 1, // safe because we know the previous character must be a backslash
-							Byte:   pos.Byte - 1,
-						},
-						End: hcl.Pos{
-							Line:   pos.Line,
-							Column: pos.Column + 1, // safe because we know the previous character must be a backslash
-							Byte:   pos.Byte + len(ch),
-						},
-					},
+					Detail:   "Backslash must be followed by an escape sequence selector character.",
+					Subject:  rng.Ptr(),
 				})
-				ret = append(ret, ch...)
-				esc = esc[:0]
-				continue Character
+				break TokenType
+			}
 
-			case '$', '%':
-				switch len(esc) {
-				case 1:
-					if len(ch) == 1 && ch[0] == esc[0] {
-						esc = append(esc, ch[0])
-						continue Character
-					}
+			switch slice[1] {
 
-					// Any other character means this wasn't an escape sequence
-					// after all.
-					ret = append(ret, esc...)
-					ret = append(ret, ch...)
-					esc = esc[:0]
-				case 2:
-					if len(ch) == 1 && ch[0] == '{' {
-						// successful escape sequence
-						ret = append(ret, esc[0])
-					} else {
-						// not an escape sequence, so just output literal
-						ret = append(ret, esc...)
-					}
-					ret = append(ret, ch...)
-					esc = esc[:0]
-				default:
-					// should never happen
-					panic("have invalid escape sequence >2 characters")
+			case 'n':
+				ret = append(ret, '\n')
+				continue Slices
+			case 'r':
+				ret = append(ret, '\r')
+				continue Slices
+			case 't':
+				ret = append(ret, '\t')
+				continue Slices
+			case '"':
+				ret = append(ret, '"')
+				continue Slices
+			case '\\':
+				ret = append(ret, '\\')
+				continue Slices
+			case 'u', 'U':
+				if slice[1] == 'u' && len(slice) != 6 {
+					diags = append(diags, &hcl.Diagnostic{
+						Severity: hcl.DiagError,
+						Summary:  "Invalid escape sequence",
+						Detail:   "The \\u escape sequence must be followed by four hexadecimal digits.",
+						Subject:  rng.Ptr(),
+					})
+					break TokenType
+				} else if slice[1] == 'U' && len(slice) != 10 {
+					diags = append(diags, &hcl.Diagnostic{
+						Severity: hcl.DiagError,
+						Summary:  "Invalid escape sequence",
+						Detail:   "The \\U escape sequence must be followed by eight hexadecimal digits.",
+						Subject:  rng.Ptr(),
+					})
+					break TokenType
 				}
 
-			}
-		} else {
-			if len(ch) == 1 {
-				switch ch[0] {
-				case '\\':
-					if quoted { // ignore backslashes in unquoted mode
-						esc = append(esc, '\\')
-						continue Character
-					}
-				case '$':
-					esc = append(esc, '$')
-					continue Character
-				case '%':
-					esc = append(esc, '%')
-					continue Character
+				numHex := string(slice[2:])
+				num, err := strconv.ParseUint(numHex, 16, 32)
+				if err != nil {
+					// Should never happen because the scanner won't match
+					// a sequence of digits that isn't valid.
+					panic(err)
 				}
+
+				r := rune(num)
+				l := utf8.RuneLen(r)
+				if l == -1 {
+					diags = append(diags, &hcl.Diagnostic{
+						Severity: hcl.DiagError,
+						Summary:  "Invalid escape sequence",
+						Detail:   fmt.Sprintf("Cannot encode character U+%04x in UTF-8.", num),
+						Subject:  rng.Ptr(),
+					})
+					break TokenType
+				}
+				for i := 0; i < l; i++ {
+					ret = append(ret, 0)
+				}
+				rb := ret[len(ret)-l:]
+				utf8.EncodeRune(rb, r)
+
+				continue Slices
+
+			default:
+				diags = append(diags, &hcl.Diagnostic{
+					Severity: hcl.DiagError,
+					Summary:  "Invalid escape sequence",
+					Detail:   fmt.Sprintf("The symbol %q is not a valid escape sequence selector.", slice[1:]),
+					Subject:  rng.Ptr(),
+				})
+				ret = append(ret, slice[1:]...)
+				continue Slices
 			}
-			ret = append(ret, ch...)
+
+		case '$', '%':
+			if len(slice) != 3 {
+				// Not long enough to be our escape sequence, so it's literal.
+				break TokenType
+			}
+
+			if slice[1] == slice[0] && slice[2] == '{' {
+				ret = append(ret, slice[0])
+				ret = append(ret, '{')
+				continue Slices
+			}
+
+			break TokenType
 		}
-	}
 
-	// if we still have an outstanding "esc" when we fall out here then
-	// the literal ended with an unterminated escape sequence, which we
-	// must now deal with.
-	if len(esc) > 0 {
-		if esc[0] == '\\' {
-			// An incomplete backslash sequence is an error, since it suggests
-			// that e.g. the user started writing a \uXXXX sequence but didn't
-			// provide enough hex digits.
-			diags = append(diags, &hcl.Diagnostic{
-				Severity: hcl.DiagError,
-				Summary:  "Invalid escape sequence",
-				Detail:   fmt.Sprintf("The characters %q do not form a complete escape sequence.", esc),
-				Subject: &hcl.Range{
-					Filename: tok.Range.Filename,
-					Start: hcl.Pos{
-						Line:   pos.Line,
-						Column: pos.Column,
-						Byte:   pos.Byte,
-					},
-					End: hcl.Pos{
-						Line:   pos.Line,
-						Column: pos.Column + len(esc),
-						Byte:   pos.Byte + len(esc),
-					},
-				},
-			})
-
-		}
-		// This might also be an incomplete $${ or %%{ escape sequence, but
-		// that's treated as a literal rather than an error since those only
-		// count as escape sequences when all three characters are present.
-
-		ret = append(ret, esc...)
-		esc = nil
+		// If we fall out here or break out of here from the switch above
+		// then this slice is just a literal.
+		ret = append(ret, slice...)
 	}
 
 	return string(ret), diags
