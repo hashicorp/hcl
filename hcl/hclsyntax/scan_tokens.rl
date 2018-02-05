@@ -1,3 +1,4 @@
+
 package hclsyntax
 
 import (
