@@ -192,6 +192,17 @@ func (b *body) JustAttributes() (hcl.Attributes, hcl.Diagnostics) {
 		if _, hidden := b.hiddenAttrs[name]; hidden {
 			continue
 		}
+
+		if existing, exists := attrs[name]; exists {
+			diags = append(diags, &hcl.Diagnostic{
+				Severity: hcl.DiagError,
+				Summary:  "Duplicate attribute definition",
+				Detail:   fmt.Sprintf("The attribute %q was already defined at %s.", name, existing.Range),
+				Subject:  &jsonAttr.NameRange,
+			})
+			continue
+		}
+
 		attrs[name] = &hcl.Attribute{
 			Name:      name,
 			Expr:      &expression{src: jsonAttr.Value},

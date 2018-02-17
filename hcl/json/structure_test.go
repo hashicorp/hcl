@@ -1096,12 +1096,14 @@ func TestJustAttributes(t *testing.T) {
 	// We test most of the functionality already in TestBodyPartialContent, so
 	// this test focuses on the handling of extraneous attributes.
 	tests := []struct {
-		src  string
-		want hcl.Attributes
+		src       string
+		want      hcl.Attributes
+		diagCount int
 	}{
 		{
 			`{}`,
 			map[string]*hcl.Attribute{},
+			0,
 		},
 		{
 			`{"foo": true}`,
@@ -1130,10 +1132,41 @@ func TestJustAttributes(t *testing.T) {
 					},
 				},
 			},
+			0,
 		},
 		{
 			`{"//": "comment that should be ignored"}`,
 			map[string]*hcl.Attribute{},
+			0,
+		},
+		{
+			`{"foo": true, "foo": true}`,
+			map[string]*hcl.Attribute{
+				"foo": {
+					Name: "foo",
+					Expr: &expression{
+						src: &booleanVal{
+							Value: true,
+							SrcRange: hcl.Range{
+								Filename: "test.json",
+								Start:    hcl.Pos{Byte: 8, Line: 1, Column: 9},
+								End:      hcl.Pos{Byte: 12, Line: 1, Column: 13},
+							},
+						},
+					},
+					Range: hcl.Range{
+						Filename: "test.json",
+						Start:    hcl.Pos{Byte: 1, Line: 1, Column: 2},
+						End:      hcl.Pos{Byte: 12, Line: 1, Column: 13},
+					},
+					NameRange: hcl.Range{
+						Filename: "test.json",
+						Start:    hcl.Pos{Byte: 1, Line: 1, Column: 2},
+						End:      hcl.Pos{Byte: 6, Line: 1, Column: 7},
+					},
+				},
+			},
+			1, // attribute foo was already defined
 		},
 	}
 
@@ -1144,8 +1177,8 @@ func TestJustAttributes(t *testing.T) {
 				t.Fatalf("Parse produced diagnostics: %s", diags)
 			}
 			got, diags := file.Body.JustAttributes()
-			if len(diags) != 0 {
-				t.Errorf("Wrong number of diagnostics %d; want %d", len(diags), 0)
+			if len(diags) != test.diagCount {
+				t.Errorf("Wrong number of diagnostics %d; want %d", len(diags), test.diagCount)
 				for _, diag := range diags {
 					t.Logf(" - %s", diag)
 				}
