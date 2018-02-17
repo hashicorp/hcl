@@ -103,7 +103,7 @@ func parseObject(p *peeker) (node, hcl.Diagnostics) {
 	var diags hcl.Diagnostics
 
 	open := p.Read()
-	attrs := map[string]*objectAttr{}
+	attrs := []*objectAttr{}
 
 	// recover is used to shift the peeker to what seems to be the end of
 	// our object, so that when we encounter an error we leave the peeker
@@ -191,24 +191,11 @@ Token:
 			return nil, diags
 		}
 
-		if existing := attrs[key]; existing != nil {
-			// Generate a diagnostic for the duplicate key, but continue parsing
-			// anyway since this is a semantic error we can recover from.
-			diags = diags.Append(&hcl.Diagnostic{
-				Severity: hcl.DiagError,
-				Summary:  "Duplicate JSON object property",
-				Detail: fmt.Sprintf(
-					"An property named %q was previously introduced at %s",
-					key, existing.NameRange.String(),
-				),
-				Subject: &keyStrNode.SrcRange,
-			})
-		}
-		attrs[key] = &objectAttr{
+		attrs = append(attrs, &objectAttr{
 			Name:      key,
 			Value:     valNode,
 			NameRange: keyStrNode.SrcRange,
-		}
+		})
 
 		switch p.Peek().Type {
 		case tokenComma:

@@ -1,6 +1,7 @@
 package json
 
 import (
+	"fmt"
 	"strconv"
 	"testing"
 )
@@ -13,14 +14,20 @@ func TestNavigationContextString(t *testing.T) {
     "null_resource": {
       "baz": {
         "id": "foo"
-      }
+			},
+			"boz": [
+				{
+					"ov": {   }
+				}
+			]
     }
   }
 }
 `
 	file, diags := Parse([]byte(src), "test.json")
 	if len(diags) != 0 {
-		t.Errorf("Unexpected diagnostics: %#v", diags)
+		fmt.Printf("offset %d\n", diags[0].Subject.Start.Byte)
+		t.Errorf("Unexpected diagnostics: %s", diags)
 	}
 	if file == nil {
 		t.Fatalf("Got nil file")
@@ -36,6 +43,7 @@ func TestNavigationContextString(t *testing.T) {
 		{36, `resource`},
 		{60, `resource.null_resource`},
 		{89, `resource.null_resource.baz`},
+		{141, `resource.null_resource.boz`},
 	}
 
 	for _, test := range tests {

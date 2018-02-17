@@ -19,7 +19,7 @@ func TestParse_nonObject(t *testing.T) {
 	if file.Body == nil {
 		t.Fatalf("got nil Body; want actual body")
 	}
-	if file.Body.(*body).obj == nil {
+	if file.Body.(*body).val == nil {
 		t.Errorf("got nil Body object; want placeholder object")
 	}
 }

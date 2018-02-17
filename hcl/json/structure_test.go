@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/davecgh/go-spew/spew"
+	"github.com/go-test/deep"
 	"github.com/hashicorp/hcl2/hcl"
 )
 
@@ -30,6 +31,45 @@ func TestBodyPartialContent(t *testing.T) {
 			0,
 		},
 		{
+			`[]`,
+			&hcl.BodySchema{},
+			&hcl.BodyContent{
+				Attributes: map[string]*hcl.Attribute{},
+				MissingItemRange: hcl.Range{
+					Filename: "test.json",
+					Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:      hcl.Pos{Line: 1, Column: 2, Byte: 1},
+				},
+			},
+			0,
+		},
+		{
+			`[{}]`,
+			&hcl.BodySchema{},
+			&hcl.BodyContent{
+				Attributes: map[string]*hcl.Attribute{},
+				MissingItemRange: hcl.Range{
+					Filename: "test.json",
+					Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:      hcl.Pos{Line: 1, Column: 2, Byte: 1},
+				},
+			},
+			0,
+		},
+		{
+			`[[]]`,
+			&hcl.BodySchema{},
+			&hcl.BodyContent{
+				Attributes: map[string]*hcl.Attribute{},
+				MissingItemRange: hcl.Range{
+					Filename: "test.json",
+					Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:      hcl.Pos{Line: 1, Column: 2, Byte: 1},
+				},
+			},
+			1, // elements of root array must be objects
+		},
+		{
 			`{"//": "comment that should be ignored"}`,
 			&hcl.BodySchema{},
 			&hcl.BodyContent{
@@ -38,6 +78,19 @@ func TestBodyPartialContent(t *testing.T) {
 					Filename: "test.json",
 					Start:    hcl.Pos{Line: 1, Column: 40, Byte: 39},
 					End:      hcl.Pos{Line: 1, Column: 41, Byte: 40},
+				},
+			},
+			0,
+		},
+		{
+			`{"//": "comment that should be ignored", "//": "another comment"}`,
+			&hcl.BodySchema{},
+			&hcl.BodyContent{
+				Attributes: map[string]*hcl.Attribute{},
+				MissingItemRange: hcl.Range{
+					Filename: "test.json",
+					Start:    hcl.Pos{Line: 1, Column: 65, Byte: 64},
+					End:      hcl.Pos{Line: 1, Column: 66, Byte: 65},
 				},
 			},
 			0,
@@ -105,6 +158,73 @@ func TestBodyPartialContent(t *testing.T) {
 					Filename: "test.json",
 					Start:    hcl.Pos{Line: 1, Column: 21, Byte: 20},
 					End:      hcl.Pos{Line: 1, Column: 22, Byte: 21},
+				},
+			},
+			0,
+		},
+		{
+			`[{"name":"Ermintrude"}]`,
+			&hcl.BodySchema{
+				Attributes: []hcl.AttributeSchema{
+					{
+						Name: "name",
+					},
+				},
+			},
+			&hcl.BodyContent{
+				Attributes: map[string]*hcl.Attribute{
+					"name": &hcl.Attribute{
+						Name: "name",
+						Expr: &expression{
+							src: &stringVal{
+								Value: "Ermintrude",
+								SrcRange: hcl.Range{
+									Filename: "test.json",
+									Start: hcl.Pos{
+										Byte:   9,
+										Line:   1,
+										Column: 10,
+									},
+									End: hcl.Pos{
+										Byte:   21,
+										Line:   1,
+										Column: 22,
+									},
+								},
+							},
+						},
+						Range: hcl.Range{
+							Filename: "test.json",
+							Start: hcl.Pos{
+								Byte:   2,
+								Line:   1,
+								Column: 3,
+							},
+							End: hcl.Pos{
+								Byte:   21,
+								Line:   1,
+								Column: 22,
+							},
+						},
+						NameRange: hcl.Range{
+							Filename: "test.json",
+							Start: hcl.Pos{
+								Byte:   2,
+								Line:   1,
+								Column: 3,
+							},
+							End: hcl.Pos{
+								Byte:   8,
+								Line:   1,
+								Column: 9,
+							},
+						},
+					},
+				},
+				MissingItemRange: hcl.Range{
+					Filename: "test.json",
+					Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:      hcl.Pos{Line: 1, Column: 2, Byte: 1},
 				},
 			},
 			0,
@@ -197,8 +317,8 @@ func TestBodyPartialContent(t *testing.T) {
 						Type:   "resource",
 						Labels: []string{},
 						Body: &body{
-							obj: &objectVal{
-								Attrs: map[string]*objectAttr{},
+							val: &objectVal{
+								Attrs: []*objectAttr{},
 								SrcRange: hcl.Range{
 									Filename: "test.json",
 									Start: hcl.Pos{
@@ -294,8 +414,8 @@ func TestBodyPartialContent(t *testing.T) {
 						Type:   "resource",
 						Labels: []string{},
 						Body: &body{
-							obj: &objectVal{
-								Attrs: map[string]*objectAttr{},
+							val: &objectVal{
+								Attrs: []*objectAttr{},
 								SrcRange: hcl.Range{
 									Filename: "test.json",
 									Start: hcl.Pos{
@@ -370,8 +490,8 @@ func TestBodyPartialContent(t *testing.T) {
 						Type:   "resource",
 						Labels: []string{},
 						Body: &body{
-							obj: &objectVal{
-								Attrs: map[string]*objectAttr{},
+							val: &objectVal{
+								Attrs: []*objectAttr{},
 								SrcRange: hcl.Range{
 									Filename: "test.json",
 									Start: hcl.Pos{
@@ -468,8 +588,8 @@ func TestBodyPartialContent(t *testing.T) {
 						Type:   "resource",
 						Labels: []string{"foo_instance", "bar"},
 						Body: &body{
-							obj: &objectVal{
-								Attrs: map[string]*objectAttr{},
+							val: &objectVal{
+								Attrs: []*objectAttr{},
 								SrcRange: hcl.Range{
 									Filename: "test.json",
 									Start: hcl.Pos{
@@ -577,6 +697,234 @@ func TestBodyPartialContent(t *testing.T) {
 			0,
 		},
 		{
+			`{"resource":{"foo_instance":[{"bar":{}}, {"bar":{}}]}}`,
+			&hcl.BodySchema{
+				Blocks: []hcl.BlockHeaderSchema{
+					{
+						Type:       "resource",
+						LabelNames: []string{"type", "name"},
+					},
+				},
+			},
+			&hcl.BodyContent{
+				Attributes: map[string]*hcl.Attribute{},
+				Blocks: hcl.Blocks{
+					{
+						Type:   "resource",
+						Labels: []string{"foo_instance", "bar"},
+						Body: &body{
+							val: &objectVal{
+								Attrs: []*objectAttr{},
+								SrcRange: hcl.Range{
+									Filename: "test.json",
+									Start: hcl.Pos{
+										Byte:   36,
+										Line:   1,
+										Column: 37,
+									},
+									End: hcl.Pos{
+										Byte:   38,
+										Line:   1,
+										Column: 39,
+									},
+								},
+								OpenRange: hcl.Range{
+									Filename: "test.json",
+									Start: hcl.Pos{
+										Byte:   36,
+										Line:   1,
+										Column: 37,
+									},
+									End: hcl.Pos{
+										Byte:   37,
+										Line:   1,
+										Column: 38,
+									},
+								},
+								CloseRange: hcl.Range{
+									Filename: "test.json",
+									Start: hcl.Pos{
+										Byte:   37,
+										Line:   1,
+										Column: 38,
+									},
+									End: hcl.Pos{
+										Byte:   38,
+										Line:   1,
+										Column: 39,
+									},
+								},
+							},
+						},
+
+						DefRange: hcl.Range{
+							Filename: "test.json",
+							Start: hcl.Pos{
+								Byte:   36,
+								Line:   1,
+								Column: 37,
+							},
+							End: hcl.Pos{
+								Byte:   37,
+								Line:   1,
+								Column: 38,
+							},
+						},
+						TypeRange: hcl.Range{
+							Filename: "test.json",
+							Start: hcl.Pos{
+								Byte:   1,
+								Line:   1,
+								Column: 2,
+							},
+							End: hcl.Pos{
+								Byte:   11,
+								Line:   1,
+								Column: 12,
+							},
+						},
+						LabelRanges: []hcl.Range{
+							{
+								Filename: "test.json",
+								Start: hcl.Pos{
+									Byte:   13,
+									Line:   1,
+									Column: 14,
+								},
+								End: hcl.Pos{
+									Byte:   27,
+									Line:   1,
+									Column: 28,
+								},
+							},
+							{
+								Filename: "test.json",
+								Start: hcl.Pos{
+									Byte:   30,
+									Line:   1,
+									Column: 31,
+								},
+								End: hcl.Pos{
+									Byte:   35,
+									Line:   1,
+									Column: 36,
+								},
+							},
+						},
+					},
+					{
+						Type:   "resource",
+						Labels: []string{"foo_instance", "bar"},
+						Body: &body{
+							val: &objectVal{
+								Attrs: []*objectAttr{},
+								SrcRange: hcl.Range{
+									Filename: "test.json",
+									Start: hcl.Pos{
+										Byte:   36,
+										Line:   1,
+										Column: 37,
+									},
+									End: hcl.Pos{
+										Byte:   38,
+										Line:   1,
+										Column: 39,
+									},
+								},
+								OpenRange: hcl.Range{
+									Filename: "test.json",
+									Start: hcl.Pos{
+										Byte:   36,
+										Line:   1,
+										Column: 37,
+									},
+									End: hcl.Pos{
+										Byte:   37,
+										Line:   1,
+										Column: 38,
+									},
+								},
+								CloseRange: hcl.Range{
+									Filename: "test.json",
+									Start: hcl.Pos{
+										Byte:   37,
+										Line:   1,
+										Column: 38,
+									},
+									End: hcl.Pos{
+										Byte:   38,
+										Line:   1,
+										Column: 39,
+									},
+								},
+							},
+						},
+
+						DefRange: hcl.Range{
+							Filename: "test.json",
+							Start: hcl.Pos{
+								Byte:   48,
+								Line:   1,
+								Column: 49,
+							},
+							End: hcl.Pos{
+								Byte:   49,
+								Line:   1,
+								Column: 50,
+							},
+						},
+						TypeRange: hcl.Range{
+							Filename: "test.json",
+							Start: hcl.Pos{
+								Byte:   1,
+								Line:   1,
+								Column: 2,
+							},
+							End: hcl.Pos{
+								Byte:   11,
+								Line:   1,
+								Column: 12,
+							},
+						},
+						LabelRanges: []hcl.Range{
+							{
+								Filename: "test.json",
+								Start: hcl.Pos{
+									Byte:   13,
+									Line:   1,
+									Column: 14,
+								},
+								End: hcl.Pos{
+									Byte:   27,
+									Line:   1,
+									Column: 28,
+								},
+							},
+							{
+								Filename: "test.json",
+								Start: hcl.Pos{
+									Byte:   42,
+									Line:   1,
+									Column: 43,
+								},
+								End: hcl.Pos{
+									Byte:   47,
+									Line:   1,
+									Column: 48,
+								},
+							},
+						},
+					},
+				},
+				MissingItemRange: hcl.Range{
+					Filename: "test.json",
+					Start:    hcl.Pos{Line: 1, Column: 54, Byte: 53},
+					End:      hcl.Pos{Line: 1, Column: 55, Byte: 54},
+				},
+			},
+			0,
+		},
+		{
 			`{"name":"Ermintrude"}`,
 			&hcl.BodySchema{
 				Blocks: []hcl.BlockHeaderSchema{
@@ -593,7 +941,74 @@ func TestBodyPartialContent(t *testing.T) {
 					End:      hcl.Pos{Line: 1, Column: 22, Byte: 21},
 				},
 			},
-			1,
+			1, // name is supposed to be a block
+		},
+		{
+			`[{"name":"Ermintrude"},{"name":"Ermintrude"}]`,
+			&hcl.BodySchema{
+				Attributes: []hcl.AttributeSchema{
+					{
+						Name: "name",
+					},
+				},
+			},
+			&hcl.BodyContent{
+				Attributes: map[string]*hcl.Attribute{
+					"name": {
+						Name: "name",
+						Expr: &expression{
+							src: &stringVal{
+								Value: "Ermintrude",
+								SrcRange: hcl.Range{
+									Filename: "test.json",
+									Start: hcl.Pos{
+										Byte:   8,
+										Line:   1,
+										Column: 9,
+									},
+									End: hcl.Pos{
+										Byte:   20,
+										Line:   1,
+										Column: 21,
+									},
+								},
+							},
+						},
+						Range: hcl.Range{
+							Filename: "test.json",
+							Start: hcl.Pos{
+								Byte:   2,
+								Line:   1,
+								Column: 3,
+							},
+							End: hcl.Pos{
+								Byte:   21,
+								Line:   1,
+								Column: 22,
+							},
+						},
+						NameRange: hcl.Range{
+							Filename: "test.json",
+							Start: hcl.Pos{
+								Byte:   2,
+								Line:   1,
+								Column: 3,
+							},
+							End: hcl.Pos{
+								Byte:   8,
+								Line:   1,
+								Column: 9,
+							},
+						},
+					},
+				},
+				MissingItemRange: hcl.Range{
+					Filename: "test.json",
+					Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:      hcl.Pos{Line: 1, Column: 2, Byte: 1},
+				},
+			},
+			1, // "name" attribute is defined twice
 		},
 	}
 
@@ -611,8 +1026,8 @@ func TestBodyPartialContent(t *testing.T) {
 				}
 			}
 
-			if !reflect.DeepEqual(got, test.want) {
-				t.Errorf("wrong result\ngot:  %s\nwant: %s", spew.Sdump(got), spew.Sdump(test.want))
+			for _, problem := range deep.Equal(got, test.want) {
+				t.Error(problem)
 			}
 		})
 	}

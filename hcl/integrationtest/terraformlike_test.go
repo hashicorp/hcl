@@ -61,6 +61,11 @@ func TestTerraformLike(t *testing.T) {
 			Required: true,
 			Type:     cty.String,
 		},
+		"tags": &hcldec.AttrSpec{
+			Name:     "tags",
+			Required: false,
+			Type:     cty.Map(cty.String),
+		},
 	}
 	securityGroupDecode := &hcldec.ObjectSpec{
 		"ingress": &hcldec.BlockListSpec{
@@ -235,6 +240,10 @@ func TestTerraformLike(t *testing.T) {
 				wantCfg := cty.ObjectVal(map[string]cty.Value{
 					"instance_type": cty.StringVal("z3.weedy"),
 					"image_id":      cty.StringVal("image-1234"),
+					"tags": cty.MapVal(map[string]cty.Value{
+						"Name":        cty.StringVal("foo"),
+						"Environment": cty.StringVal("prod"),
+					}),
 				})
 				if !cfg.RawEquals(wantCfg) {
 					t.Errorf("wrong config\ngot:  %#v\nwant: %#v", cfg, wantCfg)
@@ -280,6 +289,11 @@ resource "happycloud_instance" "test" {
   instance_type = "z3.weedy"
   image_id      = var.image_id
 
+  tags = {
+	"Name" = "foo"
+	"${"Environment"}" = "prod"
+  }
+
   depends_on = [
     happycloud_security_group.public,
   ]
@@ -318,6 +332,10 @@ const terraformLikeJSON = `
       "test": {
         "instance_type": "z3.weedy",
         "image_id": "${var.image_id}",
+        "tags": {
+            "Name": "foo",
+            "${\"Environment\"}": "prod"
+        },
         "depends_on": [
           "happycloud_security_group.public"
         ]
