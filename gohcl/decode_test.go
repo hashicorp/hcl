@@ -54,7 +54,17 @@ func TestDecodeBody(t *testing.T) {
 				Name *string `hcl:"name"`
 			}{}),
 			0,
-		},
+		}, // name nil
+		{
+			map[string]interface{}{},
+			struct {
+				Name string `hcl:"name,optional"`
+			}{},
+			deepEquals(struct {
+				Name string `hcl:"name,optional"`
+			}{}),
+			0,
+		}, // name optional
 		{
 			map[string]interface{}{},
 			withNameExpression{},

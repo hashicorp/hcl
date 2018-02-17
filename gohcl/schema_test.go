@@ -193,6 +193,20 @@ func TestImpliedBodySchema(t *testing.T) {
 			},
 			false,
 		},
+		{
+			struct {
+				Meh string `hcl:"meh,optional"`
+			}{},
+			&hcl.BodySchema{
+				Attributes: []hcl.AttributeSchema{
+					{
+						Name:     "meh",
+						Required: false,
+					},
+				},
+			},
+			false,
+		},
 	}
 
 	for _, test := range tests {
