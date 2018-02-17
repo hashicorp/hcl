@@ -5,6 +5,11 @@ import (
 	"testing"
 )
 
+func init() {
+	// see the documentation of this variable for more information
+	tracePeekerNewlinesStack = true
+}
+
 func TestPeeker(t *testing.T) {
 	tokens := Tokens{
 		{
