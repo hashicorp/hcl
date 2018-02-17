@@ -1,12 +1,10 @@
 package hclsyntax
 
 import (
-	"reflect"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
+	"github.com/go-test/deep"
 	"github.com/hashicorp/hcl2/hcl"
-	"github.com/kylelemons/godebug/pretty"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -1445,12 +1443,6 @@ block "valid" {}
 		},
 	}
 
-	prettyConfig := &pretty.Config{
-		Diffable:          true,
-		IncludeUnexported: true,
-		PrintStringers:    true,
-	}
-
 	for _, test := range tests {
 		t.Run(test.input, func(t *testing.T) {
 			file, diags := ParseConfig([]byte(test.input), "", hcl.Pos{Byte: 0, Line: 1, Column: 1})
@@ -1463,12 +1455,9 @@ block "valid" {}
 
 			got := file.Body
 
-			if !reflect.DeepEqual(got, test.want) {
-				diff := prettyConfig.Compare(test.want, got)
-				if diff != "" {
-					t.Errorf("wrong result\ninput: %s\ndiff:  %s", test.input, diff)
-				} else {
-					t.Errorf("wrong result\ninput: %s\ngot:   %s\nwant:  %s", test.input, spew.Sdump(got), spew.Sdump(test.want))
+			if diff := deep.Equal(got, test.want); diff != nil {
+				for _, problem := range diff {
+					t.Errorf(problem)
 				}
 			}
 		})
