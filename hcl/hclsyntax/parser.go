@@ -623,7 +623,7 @@ Traversal:
 					close = p.recover(TokenCBrack)
 				}
 			}
-			p.PushIncludeNewlines(true)
+			p.PopIncludeNewlines()
 
 			if lit, isLit := keyExpr.(*LiteralValueExpr); isLit {
 				litKey, _ := lit.Value(nil)

@@ -1175,6 +1175,104 @@ block "valid" {}
 			},
 		},
 		{
+			"a = \"${var.public_subnets[count.index]}\"\n",
+			0,
+			&Body{
+				Attributes: Attributes{
+					"a": {
+						Name: "a",
+						Expr: &TemplateWrapExpr{
+							Wrapped: &IndexExpr{
+								Collection: &ScopeTraversalExpr{
+									Traversal: hcl.Traversal{
+										hcl.TraverseRoot{
+											Name: "var",
+
+											SrcRange: hcl.Range{
+												Start: hcl.Pos{Line: 1, Column: 8, Byte: 7},
+												End:   hcl.Pos{Line: 1, Column: 11, Byte: 10},
+											},
+										},
+										hcl.TraverseAttr{
+											Name: "public_subnets",
+
+											SrcRange: hcl.Range{
+												Start: hcl.Pos{Line: 1, Column: 11, Byte: 10},
+												End:   hcl.Pos{Line: 1, Column: 26, Byte: 25},
+											},
+										},
+									},
+
+									SrcRange: hcl.Range{
+										Start: hcl.Pos{Line: 1, Column: 8, Byte: 7},
+										End:   hcl.Pos{Line: 1, Column: 26, Byte: 25},
+									},
+								},
+								Key: &ScopeTraversalExpr{
+									Traversal: hcl.Traversal{
+										hcl.TraverseRoot{
+											Name: "count",
+
+											SrcRange: hcl.Range{
+												Start: hcl.Pos{Line: 1, Column: 27, Byte: 26},
+												End:   hcl.Pos{Line: 1, Column: 32, Byte: 31},
+											},
+										},
+										hcl.TraverseAttr{
+											Name: "index",
+
+											SrcRange: hcl.Range{
+												Start: hcl.Pos{Line: 1, Column: 32, Byte: 31},
+												End:   hcl.Pos{Line: 1, Column: 38, Byte: 37},
+											},
+										},
+									},
+
+									SrcRange: hcl.Range{
+										Start: hcl.Pos{Line: 1, Column: 27, Byte: 26},
+										End:   hcl.Pos{Line: 1, Column: 38, Byte: 37},
+									},
+								},
+								SrcRange: hcl.Range{
+									Start: hcl.Pos{Line: 1, Column: 26, Byte: 25},
+									End:   hcl.Pos{Line: 1, Column: 39, Byte: 38},
+								},
+								OpenRange: hcl.Range{
+									Start: hcl.Pos{Line: 1, Column: 26, Byte: 25},
+									End:   hcl.Pos{Line: 1, Column: 27, Byte: 26},
+								},
+							},
+							SrcRange: hcl.Range{
+								Start: hcl.Pos{Line: 1, Column: 5, Byte: 4},
+								End:   hcl.Pos{Line: 1, Column: 41, Byte: 40},
+							},
+						},
+						SrcRange: hcl.Range{
+							Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   hcl.Pos{Line: 1, Column: 41, Byte: 40},
+						},
+						NameRange: hcl.Range{
+							Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   hcl.Pos{Line: 1, Column: 2, Byte: 1},
+						},
+						EqualsRange: hcl.Range{
+							Start: hcl.Pos{Line: 1, Column: 3, Byte: 2},
+							End:   hcl.Pos{Line: 1, Column: 4, Byte: 3},
+						},
+					},
+				},
+				Blocks: Blocks{},
+				SrcRange: hcl.Range{
+					Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   hcl.Pos{Line: 2, Column: 1, Byte: 41},
+				},
+				EndRange: hcl.Range{
+					Start: hcl.Pos{Line: 2, Column: 1, Byte: 41},
+					End:   hcl.Pos{Line: 2, Column: 1, Byte: 41},
+				},
+			},
+		},
+		{
 			"a = 1 # line comment\n",
 			0,
 			&Body{
