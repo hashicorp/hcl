@@ -571,3 +571,23 @@ func (e *expression) ExprList() []hcl.Expression {
 		return nil
 	}
 }
+
+// Implementation for hcl.ExprMap.
+func (e *expression) ExprMap() []hcl.KeyValuePair {
+	switch v := e.src.(type) {
+	case *objectVal:
+		ret := make([]hcl.KeyValuePair, len(v.Attrs))
+		for i, jsonAttr := range v.Attrs {
+			ret[i] = hcl.KeyValuePair{
+				Key: &expression{src: &stringVal{
+					Value:    jsonAttr.Name,
+					SrcRange: jsonAttr.NameRange,
+				}},
+				Value: &expression{src: jsonAttr.Value},
+			}
+		}
+		return ret
+	default:
+		return nil
+	}
+}

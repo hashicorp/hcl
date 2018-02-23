@@ -648,6 +648,18 @@ func (e *ObjectConsExpr) StartRange() hcl.Range {
 	return e.OpenRange
 }
 
+// Implementation for hcl.ExprMap
+func (e *ObjectConsExpr) ExprMap() []hcl.KeyValuePair {
+	ret := make([]hcl.KeyValuePair, len(e.Items))
+	for i, item := range e.Items {
+		ret[i] = hcl.KeyValuePair{
+			Key:   item.KeyExpr,
+			Value: item.ValueExpr,
+		}
+	}
+	return ret
+}
+
 // ForExpr represents iteration constructs:
 //
 //     tuple = [for i, v in list: upper(v) if i > 2]
