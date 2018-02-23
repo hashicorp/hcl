@@ -3,9 +3,7 @@ package hclsyntax
 import (
 	"testing"
 
-	"reflect"
-
-	"github.com/davecgh/go-spew/spew"
+	"github.com/go-test/deep"
 	"github.com/hashicorp/hcl2/hcl"
 	"github.com/zclconf/go-cty/cty"
 )
@@ -219,8 +217,10 @@ func TestParseTraversalAbs(t *testing.T) {
 				t.Errorf("wrong number of diagnostics %d; want %d", len(diags), test.diagCount)
 			}
 
-			if !reflect.DeepEqual(got, test.want) {
-				t.Errorf("wrong result\nsrc:  %s\ngot:  %s\nwant: %s", test.src, spew.Sdump(got), spew.Sdump(test.want))
+			if diff := deep.Equal(got, test.want); diff != nil {
+				for _, problem := range diff {
+					t.Error(problem)
+				}
 			}
 		})
 	}
