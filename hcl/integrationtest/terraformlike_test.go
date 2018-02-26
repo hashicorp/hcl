@@ -46,9 +46,14 @@ func TestTerraformLike(t *testing.T) {
 		Config    hcl.Body       `hcl:",remain"`
 		DependsOn hcl.Expression `hcl:"depends_on,attr"`
 	}
+	type Module struct {
+		Name      string         `hcl:"name,label"`
+		Providers hcl.Expression `hcl:"providers"`
+	}
 	type Root struct {
 		Variables []*Variable `hcl:"variable,block"`
 		Resources []*Resource `hcl:"resource,block"`
+		Modules   []*Module   `hcl:"module,block"`
 	}
 	instanceDecode := &hcldec.ObjectSpec{
 		"image_id": &hcldec.AttrSpec{
@@ -276,6 +281,65 @@ func TestTerraformLike(t *testing.T) {
 					t.Errorf("wrong depends_on traversal RootName %#v; want %#v", got, want)
 				}
 			})
+
+			t.Run("module", func(t *testing.T) {
+				if got, want := len(root.Modules), 1; got != want {
+					t.Fatalf("wrong number of Modules %d; want %d", got, want)
+				}
+				mod := root.Modules[0]
+				if got, want := mod.Name, "foo"; got != want {
+					t.Errorf("wrong module name %q; want %q", got, want)
+				}
+
+				pExpr := mod.Providers
+				pairs, diags := hcl.ExprMap(pExpr)
+				if len(diags) != 0 {
+					t.Errorf("unexpected diagnostics extracting providers")
+					for _, diag := range diags {
+						t.Logf("- %s", diag)
+					}
+				}
+				if got, want := len(pairs), 1; got != want {
+					t.Fatalf("wrong number of key/value pairs in providers %d; want %d", got, want)
+				}
+
+				pair := pairs[0]
+				kt, diags := hcl.AbsTraversalForExpr(pair.Key)
+				if len(diags) != 0 {
+					t.Errorf("unexpected diagnostics extracting providers key %#v", pair.Key)
+					for _, diag := range diags {
+						t.Logf("- %s", diag)
+					}
+				}
+				vt, diags := hcl.AbsTraversalForExpr(pair.Value)
+				if len(diags) != 0 {
+					t.Errorf("unexpected diagnostics extracting providers value  %#v", pair.Value)
+					for _, diag := range diags {
+						t.Logf("- %s", diag)
+					}
+				}
+
+				if got, want := len(kt), 1; got != want {
+					t.Fatalf("wrong number of key traversal steps %d; want %d", got, want)
+				}
+				if got, want := len(vt), 2; got != want {
+					t.Fatalf("wrong number of value traversal steps %d; want %d", got, want)
+				}
+
+				if got, want := kt.RootName(), "null"; got != want {
+					t.Errorf("wrong number key traversal root %s; want %s", got, want)
+				}
+				if got, want := vt.RootName(), "null"; got != want {
+					t.Errorf("wrong number value traversal root %s; want %s", got, want)
+				}
+				if at, ok := vt[1].(hcl.TraverseAttr); ok {
+					if got, want := at.Name, "foo"; got != want {
+						t.Errorf("wrong number value traversal attribute name %s; want %s", got, want)
+					}
+				} else {
+					t.Errorf("wrong value traversal [1] type %T; want hcl.TraverseAttr", vt[1])
+				}
+			})
 		})
 	}
 }
@@ -290,8 +354,8 @@ resource "happycloud_instance" "test" {
   image_id      = var.image_id
 
   tags = {
-	"Name" = "foo"
-	"${"Environment"}" = "prod"
+  "Name" = "foo"
+  "${"Environment"}" = "prod"
   }
 
   depends_on = [
@@ -317,6 +381,12 @@ resource "happycloud_security_group" "private" {
     content {
       cidr_block = ingress.value
     }
+  }
+}
+
+module "foo" {
+  providers = {
+    null = null.foo
   }
 }
 
@@ -365,6 +435,13 @@ const terraformLikeJSON = `
             }
           }
         }
+      }
+    }
+  },
+  "module": {
+    "foo": {
+      "providers": {
+        "null": "null.foo"
       }
     }
   }

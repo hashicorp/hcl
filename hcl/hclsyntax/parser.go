@@ -1057,23 +1057,9 @@ func (p *parser) parseObjectCons() (Expression, hcl.Diagnostics) {
 			break
 		}
 
-		// As a special case, we allow the key to be a literal identifier.
-		// This means that a variable reference or function call can't appear
-		// directly as key expression, and must instead be wrapped in some
-		// disambiguation punctuation, like (var.a) = "b" or "${var.a}" = "b".
 		var key Expression
 		var keyDiags hcl.Diagnostics
-		if p.Peek().Type == TokenIdent {
-			nameTok := p.Read()
-			key = &LiteralValueExpr{
-				Val: cty.StringVal(string(nameTok.Bytes)),
-
-				SrcRange: nameTok.Range,
-			}
-		} else {
-			key, keyDiags = p.ParseExpression()
-		}
-
+		key, keyDiags = p.ParseExpression()
 		diags = append(diags, keyDiags...)
 
 		if p.recovery && keyDiags.HasErrors() {
@@ -1083,6 +1069,11 @@ func (p *parser) parseObjectCons() (Expression, hcl.Diagnostics) {
 			close = p.recover(TokenCBrace)
 			break
 		}
+
+		// We wrap up the key expression in a special wrapper that deals
+		// with our special case that naked identifiers as object keys
+		// are interpreted as literal strings.
+		key = &ObjectConsKeyExpr{Wrapped: key}
 
 		next = p.Peek()
 		if next.Type != TokenEqual && next.Type != TokenColon {

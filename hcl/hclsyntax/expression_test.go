@@ -354,6 +354,38 @@ upper(
 			0,
 		},
 		{
+			`{true: "yes"}`,
+			nil,
+			cty.ObjectVal(map[string]cty.Value{
+				"true": cty.StringVal("yes"),
+			}),
+			0,
+		},
+		{
+			`{false: "yes"}`,
+			nil,
+			cty.ObjectVal(map[string]cty.Value{
+				"false": cty.StringVal("yes"),
+			}),
+			0,
+		},
+		{
+			`{null: "yes"}`,
+			nil,
+			cty.ObjectVal(map[string]cty.Value{
+				"null": cty.StringVal("yes"),
+			}),
+			0,
+		},
+		{
+			`{15: "yes"}`,
+			nil,
+			cty.ObjectVal(map[string]cty.Value{
+				"15": cty.StringVal("yes"),
+			}),
+			0,
+		},
+		{
 			`{"hello" = "world", "goodbye" = "cruel world"}`,
 			nil,
 			cty.ObjectVal(map[string]cty.Value{
