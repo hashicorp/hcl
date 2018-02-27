@@ -370,7 +370,7 @@ func parseNumber(p *peeker) (node, hcl.Diagnostics) {
 		}
 	}
 
-	f, _, err := (&big.Float{}).Parse(string(num), 10)
+	f, _, err := big.ParseFloat(string(num), 10, 512, big.ToNearestEven)
 	if err != nil {
 		// Should never happen if above passed, since JSON numbers are a subset
 		// of what big.Float can parse...
