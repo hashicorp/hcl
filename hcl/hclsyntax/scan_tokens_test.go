@@ -1050,6 +1050,43 @@ EOF
 			},
 		},
 		{
+			`9%8`,
+			[]Token{
+				{
+					Type:  TokenNumberLit,
+					Bytes: []byte(`9`),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   hcl.Pos{Byte: 1, Line: 1, Column: 2},
+					},
+				},
+				{
+					Type:  TokenPercent,
+					Bytes: []byte(`%`),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 1, Line: 1, Column: 2},
+						End:   hcl.Pos{Byte: 2, Line: 1, Column: 3},
+					},
+				},
+				{
+					Type:  TokenNumberLit,
+					Bytes: []byte(`8`),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 2, Line: 1, Column: 3},
+						End:   hcl.Pos{Byte: 3, Line: 1, Column: 4},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte(``),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 3, Line: 1, Column: 4},
+						End:   hcl.Pos{Byte: 3, Line: 1, Column: 4},
+					},
+				},
+			},
+		},
+		{
 			"\na = 1\n",
 			[]Token{
 				{

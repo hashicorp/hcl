@@ -37,6 +37,18 @@ func TestExpressionParseAndValue(t *testing.T) {
 			0,
 		},
 		{
+			`2*5+1`,
+			nil,
+			cty.NumberIntVal(11),
+			0,
+		},
+		{
+			`9%8`,
+			nil,
+			cty.NumberIntVal(1),
+			0,
+		},
+		{
 			`(2+unk)`,
 			&hcl.EvalContext{
 				Variables: map[string]cty.Value{
