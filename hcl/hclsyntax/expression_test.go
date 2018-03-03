@@ -183,6 +183,12 @@ func TestExpressionParseAndValue(t *testing.T) {
 			0,
 		},
 		{
+			"\"hello `backtick` world\"",
+			nil,
+			cty.StringVal("hello `backtick` world"),
+			0,
+		},
+		{
 			`"hello\nworld"`,
 			nil,
 			cty.StringVal("hello\nworld"),

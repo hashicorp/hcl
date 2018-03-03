@@ -197,14 +197,14 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
         EndStringTmpl = '"';
         StringLiteralChars = (AnyUTF8 - ("\r"|"\n"));
         TemplateStringLiteral = (
-            ('$' ^'{') |
-            ('%' ^'{') |
+            ('$' ^'{' %{ fhold; }) |
+            ('%' ^'{' %{ fhold; }) |
             ('\\' StringLiteralChars) |
             (StringLiteralChars - ("$" | '%' | '"'))
         )+;
         HeredocStringLiteral = (
-            ('$' ^'{') |
-            ('%' ^'{') |
+            ('$' ^'{' %{ fhold; }) |
+            ('%' ^'{' %{ fhold; }) |
             (StringLiteralChars - ("$" | '%'))
         )*;
         BareStringLiteral = (
@@ -337,7 +337,17 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
     // encountered something that the scanner can't match, which we'll
     // deal with as an invalid.
     if cs < hcltok_first_final {
-        f.emitToken(TokenInvalid, p, len(data))
+        if mode == scanTemplate && len(stack) == 0 {
+            // If we're scanning a bare template then any straggling
+            // top-level stuff is actually literal string, rather than
+            // invalid. This handles the case where the template ends
+            // with a single "$" or "%", which trips us up because we
+            // want to see another character to decide if it's a sequence
+            // or an escape.
+            f.emitToken(TokenStringLit, ts, len(data))
+        } else {
+            f.emitToken(TokenInvalid, ts, len(data))
+        }
     }
 
     // We always emit a synthetic EOF token at the end, since it gives the

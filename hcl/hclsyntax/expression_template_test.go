@@ -229,6 +229,30 @@ trim`,
 			cty.StringVal("\\uu1234"),
 			0,
 		},
+		{
+			`$`,
+			nil,
+			cty.StringVal("$"),
+			0,
+		},
+		{
+			`$$`,
+			nil,
+			cty.StringVal("$$"),
+			0,
+		},
+		{
+			`%`,
+			nil,
+			cty.StringVal("%"),
+			0,
+		},
+		{
+			`%%`,
+			nil,
+			cty.StringVal("%%"),
+			0,
+		},
 	}
 
 	for _, test := range tests {
