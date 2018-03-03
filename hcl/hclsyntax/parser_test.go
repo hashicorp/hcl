@@ -1264,6 +1264,72 @@ block "valid" {}
 			},
 		},
 		{
+			"a = foo.0.1.baz\n",
+			1, // Chaining legacy index syntax is not supported
+			&Body{
+				Attributes: Attributes{
+					"a": {
+						Name: "a",
+						Expr: &ScopeTraversalExpr{
+							Traversal: hcl.Traversal{
+								hcl.TraverseRoot{
+									Name: "foo",
+
+									SrcRange: hcl.Range{
+										Start: hcl.Pos{Line: 1, Column: 5, Byte: 4},
+										End:   hcl.Pos{Line: 1, Column: 8, Byte: 7},
+									},
+								},
+								hcl.TraverseIndex{
+									Key: cty.DynamicVal,
+
+									SrcRange: hcl.Range{
+										Start: hcl.Pos{Line: 1, Column: 8, Byte: 7},
+										End:   hcl.Pos{Line: 1, Column: 12, Byte: 11},
+									},
+								},
+								hcl.TraverseAttr{
+									Name: "baz",
+
+									SrcRange: hcl.Range{
+										Start: hcl.Pos{Line: 1, Column: 8, Byte: 7},
+										End:   hcl.Pos{Line: 1, Column: 12, Byte: 11},
+									},
+								},
+							},
+
+							SrcRange: hcl.Range{
+								Start: hcl.Pos{Line: 1, Column: 5, Byte: 4},
+								End:   hcl.Pos{Line: 1, Column: 16, Byte: 15},
+							},
+						},
+
+						SrcRange: hcl.Range{
+							Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   hcl.Pos{Line: 1, Column: 16, Byte: 15},
+						},
+						NameRange: hcl.Range{
+							Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   hcl.Pos{Line: 1, Column: 2, Byte: 1},
+						},
+						EqualsRange: hcl.Range{
+							Start: hcl.Pos{Line: 1, Column: 3, Byte: 2},
+							End:   hcl.Pos{Line: 1, Column: 4, Byte: 3},
+						},
+					},
+				},
+				Blocks: Blocks{},
+				SrcRange: hcl.Range{
+					Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   hcl.Pos{Line: 2, Column: 1, Byte: 16},
+				},
+				EndRange: hcl.Range{
+					Start: hcl.Pos{Line: 2, Column: 1, Byte: 16},
+					End:   hcl.Pos{Line: 2, Column: 1, Byte: 16},
+				},
+			},
+		},
+		{
 			"a = \"${var.public_subnets[count.index]}\"\n",
 			0,
 			&Body{

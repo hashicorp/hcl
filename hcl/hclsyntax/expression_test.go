@@ -763,6 +763,15 @@ upper(
 			0,
 		},
 		{
+			`[[[{name:"foo"}]], [[{name:"bar"}], [{name:"baz"}]]].*.0.0.name`,
+			nil,
+			cty.TupleVal([]cty.Value{
+				cty.DynamicVal,
+				cty.DynamicVal,
+			}),
+			1, // can't chain legacy index syntax together, like .0.0 (because 0.0 parses as a single number)
+		},
+		{
 			// For an "attribute-only" splat, an index operator applies to
 			// the splat result as a whole, rather than being incorporated
 			// into the splat traversal itself.
@@ -783,6 +792,24 @@ upper(
 
 		{
 			`["hello"][0]`,
+			nil,
+			cty.StringVal("hello"),
+			0,
+		},
+		{
+			`["hello"].0`,
+			nil,
+			cty.StringVal("hello"),
+			0,
+		},
+		{
+			`[["hello"]].0.0`,
+			nil,
+			cty.DynamicVal,
+			1, // can't chain legacy index syntax together (because 0.0 parses as 0)
+		},
+		{
+			`[{greeting = "hello"}].0.greeting`,
 			nil,
 			cty.StringVal("hello"),
 			0,

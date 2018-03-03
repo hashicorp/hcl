@@ -477,6 +477,53 @@ Traversal:
 
 				ret = makeRelativeTraversal(ret, step, rng)
 
+			case TokenNumberLit:
+				// This is a weird form we inherited from HIL, allowing numbers
+				// to be used as attributes as a weird way of writing [n].
+				// This was never actually a first-class thing in HIL, but
+				// HIL tolerated sequences like .0. in its variable names and
+				// calling applications like Terraform exploited that to
+				// introduce indexing syntax where none existed.
+				numTok := p.Read() // eat token
+				attrTok = numTok
+
+				// This syntax is ambiguous if multiple indices are used in
+				// succession, like foo.0.1.baz: that actually parses as
+				// a fractional number 0.1. Since we're only supporting this
+				// syntax for compatibility with legacy Terraform
+				// configurations, and Terraform does not tend to have lists
+				// of lists, we'll choose to reject that here with a helpful
+				// error message, rather than failing later because the index
+				// isn't a whole number.
+				if dotIdx := bytes.IndexByte(numTok.Bytes, '.'); dotIdx >= 0 {
+					first := numTok.Bytes[:dotIdx]
+					second := numTok.Bytes[dotIdx+1:]
+					diags = append(diags, &hcl.Diagnostic{
+						Severity: hcl.DiagError,
+						Summary:  "Invalid legacy index syntax",
+						Detail:   fmt.Sprintf("When using the legacy index syntax, chaining two indexes together is not permitted. Use the proper index syntax instead, like [%s][%s].", first, second),
+						Subject:  &attrTok.Range,
+					})
+					rng := hcl.RangeBetween(dot.Range, numTok.Range)
+					step := hcl.TraverseIndex{
+						Key:      cty.DynamicVal,
+						SrcRange: rng,
+					}
+					ret = makeRelativeTraversal(ret, step, rng)
+					break
+				}
+
+				numVal, numDiags := p.numberLitValue(numTok)
+				diags = append(diags, numDiags...)
+
+				rng := hcl.RangeBetween(dot.Range, numTok.Range)
+				step := hcl.TraverseIndex{
+					Key:      numVal,
+					SrcRange: rng,
+				}
+
+				ret = makeRelativeTraversal(ret, step, rng)
+
 			case TokenStar:
 				// "Attribute-only" splat expression.
 				// (This is a kinda weird construct inherited from HIL, which
@@ -497,6 +544,27 @@ Traversal:
 						// into a list, for expressions like:
 						// foo.bar.*.baz.0.foo
 						numTok := p.Read()
+
+						// Weird special case if the user writes something
+						// like foo.bar.*.baz.0.0.foo, where 0.0 parses
+						// as a number.
+						if dotIdx := bytes.IndexByte(numTok.Bytes, '.'); dotIdx >= 0 {
+							first := numTok.Bytes[:dotIdx]
+							second := numTok.Bytes[dotIdx+1:]
+							diags = append(diags, &hcl.Diagnostic{
+								Severity: hcl.DiagError,
+								Summary:  "Invalid legacy index syntax",
+								Detail:   fmt.Sprintf("When using the legacy index syntax, chaining two indexes together is not permitted. Use the proper index syntax with a full splat expression [*] instead, like [%s][%s].", first, second),
+								Subject:  &attrTok.Range,
+							})
+							trav = append(trav, hcl.TraverseIndex{
+								Key:      cty.DynamicVal,
+								SrcRange: hcl.RangeBetween(dot.Range, numTok.Range),
+							})
+							lastRange = numTok.Range
+							continue
+						}
+
 						numVal, numDiags := p.numberLitValue(numTok)
 						diags = append(diags, numDiags...)
 						trav = append(trav, hcl.TraverseIndex{
