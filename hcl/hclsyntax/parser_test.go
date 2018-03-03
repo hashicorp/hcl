@@ -229,6 +229,59 @@ func TestParseConfig(t *testing.T) {
 			},
 		},
 		{
+			"block foo {}\n",
+			0,
+			&Body{
+				Attributes: Attributes{},
+				Blocks: Blocks{
+					&Block{
+						Type:   "block",
+						Labels: []string{"foo"},
+						Body: &Body{
+							Attributes: Attributes{},
+							Blocks:     Blocks{},
+
+							SrcRange: hcl.Range{
+								Start: hcl.Pos{Line: 1, Column: 11, Byte: 10},
+								End:   hcl.Pos{Line: 1, Column: 13, Byte: 12},
+							},
+							EndRange: hcl.Range{
+								Start: hcl.Pos{Line: 1, Column: 13, Byte: 12},
+								End:   hcl.Pos{Line: 1, Column: 13, Byte: 12},
+							},
+						},
+
+						TypeRange: hcl.Range{
+							Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   hcl.Pos{Line: 1, Column: 6, Byte: 5},
+						},
+						LabelRanges: []hcl.Range{
+							{
+								Start: hcl.Pos{Line: 1, Column: 7, Byte: 6},
+								End:   hcl.Pos{Line: 1, Column: 10, Byte: 9},
+							},
+						},
+						OpenBraceRange: hcl.Range{
+							Start: hcl.Pos{Line: 1, Column: 11, Byte: 10},
+							End:   hcl.Pos{Line: 1, Column: 12, Byte: 11},
+						},
+						CloseBraceRange: hcl.Range{
+							Start: hcl.Pos{Line: 1, Column: 12, Byte: 11},
+							End:   hcl.Pos{Line: 1, Column: 13, Byte: 12},
+						},
+					},
+				},
+				SrcRange: hcl.Range{
+					Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   hcl.Pos{Line: 2, Column: 1, Byte: 13},
+				},
+				EndRange: hcl.Range{
+					Start: hcl.Pos{Line: 2, Column: 1, Byte: 13},
+					End:   hcl.Pos{Line: 2, Column: 1, Byte: 13},
+				},
+			},
+		},
+		{
 			`
 block "invalid" 1.2 {}
 block "valid" {}

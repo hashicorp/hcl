@@ -161,7 +161,7 @@ language-agnostic HCL information model.
 ConfigFile = Body;
 Body       = (Attribute | Block)*;
 Attribute  = Identifier "=" Expression Newline;
-Block      = Identifier (StringLit)* "{" Newline Body "}" Newline;
+Block      = Identifier (StringLit|Identifier)* "{" Newline Body "}" Newline;
 ```
 
 ### Configuration Files
@@ -186,8 +186,10 @@ for later evaluation by the calling application.
 ### Blocks
 
 A _block_ creates a child body that is annotated with a block _type_ and
-zero or more optional block _labels_. Blocks create a structural heirachy
-which can be interpreted by the calling application.
+zero or more block _labels_. Blocks create a structural heirachy which can be
+interpreted by the calling application.
+
+Block labels can either be quoted literal strings or naked identifiers.
 
 ## Expressions
 

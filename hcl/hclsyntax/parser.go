@@ -132,7 +132,7 @@ func (p *parser) ParseBodyItem() (Node, hcl.Diagnostics) {
 	switch next.Type {
 	case TokenEqual:
 		return p.finishParsingBodyAttribute(ident)
-	case TokenOQuote, TokenOBrace:
+	case TokenOQuote, TokenOBrace, TokenIdent:
 		return p.finishParsingBodyBlock(ident)
 	default:
 		p.recoverAfterBodyItem()
@@ -231,6 +231,12 @@ Token:
 					CloseBraceRange: ident.Range, // placeholder
 				}, diags
 			}
+
+		case TokenIdent:
+			tok = p.Read() // eat token
+			label, labelRange := string(tok.Bytes), tok.Range
+			labels = append(labels, label)
+			labelRanges = append(labelRanges, labelRange)
 
 		default:
 			switch tok.Type {
