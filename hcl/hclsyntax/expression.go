@@ -417,6 +417,21 @@ func (e *FunctionCallExpr) StartRange() hcl.Range {
 	return hcl.RangeBetween(e.NameRange, e.OpenParenRange)
 }
 
+// Implementation for hcl.ExprCall.
+func (e *FunctionCallExpr) ExprCall() *hcl.StaticCall {
+	ret := &hcl.StaticCall{
+		Name:      e.Name,
+		NameRange: e.NameRange,
+		Arguments: make([]hcl.Expression, len(e.Args)),
+		ArgsRange: hcl.RangeBetween(e.OpenParenRange, e.CloseParenRange),
+	}
+	// Need to convert our own Expression objects into hcl.Expression.
+	for i, arg := range e.Args {
+		ret.Arguments[i] = arg
+	}
+	return ret
+}
+
 type ConditionalExpr struct {
 	Condition   Expression
 	TrueResult  Expression

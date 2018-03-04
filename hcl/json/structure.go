@@ -558,6 +558,29 @@ func (e *expression) AsTraversal() hcl.Traversal {
 	}
 }
 
+// Implementation for hcl.ExprCall.
+func (e *expression) ExprCall() *hcl.StaticCall {
+	// In JSON-based syntax a static call is given as a string containing
+	// an expression in the native syntax that also supports ExprCall.
+
+	switch v := e.src.(type) {
+	case *stringVal:
+		expr, diags := hclsyntax.ParseExpression([]byte(v.Value), v.SrcRange.Filename, v.SrcRange.Start)
+		if diags.HasErrors() {
+			return nil
+		}
+
+		call, diags := hcl.ExprCall(expr)
+		if diags.HasErrors() {
+			return nil
+		}
+
+		return call
+	default:
+		return nil
+	}
+}
+
 // Implementation for hcl.ExprList.
 func (e *expression) ExprList() []hcl.Expression {
 	switch v := e.src.(type) {
