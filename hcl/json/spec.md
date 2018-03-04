@@ -358,3 +358,48 @@ the result must be a number, rather than a string representation of a number:
 ```json
 "${ a + b }"
 ```
+
+## Static Analysis
+
+The HCL static analysis operations are implemented for JSON values that
+represent expressions, as described in the following sections.
+
+Due to the limited expressive power of the JSON syntax alone, use of these
+static analyses functions rather than normal expression evaluation is used
+as additional context for how a JSON value is to be interpreted, which means
+that static analyses can result in a different interpretation of a given
+expression than normal evaluation.
+
+### Static List
+
+An expression interpreted as a static list must be a JSON array. Each of the
+values in the array is interpreted as an expression and returned.
+
+### Static Map
+
+An expression interpreted as a static map must be a JSON object. Each of the
+key/value pairs in the object is presented as a pair of expressions. Since
+object property names are always strings, evaluating the key expression with
+a non-`nil` evaluation context will evaluate any template sequences given
+in the property name.
+
+### Static Call
+
+An expression interpreted as a static call must be a string. The content of
+the string is interpreted as a native syntax expression (not a _template_,
+unlike normal evaluation) and then the static call analysis is delegated to
+that expression.
+
+If the original expression is not a string or its contents cannot be parsed
+as a native syntax expression then static call analysis is not supported.
+
+### Static Traversal
+
+An expression interpreted as a static traversal must be a string. The content
+of the string is interpreted as a native syntax expression (not a _template_,
+unlike normal evaluation) and then static traversal analysis is delegated
+to that expression.
+
+If the original expression is not a string or its contents cannot be parsed
+as a native syntax expression then static call analysis is not supported.
+

@@ -879,3 +879,45 @@ application, by converting the final template result to string. This is
 necessary, for example, if a standalone template is being used to produce
 the direct contents of a file, since the result in that case must always be a
 string.
+
+## Static Analysis
+
+The HCL static analysis operations are implemented for some expression types
+in the native syntax, as described in the following sections.
+
+A goal for static analysis of the native syntax is for the interpretation to
+be as consistent as possible with the dynamic evaluation interpretation of
+the given expression, though some deviations are intentionally made in order
+to maximize the potential for analysis.
+
+### Static List
+
+The tuple construction syntax can be interpreted as a static list. All of
+the expression elements given are returned as the static list elements,
+with no further interpretation.
+
+### Static Map
+
+The object construction syntax can be interpreted as a static map. All of the
+key/value pairs given are returned as the static pairs, with no further
+interpretation.
+
+The usual requirement that an attribute name be interpretable as a string
+does not apply to this static analyis, allowing callers to provide map-like
+constructs with different key types by building on the map syntax.
+
+### Static Call
+
+The function call syntax can be interpreted as a static call. The called
+function name is returned verbatim and the given argument expressions are
+returned as the static arguments, with no further interpretation.
+
+### Static Traversal
+
+A variable expression and any attached attribute access operations and
+constant index operations can be interpreted as a static traversal.
+
+The keywords `true`, `false` and `null` can also be interpreted as
+static traversals, behaving as if they were references to variables of those
+names, to allow callers to redefine the meaning of those keywords in certain
+contexts.
