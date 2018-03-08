@@ -112,7 +112,25 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
             if topdoc.StartOfLine {
                 maybeMarker := bytes.TrimSpace(data[ts:te])
                 if bytes.Equal(maybeMarker, topdoc.Marker) {
+                    // We actually emit two tokens here: the end-of-heredoc
+                    // marker first, and then separately the newline that
+                    // follows it. This then avoids issues with the closing
+                    // marker consuming a newline that would normally be used
+                    // to mark the end of an attribute definition.
+                    // We might have either a \n sequence or an \r\n sequence
+                    // here, so we must handle both.
+                    nls := te-1
+                    nle := te
+                    te--
+                    if data[te-1] == '\r' {
+                        // back up one more byte
+                        nls--
+                        te--
+                    }
                     token(TokenCHeredoc);
+                    ts = nls
+                    te = nle
+                    token(TokenNewline);
                     heredocs = heredocs[:len(heredocs)-1]
                     fret;
                 }

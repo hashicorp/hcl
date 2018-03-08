@@ -4,6 +4,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/go-test/deep"
+
 	"github.com/hashicorp/hcl2/hcl"
 	"github.com/kylelemons/godebug/pretty"
 )
@@ -978,9 +980,17 @@ EOT
 				},
 				{
 					Type:  TokenCHeredoc,
-					Bytes: []byte("EOT\n"),
+					Bytes: []byte("EOT"),
 					Range: hcl.Range{
 						Start: hcl.Pos{Byte: 18, Line: 3, Column: 1},
+						End:   hcl.Pos{Byte: 21, Line: 3, Column: 4},
+					},
+				},
+				{
+					Type:  TokenNewline,
+					Bytes: []byte("\n"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 21, Line: 3, Column: 4},
 						End:   hcl.Pos{Byte: 22, Line: 4, Column: 1},
 					},
 				},
@@ -990,6 +1000,51 @@ EOT
 					Range: hcl.Range{
 						Start: hcl.Pos{Byte: 22, Line: 4, Column: 1},
 						End:   hcl.Pos{Byte: 22, Line: 4, Column: 1},
+					},
+				},
+			},
+		},
+		{
+			"<<EOT\r\nhello world\r\nEOT\r\n", // intentional windows-style line endings
+			[]Token{
+				{
+					Type:  TokenOHeredoc,
+					Bytes: []byte("<<EOT\r\n"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   hcl.Pos{Byte: 7, Line: 1, Column: 7},
+					},
+				},
+				{
+					Type:  TokenStringLit,
+					Bytes: []byte("hello world\r\n"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 7, Line: 1, Column: 7},
+						End:   hcl.Pos{Byte: 20, Line: 1, Column: 19},
+					},
+				},
+				{
+					Type:  TokenCHeredoc,
+					Bytes: []byte("EOT"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 20, Line: 1, Column: 19},
+						End:   hcl.Pos{Byte: 23, Line: 1, Column: 22},
+					},
+				},
+				{
+					Type:  TokenNewline,
+					Bytes: []byte("\r\n"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 23, Line: 1, Column: 22},
+						End:   hcl.Pos{Byte: 25, Line: 1, Column: 23},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 25, Line: 1, Column: 23},
+						End:   hcl.Pos{Byte: 25, Line: 1, Column: 23},
 					},
 				},
 			},
@@ -1050,9 +1105,17 @@ EOT
 				},
 				{
 					Type:  TokenCHeredoc,
-					Bytes: []byte("EOT\n"),
+					Bytes: []byte("EOT"),
 					Range: hcl.Range{
 						Start: hcl.Pos{Byte: 20, Line: 3, Column: 1},
+						End:   hcl.Pos{Byte: 23, Line: 3, Column: 4},
+					},
+				},
+				{
+					Type:  TokenNewline,
+					Bytes: []byte("\n"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 23, Line: 3, Column: 4},
 						End:   hcl.Pos{Byte: 24, Line: 4, Column: 1},
 					},
 				},
@@ -1114,9 +1177,17 @@ EOT
 				},
 				{
 					Type:  TokenCHeredoc,
-					Bytes: []byte("EOT\n"),
+					Bytes: []byte("EOT"),
 					Range: hcl.Range{
 						Start: hcl.Pos{Byte: 17, Line: 3, Column: 1},
+						End:   hcl.Pos{Byte: 20, Line: 3, Column: 4},
+					},
+				},
+				{
+					Type:  TokenNewline,
+					Bytes: []byte("\n"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 20, Line: 3, Column: 4},
 						End:   hcl.Pos{Byte: 21, Line: 4, Column: 1},
 					},
 				},
@@ -1173,9 +1244,17 @@ EOF
 				},
 				{
 					Type:  TokenCHeredoc,
-					Bytes: []byte("EOF\n"),
+					Bytes: []byte("EOF"),
 					Range: hcl.Range{
 						Start: hcl.Pos{Byte: 21, Line: 4, Column: 1},
+						End:   hcl.Pos{Byte: 24, Line: 4, Column: 4},
+					},
+				},
+				{
+					Type:  TokenNewline,
+					Bytes: []byte("\n"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 24, Line: 4, Column: 4},
 						End:   hcl.Pos{Byte: 25, Line: 5, Column: 1},
 					},
 				},
@@ -1197,9 +1276,17 @@ EOF
 				},
 				{
 					Type:  TokenCHeredoc,
-					Bytes: []byte("EOF\n"),
+					Bytes: []byte("EOF"),
 					Range: hcl.Range{
 						Start: hcl.Pos{Byte: 27, Line: 6, Column: 1},
+						End:   hcl.Pos{Byte: 30, Line: 6, Column: 4},
+					},
+				},
+				{
+					Type:  TokenNewline,
+					Bytes: []byte("\n"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 30, Line: 6, Column: 4},
 						End:   hcl.Pos{Byte: 31, Line: 7, Column: 1},
 					},
 				},
@@ -1565,6 +1652,13 @@ EOF
 					test.input, diff,
 				)
 			}
+
+			// "pretty" diff output is not helpful for all differences, so
+			// we'll also print out a list of specific differences.
+			for _, problem := range deep.Equal(got, test.want) {
+				t.Error(problem)
+			}
+
 		})
 	}
 }
