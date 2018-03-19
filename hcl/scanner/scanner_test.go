@@ -593,6 +593,33 @@ func countNewlines(s string) int {
 	return n
 }
 
+func TestScanDigitsUnread(t *testing.T) {
+	cases := []string{
+		"M=0\"\\00",
+		"M=\"\\00",
+		"\"\\00",
+		"M=[\"\\00",
+		"U{\"\\00",
+		"\"\n{}#\n\"\\00",
+		"M=[[\"\\00",
+		"U{d=0\"\\U00",
+		"#\n\"\\x00",
+		"m=[[[\"\\00",
+	}
+
+	for _, c := range cases {
+		s := New([]byte(c))
+
+		for {
+			tok := s.Scan()
+			if tok.Type == token.EOF {
+				break
+			}
+			t.Logf("s.Scan() = %s", tok)
+		}
+	}
+}
+
 func TestScanHeredocRegexpCompile(t *testing.T) {
 	cases := []string{
 		"0\xe1\n<<ȸ\nhello\nworld\nȸ",
@@ -600,7 +627,6 @@ func TestScanHeredocRegexpCompile(t *testing.T) {
 
 	for _, c := range cases {
 		s := New([]byte(c))
-		fmt.Printf("START %q\n", c)
 
 		for {
 			tok := s.Scan()
