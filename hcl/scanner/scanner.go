@@ -74,20 +74,17 @@ func (s *Scanner) next() rune {
 		return eof
 	}
 
-	if ch == utf8.RuneError && size == 1 {
-		s.srcPos.Column++
-		s.srcPos.Offset += size
-		s.lastCharLen = size
-		s.err("illegal UTF-8 encoding")
-		return ch
-	}
-
 	// remember last position
 	s.prevPos = s.srcPos
 
 	s.srcPos.Column++
 	s.lastCharLen = size
 	s.srcPos.Offset += size
+
+	if ch == utf8.RuneError && size == 1 {
+		s.err("illegal UTF-8 encoding")
+		return ch
+	}
 
 	if ch == '\n' {
 		s.srcPos.Line++
