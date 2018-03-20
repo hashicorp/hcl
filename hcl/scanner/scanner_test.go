@@ -592,3 +592,22 @@ func countNewlines(s string) int {
 	}
 	return n
 }
+
+func TestScanHeredocRegexpCompile(t *testing.T) {
+	cases := []string{
+		"0\xe1\n<<ȸ\nhello\nworld\nȸ",
+	}
+
+	for _, c := range cases {
+		s := New([]byte(c))
+		fmt.Printf("START %q\n", c)
+
+		for {
+			tok := s.Scan()
+			if tok.Type == token.EOF {
+				break
+			}
+			t.Logf("s.Scan() = %s", tok)
+		}
+	}
+}
