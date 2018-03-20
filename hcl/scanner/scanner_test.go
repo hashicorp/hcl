@@ -512,6 +512,8 @@ func TestError(t *testing.T) {
 
 	testError(t, "ab\x80", "1:3", "illegal UTF-8 encoding", token.IDENT)
 	testError(t, "abc\xff", "1:4", "illegal UTF-8 encoding", token.IDENT)
+	testError(t, "ab\x00", "1:3", "unexpected null character (0x00)", token.IDENT)
+	testError(t, "ab\x00\n", "1:3", "unexpected null character (0x00)", token.IDENT)
 
 	testError(t, `"ab`+"\x80", "1:4", "illegal UTF-8 encoding", token.STRING)
 	testError(t, `"abc`+"\xff", "1:5", "illegal UTF-8 encoding", token.STRING)
