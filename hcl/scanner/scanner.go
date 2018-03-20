@@ -100,6 +100,11 @@ func (s *Scanner) next() rune {
 		return eof
 	}
 
+	if ch == '\uE123' {
+		s.err("unicode code point U+E123 reserved for internal use")
+		return utf8.RuneError
+	}
+
 	// debug
 	// fmt.Printf("ch: %q, offset:column: %d:%d\n", ch, s.srcPos.Offset, s.srcPos.Column)
 	return ch

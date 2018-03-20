@@ -509,6 +509,7 @@ func TestScan_crlf(t *testing.T) {
 func TestError(t *testing.T) {
 	testError(t, "\x80", "1:1", "illegal UTF-8 encoding", token.ILLEGAL)
 	testError(t, "\xff", "1:1", "illegal UTF-8 encoding", token.ILLEGAL)
+	testError(t, "\uE123", "1:1", "unicode code point U+E123 reserved for internal use", token.ILLEGAL)
 
 	testError(t, "ab\x80", "1:3", "illegal UTF-8 encoding", token.IDENT)
 	testError(t, "abc\xff", "1:4", "illegal UTF-8 encoding", token.IDENT)
