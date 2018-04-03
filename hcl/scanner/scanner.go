@@ -552,7 +552,7 @@ func (s *Scanner) scanDigits(ch rune, base, n int) rune {
 		s.err("illegal char escape")
 	}
 
-	if n != start {
+	if n != start && ch != eof {
 		// we scanned all digits, put the last non digit char back,
 		// only if we read anything at all
 		s.unread()
