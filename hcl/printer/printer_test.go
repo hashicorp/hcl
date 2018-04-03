@@ -153,6 +153,8 @@ func TestFormatValidOutput(t *testing.T) {
 	cases := []string{
 		"#\x00",
 		"#\ue123t",
+		"Y=<<4\n4/\n\n\n/4/@=4/\n\n\n/4000000004\r\r\n00004\n",
+		"x=<<_\n_\r\r\n_\n",
 	}
 
 	for _, c := range cases {

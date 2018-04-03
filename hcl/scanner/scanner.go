@@ -440,9 +440,9 @@ func (s *Scanner) scanHeredoc() {
 
 	var identRegexp *regexp.Regexp
 	if identBytes[0] == '-' {
-		identRegexp = regexp.MustCompile(fmt.Sprintf(`[[:space:]]*%s\z`, identBytes[1:]))
+		identRegexp = regexp.MustCompile(fmt.Sprintf(`^[[:space:]]*%s\r*\z`, identBytes[1:]))
 	} else {
-		identRegexp = regexp.MustCompile(fmt.Sprintf(`[[:space:]]*%s\z`, identBytes))
+		identRegexp = regexp.MustCompile(fmt.Sprintf(`^[[:space:]]*%s\r*\z`, identBytes))
 	}
 
 	// Read the actual string value
