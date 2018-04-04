@@ -531,6 +531,9 @@ func TestError(t *testing.T) {
 	testError(t, `"${abc`+"\n", "2:1", "literal not terminated", token.STRING)
 	testError(t, `/*/`, "1:4", "comment not terminated", token.COMMENT)
 	testError(t, `/foo`, "1:1", "expected '/' for comment", token.COMMENT)
+
+	testError(t, "<<\nfoo\n\n", "1:3", "zero-length heredoc anchor", token.HEREDOC)
+	testError(t, "<<-\nfoo\n\n", "1:4", "zero-length heredoc anchor", token.HEREDOC)
 }
 
 func testError(t *testing.T, src, pos, msg string, tok token.Type) {
