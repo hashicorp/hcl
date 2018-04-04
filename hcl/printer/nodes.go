@@ -252,6 +252,14 @@ func (p *printer) objectItem(o *ast.ObjectItem) []byte {
 		}
 	}
 
+	// If key and val are on different lines, treat line comments like lead comments.
+	if o.LineComment != nil && o.Val.Pos().Line != o.Keys[0].Pos().Line {
+		for _, comment := range o.LineComment.List {
+			buf.WriteString(comment.Text)
+			buf.WriteByte(newline)
+		}
+	}
+
 	for i, k := range o.Keys {
 		buf.WriteString(k.Token.Text)
 		buf.WriteByte(blank)
@@ -265,7 +273,7 @@ func (p *printer) objectItem(o *ast.ObjectItem) []byte {
 
 	buf.Write(p.output(o.Val))
 
-	if o.Val.Pos().Line == o.Keys[0].Pos().Line && o.LineComment != nil {
+	if o.LineComment != nil && o.Val.Pos().Line == o.Keys[0].Pos().Line {
 		buf.WriteByte(blank)
 		for _, comment := range o.LineComment.List {
 			buf.WriteString(comment.Text)
