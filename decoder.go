@@ -1,6 +1,7 @@
 package hcl
 
 import (
+	"encoding"
 	"errors"
 	"fmt"
 	"reflect"
@@ -12,6 +13,13 @@ import (
 	"github.com/hashicorp/hcl/hcl/parser"
 	"github.com/hashicorp/hcl/hcl/token"
 )
+
+// Unmarshaler is the interface implemented by types that wish to override the unmarshalling
+// behavior of hcl. The input to the UnmarshalHCL function is the ast.Node associated with the value
+// being unmarshaled.
+type Unmarshaler interface {
+	UnmarshalHCL(node ast.Node) error
+}
 
 // This is the tag to use with structures to have settings for HCL
 const tagName = "hcl"
@@ -64,6 +72,57 @@ type decoder struct {
 	stack []reflect.Kind
 }
 
+func astToTextBytes(node ast.Node) []byte {
+	switch node := node.(type) {
+	case *ast.LiteralType:
+		switch node.Token.Type {
+		case token.STRING, token.HEREDOC:
+			return []byte(node.Token.Value().(string))
+		case token.FLOAT, token.NUMBER, token.BOOL:
+			return []byte(node.Token.Text)
+		default:
+			return nil
+		}
+	}
+	return nil
+}
+
+func (d *decoder) tryDecodeUnmarshaler(name string, node ast.Node, result reflect.Value) (ok bool, err error) {
+	if result == (reflect.Value{}) || !result.IsValid() {
+		return false, nil
+	}
+
+	// Get the value of the result and then take its address, again,
+	result = reflect.Indirect(result)
+	if result.CanAddr() {
+		result = result.Addr()
+	}
+
+	for result != (reflect.Value{}) && result.IsValid() && result.CanInterface() {
+		switch m := result.Interface().(type) {
+		case Unmarshaler:
+			return true, m.UnmarshalHCL(node)
+		case encoding.TextUnmarshaler:
+			b := astToTextBytes(node)
+			if b == nil {
+				return true, &parser.PosError{
+					Pos: node.Pos(),
+					Err: fmt.Errorf("%s: unknown type %T", name, node),
+				}
+			}
+			return true, m.UnmarshalText(b)
+		}
+
+		if result.Kind() != reflect.Ptr {
+			break
+		}
+
+		result = result.Elem()
+	}
+
+	return false, nil
+}
+
 func (d *decoder) decode(name string, node ast.Node, result reflect.Value) error {
 	k := result
 
@@ -84,6 +143,10 @@ func (d *decoder) decode(name string, node ast.Node, result reflect.Value) error
 		defer func() {
 			d.stack = d.stack[:len(d.stack)-1]
 		}()
+	}
+
+	if ok, err := d.tryDecodeUnmarshaler(name, node, result); ok {
+		return err
 	}
 
 	switch k.Kind() {

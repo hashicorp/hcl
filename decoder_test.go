@@ -1,6 +1,8 @@
 package hcl
 
 import (
+	"bytes"
+	"errors"
 	"io/ioutil"
 	"path/filepath"
 	"reflect"
@@ -932,6 +934,189 @@ nested "content" {
 
 	if v["hello"] != "world" {
 		t.Errorf("expected mapping to be returned")
+	}
+}
+
+type hclUnmarshalerType struct {
+	Left, Right string
+}
+
+func (t *hclUnmarshalerType) UnmarshalHCL(node ast.Node) error {
+	list, ok := node.(*ast.ListType)
+	if !ok {
+		return errors.New("joint: expected list")
+	}
+
+	if len(list.List) != 2 {
+		return errors.New("joint: expected 2 items")
+	}
+
+	if err := DecodeObject(&t.Left, list.List[0]); err != nil {
+		return err
+	}
+
+	return DecodeObject(&t.Right, list.List[1])
+}
+
+func TestDecode_Unmarshaler(t *testing.T) {
+	var value struct {
+		Joint *hclUnmarshalerType
+	}
+
+	content := `
+joint = [1, <<EOF
+text
+EOF
+]
+`
+
+	err := Decode(&value, content)
+
+	if err != nil {
+		t.Fatalf("unable to decode content, %v", err)
+	}
+
+	want := &hclUnmarshalerType{Left: "1", Right: "text\n"}
+	if !reflect.DeepEqual(want, value.Joint) {
+		t.Errorf("want %#+v; got %#+v", want, value.Joint)
+	}
+}
+
+func TestDecode_Unmarshaler_Value(t *testing.T) {
+	var value struct {
+		Joint hclUnmarshalerType
+	}
+
+	content := `
+joint = [1, <<EOF
+text
+EOF
+]
+`
+
+	err := Decode(&value, content)
+
+	if err != nil {
+		t.Fatalf("unable to decode content, %v", err)
+	}
+
+	want := hclUnmarshalerType{Left: "1", Right: "text\n"}
+	if !reflect.DeepEqual(want, value.Joint) {
+		t.Errorf("want %#+v; got %#+v", want, value.Joint)
+	}
+}
+
+func TestDecode_Unmarshaler_Error(t *testing.T) {
+	var value struct {
+		Joint *hclUnmarshalerType
+	}
+
+	content := `
+joint = ["left"]
+`
+
+	err := Decode(&value, content)
+
+	if err == nil {
+		t.Fatalf("expected error, got nil")
+	}
+
+	if want := errors.New("joint: expected 2 items"); !reflect.DeepEqual(err, want) {
+		t.Errorf("want %v; got %v", want, err)
+	}
+}
+
+type textUnmarshalerType struct {
+	Left, Right string
+}
+
+func (t *textUnmarshalerType) UnmarshalText(b []byte) error {
+	bs := bytes.SplitN(b, []byte{':'}, 2)
+	if len(bs) != 2 {
+		return errors.New("joint: expected colon")
+	}
+	*t = textUnmarshalerType{
+		Left:  string(bs[0]),
+		Right: string(bs[1]),
+	}
+	return nil
+}
+
+type floatUnmarshalerType float64
+
+func (f *floatUnmarshalerType) UnmarshalText(b []byte) error {
+	if !bytes.Equal([]byte(`center`), b) {
+		return errors.New("want 1234")
+	}
+	*f = 1234
+	return nil
+}
+
+func TestDecode_TextUnmarshaler(t *testing.T) {
+	var value struct {
+		Joint  *textUnmarshalerType
+		Floaty floatUnmarshalerType
+	}
+
+	content := `
+joint = "left:right"
+floaty = "center"
+`
+
+	err := Decode(&value, content)
+
+	if err != nil {
+		t.Fatalf("unable to decode content, %v", err)
+	}
+
+	want := &textUnmarshalerType{Left: "left", Right: "right"}
+	if !reflect.DeepEqual(want, value.Joint) {
+		t.Errorf("want %#+v; got %#+v", want, value.Joint)
+	}
+
+	if value.Floaty != 1234.0 {
+		t.Errorf("want %#+v; got %#+v", 1234.0, value.Floaty)
+	}
+}
+
+func TestDecode_TextUnmarshaler_Value(t *testing.T) {
+	var value struct {
+		Joint textUnmarshalerType
+	}
+
+	content := `
+joint = "left:right"
+`
+
+	err := Decode(&value, content)
+
+	if err != nil {
+		t.Fatalf("unable to decode content, %v", err)
+	}
+
+	want := textUnmarshalerType{Left: "left", Right: "right"}
+	if !reflect.DeepEqual(want, value.Joint) {
+		t.Errorf("want %#+v; got %#+v", want, value.Joint)
+	}
+}
+
+func TestDecode_TextUnmarshaler_Error(t *testing.T) {
+	var value struct {
+		Joint *textUnmarshalerType
+	}
+
+	content := `
+joint = "left"
+`
+
+	err := Decode(&value, content)
+
+	if err == nil {
+		t.Fatalf("expected error, got nil")
+	}
+
+	if want := errors.New("joint: expected colon"); !reflect.DeepEqual(err, want) {
+		t.Errorf("want %v; got %v", want, err)
 	}
 }
 
