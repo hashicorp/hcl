@@ -734,6 +734,22 @@ upper(
 			0,
 		},
 		{
+			`set.*.name`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"set": cty.SetVal([]cty.Value{
+						cty.ObjectVal(map[string]cty.Value{
+							"name": cty.StringVal("Steve"),
+						}),
+					}),
+				},
+			},
+			cty.TupleVal([]cty.Value{
+				cty.StringVal("Steve"),
+			}),
+			0,
+		},
+		{
 			`["hello", "goodbye"].*`,
 			nil,
 			cty.TupleVal([]cty.Value{

@@ -1170,7 +1170,7 @@ func (e *SplatExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	// both to tuples/lists and to other values, and in the latter case
 	// the value will be treated as an implicit single-value list. We'll
 	// deal with that here first.
-	if !(sourceVal.Type().IsTupleType() || sourceVal.Type().IsListType()) {
+	if !(sourceVal.Type().IsTupleType() || sourceVal.Type().IsListType() || sourceVal.Type().IsSetType()) {
 		sourceVal = cty.ListVal([]cty.Value{sourceVal})
 	}
 
