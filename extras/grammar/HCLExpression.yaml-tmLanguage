@@ -1,0 +1,111 @@
+name: HCL Expression
+scopeName: source.hclexpr
+fileTypes: []
+uuid: 6c358551-0381-4128-9ea3-277b21943b5c
+
+patterns:
+
+- comment: Comments
+  name: comment.line.hcl
+  begin: '#|//'
+  end: $\n?
+  captures:
+    '0': {name: punctuation.definition.comment.hcl}
+
+- comment: Block comments
+  name: comment.block.hcl
+  begin: /\*
+  end: \*/
+  captures:
+    '0': {name: punctuation.definition.comment.hcl}
+
+- comment: Language constants (true, false, null)
+  name: constant.language.hcl
+  match: \b(true|false|null)\b
+
+- comment: Numbers
+  name: constant.numeric.hcl
+  match: \b([0-9]+)(.[0-9]+)?([eE][0-9]+)?\b
+
+- comment: Function Calls
+  begin: ([-\w]+)(\()
+  beginCaptures:
+    '1': {name: keyword.other.function.inline.hcl}
+    '2': {name: keyword.other.section.begin.hcl}
+  end: (\))
+  endCaptures:
+    '1': {name: keyword.other.section.end.hcl}
+  patterns:
+  - include: '$self'
+
+- comment: Variables and Attribute Names
+  match: '[-\w]+'
+  captures:
+    '0': {name: variable.other.hcl}
+
+- comment: Heredoc Templates
+  begin: (?>\s*<<(\w+))
+  beginCaptures:
+    '0': {name: punctuation.definition.string.begin.hcl}
+    '1': {name: keyword.operator.heredoc.hcl}
+  end: ^\s*\1$
+  endCaptures:
+    '0': {name: punctuation.definition.string.end.hcl keyword.operator.heredoc.hcl}
+  patterns:
+  - include: 'source.hcltemplate'
+
+- comment: String Templates
+  begin: \"
+  beginCaptures:
+    '0': {name: string.hcl punctuation.definition.string.begin.hcl}
+  end: \"
+  endCaptures:
+    '0': {name: string.hcl punctuation.definition.string.end.hcl}
+  patterns:
+  - include: 'source.hcltemplate'
+  - match: '(^"|$\{|%\{)+'
+    name: "string.quoted.double.hcl"
+
+- comment: Operators
+  match: '(!=|==|>=|<=|&&|\|\||[-+*/%<>!?:])'
+  captures:
+    '0': {name: keyword.operator.hcl}
+
+- comment: Parentheses
+  begin: '\('
+  beginCaptures:
+    '0': {name: meta.brace.round.hcl}
+  end: '\)'
+  endCaptures:
+    '0': {name: meta.brace.round.hcl}
+  patterns:
+  - include: '$self'
+
+- comment: Tuple Constructor
+  begin: '\['
+  beginCaptures:
+    '0': {name: meta.brace.square.hcl}
+  end: '\]'
+  endCaptures:
+    '0': {name: meta.brace.square.hcl}
+  patterns:
+  - match: '(for|in)'
+    captures:
+      '0': {name: keyword.control.hcl}
+  - include: '$self'
+
+- comment: Object Constructor
+  begin: '\{'
+  beginCaptures:
+    '0': {name: meta.brace.curly.hcl}
+  end: '\}'
+  endCaptures:
+    '0': {name: meta.brace.curly.hcl}
+  patterns:
+  - match: '(for|in)'
+    captures:
+      '0': {name: keyword.control.hcl}
+  - match: '(=>|\.\.\.)'
+    captures:
+      '0': {name: keyword.operator.hcl}
+  - include: '$self'

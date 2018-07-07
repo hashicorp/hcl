@@ -1,0 +1,97 @@
+{
+  "fileTypes": [
+    "hcl",
+    "hcldec"
+  ],
+  "name": "HCL",
+  "patterns": [
+    {
+      "begin": "#|//",
+      "captures": {
+        "0": {
+          "name": "punctuation.definition.comment.hcl"
+        }
+      },
+      "comment": "Comments",
+      "end": "$\\n?",
+      "name": "comment.line.hcl"
+    },
+    {
+      "begin": "/\\*",
+      "captures": {
+        "0": {
+          "name": "punctuation.definition.comment.hcl"
+        }
+      },
+      "comment": "Block comments",
+      "end": "\\*/",
+      "name": "comment.block.hcl"
+    },
+    {
+      "begin": "{",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.block.hcl"
+        }
+      },
+      "comment": "Nested Blocks",
+      "end": "}",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.block.hcl"
+        }
+      },
+      "name": "meta.block.hcl",
+      "patterns": [
+        {
+          "include": "$self"
+        }
+      ]
+    },
+    {
+      "captures": {
+        "1": {
+          "name": "string.hcl punctuation.definition.string.begin.hcl"
+        },
+        "2": {
+          "name": "string.value.hcl"
+        },
+        "3": {
+          "name": "string.hcl punctuation.definition.string.end.hcl"
+        }
+      },
+      "comment": "Quoted Block Labels",
+      "match": "(\")([^\"]+)(\")"
+    },
+    {
+      "begin": "(\\w+)\\s*(=)\\s*",
+      "beginCaptures": {
+        "1": {
+          "name": "variable.other.assignment.hcl"
+        },
+        "2": {
+          "name": "keyword.operator.hcl"
+        }
+      },
+      "comment": "Attribute Definitions",
+      "end": "$",
+      "name": "meta.attr.hcl",
+      "patterns": [
+        {
+          "include": "source.hclexpr"
+        }
+      ]
+    },
+    {
+      "captures": {
+        "0": {
+          "name": "keyword.other.hcl"
+        }
+      },
+      "comment": "Keywords",
+      "match": "[-\\w]+"
+    }
+  ],
+  "scopeName": "source.hcl",
+  "uuid": "55e8075d-e2e3-4e44-8446-744a9860e476"
+}
