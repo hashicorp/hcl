@@ -239,6 +239,10 @@ func spaceAfterToken(subject, before, after *Token) bool {
 		// No space right before a comma in an argument list
 		return false
 
+	case subject.Type == hclsyntax.TokenComma:
+		// Always a space after a comma
+		return true
+
 	case subject.Type == hclsyntax.TokenQuotedLit || subject.Type == hclsyntax.TokenStringLit || subject.Type == hclsyntax.TokenOQuote || subject.Type == hclsyntax.TokenOHeredoc || after.Type == hclsyntax.TokenQuotedLit || after.Type == hclsyntax.TokenStringLit || after.Type == hclsyntax.TokenCQuote || after.Type == hclsyntax.TokenCHeredoc:
 		// No extra spaces within templates
 		return false
