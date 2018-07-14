@@ -2,13 +2,15 @@ package hclwrite
 
 import (
 	"fmt"
+	"math/big"
 	"reflect"
 	"testing"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/hashicorp/hcl2/hcl/hclsyntax"
 	"github.com/hashicorp/hcl2/hcl"
+	"github.com/hashicorp/hcl2/hcl/hclsyntax"
 	"github.com/kylelemons/godebug/pretty"
+	"github.com/zclconf/go-cty/cty"
 )
 
 func TestParse(t *testing.T) {
@@ -48,11 +50,13 @@ func TestParse(t *testing.T) {
 								},
 							},
 							&TokenSeq{
-								Tokens{
-									{
-										Type:         hclsyntax.TokenNumberLit,
-										Bytes:        []byte(`1`),
-										SpacesBefore: 1,
+								&TokenSeq{
+									Tokens{
+										{
+											Type:         hclsyntax.TokenNumberLit,
+											Bytes:        []byte(`1`),
+											SpacesBefore: 1,
+										},
 									},
 								},
 							},
@@ -81,13 +85,17 @@ func TestParse(t *testing.T) {
 							},
 						}},
 						Expr: &Expression{
-							AllTokens: &TokenSeq{Tokens{
-								{
-									Type:         hclsyntax.TokenNumberLit,
-									Bytes:        []byte(`1`),
-									SpacesBefore: 1,
+							AllTokens: &TokenSeq{
+								&TokenSeq{
+									Tokens{
+										{
+											Type:         hclsyntax.TokenNumberLit,
+											Bytes:        []byte(`1`),
+											SpacesBefore: 1,
+										},
+									},
 								},
-							}},
+							},
 						},
 						EOLTokens: &TokenSeq{Tokens{
 							{
@@ -119,11 +127,13 @@ func TestParse(t *testing.T) {
 							},
 						},
 						&TokenSeq{
-							Tokens{
-								{
-									Type:         hclsyntax.TokenNumberLit,
-									Bytes:        []byte(`1`),
-									SpacesBefore: 1,
+							&TokenSeq{
+								Tokens{
+									{
+										Type:         hclsyntax.TokenNumberLit,
+										Bytes:        []byte(`1`),
+										SpacesBefore: 1,
+									},
 								},
 							},
 						},
@@ -174,11 +184,13 @@ func TestParse(t *testing.T) {
 								},
 							},
 							&TokenSeq{
-								Tokens{
-									{
-										Type:         hclsyntax.TokenNumberLit,
-										Bytes:        []byte(`1`),
-										SpacesBefore: 1,
+								&TokenSeq{
+									Tokens{
+										{
+											Type:         hclsyntax.TokenNumberLit,
+											Bytes:        []byte(`1`),
+											SpacesBefore: 1,
+										},
 									},
 								},
 							},
@@ -214,13 +226,17 @@ func TestParse(t *testing.T) {
 							},
 						}},
 						Expr: &Expression{
-							AllTokens: &TokenSeq{Tokens{
-								{
-									Type:         hclsyntax.TokenNumberLit,
-									Bytes:        []byte(`1`),
-									SpacesBefore: 1,
+							AllTokens: &TokenSeq{
+								&TokenSeq{
+									Tokens{
+										{
+											Type:         hclsyntax.TokenNumberLit,
+											Bytes:        []byte(`1`),
+											SpacesBefore: 1,
+										},
+									},
 								},
-							}},
+							},
 						},
 						EOLTokens: &TokenSeq{Tokens{
 							{
@@ -261,11 +277,13 @@ func TestParse(t *testing.T) {
 							},
 						},
 						&TokenSeq{
-							Tokens{
-								{
-									Type:         hclsyntax.TokenNumberLit,
-									Bytes:        []byte(`1`),
-									SpacesBefore: 1,
+							&TokenSeq{
+								Tokens{
+									{
+										Type:         hclsyntax.TokenNumberLit,
+										Bytes:        []byte(`1`),
+										SpacesBefore: 1,
+									},
 								},
 							},
 						},
@@ -307,11 +325,13 @@ func TestParse(t *testing.T) {
 								},
 							},
 							&TokenSeq{
-								Tokens{
-									{
-										Type:         hclsyntax.TokenNumberLit,
-										Bytes:        []byte(`1`),
-										SpacesBefore: 1,
+								&TokenSeq{
+									Tokens{
+										{
+											Type:         hclsyntax.TokenNumberLit,
+											Bytes:        []byte(`1`),
+											SpacesBefore: 1,
+										},
 									},
 								},
 							},
@@ -340,13 +360,17 @@ func TestParse(t *testing.T) {
 							},
 						}},
 						Expr: &Expression{
-							AllTokens: &TokenSeq{Tokens{
-								{
-									Type:         hclsyntax.TokenNumberLit,
-									Bytes:        []byte(`1`),
-									SpacesBefore: 1,
+							AllTokens: &TokenSeq{
+								&TokenSeq{
+									Tokens{
+										{
+											Type:         hclsyntax.TokenNumberLit,
+											Bytes:        []byte(`1`),
+											SpacesBefore: 1,
+										},
+									},
 								},
-							}},
+							},
 						},
 						LineCommentTokens: &TokenSeq{Tokens{
 							{
@@ -378,11 +402,13 @@ func TestParse(t *testing.T) {
 							},
 						},
 						&TokenSeq{
-							Tokens{
-								{
-									Type:         hclsyntax.TokenNumberLit,
-									Bytes:        []byte(`1`),
-									SpacesBefore: 1,
+							&TokenSeq{
+								Tokens{
+									{
+										Type:         hclsyntax.TokenNumberLit,
+										Bytes:        []byte(`1`),
+										SpacesBefore: 1,
+									},
 								},
 							},
 						},
@@ -424,11 +450,13 @@ func TestParse(t *testing.T) {
 								},
 							},
 							&TokenSeq{
-								Tokens{
-									{
-										Type:         hclsyntax.TokenNumberLit,
-										Bytes:        []byte(`1`),
-										SpacesBefore: 1,
+								&TokenSeq{
+									Tokens{
+										{
+											Type:         hclsyntax.TokenNumberLit,
+											Bytes:        []byte(`1`),
+											SpacesBefore: 1,
+										},
 									},
 								},
 							},
@@ -457,13 +485,17 @@ func TestParse(t *testing.T) {
 							},
 						}},
 						Expr: &Expression{
-							AllTokens: &TokenSeq{Tokens{
-								{
-									Type:         hclsyntax.TokenNumberLit,
-									Bytes:        []byte(`1`),
-									SpacesBefore: 1,
+							AllTokens: &TokenSeq{
+								&TokenSeq{
+									Tokens{
+										{
+											Type:         hclsyntax.TokenNumberLit,
+											Bytes:        []byte(`1`),
+											SpacesBefore: 1,
+										},
+									},
 								},
-							}},
+							},
 						},
 						EOLTokens: &TokenSeq{Tokens{
 							{
@@ -509,11 +541,13 @@ func TestParse(t *testing.T) {
 							},
 						},
 						&TokenSeq{
-							Tokens{
-								{
-									Type:         hclsyntax.TokenNumberLit,
-									Bytes:        []byte(`1`),
-									SpacesBefore: 1,
+							&TokenSeq{
+								Tokens{
+									{
+										Type:         hclsyntax.TokenNumberLit,
+										Bytes:        []byte(`1`),
+										SpacesBefore: 1,
+									},
 								},
 							},
 						},
@@ -702,11 +736,13 @@ func TestParse(t *testing.T) {
 										},
 									},
 									&TokenSeq{
-										Tokens{
-											{
-												Type:         hclsyntax.TokenNumberLit,
-												Bytes:        []byte(`1`),
-												SpacesBefore: 1,
+										&TokenSeq{
+											Tokens{
+												{
+													Type:         hclsyntax.TokenNumberLit,
+													Bytes:        []byte(`1`),
+													SpacesBefore: 1,
+												},
 											},
 										},
 									},
@@ -777,11 +813,13 @@ func TestParse(t *testing.T) {
 											},
 										},
 										&TokenSeq{
-											Tokens{
-												{
-													Type:         hclsyntax.TokenNumberLit,
-													Bytes:        []byte(`1`),
-													SpacesBefore: 1,
+											&TokenSeq{
+												Tokens{
+													{
+														Type:         hclsyntax.TokenNumberLit,
+														Bytes:        []byte(`1`),
+														SpacesBefore: 1,
+													},
 												},
 											},
 										},
@@ -815,11 +853,13 @@ func TestParse(t *testing.T) {
 									},
 									Expr: &Expression{
 										AllTokens: &TokenSeq{
-											Tokens{
-												{
-													Type:         hclsyntax.TokenNumberLit,
-													Bytes:        []byte(`1`),
-													SpacesBefore: 1,
+											&TokenSeq{
+												Tokens{
+													{
+														Type:         hclsyntax.TokenNumberLit,
+														Bytes:        []byte(`1`),
+														SpacesBefore: 1,
+													},
 												},
 											},
 										},
@@ -865,11 +905,13 @@ func TestParse(t *testing.T) {
 										},
 									},
 									&TokenSeq{
-										Tokens{
-											{
-												Type:         hclsyntax.TokenNumberLit,
-												Bytes:        []byte(`1`),
-												SpacesBefore: 1,
+										&TokenSeq{
+											Tokens{
+												{
+													Type:         hclsyntax.TokenNumberLit,
+													Bytes:        []byte(`1`),
+													SpacesBefore: 1,
+												},
 											},
 										},
 									},
@@ -951,11 +993,13 @@ func TestParse(t *testing.T) {
 									},
 								},
 								&TokenSeq{
-									Tokens{
-										{
-											Type:         hclsyntax.TokenNumberLit,
-											Bytes:        []byte(`1`),
-											SpacesBefore: 1,
+									&TokenSeq{
+										Tokens{
+											{
+												Type:         hclsyntax.TokenNumberLit,
+												Bytes:        []byte(`1`),
+												SpacesBefore: 1,
+											},
 										},
 									},
 								},
@@ -976,6 +1020,682 @@ func TestParse(t *testing.T) {
 									Type:         hclsyntax.TokenCBrace,
 									Bytes:        []byte(`}`),
 									SpacesBefore: 0,
+								},
+							},
+						},
+						&TokenSeq{
+							Tokens{
+								{
+									Type:         hclsyntax.TokenNewline,
+									Bytes:        []byte{'\n'},
+									SpacesBefore: 0,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			"a = foo\n",
+			&Body{
+				Items: []Node{
+					&Attribute{
+						AllTokens: &TokenSeq{
+							&TokenSeq{
+								Tokens{
+									{
+										Type:         hclsyntax.TokenIdent,
+										Bytes:        []byte(`a`),
+										SpacesBefore: 0,
+									},
+								},
+							},
+							&TokenSeq{
+								Tokens{
+									{
+										Type:         hclsyntax.TokenEqual,
+										Bytes:        []byte(`=`),
+										SpacesBefore: 1,
+									},
+								},
+							},
+							&TokenSeq{
+								&TokenSeq{
+									&TokenSeq{
+										Tokens{
+											{
+												Type:         hclsyntax.TokenIdent,
+												Bytes:        []byte(`foo`),
+												SpacesBefore: 1,
+											},
+										},
+									},
+								},
+							},
+							&TokenSeq{
+								Tokens{
+									{
+										Type:         hclsyntax.TokenNewline,
+										Bytes:        []byte{'\n'},
+										SpacesBefore: 0,
+									},
+								},
+							},
+						},
+						NameTokens: &TokenSeq{Tokens{
+							{
+								Type:         hclsyntax.TokenIdent,
+								Bytes:        []byte(`a`),
+								SpacesBefore: 0,
+							},
+						}},
+						EqualsTokens: &TokenSeq{Tokens{
+							{
+								Type:         hclsyntax.TokenEqual,
+								Bytes:        []byte(`=`),
+								SpacesBefore: 1,
+							},
+						}},
+						Expr: &Expression{
+							AllTokens: &TokenSeq{
+								&TokenSeq{
+									&TokenSeq{
+										Tokens{
+											{
+												Type:         hclsyntax.TokenIdent,
+												Bytes:        []byte(`foo`),
+												SpacesBefore: 1,
+											},
+										},
+									},
+								},
+							},
+							AbsTraversals: []*Traversal{
+								{
+									AllTokens: &TokenSeq{
+										&TokenSeq{
+											Tokens{
+												{
+													Type:         hclsyntax.TokenIdent,
+													Bytes:        []byte(`foo`),
+													SpacesBefore: 1,
+												},
+											},
+										},
+									},
+									Steps: []*Traverser{
+										{
+											AllTokens: &TokenSeq{Tokens{
+												{
+													Type:         hclsyntax.TokenIdent,
+													Bytes:        []byte(`foo`),
+													SpacesBefore: 1,
+												},
+											}},
+											Logical: hcl.TraverseRoot{
+												Name: "foo",
+												SrcRange: hcl.Range{
+													Filename: "",
+													Start:    hcl.Pos{Line: 1, Column: 5, Byte: 4},
+													End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+						EOLTokens: &TokenSeq{Tokens{
+							{
+								Type:         hclsyntax.TokenNewline,
+								Bytes:        []byte{'\n'},
+								SpacesBefore: 0,
+							},
+						}},
+					},
+				},
+				AllTokens: &TokenSeq{
+					&TokenSeq{
+						&TokenSeq{
+							Tokens{
+								{
+									Type:         hclsyntax.TokenIdent,
+									Bytes:        []byte(`a`),
+									SpacesBefore: 0,
+								},
+							},
+						},
+						&TokenSeq{
+							Tokens{
+								{
+									Type:         hclsyntax.TokenEqual,
+									Bytes:        []byte(`=`),
+									SpacesBefore: 1,
+								},
+							},
+						},
+						&TokenSeq{
+							&TokenSeq{
+								&TokenSeq{
+									Tokens{
+										{
+											Type:         hclsyntax.TokenIdent,
+											Bytes:        []byte(`foo`),
+											SpacesBefore: 1,
+										},
+									},
+								},
+							},
+						},
+						&TokenSeq{
+							Tokens{
+								{
+									Type:         hclsyntax.TokenNewline,
+									Bytes:        []byte{'\n'},
+									SpacesBefore: 0,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			"a = foo.bar\n",
+			&Body{
+				Items: []Node{
+					&Attribute{
+						AllTokens: &TokenSeq{
+							&TokenSeq{
+								Tokens{
+									{
+										Type:         hclsyntax.TokenIdent,
+										Bytes:        []byte(`a`),
+										SpacesBefore: 0,
+									},
+								},
+							},
+							&TokenSeq{
+								Tokens{
+									{
+										Type:         hclsyntax.TokenEqual,
+										Bytes:        []byte(`=`),
+										SpacesBefore: 1,
+									},
+								},
+							},
+							&TokenSeq{
+								&TokenSeq{
+									&TokenSeq{
+										Tokens{
+											{
+												Type:         hclsyntax.TokenIdent,
+												Bytes:        []byte(`foo`),
+												SpacesBefore: 1,
+											},
+										},
+									},
+									&TokenSeq{
+										Tokens{
+											{
+												Type:         hclsyntax.TokenDot,
+												Bytes:        []byte(`.`),
+												SpacesBefore: 0,
+											},
+											{
+												Type:         hclsyntax.TokenIdent,
+												Bytes:        []byte(`bar`),
+												SpacesBefore: 0,
+											},
+										},
+									},
+								},
+							},
+							&TokenSeq{
+								Tokens{
+									{
+										Type:         hclsyntax.TokenNewline,
+										Bytes:        []byte{'\n'},
+										SpacesBefore: 0,
+									},
+								},
+							},
+						},
+						NameTokens: &TokenSeq{Tokens{
+							{
+								Type:         hclsyntax.TokenIdent,
+								Bytes:        []byte(`a`),
+								SpacesBefore: 0,
+							},
+						}},
+						EqualsTokens: &TokenSeq{Tokens{
+							{
+								Type:         hclsyntax.TokenEqual,
+								Bytes:        []byte(`=`),
+								SpacesBefore: 1,
+							},
+						}},
+						Expr: &Expression{
+							AllTokens: &TokenSeq{
+								&TokenSeq{
+									&TokenSeq{
+										Tokens{
+											{
+												Type:         hclsyntax.TokenIdent,
+												Bytes:        []byte(`foo`),
+												SpacesBefore: 1,
+											},
+										},
+									},
+									&TokenSeq{
+										Tokens{
+											{
+												Type:         hclsyntax.TokenDot,
+												Bytes:        []byte(`.`),
+												SpacesBefore: 0,
+											},
+											{
+												Type:         hclsyntax.TokenIdent,
+												Bytes:        []byte(`bar`),
+												SpacesBefore: 0,
+											},
+										},
+									},
+								},
+							},
+							AbsTraversals: []*Traversal{
+								{
+									AllTokens: &TokenSeq{
+										&TokenSeq{
+											Tokens{
+												{
+													Type:         hclsyntax.TokenIdent,
+													Bytes:        []byte(`foo`),
+													SpacesBefore: 1,
+												},
+											},
+										},
+										&TokenSeq{
+											Tokens{
+												{
+													Type:         hclsyntax.TokenDot,
+													Bytes:        []byte(`.`),
+													SpacesBefore: 0,
+												},
+												{
+													Type:         hclsyntax.TokenIdent,
+													Bytes:        []byte(`bar`),
+													SpacesBefore: 0,
+												},
+											},
+										},
+									},
+									Steps: []*Traverser{
+										{
+											AllTokens: &TokenSeq{Tokens{
+												{
+													Type:         hclsyntax.TokenIdent,
+													Bytes:        []byte(`foo`),
+													SpacesBefore: 1,
+												},
+											}},
+											Logical: hcl.TraverseRoot{
+												Name: "foo",
+												SrcRange: hcl.Range{
+													Filename: "",
+													Start:    hcl.Pos{Line: 1, Column: 5, Byte: 4},
+													End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+												},
+											},
+										},
+										{
+											AllTokens: &TokenSeq{Tokens{
+												{
+													Type:         hclsyntax.TokenDot,
+													Bytes:        []byte(`.`),
+													SpacesBefore: 0,
+												},
+												{
+													Type:         hclsyntax.TokenIdent,
+													Bytes:        []byte(`bar`),
+													SpacesBefore: 0,
+												},
+											}},
+											Logical: hcl.TraverseAttr{
+												Name: "bar",
+												SrcRange: hcl.Range{
+													Filename: "",
+													Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+													End:      hcl.Pos{Line: 1, Column: 12, Byte: 11},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+						EOLTokens: &TokenSeq{Tokens{
+							{
+								Type:         hclsyntax.TokenNewline,
+								Bytes:        []byte{'\n'},
+								SpacesBefore: 0,
+							},
+						}},
+					},
+				},
+				AllTokens: &TokenSeq{
+					&TokenSeq{
+						&TokenSeq{
+							Tokens{
+								{
+									Type:         hclsyntax.TokenIdent,
+									Bytes:        []byte(`a`),
+									SpacesBefore: 0,
+								},
+							},
+						},
+						&TokenSeq{
+							Tokens{
+								{
+									Type:         hclsyntax.TokenEqual,
+									Bytes:        []byte(`=`),
+									SpacesBefore: 1,
+								},
+							},
+						},
+						&TokenSeq{
+							&TokenSeq{
+								&TokenSeq{
+									Tokens{
+										{
+											Type:         hclsyntax.TokenIdent,
+											Bytes:        []byte(`foo`),
+											SpacesBefore: 1,
+										},
+									},
+								},
+								&TokenSeq{
+									Tokens{
+										{
+											Type:         hclsyntax.TokenDot,
+											Bytes:        []byte(`.`),
+											SpacesBefore: 0,
+										},
+										{
+											Type:         hclsyntax.TokenIdent,
+											Bytes:        []byte(`bar`),
+											SpacesBefore: 0,
+										},
+									},
+								},
+							},
+						},
+						&TokenSeq{
+							Tokens{
+								{
+									Type:         hclsyntax.TokenNewline,
+									Bytes:        []byte{'\n'},
+									SpacesBefore: 0,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			"a = foo[0]\n",
+			&Body{
+				Items: []Node{
+					&Attribute{
+						AllTokens: &TokenSeq{
+							&TokenSeq{
+								Tokens{
+									{
+										Type:         hclsyntax.TokenIdent,
+										Bytes:        []byte(`a`),
+										SpacesBefore: 0,
+									},
+								},
+							},
+							&TokenSeq{
+								Tokens{
+									{
+										Type:         hclsyntax.TokenEqual,
+										Bytes:        []byte(`=`),
+										SpacesBefore: 1,
+									},
+								},
+							},
+							&TokenSeq{
+								&TokenSeq{
+									&TokenSeq{
+										Tokens{
+											{
+												Type:         hclsyntax.TokenIdent,
+												Bytes:        []byte(`foo`),
+												SpacesBefore: 1,
+											},
+										},
+									},
+									&TokenSeq{
+										Tokens{
+											{
+												Type:         hclsyntax.TokenOBrack,
+												Bytes:        []byte(`[`),
+												SpacesBefore: 0,
+											},
+											{
+												Type:         hclsyntax.TokenNumberLit,
+												Bytes:        []byte(`0`),
+												SpacesBefore: 0,
+											},
+											{
+												Type:         hclsyntax.TokenCBrack,
+												Bytes:        []byte(`]`),
+												SpacesBefore: 0,
+											},
+										},
+									},
+								},
+							},
+							&TokenSeq{
+								Tokens{
+									{
+										Type:         hclsyntax.TokenNewline,
+										Bytes:        []byte{'\n'},
+										SpacesBefore: 0,
+									},
+								},
+							},
+						},
+						NameTokens: &TokenSeq{Tokens{
+							{
+								Type:         hclsyntax.TokenIdent,
+								Bytes:        []byte(`a`),
+								SpacesBefore: 0,
+							},
+						}},
+						EqualsTokens: &TokenSeq{Tokens{
+							{
+								Type:         hclsyntax.TokenEqual,
+								Bytes:        []byte(`=`),
+								SpacesBefore: 1,
+							},
+						}},
+						Expr: &Expression{
+							AllTokens: &TokenSeq{
+								&TokenSeq{
+									&TokenSeq{
+										Tokens{
+											{
+												Type:         hclsyntax.TokenIdent,
+												Bytes:        []byte(`foo`),
+												SpacesBefore: 1,
+											},
+										},
+									},
+									&TokenSeq{
+										Tokens{
+											{
+												Type:         hclsyntax.TokenOBrack,
+												Bytes:        []byte(`[`),
+												SpacesBefore: 0,
+											},
+											{
+												Type:         hclsyntax.TokenNumberLit,
+												Bytes:        []byte(`0`),
+												SpacesBefore: 0,
+											},
+											{
+												Type:         hclsyntax.TokenCBrack,
+												Bytes:        []byte(`]`),
+												SpacesBefore: 0,
+											},
+										},
+									},
+								},
+							},
+							AbsTraversals: []*Traversal{
+								{
+									AllTokens: &TokenSeq{
+										&TokenSeq{
+											Tokens{
+												{
+													Type:         hclsyntax.TokenIdent,
+													Bytes:        []byte(`foo`),
+													SpacesBefore: 1,
+												},
+											},
+										},
+										&TokenSeq{
+											Tokens{
+												{
+													Type:         hclsyntax.TokenOBrack,
+													Bytes:        []byte(`[`),
+													SpacesBefore: 0,
+												},
+												{
+													Type:         hclsyntax.TokenNumberLit,
+													Bytes:        []byte(`0`),
+													SpacesBefore: 0,
+												},
+												{
+													Type:         hclsyntax.TokenCBrack,
+													Bytes:        []byte(`]`),
+													SpacesBefore: 0,
+												},
+											},
+										},
+									},
+									Steps: []*Traverser{
+										{
+											AllTokens: &TokenSeq{Tokens{
+												{
+													Type:         hclsyntax.TokenIdent,
+													Bytes:        []byte(`foo`),
+													SpacesBefore: 1,
+												},
+											}},
+											Logical: hcl.TraverseRoot{
+												Name: "foo",
+												SrcRange: hcl.Range{
+													Filename: "",
+													Start:    hcl.Pos{Line: 1, Column: 5, Byte: 4},
+													End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+												},
+											},
+										},
+										{
+											AllTokens: &TokenSeq{Tokens{
+												{
+													Type:         hclsyntax.TokenOBrack,
+													Bytes:        []byte(`[`),
+													SpacesBefore: 0,
+												},
+												{
+													Type:         hclsyntax.TokenNumberLit,
+													Bytes:        []byte(`0`),
+													SpacesBefore: 0,
+												},
+												{
+													Type:         hclsyntax.TokenCBrack,
+													Bytes:        []byte(`]`),
+													SpacesBefore: 0,
+												},
+											}},
+											Logical: hcl.TraverseIndex{
+												Key: cty.NumberVal(big.NewFloat(0).SetPrec(512)),
+												SrcRange: hcl.Range{
+													Filename: "",
+													Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+													End:      hcl.Pos{Line: 1, Column: 11, Byte: 10},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+						EOLTokens: &TokenSeq{Tokens{
+							{
+								Type:         hclsyntax.TokenNewline,
+								Bytes:        []byte{'\n'},
+								SpacesBefore: 0,
+							},
+						}},
+					},
+				},
+				AllTokens: &TokenSeq{
+					&TokenSeq{
+						&TokenSeq{
+							Tokens{
+								{
+									Type:         hclsyntax.TokenIdent,
+									Bytes:        []byte(`a`),
+									SpacesBefore: 0,
+								},
+							},
+						},
+						&TokenSeq{
+							Tokens{
+								{
+									Type:         hclsyntax.TokenEqual,
+									Bytes:        []byte(`=`),
+									SpacesBefore: 1,
+								},
+							},
+						},
+						&TokenSeq{
+							&TokenSeq{
+								&TokenSeq{
+									Tokens{
+										{
+											Type:         hclsyntax.TokenIdent,
+											Bytes:        []byte(`foo`),
+											SpacesBefore: 1,
+										},
+									},
+								},
+								&TokenSeq{
+									Tokens{
+										{
+											Type:         hclsyntax.TokenOBrack,
+											Bytes:        []byte(`[`),
+											SpacesBefore: 0,
+										},
+										{
+											Type:         hclsyntax.TokenNumberLit,
+											Bytes:        []byte(`0`),
+											SpacesBefore: 0,
+										},
+										{
+											Type:         hclsyntax.TokenCBrack,
+											Bytes:        []byte(`]`),
+											SpacesBefore: 0,
+										},
+									},
 								},
 							},
 						},
