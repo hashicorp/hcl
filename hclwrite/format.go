@@ -296,8 +296,6 @@ func spaceAfterToken(subject, before, after *Token) bool {
 
 func linesForFormat(tokens Tokens) []formatLine {
 	if len(tokens) == 0 {
-		// should never happen, since we should always have EOF, but let's
-		// not crash anyway.
 		return make([]formatLine, 0)
 	}
 
@@ -328,6 +326,16 @@ func linesForFormat(tokens Tokens) []formatLine {
 			lines[li].lead = tokens[lineStart : i+1]
 			lineStart = i + 1
 			li++
+		}
+	}
+
+	// If a set of tokens doesn't end in TokenEOF (e.g. because it's a
+	// fragment of tokens from the middle of a file) then we might fall
+	// out here with a line still pending.
+	if lineStart < len(tokens) {
+		lines[li].lead = tokens[lineStart:]
+		if lines[li].lead[len(lines[li].lead)-1].Type == hclsyntax.TokenEOF {
+			lines[li].lead = lines[li].lead[:len(lines[li].lead)-1]
 		}
 	}
 
