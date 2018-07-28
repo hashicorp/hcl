@@ -46,22 +46,22 @@ type Diagnostic struct {
 	Subject *Range
 	Context *Range
 
-	// For diagnostics that occur when evaluating an expression, EvalContext
-	// may point to the EvalContext that was active when evaluating that
-	// expression, which may allow for the inclusion of additional useful
-	// information when rendering a diagnostic message to the user.
+	// For diagnostics that occur when evaluating an expression, Expression
+	// may refer to that expression and EvalContext may point to the
+	// EvalContext that was active when evaluating it. This may allow for the
+	// inclusion of additional useful information when rendering a diagnostic
+	// message to the user.
 	//
 	// It is not always possible to select a single EvalContext for a
 	// diagnostic, and so in some cases this field may be nil even when an
-	// expression causes a problem. Therefore it is not valid to use the
-	// nil-ness of this field to definitively decide whether a diagnostic
-	// relates to an expression.
+	// expression causes a problem.
 	//
 	// EvalContexts form a tree, so the given EvalContext may refer to a parent
 	// which in turn refers to another parent, etc. For a full picture of all
 	// of the active variables and functions the caller must walk up this
 	// chain, preferring definitions that are "closer" to the expression in
 	// case of colliding names.
+	Expression  Expression
 	EvalContext *EvalContext
 }
 

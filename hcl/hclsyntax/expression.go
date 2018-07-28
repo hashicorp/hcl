@@ -106,7 +106,7 @@ func (e *ScopeTraversalExpr) walkChildNodes(w internalWalkFunc) {
 
 func (e *ScopeTraversalExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	val, diags := e.Traversal.TraverseAbs(ctx)
-	setDiagEvalContext(diags, ctx)
+	setDiagEvalContext(diags, e, ctx)
 	return val, diags
 }
 
@@ -138,7 +138,7 @@ func (e *RelativeTraversalExpr) walkChildNodes(w internalWalkFunc) {
 func (e *RelativeTraversalExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	src, diags := e.Source.Value(ctx)
 	ret, travDiags := e.Traversal.TraverseRel(src)
-	setDiagEvalContext(travDiags, ctx)
+	setDiagEvalContext(travDiags, e, ctx)
 	diags = append(diags, travDiags...)
 	return ret, diags
 }
@@ -214,6 +214,7 @@ func (e *FunctionCallExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnosti
 					Summary:     "Function calls not allowed",
 					Detail:      "Functions may not be called here.",
 					Subject:     e.Range().Ptr(),
+					Expression:  e,
 					EvalContext: ctx,
 				},
 			}
@@ -235,6 +236,7 @@ func (e *FunctionCallExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnosti
 				Detail:      fmt.Sprintf("There is no function named %q.%s", e.Name, suggestion),
 				Subject:     &e.NameRange,
 				Context:     e.Range().Ptr(),
+				Expression:  e,
 				EvalContext: ctx,
 			},
 		}
@@ -263,8 +265,9 @@ func (e *FunctionCallExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnosti
 					Severity:    hcl.DiagError,
 					Summary:     "Invalid expanding argument value",
 					Detail:      "The expanding argument (indicated by ...) must not be null.",
-					Context:     expandExpr.Range().Ptr(),
-					Subject:     e.Range().Ptr(),
+					Subject:     expandExpr.Range().Ptr(),
+					Context:     e.Range().Ptr(),
+					Expression:  expandExpr,
 					EvalContext: ctx,
 				})
 				return cty.DynamicVal, diags
@@ -289,8 +292,9 @@ func (e *FunctionCallExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnosti
 				Severity:    hcl.DiagError,
 				Summary:     "Invalid expanding argument value",
 				Detail:      "The expanding argument (indicated by ...) must be of a tuple, list, or set type.",
-				Context:     expandExpr.Range().Ptr(),
-				Subject:     e.Range().Ptr(),
+				Subject:     expandExpr.Range().Ptr(),
+				Context:     e.Range().Ptr(),
+				Expression:  expandExpr,
 				EvalContext: ctx,
 			})
 			return cty.DynamicVal, diags
@@ -313,6 +317,7 @@ func (e *FunctionCallExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnosti
 				),
 				Subject:     &e.CloseParenRange,
 				Context:     e.Range().Ptr(),
+				Expression:  e,
 				EvalContext: ctx,
 			},
 		}
@@ -329,6 +334,7 @@ func (e *FunctionCallExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnosti
 				),
 				Subject:     args[len(params)].StartRange().Ptr(),
 				Context:     e.Range().Ptr(),
+				Expression:  e,
 				EvalContext: ctx,
 			},
 		}
@@ -361,6 +367,7 @@ func (e *FunctionCallExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnosti
 				),
 				Subject:     argExpr.StartRange().Ptr(),
 				Context:     e.Range().Ptr(),
+				Expression:  argExpr,
 				EvalContext: ctx,
 			})
 		}
@@ -399,6 +406,7 @@ func (e *FunctionCallExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnosti
 				),
 				Subject:     argExpr.StartRange().Ptr(),
 				Context:     e.Range().Ptr(),
+				Expression:  argExpr,
 				EvalContext: ctx,
 			})
 
@@ -412,6 +420,7 @@ func (e *FunctionCallExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnosti
 				),
 				Subject:     e.StartRange().Ptr(),
 				Context:     e.Range().Ptr(),
+				Expression:  e,
 				EvalContext: ctx,
 			})
 		}
@@ -481,6 +490,7 @@ func (e *ConditionalExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostic
 				),
 				Subject:     hcl.RangeBetween(e.TrueResult.Range(), e.FalseResult.Range()).Ptr(),
 				Context:     &e.SrcRange,
+				Expression:  e,
 				EvalContext: ctx,
 			},
 		}
@@ -495,6 +505,7 @@ func (e *ConditionalExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostic
 			Detail:      "The condition value is null. Conditions must either be true or false.",
 			Subject:     e.Condition.Range().Ptr(),
 			Context:     &e.SrcRange,
+			Expression:  e.Condition,
 			EvalContext: ctx,
 		})
 		return cty.UnknownVal(resultType), diags
@@ -510,6 +521,7 @@ func (e *ConditionalExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostic
 			Detail:      fmt.Sprintf("The condition expression must be of type bool."),
 			Subject:     e.Condition.Range().Ptr(),
 			Context:     &e.SrcRange,
+			Expression:  e.Condition,
 			EvalContext: ctx,
 		})
 		return cty.UnknownVal(resultType), diags
@@ -531,6 +543,7 @@ func (e *ConditionalExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostic
 					),
 					Subject:     e.TrueResult.Range().Ptr(),
 					Context:     &e.SrcRange,
+					Expression:  e.TrueResult,
 					EvalContext: ctx,
 				})
 				trueResult = cty.UnknownVal(resultType)
@@ -551,8 +564,9 @@ func (e *ConditionalExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostic
 						"The false result value has the wrong type: %s.",
 						err.Error(),
 					),
-					Subject:     e.TrueResult.Range().Ptr(),
+					Subject:     e.FalseResult.Range().Ptr(),
 					Context:     &e.SrcRange,
+					Expression:  e.FalseResult,
 					EvalContext: ctx,
 				})
 				falseResult = cty.UnknownVal(resultType)
@@ -697,6 +711,7 @@ func (e *ObjectConsExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics
 				Summary:     "Null value as key",
 				Detail:      "Can't use a null value as a key.",
 				Subject:     item.ValueExpr.Range().Ptr(),
+				Expression:  item.KeyExpr,
 				EvalContext: ctx,
 			})
 			known = false
@@ -711,6 +726,7 @@ func (e *ObjectConsExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics
 				Summary:     "Incorrect key type",
 				Detail:      fmt.Sprintf("Can't use this value as a key: %s.", err.Error()),
 				Subject:     item.ValueExpr.Range().Ptr(),
+				Expression:  item.ValueExpr,
 				EvalContext: ctx,
 			})
 			known = false

@@ -13,9 +13,10 @@ import (
 // been seen by a caller. Its purpose is to apply additional context to a
 // set of diagnostics produced by a "deeper" component as the stack unwinds
 // during expression evaluation.
-func setDiagEvalContext(diags hcl.Diagnostics, ctx *hcl.EvalContext) {
+func setDiagEvalContext(diags hcl.Diagnostics, expr hcl.Expression, ctx *hcl.EvalContext) {
 	for _, diag := range diags {
-		if diag.EvalContext == nil {
+		if diag.Expression == nil {
+			diag.Expression = expr
 			diag.EvalContext = ctx
 		}
 	}

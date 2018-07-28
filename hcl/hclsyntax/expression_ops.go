@@ -154,6 +154,7 @@ func (e *BinaryOpExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) 
 			Detail:      fmt.Sprintf("Unsuitable value for left operand: %s.", err),
 			Subject:     e.LHS.Range().Ptr(),
 			Context:     &e.SrcRange,
+			Expression:  e.LHS,
 			EvalContext: ctx,
 		})
 	}
@@ -165,6 +166,7 @@ func (e *BinaryOpExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) 
 			Detail:      fmt.Sprintf("Unsuitable value for right operand: %s.", err),
 			Subject:     e.RHS.Range().Ptr(),
 			Context:     &e.SrcRange,
+			Expression:  e.RHS,
 			EvalContext: ctx,
 		})
 	}
@@ -184,6 +186,7 @@ func (e *BinaryOpExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) 
 			Summary:     "Operation failed",
 			Detail:      fmt.Sprintf("Error during operation: %s.", err),
 			Subject:     &e.SrcRange,
+			Expression:  e,
 			EvalContext: ctx,
 		})
 		return cty.UnknownVal(e.Op.Type), diags
@@ -227,6 +230,7 @@ func (e *UnaryOpExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 			Detail:      fmt.Sprintf("Unsuitable value for unary operand: %s.", err),
 			Subject:     e.Val.Range().Ptr(),
 			Context:     &e.SrcRange,
+			Expression:  e.Val,
 			EvalContext: ctx,
 		})
 	}
@@ -246,6 +250,7 @@ func (e *UnaryOpExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 			Summary:     "Operation failed",
 			Detail:      fmt.Sprintf("Error during operation: %s.", err),
 			Subject:     &e.SrcRange,
+			Expression:  e,
 			EvalContext: ctx,
 		})
 		return cty.UnknownVal(e.Op.Type), diags

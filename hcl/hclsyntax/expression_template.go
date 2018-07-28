@@ -39,6 +39,7 @@ func (e *TemplateExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) 
 				),
 				Subject:     part.Range().Ptr(),
 				Context:     &e.SrcRange,
+				Expression:  part,
 				EvalContext: ctx,
 			})
 			continue
@@ -64,6 +65,7 @@ func (e *TemplateExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) 
 				),
 				Subject:     part.Range().Ptr(),
 				Context:     &e.SrcRange,
+				Expression:  part,
 				EvalContext: ctx,
 			})
 			continue
@@ -130,6 +132,7 @@ func (e *TemplateJoinExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnosti
 					"An iteration result is null. Cannot include a null value in a string template.",
 				),
 				Subject:     e.Range().Ptr(),
+				Expression:  e,
 				EvalContext: ctx,
 			})
 			continue
@@ -147,6 +150,7 @@ func (e *TemplateJoinExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnosti
 					err.Error(),
 				),
 				Subject:     e.Range().Ptr(),
+				Expression:  e,
 				EvalContext: ctx,
 			})
 			continue

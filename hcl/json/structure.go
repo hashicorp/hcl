@@ -432,7 +432,8 @@ func (e *expression) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 				Value:    jsonAttr.Name,
 				SrcRange: jsonAttr.NameRange,
 			}}).Value(ctx)
-			val, valDiags := (&expression{src: jsonAttr.Value}).Value(ctx)
+			valExpr := &expression{src: jsonAttr.Value}
+			val, valDiags := valExpr.Value(ctx)
 			diags = append(diags, nameDiags...)
 			diags = append(diags, valDiags...)
 
@@ -444,6 +445,7 @@ func (e *expression) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 					Summary:     "Invalid object key expression",
 					Detail:      fmt.Sprintf("Cannot use this expression as an object key: %s.", err),
 					Subject:     &jsonAttr.NameRange,
+					Expression:  valExpr,
 					EvalContext: ctx,
 				})
 				continue
@@ -454,6 +456,7 @@ func (e *expression) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 					Summary:     "Invalid object key expression",
 					Detail:      "Cannot use null value as an object key.",
 					Subject:     &jsonAttr.NameRange,
+					Expression:  valExpr,
 					EvalContext: ctx,
 				})
 				continue
@@ -477,6 +480,7 @@ func (e *expression) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 					Summary:     "Duplicate object attribute",
 					Detail:      fmt.Sprintf("An attribute named %q was already defined at %s.", nameStr, attrRanges[nameStr]),
 					Subject:     &jsonAttr.NameRange,
+					Expression:  e,
 					EvalContext: ctx,
 				})
 				continue
