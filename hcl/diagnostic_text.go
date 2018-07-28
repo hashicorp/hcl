@@ -147,6 +147,7 @@ func (w *diagnosticTextWriter) WriteDiagnostic(diag *Diagnostic) error {
 
 			vars := expr.Variables()
 			stmts := make([]string, 0, len(vars))
+			seen := make(map[string]struct{}, len(vars))
 			for _, traversal := range vars {
 				val, diags := traversal.TraverseAbs(ctx)
 				if diags.HasErrors() {
@@ -157,6 +158,9 @@ func (w *diagnosticTextWriter) WriteDiagnostic(diag *Diagnostic) error {
 				}
 
 				traversalStr := w.traversalStr(traversal)
+				if _, exists := seen[traversalStr]; exists {
+					continue // don't show duplicates when the same variable is referenced multiple times
+				}
 				switch {
 				case !val.IsKnown():
 					// Can't say anything about this yet, then.
@@ -166,6 +170,7 @@ func (w *diagnosticTextWriter) WriteDiagnostic(diag *Diagnostic) error {
 				default:
 					stmts = append(stmts, fmt.Sprintf("%s as %s", traversalStr, w.valueStr(val)))
 				}
+				seen[traversalStr] = struct{}{}
 			}
 
 			sort.Strings(stmts) // FIXME: Should maybe use a traversal-aware sort that can sort numeric indexes properly?
