@@ -604,7 +604,9 @@ func (e *IndexExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	diags = append(diags, collDiags...)
 	diags = append(diags, keyDiags...)
 
-	return hcl.Index(coll, key, &e.SrcRange)
+	val, diags := hcl.Index(coll, key, &e.SrcRange)
+	setDiagEvalContext(diags, e, ctx)
+	return val, diags
 }
 
 func (e *IndexExpr) Range() hcl.Range {
