@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"testing"
+
+	"github.com/zclconf/go-cty/cty"
 )
 
 func TestDiagnosticTextWriter(t *testing.T) {
@@ -110,6 +112,79 @@ Did you mean "pizzetta"?
 
 `,
 		},
+		{
+			&Diagnostic{
+				Severity: DiagError,
+				Summary:  "Test of including relevant variable values",
+				Detail:   `This diagnostic includes an expression and an evalcontext.`,
+				Subject: &Range{
+					Start: Pos{
+						Byte:   42,
+						Column: 3,
+						Line:   5,
+					},
+					End: Pos{
+						Byte:   47,
+						Column: 8,
+						Line:   5,
+					},
+				},
+				Expression: &diagnosticTestExpr{
+					vars: []Traversal{
+						{
+							TraverseRoot{
+								Name: "foo",
+							},
+						},
+						{
+							TraverseRoot{
+								Name: "bar",
+							},
+							TraverseAttr{
+								Name: "baz",
+							},
+						},
+						{
+							TraverseRoot{
+								Name: "missing",
+							},
+						},
+						{
+							TraverseRoot{
+								Name: "boz",
+							},
+						},
+					},
+				},
+				EvalContext: &EvalContext{
+					parent: &EvalContext{
+						Variables: map[string]cty.Value{
+							"foo": cty.StringVal("foo value"),
+						},
+					},
+					Variables: map[string]cty.Value{
+						"bar": cty.ObjectVal(map[string]cty.Value{
+							"baz": cty.ListValEmpty(cty.String),
+						}),
+						"boz":    cty.NumberIntVal(5),
+						"unused": cty.True,
+					},
+				},
+			},
+			`Error: Test of including relevant variable values
+
+  on  line 5, in hardcoded-context:
+   5:   pizza = "cheese"
+
+with bar.baz as empty list of string,
+     boz as 5,
+     foo as "foo value".
+
+This diagnostic includes an expression
+and an evalcontext.
+
+`,
+		},
 	}
 
 	files := map[string]*File{
@@ -148,4 +223,13 @@ type diagnosticTestNav struct {
 
 func (tn *diagnosticTestNav) ContextString(offset int) string {
 	return "hardcoded-context"
+}
+
+type diagnosticTestExpr struct {
+	vars []Traversal
+	staticExpr
+}
+
+func (e *diagnosticTestExpr) Variables() []Traversal {
+	return e.vars
 }
