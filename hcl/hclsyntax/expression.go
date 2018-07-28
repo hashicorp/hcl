@@ -486,7 +486,7 @@ func (e *ConditionalExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostic
 					// "These expressions are object and object respectively" if the
 					// object types don't exactly match.
 					"The true and false result expressions must have consistent types. The given expressions are %s and %s, respectively.",
-					trueResult.Type(), falseResult.Type(),
+					trueResult.Type().FriendlyName(), falseResult.Type().FriendlyName(),
 				),
 				Subject:     hcl.RangeBetween(e.TrueResult.Range(), e.FalseResult.Range()).Ptr(),
 				Context:     &e.SrcRange,
