@@ -225,7 +225,13 @@ func (w *diagnosticTextWriter) traversalStr(traversal Traversal) string {
 			buf.WriteString(tStep.Name)
 		case TraverseIndex:
 			buf.WriteByte('[')
-			buf.WriteString(w.valueStr(tStep.Key))
+			if keyTy := tStep.Key.Type(); keyTy.IsPrimitiveType() {
+				buf.WriteString(w.valueStr(tStep.Key))
+			} else {
+				// We'll just use a placeholder for more complex values,
+				// since otherwise our result could grow ridiculously long.
+				buf.WriteString("...")
+			}
 			buf.WriteByte(']')
 		}
 	}
