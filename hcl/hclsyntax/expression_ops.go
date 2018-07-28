@@ -149,21 +149,23 @@ func (e *BinaryOpExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) 
 	lhsVal, err := convert.Convert(givenLHSVal, lhsParam.Type)
 	if err != nil {
 		diags = append(diags, &hcl.Diagnostic{
-			Severity: hcl.DiagError,
-			Summary:  "Invalid operand",
-			Detail:   fmt.Sprintf("Unsuitable value for left operand: %s.", err),
-			Subject:  e.LHS.Range().Ptr(),
-			Context:  &e.SrcRange,
+			Severity:    hcl.DiagError,
+			Summary:     "Invalid operand",
+			Detail:      fmt.Sprintf("Unsuitable value for left operand: %s.", err),
+			Subject:     e.LHS.Range().Ptr(),
+			Context:     &e.SrcRange,
+			EvalContext: ctx,
 		})
 	}
 	rhsVal, err := convert.Convert(givenRHSVal, rhsParam.Type)
 	if err != nil {
 		diags = append(diags, &hcl.Diagnostic{
-			Severity: hcl.DiagError,
-			Summary:  "Invalid operand",
-			Detail:   fmt.Sprintf("Unsuitable value for right operand: %s.", err),
-			Subject:  e.RHS.Range().Ptr(),
-			Context:  &e.SrcRange,
+			Severity:    hcl.DiagError,
+			Summary:     "Invalid operand",
+			Detail:      fmt.Sprintf("Unsuitable value for right operand: %s.", err),
+			Subject:     e.RHS.Range().Ptr(),
+			Context:     &e.SrcRange,
+			EvalContext: ctx,
 		})
 	}
 
@@ -178,10 +180,11 @@ func (e *BinaryOpExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) 
 	if err != nil {
 		diags = append(diags, &hcl.Diagnostic{
 			// FIXME: This diagnostic is useless.
-			Severity: hcl.DiagError,
-			Summary:  "Operation failed",
-			Detail:   fmt.Sprintf("Error during operation: %s.", err),
-			Subject:  &e.SrcRange,
+			Severity:    hcl.DiagError,
+			Summary:     "Operation failed",
+			Detail:      fmt.Sprintf("Error during operation: %s.", err),
+			Subject:     &e.SrcRange,
+			EvalContext: ctx,
 		})
 		return cty.UnknownVal(e.Op.Type), diags
 	}
@@ -219,11 +222,12 @@ func (e *UnaryOpExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	val, err := convert.Convert(givenVal, param.Type)
 	if err != nil {
 		diags = append(diags, &hcl.Diagnostic{
-			Severity: hcl.DiagError,
-			Summary:  "Invalid operand",
-			Detail:   fmt.Sprintf("Unsuitable value for unary operand: %s.", err),
-			Subject:  e.Val.Range().Ptr(),
-			Context:  &e.SrcRange,
+			Severity:    hcl.DiagError,
+			Summary:     "Invalid operand",
+			Detail:      fmt.Sprintf("Unsuitable value for unary operand: %s.", err),
+			Subject:     e.Val.Range().Ptr(),
+			Context:     &e.SrcRange,
+			EvalContext: ctx,
 		})
 	}
 
@@ -238,10 +242,11 @@ func (e *UnaryOpExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	if err != nil {
 		diags = append(diags, &hcl.Diagnostic{
 			// FIXME: This diagnostic is useless.
-			Severity: hcl.DiagError,
-			Summary:  "Operation failed",
-			Detail:   fmt.Sprintf("Error during operation: %s.", err),
-			Subject:  &e.SrcRange,
+			Severity:    hcl.DiagError,
+			Summary:     "Operation failed",
+			Detail:      fmt.Sprintf("Error during operation: %s.", err),
+			Subject:     &e.SrcRange,
+			EvalContext: ctx,
 		})
 		return cty.UnknownVal(e.Op.Type), diags
 	}
