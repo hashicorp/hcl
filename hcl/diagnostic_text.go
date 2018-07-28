@@ -270,7 +270,7 @@ func (w *diagnosticTextWriter) valueStr(val cty.Value) string {
 		case 0:
 			return "empty " + ty.FriendlyName()
 		case 1:
-			return ty.FriendlyName() + "with 1 element"
+			return ty.FriendlyName() + " with 1 element"
 		default:
 			return fmt.Sprintf("%s with %d elements", ty.FriendlyName(), l)
 		}
