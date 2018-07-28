@@ -859,6 +859,7 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 			Detail:      "A null value cannot be used as the collection in a 'for' expression.",
 			Subject:     e.CollExpr.Range().Ptr(),
 			Context:     &e.SrcRange,
+			Expression:  e.CollExpr,
 			EvalContext: ctx,
 		})
 		return cty.DynamicVal, diags
@@ -876,6 +877,7 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 			),
 			Subject:     e.CollExpr.Range().Ptr(),
 			Context:     &e.SrcRange,
+			Expression:  e.CollExpr,
 			EvalContext: ctx,
 		})
 		return cty.DynamicVal, diags
@@ -884,14 +886,13 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 		return cty.DynamicVal, diags
 	}
 
-	childCtx := ctx.NewChild()
-	childCtx.Variables = map[string]cty.Value{}
-
 	// Before we start we'll do an early check to see if any CondExpr we've
 	// been given is of the wrong type. This isn't 100% reliable (it may
 	// be DynamicVal until real values are given) but it should catch some
 	// straightforward cases and prevent a barrage of repeated errors.
 	if e.CondExpr != nil {
+		childCtx := ctx.NewChild()
+		childCtx.Variables = map[string]cty.Value{}
 		if e.KeyVar != "" {
 			childCtx.Variables[e.KeyVar] = cty.DynamicVal
 		}
@@ -906,6 +907,7 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 				Detail:      "The value of the 'if' clause must not be null.",
 				Subject:     e.CondExpr.Range().Ptr(),
 				Context:     &e.SrcRange,
+				Expression:  e.CondExpr,
 				EvalContext: ctx,
 			})
 			return cty.DynamicVal, diags
@@ -918,6 +920,7 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 				Detail:      fmt.Sprintf("The 'if' clause value is invalid: %s.", err.Error()),
 				Subject:     e.CondExpr.Range().Ptr(),
 				Context:     &e.SrcRange,
+				Expression:  e.CondExpr,
 				EvalContext: ctx,
 			})
 			return cty.DynamicVal, diags
@@ -942,6 +945,8 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 		known := true
 		for it.Next() {
 			k, v := it.Element()
+			childCtx := ctx.NewChild()
+			childCtx.Variables = map[string]cty.Value{}
 			if e.KeyVar != "" {
 				childCtx.Variables[e.KeyVar] = k
 			}
@@ -958,7 +963,8 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 							Detail:      "The value of the 'if' clause must not be null.",
 							Subject:     e.CondExpr.Range().Ptr(),
 							Context:     &e.SrcRange,
-							EvalContext: ctx,
+							Expression:  e.CondExpr,
+							EvalContext: childCtx,
 						})
 					}
 					known = false
@@ -973,7 +979,8 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 							Detail:      fmt.Sprintf("The 'if' clause value is invalid: %s.", err.Error()),
 							Subject:     e.CondExpr.Range().Ptr(),
 							Context:     &e.SrcRange,
-							EvalContext: ctx,
+							Expression:  e.CondExpr,
+							EvalContext: childCtx,
 						})
 					}
 					known = false
@@ -1000,7 +1007,8 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 						Detail:      "Key expression in 'for' expression must not produce a null value.",
 						Subject:     e.KeyExpr.Range().Ptr(),
 						Context:     &e.SrcRange,
-						EvalContext: ctx,
+						Expression:  e.KeyExpr,
+						EvalContext: childCtx,
 					})
 				}
 				known = false
@@ -1020,7 +1028,8 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 						Detail:      fmt.Sprintf("The key expression produced an invalid result: %s.", err.Error()),
 						Subject:     e.KeyExpr.Range().Ptr(),
 						Context:     &e.SrcRange,
-						EvalContext: ctx,
+						Expression:  e.KeyExpr,
+						EvalContext: childCtx,
 					})
 				}
 				known = false
@@ -1045,7 +1054,8 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 						),
 						Subject:     e.KeyExpr.Range().Ptr(),
 						Context:     &e.SrcRange,
-						EvalContext: ctx,
+						Expression:  e.KeyExpr,
+						EvalContext: childCtx,
 					})
 				} else {
 					vals[key.AsString()] = val
@@ -1075,6 +1085,8 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 		known := true
 		for it.Next() {
 			k, v := it.Element()
+			childCtx := ctx.NewChild()
+			childCtx.Variables = map[string]cty.Value{}
 			if e.KeyVar != "" {
 				childCtx.Variables[e.KeyVar] = k
 			}
@@ -1091,7 +1103,8 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 							Detail:      "The value of the 'if' clause must not be null.",
 							Subject:     e.CondExpr.Range().Ptr(),
 							Context:     &e.SrcRange,
-							EvalContext: ctx,
+							Expression:  e.CondExpr,
+							EvalContext: childCtx,
 						})
 					}
 					known = false
@@ -1114,7 +1127,8 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 							Detail:      fmt.Sprintf("The 'if' clause value is invalid: %s.", err.Error()),
 							Subject:     e.CondExpr.Range().Ptr(),
 							Context:     &e.SrcRange,
-							EvalContext: ctx,
+							Expression:  e.CondExpr,
+							EvalContext: childCtx,
 						})
 					}
 					known = false
@@ -1205,6 +1219,7 @@ func (e *SplatExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 			Detail:      "Splat expressions (with the * symbol) cannot be applied to null values.",
 			Subject:     e.Source.Range().Ptr(),
 			Context:     hcl.RangeBetween(e.Source.Range(), e.MarkerRange).Ptr(),
+			Expression:  e.Source,
 			EvalContext: ctx,
 		})
 		return cty.DynamicVal, diags
