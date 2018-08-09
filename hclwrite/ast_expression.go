@@ -40,7 +40,7 @@ func NewExpressionLiteral(val cty.Value) *Expression {
 
 // NewExpressionAbsTraversal constructs an expression that represents the
 // given traversal, which must be absolute or this function will panic.
-func NewExpressionAbsTraversal(traversal hcl.Traversal) {
+func NewExpressionAbsTraversal(traversal hcl.Traversal) *Expression {
 	panic("NewExpressionAbsTraversal not yet implemented")
 }
 
