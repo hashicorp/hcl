@@ -243,6 +243,121 @@ b {}
 		},
 		{
 			`
+b {
+}
+`,
+			&BlockAttrsSpec{
+				TypeName:    "b",
+				ElementType: cty.String,
+			},
+			nil,
+			cty.MapValEmpty(cty.String),
+			0,
+		},
+		{
+			`
+b {
+  hello = "world"
+}
+`,
+			&BlockAttrsSpec{
+				TypeName:    "b",
+				ElementType: cty.String,
+			},
+			nil,
+			cty.MapVal(map[string]cty.Value{
+				"hello": cty.StringVal("world"),
+			}),
+			0,
+		},
+		{
+			`
+b {
+  hello = true
+}
+`,
+			&BlockAttrsSpec{
+				TypeName:    "b",
+				ElementType: cty.String,
+			},
+			nil,
+			cty.MapVal(map[string]cty.Value{
+				"hello": cty.StringVal("true"),
+			}),
+			0,
+		},
+		{
+			`
+b {
+  hello   = true
+  goodbye = 5
+}
+`,
+			&BlockAttrsSpec{
+				TypeName:    "b",
+				ElementType: cty.String,
+			},
+			nil,
+			cty.MapVal(map[string]cty.Value{
+				"hello":   cty.StringVal("true"),
+				"goodbye": cty.StringVal("5"),
+			}),
+			0,
+		},
+		{
+			``,
+			&BlockAttrsSpec{
+				TypeName:    "b",
+				ElementType: cty.String,
+			},
+			nil,
+			cty.NullVal(cty.Map(cty.String)),
+			0,
+		},
+		{
+			``,
+			&BlockAttrsSpec{
+				TypeName:    "b",
+				ElementType: cty.String,
+				Required:    true,
+			},
+			nil,
+			cty.NullVal(cty.Map(cty.String)),
+			1, // missing b block
+		},
+		{
+			`
+b {
+}
+b {
+}
+			`,
+			&BlockAttrsSpec{
+				TypeName:    "b",
+				ElementType: cty.String,
+			},
+			nil,
+			cty.MapValEmpty(cty.String),
+			1, // duplicate b block
+		},
+		{
+			`
+b {
+}
+b {
+}
+			`,
+			&BlockAttrsSpec{
+				TypeName:    "b",
+				ElementType: cty.String,
+				Required:    true,
+			},
+			nil,
+			cty.MapValEmpty(cty.String),
+			1, // duplicate b block
+		},
+		{
+			`
 b {}
 b {}
 `,

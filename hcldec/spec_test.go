@@ -21,6 +21,7 @@ var _ Spec = (*BlockSpec)(nil)
 var _ Spec = (*BlockListSpec)(nil)
 var _ Spec = (*BlockSetSpec)(nil)
 var _ Spec = (*BlockMapSpec)(nil)
+var _ Spec = (*BlockAttrsSpec)(nil)
 var _ Spec = (*BlockLabelSpec)(nil)
 var _ Spec = (*DefaultSpec)(nil)
 var _ Spec = (*TransformExprSpec)(nil)
@@ -33,6 +34,7 @@ var _ blockSpec = (*BlockSpec)(nil)
 var _ blockSpec = (*BlockListSpec)(nil)
 var _ blockSpec = (*BlockSetSpec)(nil)
 var _ blockSpec = (*BlockMapSpec)(nil)
+var _ blockSpec = (*BlockAttrsSpec)(nil)
 var _ blockSpec = (*DefaultSpec)(nil)
 
 var _ specNeedingVariables = (*AttrSpec)(nil)
@@ -40,6 +42,7 @@ var _ specNeedingVariables = (*BlockSpec)(nil)
 var _ specNeedingVariables = (*BlockListSpec)(nil)
 var _ specNeedingVariables = (*BlockSetSpec)(nil)
 var _ specNeedingVariables = (*BlockMapSpec)(nil)
+var _ specNeedingVariables = (*BlockAttrsSpec)(nil)
 
 func TestDefaultSpec(t *testing.T) {
 	config := `

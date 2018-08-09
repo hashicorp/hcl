@@ -135,6 +135,9 @@ func decodeSpecBlock(block *hcl.Block) (hcldec.Spec, hcl.Diagnostics) {
 	case "block_map":
 		return decodeBlockMapSpec(block.Body, impliedName)
 
+	case "block_attrs":
+		return decodeBlockAttrsSpec(block.Body, impliedName)
+
 	case "default":
 		return decodeDefaultSpec(block.Body)
 
@@ -426,6 +429,47 @@ func decodeBlockNestedSpec(body hcl.Body) (hcldec.Spec, hcl.Diagnostics) {
 
 	spec, specDiags := decodeSpecBlock(content.Blocks[0])
 	diags = append(diags, specDiags...)
+	return spec, diags
+}
+
+func decodeBlockAttrsSpec(body hcl.Body, impliedName string) (hcldec.Spec, hcl.Diagnostics) {
+	type content struct {
+		TypeName    *string        `hcl:"block_type"`
+		ElementType hcl.Expression `hcl:"element_type"`
+		Required    *bool          `hcl:"required"`
+	}
+
+	var args content
+	diags := gohcl.DecodeBody(body, nil, &args)
+	if diags.HasErrors() {
+		return errSpec, diags
+	}
+
+	spec := &hcldec.BlockAttrsSpec{
+		TypeName: impliedName,
+	}
+
+	if args.Required != nil {
+		spec.Required = *args.Required
+	}
+	if args.TypeName != nil {
+		spec.TypeName = *args.TypeName
+	}
+
+	var typeDiags hcl.Diagnostics
+	spec.ElementType, typeDiags = evalTypeExpr(args.ElementType)
+	diags = append(diags, typeDiags...)
+
+	if spec.TypeName == "" {
+		diags = append(diags, &hcl.Diagnostic{
+			Severity: hcl.DiagError,
+			Summary:  "Missing block_type in block_attrs spec",
+			Detail:   "The block_type attribute is required, to specify the block type name that is expected in an input HCL file.",
+			Subject:  body.MissingItemRange().Ptr(),
+		})
+		return errSpec, diags
+	}
+
 	return spec, diags
 }
 

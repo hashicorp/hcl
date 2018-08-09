@@ -258,6 +258,40 @@ of the given type must have.
 `block` expects a single nested spec block, which is applied to the body of
 each matching block to produce the resulting map items.
 
+## `block_attrs` spec blocks
+
+The `block_attrs` spec type is similar to an `attr` spec block of a map type,
+but it produces a map from the attributes of a block rather than from an
+attribute's expression.
+
+```hcl
+block_attrs {
+  block_type   = "variables"
+  element_type = string
+  required     = false
+}
+```
+
+This allows a map with user-defined keys to be produced within block syntax,
+but due to the constraints of that syntax it also means that the user will
+be unable to dynamically-generate either individual key names using key
+expressions or the entire map value using a `for` expression.
+
+`block_attrs` spec blocks accept the following arguments:
+
+* `block_type` (required) - The block type name to expect within the HCL
+  input file. This may be omitted when a default name selector is created
+  by a parent `object` spec, if the input block type name should match the
+  output JSON object property name.
+
+* `element_type` (required) - The value type to require for each of the
+  attributes within a matched block. The resulting value will be a JSON
+  object whose property values are of this type.
+
+* `required` (optional) - If `true`, an error will be produced if a block
+  of the given type is not present. If `false` -- the default -- an absent
+  block will be indicated by producing `null`.
+
 ## `literal` spec blocks
 
 The `literal` spec type returns a given literal value, and creates no
