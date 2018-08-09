@@ -51,6 +51,35 @@ func (n *node) Detach() {
 	n.after = nil
 }
 
+// ReplaceWith removes the receiver from the list it currently belongs to and
+// inserts a new node with the given content in its place. If the node is not
+// currently in a list, this function will panic.
+//
+// The return value is the newly-constructed node, containing the given content.
+// After this function returns, the reciever is no longer attached to a list.
+func (n *node) ReplaceWith(c nodeContent) *node {
+	if n.list == nil {
+		panic("can't replace node that is not in a list")
+	}
+
+	before := n.before
+	after := n.after
+	list := n.list
+	n.before, n.after, n.list = nil, nil, nil
+
+	nn := newNode(c)
+	nn.before = before
+	nn.after = after
+	nn.list = list
+	if before != nil {
+		before.after = nn
+	}
+	if after != nil {
+		after.before = nn
+	}
+	return nn
+}
+
 func (n *node) assertUnattached() {
 	if n.list != nil {
 		panic(fmt.Sprintf("attempt to attach already-attached node %#v", n))
@@ -80,6 +109,7 @@ func (ns *nodes) Append(c nodeContent) *node {
 		content: c,
 	}
 	ns.AppendNode(n)
+	n.list = ns
 	return n
 }
 
@@ -101,6 +131,7 @@ func (ns *nodes) AppendUnstructuredTokens(tokens Tokens) *node {
 	}
 	n := newNode(tokens)
 	ns.AppendNode(n)
+	n.list = ns
 	return n
 }
 

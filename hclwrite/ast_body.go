@@ -2,6 +2,7 @@ package hclwrite
 
 import (
 	"github.com/hashicorp/hcl2/hcl"
+	"github.com/hashicorp/hcl2/hcl/hclsyntax"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -15,9 +16,17 @@ type Body struct {
 	indentLevel int
 }
 
-func (b *Body) appendItem(n *node) {
-	b.inTree.children.AppendNode(n)
-	b.items.Add(n)
+func (b *Body) appendItem(c nodeContent) *node {
+	nn := b.children.Append(c)
+	b.items.Add(nn)
+	return nn
+}
+
+func (b *Body) appendItemNode(nn *node) *node {
+	nn.assertUnattached()
+	b.children.AppendNode(nn)
+	b.items.Add(nn)
+	return nn
 }
 
 func (b *Body) AppendUnstructuredTokens(ts Tokens) {
@@ -49,7 +58,16 @@ func (b *Body) GetAttribute(name string) *Attribute {
 // The return value is the attribute that was either modified in-place or
 // created.
 func (b *Body) SetAttributeValue(name string, val cty.Value) *Attribute {
-	panic("Body.SetAttributeValue not yet implemented")
+	attr := b.GetAttribute(name)
+	expr := NewExpressionLiteral(val)
+	if attr != nil {
+		attr.expr = attr.expr.ReplaceWith(expr)
+	} else {
+		attr := newAttribute()
+		attr.init(name, expr)
+		b.appendItem(attr)
+	}
+	return attr
 }
 
 // SetAttributeTraversal either replaces the expression of an existing attribute
@@ -71,6 +89,40 @@ type Attribute struct {
 	name         *node
 	expr         *node
 	lineComments *node
+}
+
+func newAttribute() *Attribute {
+	return &Attribute{
+		inTree: newInTree(),
+	}
+}
+
+func (a *Attribute) init(name string, expr *Expression) {
+	expr.assertUnattached()
+
+	nameTok := newIdentToken(name)
+	nameObj := newIdentifier(nameTok)
+	a.leadComments = a.children.Append(newComments(nil))
+	a.name = a.children.Append(nameObj)
+	a.children.AppendUnstructuredTokens(Tokens{
+		{
+			Type:  hclsyntax.TokenEqual,
+			Bytes: []byte{'='},
+		},
+	})
+	a.expr = a.children.Append(expr)
+	a.expr.list = a.children
+	a.lineComments = a.children.Append(newComments(nil))
+	a.children.AppendUnstructuredTokens(Tokens{
+		{
+			Type:  hclsyntax.TokenNewline,
+			Bytes: []byte{'\n'},
+		},
+	})
+}
+
+func (a *Attribute) Expr() *Expression {
+	return a.expr.content.(*Expression)
 }
 
 type Block struct {

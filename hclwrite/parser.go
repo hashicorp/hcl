@@ -197,7 +197,7 @@ func parseBody(nativeBody *hclsyntax.Body, from inputTokens) (inputTokens, *node
 		if beforeItem.Len() > 0 {
 			body.AppendUnstructuredTokens(beforeItem.Tokens())
 		}
-		body.appendItem(item)
+		body.appendItemNode(item)
 
 		remain = afterItem
 	}

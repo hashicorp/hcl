@@ -95,3 +95,10 @@ func (ts Tokens) walkChildNodes(w internalWalkFunc) {
 func (ts Tokens) BuildTokens(to Tokens) Tokens {
 	return append(to, ts...)
 }
+
+func newIdentToken(name string) *Token {
+	return &Token{
+		Type:  hclsyntax.TokenIdent,
+		Bytes: []byte(name),
+	}
+}

@@ -6,8 +6,10 @@ import (
 	"testing"
 
 	"github.com/davecgh/go-spew/spew"
+	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/hcl2/hcl"
 	"github.com/hashicorp/hcl2/hcl/hclsyntax"
+	"github.com/zclconf/go-cty/cty"
 )
 
 func TestBodyGetAttribute(t *testing.T) {
@@ -209,6 +211,203 @@ func TestBodyGetAttribute(t *testing.T) {
 				if !reflect.DeepEqual(got, test.want) {
 					t.Errorf("wrong result\ngot:  %s\nwant: %s", spew.Sdump(got), spew.Sdump(test.want))
 				}
+			}
+		})
+	}
+}
+func TestBodySetAttributeValue(t *testing.T) {
+	tests := []struct {
+		src  string
+		name string
+		val  cty.Value
+		want Tokens
+	}{
+		{
+			"",
+			"a",
+			cty.True,
+			Tokens{
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte{'a'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte{'='},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte("true"),
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenNewline,
+					Bytes:        []byte{'\n'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEOF,
+					Bytes:        []byte{},
+					SpacesBefore: 0,
+				},
+			},
+		},
+		{
+			"b = false\n",
+			"a",
+			cty.True,
+			Tokens{
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte{'b'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte{'='},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte("false"),
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenNewline,
+					Bytes:        []byte{'\n'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte{'a'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte{'='},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte("true"),
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenNewline,
+					Bytes:        []byte{'\n'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEOF,
+					Bytes:        []byte{},
+					SpacesBefore: 0,
+				},
+			},
+		},
+		{
+			"a = false\n",
+			"a",
+			cty.True,
+			Tokens{
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte{'a'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte{'='},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte("true"),
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenNewline,
+					Bytes:        []byte{'\n'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEOF,
+					Bytes:        []byte{},
+					SpacesBefore: 0,
+				},
+			},
+		},
+		{
+			"a = 1\nb = false\n",
+			"a",
+			cty.True,
+			Tokens{
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte{'a'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte{'='},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte("true"),
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenNewline,
+					Bytes:        []byte{'\n'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte{'b'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte{'='},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte("false"),
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenNewline,
+					Bytes:        []byte{'\n'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEOF,
+					Bytes:        []byte{},
+					SpacesBefore: 0,
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%s = %#v in %s", test.name, test.val, test.src), func(t *testing.T) {
+			f, diags := ParseConfig([]byte(test.src), "", hcl.Pos{Line: 1, Column: 1})
+			if len(diags) != 0 {
+				for _, diag := range diags {
+					t.Logf("- %s", diag.Error())
+				}
+				t.Fatalf("unexpected diagnostics")
+			}
+
+			f.Body().SetAttributeValue(test.name, test.val)
+			got := f.BuildTokens(nil)
+			format(got)
+			if !reflect.DeepEqual(got, test.want) {
+				diff := cmp.Diff(test.want, got)
+				t.Errorf("wrong result\ngot:  %s\nwant: %s\ndiff:\n%s", spew.Sdump(got), spew.Sdump(test.want), diff)
 			}
 		})
 	}

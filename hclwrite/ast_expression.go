@@ -20,8 +20,22 @@ func newExpression() *Expression {
 
 // NewExpressionLiteral constructs an an expression that represents the given
 // literal value.
+//
+// Since an unknown value cannot be represented in source code, this function
+// will panic if the given value is unknown or contains a nested unknown value.
+// Use val.IsWhollyKnown before calling to be sure.
+//
+// HCL native syntax does not directly represent lists, maps, and sets, and
+// instead relies on the automatic conversions to those collection types from
+// either list or tuple constructor syntax. Therefore converting collection
+// values to source code and re-reading them will lose type information, and
+// the reader must provide a suitable type at decode time to recover the
+// original value.
 func NewExpressionLiteral(val cty.Value) *Expression {
-	panic("NewExpressionLiteral not yet implemented")
+	toks := TokensForValue(val)
+	expr := newExpression()
+	expr.children.AppendUnstructuredTokens(toks)
+	return expr
 }
 
 // NewExpressionAbsTraversal constructs an expression that represents the
