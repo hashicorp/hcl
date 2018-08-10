@@ -26,6 +26,7 @@ var vars = &varSpecs{}
 var (
 	specFile    = flag.StringP("spec", "s", "", "path to spec file (required)")
 	outputFile  = flag.StringP("out", "o", "", "write to the given file, instead of stdout")
+	diagsFormat = flag.StringP("diags", "", "", "format any returned diagnostics in the given format; currently only \"json\" is accepted")
 	showVarRefs = flag.BoolP("var-refs", "", false, "rather than decoding input, produce a JSON description of the variables referenced by it")
 	showVersion = flag.BoolP("version", "v", false, "show the version number and immediately exit")
 )
@@ -35,13 +36,6 @@ var diagWr hcl.DiagnosticWriter // initialized in init
 
 func init() {
 	flag.VarP(vars, "vars", "V", "provide variables to the given configuration file(s)")
-
-	color := terminal.IsTerminal(int(os.Stderr.Fd()))
-	w, _, err := terminal.GetSize(int(os.Stdout.Fd()))
-	if err != nil {
-		w = 80
-	}
-	diagWr = hcl.NewDiagnosticTextWriter(os.Stderr, parser.Files(), uint(w), color)
 }
 
 func main() {
@@ -54,6 +48,21 @@ func main() {
 	}
 
 	args := flag.Args()
+
+	switch *diagsFormat {
+	case "":
+		color := terminal.IsTerminal(int(os.Stderr.Fd()))
+		w, _, err := terminal.GetSize(int(os.Stdout.Fd()))
+		if err != nil {
+			w = 80
+		}
+		diagWr = hcl.NewDiagnosticTextWriter(os.Stderr, parser.Files(), uint(w), color)
+	case "json":
+		diagWr = &jsonDiagWriter{w: os.Stderr}
+	default:
+		fmt.Fprintf(os.Stderr, "Invalid diagnostics format %q: only \"json\" is supported.\n", *diagsFormat)
+		os.Exit(2)
+	}
 
 	err := realmain(args)
 
@@ -75,6 +84,7 @@ func realmain(args []string) error {
 	diags = append(diags, specDiags...)
 	if specDiags.HasErrors() {
 		diagWr.WriteDiagnostics(diags)
+		flush(diagWr)
 		os.Exit(2)
 	}
 
@@ -146,6 +156,7 @@ func realmain(args []string) error {
 
 	if diags.HasErrors() {
 		diagWr.WriteDiagnostics(diags)
+		flush(diagWr)
 		os.Exit(2)
 	}
 
@@ -170,6 +181,7 @@ func realmain(args []string) error {
 
 	if diags.HasErrors() {
 		diagWr.WriteDiagnostics(diags)
+		flush(diagWr)
 		os.Exit(2)
 	}
 
