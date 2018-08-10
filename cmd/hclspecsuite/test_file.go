@@ -14,6 +14,9 @@ type TestFile struct {
 	ResultType cty.Type
 
 	Traversals []hcl.Traversal
+
+	ResultRange     hcl.Range
+	ResultTypeRange hcl.Range
 }
 
 func (r *Runner) LoadTestFile(filename string) (*TestFile, hcl.Diagnostics) {
@@ -38,6 +41,7 @@ func (r *Runner) LoadTestFile(filename string) (*TestFile, hcl.Diagnostics) {
 		if !moreDiags.HasErrors() {
 			ret.ResultType = ty
 		}
+		ret.ResultTypeRange = typeAttr.Expr.Range()
 	}
 
 	if resultAttr, exists := content.Attributes["result"]; exists {
@@ -56,6 +60,7 @@ func (r *Runner) LoadTestFile(filename string) (*TestFile, hcl.Diagnostics) {
 				ret.Result = resultVal
 			}
 		}
+		ret.ResultRange = resultAttr.Expr.Range()
 	}
 
 	return ret, diags

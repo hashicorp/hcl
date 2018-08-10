@@ -28,6 +28,7 @@ var (
 	outputFile  = flag.StringP("out", "o", "", "write to the given file, instead of stdout")
 	diagsFormat = flag.StringP("diags", "", "", "format any returned diagnostics in the given format; currently only \"json\" is accepted")
 	showVarRefs = flag.BoolP("var-refs", "", false, "rather than decoding input, produce a JSON description of the variables referenced by it")
+	withType    = flag.BoolP("with-type", "", false, "include an additional object level at the top describing the HCL-oriented type of the result value")
 	showVersion = flag.BoolP("version", "v", false, "show the version number and immediately exit")
 )
 
@@ -146,7 +147,13 @@ func realmain(args []string) error {
 		}
 	} else {
 		for _, filename := range args {
-			f, fDiags := parser.ParseHCLFile(filename)
+			var f *hcl.File
+			var fDiags hcl.Diagnostics
+			if strings.HasSuffix(filename, ".json") {
+				f, fDiags = parser.ParseJSONFile(filename)
+			} else {
+				f, fDiags = parser.ParseHCLFile(filename)
+			}
 			diags = append(diags, fDiags...)
 			if !fDiags.HasErrors() {
 				bodies = append(bodies, f.Body)
@@ -185,7 +192,13 @@ func realmain(args []string) error {
 		os.Exit(2)
 	}
 
-	out, err := ctyjson.Marshal(val, val.Type())
+	wantType := val.Type()
+	if *withType {
+		// We'll instead ask to encode as dynamic, which will make the
+		// marshaler include type information.
+		wantType = cty.DynamicPseudoType
+	}
+	out, err := ctyjson.Marshal(val, wantType)
 	if err != nil {
 		return err
 	}

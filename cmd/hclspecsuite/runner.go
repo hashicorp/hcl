@@ -10,9 +10,13 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/hashicorp/hcl2/ext/typeexpr"
+
 	"github.com/hashicorp/hcl2/hcl"
 	"github.com/hashicorp/hcl2/hclparse"
 	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-cty/cty/convert"
+	ctyjson "github.com/zclconf/go-cty/cty/json"
 )
 
 type Runner struct {
@@ -58,13 +62,13 @@ func (r *Runner) runDir(dir string) hcl.Diagnostics {
 	sort.Strings(subDirs)
 
 	for _, filename := range tests {
-		filename = filepath.Join(r.baseDir, filename)
+		filename = filepath.Join(dir, filename)
 		testDiags := r.runTest(filename)
 		diags = append(diags, testDiags...)
 	}
 
 	for _, dirName := range subDirs {
-		dir := filepath.Join(r.baseDir, dirName)
+		dir := filepath.Join(dir, dirName)
 		dirDiags := r.runDir(dir)
 		diags = append(diags, dirDiags...)
 	}
@@ -90,7 +94,7 @@ func (r *Runner) runTest(filename string) hcl.Diagnostics {
 	basePath := filename[:len(filename)-2]
 	specFilename := basePath + ".hcldec"
 	nativeFilename := basePath + ".hcl"
-	//jsonFilename := basePath + ".hcl.json"
+	jsonFilename := basePath + ".hcl.json"
 
 	if _, err := os.Stat(specFilename); err != nil {
 		diags = append(diags, &hcl.Diagnostic{
@@ -102,7 +106,72 @@ func (r *Runner) runTest(filename string) hcl.Diagnostics {
 	}
 
 	if _, err := os.Stat(nativeFilename); err == nil {
+		moreDiags := r.runTestInput(specFilename, nativeFilename, tf)
+		diags = append(diags, moreDiags...)
+	}
 
+	if _, err := os.Stat(jsonFilename); err == nil {
+		moreDiags := r.runTestInput(specFilename, jsonFilename, tf)
+		diags = append(diags, moreDiags...)
+	}
+
+	return diags
+}
+
+func (r *Runner) runTestInput(specFilename, inputFilename string, tf *TestFile) hcl.Diagnostics {
+	// We'll add the source code of the input file to our own parser, even
+	// though it'll actually be parsed by the hcldec child process, since that
+	// way we can produce nice diagnostic messages if hcldec fails to process
+	// the input file.
+	if src, err := ioutil.ReadFile(inputFilename); err == nil {
+		r.parser.AddFile(inputFilename, &hcl.File{
+			Bytes: src,
+		})
+	}
+
+	var diags hcl.Diagnostics
+
+	val, moreDiags := r.hcldecTransform(specFilename, inputFilename)
+	diags = append(diags, moreDiags...)
+	if moreDiags.HasErrors() {
+		// If hcldec failed then there's no point in continuing.
+		return diags
+	}
+
+	if errs := val.Type().TestConformance(tf.ResultType); len(errs) > 0 {
+		diags = append(diags, &hcl.Diagnostic{
+			Severity: hcl.DiagError,
+			Summary:  "Incorrect result type",
+			Detail: fmt.Sprintf(
+				"Input file %s produced %s, but was expecting %s.",
+				inputFilename, typeexpr.TypeString(val.Type()), typeexpr.TypeString(tf.ResultType),
+			),
+		})
+	}
+
+	if tf.Result != cty.NilVal {
+		cmpVal, err := convert.Convert(tf.Result, tf.ResultType)
+		if err != nil {
+			diags = append(diags, &hcl.Diagnostic{
+				Severity: hcl.DiagError,
+				Summary:  "Incorrect type for result value",
+				Detail: fmt.Sprintf(
+					"Result does not conform to the given result type: %s.", err,
+				),
+				Subject: &tf.ResultRange,
+			})
+		} else {
+			if !val.RawEquals(cmpVal) {
+				diags = append(diags, &hcl.Diagnostic{
+					Severity: hcl.DiagError,
+					Summary:  "Incorrect result value",
+					Detail: fmt.Sprintf(
+						"Input file %s produced %#v, but was expecting %#v.",
+						inputFilename, val, tf.Result,
+					),
+				})
+			}
+		}
 	}
 
 	return diags
@@ -116,32 +185,45 @@ func (r *Runner) hcldecTransform(specFile, inputFile string) (cty.Value, hcl.Dia
 	cmd := &exec.Cmd{
 		Path: r.hcldecPath,
 		Args: []string{
+			r.hcldecPath,
 			"--spec=" + specFile,
 			"--diags=json",
+			"--with-type",
 			inputFile,
 		},
 		Stdout: &outBuffer,
 		Stderr: &errBuffer,
 	}
 	err := cmd.Run()
-	if _, isExit := err.(*exec.ExitError); !isExit {
-		diags = append(diags, &hcl.Diagnostic{
-			Severity: hcl.DiagError,
-			Summary:  "Failed to run hcldec",
-			Detail:   fmt.Sprintf("Sub-program hcldec failed to start: %s.", err),
-		})
-		return cty.DynamicVal, diags
-	}
-
 	if err != nil {
-		// If we exited unsuccessfully then we'll expect diagnostics on stderr
-		// TODO: implement that
-	} else {
-		// Otherwise, we expect a JSON result value on stdout
-		// TODO: implement that
-	}
+		if _, isExit := err.(*exec.ExitError); !isExit {
+			diags = append(diags, &hcl.Diagnostic{
+				Severity: hcl.DiagError,
+				Summary:  "Failed to run hcldec",
+				Detail:   fmt.Sprintf("Sub-program hcldec failed to start: %s.", err),
+			})
+			return cty.DynamicVal, diags
+		}
 
-	return cty.DynamicVal, diags
+		// If we exited unsuccessfully then we'll expect diagnostics on stderr
+		moreDiags := decodeJSONDiagnostics(errBuffer.Bytes())
+		diags = append(diags, moreDiags...)
+		return cty.DynamicVal, diags
+	} else {
+		// Otherwise, we expect a JSON result value on stdout. Since we used
+		// --with-type above, we can decode as DynamicPseudoType to recover
+		// exactly the type that was saved, without the usual JSON lossiness.
+		val, err := ctyjson.Unmarshal(outBuffer.Bytes(), cty.DynamicPseudoType)
+		if err != nil {
+			diags = append(diags, &hcl.Diagnostic{
+				Severity: hcl.DiagError,
+				Summary:  "Failed to parse hcldec result",
+				Detail:   fmt.Sprintf("Sub-program hcldec produced an invalid result: %s.", err),
+			})
+			return cty.DynamicVal, diags
+		}
+		return val, diags
+	}
 }
 
 func (r *Runner) prettyDirName(dir string) string {
