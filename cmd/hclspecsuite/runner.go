@@ -169,44 +169,114 @@ func (r *Runner) runTestInput(specFilename, inputFilename string, tf *TestFile) 
 
 	}
 
-	val, moreDiags := r.hcldecTransform(specFilename, inputFilename)
-	diags = append(diags, moreDiags...)
-	if moreDiags.HasErrors() {
-		// If hcldec failed then there's no point in continuing.
-		return diags
-	}
+	val, transformDiags := r.hcldecTransform(specFilename, inputFilename)
+	if len(tf.ExpectedDiags) == 0 {
+		diags = append(diags, transformDiags...)
+		if transformDiags.HasErrors() {
+			// If hcldec failed then there's no point in continuing.
+			return diags
+		}
 
-	if errs := val.Type().TestConformance(tf.ResultType); len(errs) > 0 {
-		diags = append(diags, &hcl.Diagnostic{
-			Severity: hcl.DiagError,
-			Summary:  "Incorrect result type",
-			Detail: fmt.Sprintf(
-				"Input file %s produced %s, but was expecting %s.",
-				inputFilename, typeexpr.TypeString(val.Type()), typeexpr.TypeString(tf.ResultType),
-			),
-		})
-	}
-
-	if tf.Result != cty.NilVal {
-		cmpVal, err := convert.Convert(tf.Result, tf.ResultType)
-		if err != nil {
+		if errs := val.Type().TestConformance(tf.ResultType); len(errs) > 0 {
 			diags = append(diags, &hcl.Diagnostic{
 				Severity: hcl.DiagError,
-				Summary:  "Incorrect type for result value",
+				Summary:  "Incorrect result type",
 				Detail: fmt.Sprintf(
-					"Result does not conform to the given result type: %s.", err,
+					"Input file %s produced %s, but was expecting %s.",
+					inputFilename, typeexpr.TypeString(val.Type()), typeexpr.TypeString(tf.ResultType),
 				),
-				Subject: &tf.ResultRange,
 			})
-		} else {
-			if !val.RawEquals(cmpVal) {
+		}
+
+		if tf.Result != cty.NilVal {
+			cmpVal, err := convert.Convert(tf.Result, tf.ResultType)
+			if err != nil {
 				diags = append(diags, &hcl.Diagnostic{
 					Severity: hcl.DiagError,
-					Summary:  "Incorrect result value",
+					Summary:  "Incorrect type for result value",
 					Detail: fmt.Sprintf(
-						"Input file %s produced %#v, but was expecting %#v.",
-						inputFilename, val, tf.Result,
+						"Result does not conform to the given result type: %s.", err,
 					),
+					Subject: &tf.ResultRange,
+				})
+			} else {
+				if !val.RawEquals(cmpVal) {
+					diags = append(diags, &hcl.Diagnostic{
+						Severity: hcl.DiagError,
+						Summary:  "Incorrect result value",
+						Detail: fmt.Sprintf(
+							"Input file %s produced %#v, but was expecting %#v.",
+							inputFilename, val, tf.Result,
+						),
+					})
+				}
+			}
+		}
+	} else {
+		// We're expecting diagnostics, and so we'll need to correlate the
+		// severities and source ranges of our actual diagnostics against
+		// what we were expecting.
+		type DiagnosticEntry struct {
+			Severity hcl.DiagnosticSeverity
+			Range    hcl.Range
+		}
+		got := make(map[DiagnosticEntry]*hcl.Diagnostic)
+		want := make(map[DiagnosticEntry]hcl.Range)
+		for _, diag := range transformDiags {
+			if diag.Subject == nil {
+				// Sourceless diagnostics can never be expected, so we'll just
+				// pass these through as-is and assume they are hcldec
+				// operational errors.
+				diags = append(diags, diag)
+				continue
+			}
+			if diag.Subject.Filename != inputFilename {
+				// If the problem is for something other than the input file
+				// then it can't be expected.
+				diags = append(diags, diag)
+				continue
+			}
+			entry := DiagnosticEntry{
+				Severity: diag.Severity,
+				Range:    *diag.Subject,
+			}
+			got[entry] = diag
+		}
+		for _, e := range tf.ExpectedDiags {
+			e.Range.Filename = inputFilename // assumed here, since we don't allow any other filename to be expected
+			entry := DiagnosticEntry{
+				Severity: e.Severity,
+				Range:    e.Range,
+			}
+			want[entry] = e.DeclRange
+		}
+
+		for gotEntry, diag := range got {
+			if _, wanted := want[gotEntry]; !wanted {
+				// Pass through the diagnostic itself so the user can see what happened
+				diags = append(diags, diag)
+				diags = append(diags, &hcl.Diagnostic{
+					Severity: hcl.DiagError,
+					Summary:  "Unexpected diagnostic",
+					Detail: fmt.Sprintf(
+						"No %s diagnostic was expected %s. The unexpected diagnostic was shown above.",
+						severityString(gotEntry.Severity), rangeString(gotEntry.Range),
+					),
+					Subject: &gotEntry.Range,
+				})
+			}
+		}
+
+		for wantEntry, declRange := range want {
+			if _, gotted := got[wantEntry]; !gotted {
+				diags = append(diags, &hcl.Diagnostic{
+					Severity: hcl.DiagError,
+					Summary:  "Missing expected diagnostic",
+					Detail: fmt.Sprintf(
+						"No %s diagnostic was generated %s.",
+						severityString(wantEntry.Severity), rangeString(wantEntry.Range),
+					),
+					Subject: &declRange,
 				})
 			}
 		}

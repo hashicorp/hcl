@@ -87,3 +87,22 @@ func decodeJSONDiagnostics(src []byte) hcl.Diagnostics {
 
 	return diags
 }
+
+func severityString(severity hcl.DiagnosticSeverity) string {
+	switch severity {
+	case hcl.DiagError:
+		return "error"
+	case hcl.DiagWarning:
+		return "warning"
+	default:
+		return "unsupported-severity"
+	}
+}
+
+func rangeString(rng hcl.Range) string {
+	return fmt.Sprintf(
+		"from line %d column %d byte %d to line %d column %d byte %d",
+		rng.Start.Line, rng.Start.Column, rng.Start.Byte,
+		rng.End.Line, rng.End.Column, rng.End.Byte,
+	)
+}
