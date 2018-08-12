@@ -5,10 +5,10 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/hashicorp/hcl2/hclparse"
+	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/hashicorp/hcl2/hcl"
-	"golang.org/x/crypto/ssh/terminal"
+	"github.com/hashicorp/hcl2/hclparse"
 )
 
 func main() {
