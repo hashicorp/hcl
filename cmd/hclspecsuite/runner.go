@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -123,13 +124,50 @@ func (r *Runner) runTestInput(specFilename, inputFilename string, tf *TestFile) 
 	// though it'll actually be parsed by the hcldec child process, since that
 	// way we can produce nice diagnostic messages if hcldec fails to process
 	// the input file.
-	if src, err := ioutil.ReadFile(inputFilename); err == nil {
+	src, err := ioutil.ReadFile(inputFilename)
+	if err == nil {
 		r.parser.AddFile(inputFilename, &hcl.File{
 			Bytes: src,
 		})
 	}
 
 	var diags hcl.Diagnostics
+
+	if tf.ChecksTraversals {
+		gotTraversals, moreDiags := r.hcldecVariables(specFilename, inputFilename)
+		diags = append(diags, moreDiags...)
+		if !moreDiags.HasErrors() {
+			expected := tf.ExpectedTraversals
+			for _, got := range gotTraversals {
+				e := findTraversalSpec(got, expected)
+				rng := got.SourceRange()
+				if e == nil {
+					diags = append(diags, &hcl.Diagnostic{
+						Severity: hcl.DiagError,
+						Summary:  "Unexpected traversal",
+						Detail:   "Detected traversal that is not indicated as expected in the test file.",
+						Subject:  &rng,
+					})
+				} else {
+					moreDiags := checkTraversalsMatch(got, inputFilename, e)
+					diags = append(diags, moreDiags...)
+				}
+			}
+
+			// Look for any traversals that didn't show up at all.
+			for _, e := range expected {
+				if t := findTraversalForSpec(e, gotTraversals); t == nil {
+					diags = append(diags, &hcl.Diagnostic{
+						Severity: hcl.DiagError,
+						Summary:  "Missing expected traversal",
+						Detail:   "This expected traversal was not detected.",
+						Subject:  e.Traversal.SourceRange().Ptr(),
+					})
+				}
+			}
+		}
+
+	}
 
 	val, moreDiags := r.hcldecTransform(specFilename, inputFilename)
 	diags = append(diags, moreDiags...)
@@ -223,6 +261,152 @@ func (r *Runner) hcldecTransform(specFile, inputFile string) (cty.Value, hcl.Dia
 			return cty.DynamicVal, diags
 		}
 		return val, diags
+	}
+}
+
+func (r *Runner) hcldecVariables(specFile, inputFile string) ([]hcl.Traversal, hcl.Diagnostics) {
+	var diags hcl.Diagnostics
+	var outBuffer bytes.Buffer
+	var errBuffer bytes.Buffer
+
+	cmd := &exec.Cmd{
+		Path: r.hcldecPath,
+		Args: []string{
+			r.hcldecPath,
+			"--spec=" + specFile,
+			"--diags=json",
+			"--var-refs",
+			inputFile,
+		},
+		Stdout: &outBuffer,
+		Stderr: &errBuffer,
+	}
+	err := cmd.Run()
+	if err != nil {
+		if _, isExit := err.(*exec.ExitError); !isExit {
+			diags = append(diags, &hcl.Diagnostic{
+				Severity: hcl.DiagError,
+				Summary:  "Failed to run hcldec",
+				Detail:   fmt.Sprintf("Sub-program hcldec (evaluating input) failed to start: %s.", err),
+			})
+			return nil, diags
+		}
+
+		// If we exited unsuccessfully then we'll expect diagnostics on stderr
+		moreDiags := decodeJSONDiagnostics(errBuffer.Bytes())
+		diags = append(diags, moreDiags...)
+		return nil, diags
+	} else {
+		// Otherwise, we expect a JSON description of the traversals on stdout.
+		type PosJSON struct {
+			Line   int `json:"line"`
+			Column int `json:"column"`
+			Byte   int `json:"byte"`
+		}
+		type RangeJSON struct {
+			Filename string  `json:"filename"`
+			Start    PosJSON `json:"start"`
+			End      PosJSON `json:"end"`
+		}
+		type StepJSON struct {
+			Kind  string          `json:"kind"`
+			Name  string          `json:"name,omitempty"`
+			Key   json.RawMessage `json:"key,omitempty"`
+			Range RangeJSON       `json:"range"`
+		}
+		type TraversalJSON struct {
+			Steps []StepJSON `json:"steps"`
+		}
+
+		var raw []TraversalJSON
+		err := json.Unmarshal(outBuffer.Bytes(), &raw)
+		if err != nil {
+			diags = append(diags, &hcl.Diagnostic{
+				Severity: hcl.DiagError,
+				Summary:  "Failed to parse hcldec result",
+				Detail:   fmt.Sprintf("Sub-program hcldec (with --var-refs) produced an invalid result: %s.", err),
+			})
+			return nil, diags
+		}
+
+		var ret []hcl.Traversal
+		if len(raw) == 0 {
+			return ret, diags
+		}
+
+		ret = make([]hcl.Traversal, 0, len(raw))
+		for _, rawT := range raw {
+			traversal := make(hcl.Traversal, 0, len(rawT.Steps))
+			for _, rawS := range rawT.Steps {
+				rng := hcl.Range{
+					Filename: rawS.Range.Filename,
+					Start: hcl.Pos{
+						Line:   rawS.Range.Start.Line,
+						Column: rawS.Range.Start.Column,
+						Byte:   rawS.Range.Start.Byte,
+					},
+					End: hcl.Pos{
+						Line:   rawS.Range.End.Line,
+						Column: rawS.Range.End.Column,
+						Byte:   rawS.Range.End.Byte,
+					},
+				}
+
+				switch rawS.Kind {
+
+				case "root":
+					traversal = append(traversal, hcl.TraverseRoot{
+						Name:     rawS.Name,
+						SrcRange: rng,
+					})
+
+				case "attr":
+					traversal = append(traversal, hcl.TraverseAttr{
+						Name:     rawS.Name,
+						SrcRange: rng,
+					})
+
+				case "index":
+					ty, err := ctyjson.ImpliedType([]byte(rawS.Key))
+					if err != nil {
+						diags = append(diags, &hcl.Diagnostic{
+							Severity: hcl.DiagError,
+							Summary:  "Failed to parse hcldec result",
+							Detail:   fmt.Sprintf("Sub-program hcldec (with --var-refs) produced an invalid result: traversal step has invalid index key %s.", rawS.Key),
+						})
+						return nil, diags
+					}
+					keyVal, err := ctyjson.Unmarshal([]byte(rawS.Key), ty)
+					if err != nil {
+						diags = append(diags, &hcl.Diagnostic{
+							Severity: hcl.DiagError,
+							Summary:  "Failed to parse hcldec result",
+							Detail:   fmt.Sprintf("Sub-program hcldec (with --var-refs) produced a result with an invalid index key %s: %s.", rawS.Key, err),
+						})
+						return nil, diags
+					}
+
+					traversal = append(traversal, hcl.TraverseIndex{
+						Key:      keyVal,
+						SrcRange: rng,
+					})
+
+				default:
+					// Should never happen since the above cases are exhaustive,
+					// but we'll catch it gracefully since this is coming from
+					// a possibly-buggy hcldec implementation that we're testing.
+					diags = append(diags, &hcl.Diagnostic{
+						Severity: hcl.DiagError,
+						Summary:  "Failed to parse hcldec result",
+						Detail:   fmt.Sprintf("Sub-program hcldec (with --var-refs) produced an invalid result: traversal step of unsupported kind %q.", rawS.Kind),
+					})
+					return nil, diags
+				}
+			}
+
+			ret = append(ret, traversal)
+		}
+		return ret, diags
 	}
 }
 

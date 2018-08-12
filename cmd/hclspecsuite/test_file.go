@@ -27,11 +27,13 @@ type TestFile struct {
 type TestFileExpectTraversal struct {
 	Traversal hcl.Traversal
 	Range     hcl.Range
+	DeclRange hcl.Range
 }
 
 type TestFileExpectDiag struct {
-	Severity hcl.DiagnosticSeverity
-	Range    hcl.Range
+	Severity  hcl.DiagnosticSeverity
+	Range     hcl.Range
+	DeclRange hcl.Range
 }
 
 func (r *Runner) LoadTestFile(filename string) (*TestFile, hcl.Diagnostics) {
@@ -181,6 +183,7 @@ func (r *Runner) decodeTraversalExpectBlock(block *hcl.Block) (*TestFileExpectTr
 	return &TestFileExpectTraversal{
 		Traversal: traversal,
 		Range:     rng,
+		DeclRange: block.DefRange,
 	}, diags
 }
 
@@ -226,8 +229,9 @@ func (r *Runner) decodeDiagnosticsBlock(block *hcl.Block) ([]*TestFileExpectDiag
 		}
 
 		ret = append(ret, &TestFileExpectDiag{
-			Severity: severity,
-			Range:    rng,
+			Severity:  severity,
+			Range:     rng,
+			DeclRange: block.TypeRange,
 		})
 	}
 	return ret, diags
@@ -254,13 +258,13 @@ func (r *Runner) decodeRangeFromBody(body hcl.Body) (hcl.Range, hcl.Body, hcl.Di
 		// path we pass to hcldec.
 		Start: hcl.Pos{
 			Line:   raw.From.Line,
-			Column: raw.From.Line,
-			Byte:   raw.From.Line,
+			Column: raw.From.Column,
+			Byte:   raw.From.Byte,
 		},
 		End: hcl.Pos{
 			Line:   raw.To.Line,
-			Column: raw.To.Line,
-			Byte:   raw.To.Line,
+			Column: raw.To.Column,
+			Byte:   raw.To.Byte,
 		},
 	}, raw.Remain, diags
 }
