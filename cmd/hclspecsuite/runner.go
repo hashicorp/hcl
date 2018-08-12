@@ -97,6 +97,17 @@ func (r *Runner) runTest(filename string) hcl.Diagnostics {
 	nativeFilename := basePath + ".hcl"
 	jsonFilename := basePath + ".hcl.json"
 
+	// We'll add the source code of the spec file to our own parser, even
+	// though it'll actually be parsed by the hcldec child process, since that
+	// way we can produce nice diagnostic messages if hcldec fails to process
+	// the spec file.
+	src, err := ioutil.ReadFile(specFilename)
+	if err == nil {
+		r.parser.AddFile(specFilename, &hcl.File{
+			Bytes: src,
+		})
+	}
+
 	if _, err := os.Stat(specFilename); err != nil {
 		diags = append(diags, &hcl.Diagnostic{
 			Severity: hcl.DiagError,
