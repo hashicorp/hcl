@@ -21,10 +21,11 @@ import (
 )
 
 type Runner struct {
-	parser     *hclparse.Parser
-	hcldecPath string
-	baseDir    string
-	log        LogCallback
+	parser      *hclparse.Parser
+	hcldecPath  string
+	baseDir     string
+	logBegin    LogBeginCallback
+	logProblems LogProblemsCallback
 }
 
 func (r *Runner) Run() hcl.Diagnostics {
@@ -82,14 +83,18 @@ func (r *Runner) runTest(filename string) hcl.Diagnostics {
 	tf, diags := r.LoadTestFile(filename)
 	if diags.HasErrors() {
 		// We'll still log, so it's clearer which test the diagnostics belong to.
-		if r.log != nil {
-			r.log(prettyName, nil)
+		if r.logBegin != nil {
+			r.logBegin(prettyName, nil)
+		}
+		if r.logProblems != nil {
+			r.logProblems(prettyName, nil, diags)
+			return nil // don't duplicate the diagnostics we already reported
 		}
 		return diags
 	}
 
-	if r.log != nil {
-		r.log(prettyName, tf)
+	if r.logBegin != nil {
+		r.logBegin(prettyName, tf)
 	}
 
 	basePath := filename[:len(filename)-2]
@@ -125,6 +130,11 @@ func (r *Runner) runTest(filename string) hcl.Diagnostics {
 	if _, err := os.Stat(jsonFilename); err == nil {
 		moreDiags := r.runTestInput(specFilename, jsonFilename, tf)
 		diags = append(diags, moreDiags...)
+	}
+
+	if r.logProblems != nil {
+		r.logProblems(prettyName, nil, diags)
+		return nil // don't duplicate the diagnostics we already reported
 	}
 
 	return diags

@@ -32,27 +32,40 @@ func realMain(args []string) int {
 
 	parser := hclparse.NewParser()
 
+	color := terminal.IsTerminal(int(os.Stderr.Fd()))
+	w, _, err := terminal.GetSize(int(os.Stdout.Fd()))
+	if err != nil {
+		w = 80
+	}
+	diagWr := hcl.NewDiagnosticTextWriter(os.Stderr, parser.Files(), uint(w), color)
+	var diagCount int
+
 	runner := &Runner{
 		parser:     parser,
 		hcldecPath: hcldecPath,
 		baseDir:    testsDir,
-		log: func(name string, file *TestFile) {
+		logBegin: func(name string, file *TestFile) {
+			fmt.Printf("- %s\n", name)
+		},
+		logProblems: func(name string, file *TestFile, diags hcl.Diagnostics) {
+			if len(diags) != 0 {
+				os.Stderr.WriteString("\n")
+				diagWr.WriteDiagnostics(diags)
+				diagCount += len(diags)
+			}
 			fmt.Printf("- %s\n", name)
 		},
 	}
 	diags := runner.Run()
 
 	if len(diags) != 0 {
-		os.Stderr.WriteString("\n")
-		color := terminal.IsTerminal(int(os.Stderr.Fd()))
-		w, _, err := terminal.GetSize(int(os.Stdout.Fd()))
-		if err != nil {
-			w = 80
-		}
-		diagWr := hcl.NewDiagnosticTextWriter(os.Stderr, parser.Files(), uint(w), color)
+		os.Stderr.WriteString("\n\n\n== Test harness problems:\n\n")
 		diagWr.WriteDiagnostics(diags)
-		return 2
+		diagCount += len(diags)
 	}
 
+	if diagCount > 0 {
+		return 2
+	}
 	return 0
 }
