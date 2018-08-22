@@ -394,6 +394,15 @@ func decodeBlockMapSpec(body hcl.Body, impliedName string) (hcldec.Spec, hcl.Dia
 		return errSpec, diags
 	}
 
+	if hcldec.ImpliedType(spec).HasDynamicTypes() {
+		diags = append(diags, &hcl.Diagnostic{
+			Severity: hcl.DiagError,
+			Summary:  "Invalid block_map spec",
+			Detail:   "A block_map spec may not contain attributes with type 'any'.",
+			Subject:  body.MissingItemRange().Ptr(),
+		})
+	}
+
 	return spec, diags
 }
 

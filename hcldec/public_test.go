@@ -426,6 +426,49 @@ b {}
 		},
 		{
 			`
+b {
+	a = true
+}
+b {
+	a = 1
+}
+`,
+			&BlockListSpec{
+				TypeName: "b",
+				Nested: &AttrSpec{
+					Name: "a",
+					Type: cty.DynamicPseudoType,
+				},
+			},
+			nil,
+			cty.DynamicVal,
+			1, // Unconsistent argument types in b blocks
+		},
+		{
+			`
+b {
+	a = true
+}
+b {
+	a = "not a bool"
+}
+`,
+			&BlockListSpec{
+				TypeName: "b",
+				Nested: &AttrSpec{
+					Name: "a",
+					Type: cty.DynamicPseudoType,
+				},
+			},
+			nil,
+			cty.ListVal([]cty.Value{
+				cty.StringVal("true"), // type unification generalizes all the values to strings
+				cty.StringVal("not a bool"),
+			}),
+			0,
+		},
+		{
+			`
 b {}
 b {}
 `,
@@ -460,6 +503,49 @@ b "bar" "baz" {}
 			cty.SetVal([]cty.Value{
 				cty.TupleVal([]cty.Value{cty.StringVal("bar"), cty.StringVal("foo")}),
 				cty.TupleVal([]cty.Value{cty.StringVal("baz"), cty.StringVal("bar")}),
+			}),
+			0,
+		},
+		{
+			`
+b {
+	a = true
+}
+b {
+	a = 1
+}
+`,
+			&BlockSetSpec{
+				TypeName: "b",
+				Nested: &AttrSpec{
+					Name: "a",
+					Type: cty.DynamicPseudoType,
+				},
+			},
+			nil,
+			cty.DynamicVal,
+			1, // Unconsistent argument types in b blocks
+		},
+		{
+			`
+b {
+	a = true
+}
+b {
+	a = "not a bool"
+}
+`,
+			&BlockSetSpec{
+				TypeName: "b",
+				Nested: &AttrSpec{
+					Name: "a",
+					Type: cty.DynamicPseudoType,
+				},
+			},
+			nil,
+			cty.SetVal([]cty.Value{
+				cty.StringVal("true"), // type unification generalizes all the values to strings
+				cty.StringVal("not a bool"),
 			}),
 			0,
 		},
