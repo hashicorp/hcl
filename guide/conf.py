@@ -33,7 +33,6 @@ extensions = [
     'sphinx.ext.githubpages',
     'sphinxcontrib.golangdomain',
     'sphinx.ext.autodoc',
-    'autoapi.extension',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -156,13 +155,3 @@ texinfo_documents = [
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
-
-autoapi_type = 'go'
-autoapi_dirs = [
-    os.path.join(os.path.dirname(__file__), '..', x)
-    for x in ['gohcl', 'hcl', 'hcldec', 'hcled', 'hclparse', 'hcltest', 'hclwrite']
-]
-autoapi_root = 'api'
-autoapi_add_toctree_entry = False
-autoapi_keep_files = True
-autoapi_generate_api_docs = False
