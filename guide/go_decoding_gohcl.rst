@@ -1,5 +1,7 @@
 .. go:package:: gohcl
 
+.. _go-decoding-gohcl:
+
 Decoding Into Native Go Values
 ==============================
 
@@ -52,6 +54,8 @@ which case ``nil`` is written to indicate the absense of the argument.
 The sections below discuss some additional decoding use-cases. For full details
 on the `gohcl` package, see
 `the godoc reference <https://godoc.org/github.com/hashicorp/hcl2/gohcl>`_.
+
+.. _go-decoding-gohcl-evalcontext:
 
 Variables and Functions
 -----------------------

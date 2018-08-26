@@ -23,5 +23,6 @@ a Go program.
    go_parsing
    go_diagnostics
    go_decoding_gohcl
+   go_decoding_hcldec
 
 .. _Go: https://golang.org/
