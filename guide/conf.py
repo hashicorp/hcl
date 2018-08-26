@@ -1,4 +1,5 @@
 import subprocess
+import os
 import os.path
 
 # -- Project information -----------------------------------------------------
@@ -7,12 +8,15 @@ project = u'HCL'
 copyright = u'2018, HashiCorp'
 author = u'HashiCorp'
 
-git_version = subprocess.check_output(['git', 'describe', '--always']).strip()
+if 'READTHEDOCS_VERSION' in os.environ:
+    version_str = os.environ['READTHEDOCS_VERSION']
+else:
+    version_str = subprocess.check_output(['git', 'describe', '--always']).strip()
 
 # The short X.Y version
-version = unicode(git_version)
+version = unicode(version_str)
 # The full version, including alpha/beta/rc tags
-release = unicode(git_version)
+release = unicode(version_str)
 
 
 # -- General configuration ---------------------------------------------------
