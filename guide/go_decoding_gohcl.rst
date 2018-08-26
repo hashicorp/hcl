@@ -67,7 +67,7 @@ The second argument to ``gohcl.DecodeBody``, shown as ``nil`` in the previous
 example, allows the calling application to additionally offer variables and
 functions for use in expressions. Its value is a pointer to an
 ``hcl.EvalContext``, which will be covered in more detail in the later section
-:ref:`expression-eval`. For now, a simple example of making the id of the
+:ref:`go-expression-eval`. For now, a simple example of making the id of the
 current process available as a single variable called ``pid``:
 
 .. code-block:: go

@@ -223,7 +223,7 @@ just as with ``gohcl.DecodeBlock``.
 This object can be constructed using
 :ref:`the gohcl helper function <go-decoding-gohcl-evalcontext>` as before if desired, but
 you can also choose to work directly with :go:type:`hcl.EvalContext` as
-discussed in :ref:`expression-eval`:
+discussed in :ref:`go-expression-eval`:
 
 .. code-block:: go
 

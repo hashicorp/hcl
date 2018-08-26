@@ -28,6 +28,7 @@ via its library API.
 
    intro
    go
+   language_design
 
 .. _libucl: https://github.com/vstakhov/libucl
 .. _`nginx configuration`: http://nginx.org/en/docs/beginners_guide.html#conf_structure
