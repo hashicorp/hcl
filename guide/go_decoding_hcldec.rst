@@ -105,6 +105,8 @@ that would have the following shape if serialized to JSON:
     }
   }
 
+.. go:package:: cty
+
 Types and Values With ``cty``
 -----------------------------
 
