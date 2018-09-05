@@ -1,5 +1,5 @@
-HCL Configuration Language
-==========================
+HCL Config Language Toolkit
+===========================
 
 HCL is a toolkit for creating structured configuration languages that are both
 human- and machine-friendly, for use with command-line tools, servers, etc.
