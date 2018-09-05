@@ -117,8 +117,9 @@ func (d *decoder) decode(name string, node ast.Node, result reflect.Value) error
 func (d *decoder) decodeBool(name string, node ast.Node, result reflect.Value) error {
 	switch n := node.(type) {
 	case *ast.LiteralType:
-		if n.Token.Type == token.BOOL {
-			v, err := strconv.ParseBool(n.Token.Text)
+		switch n.Token.Type {
+		case token.BOOL, token.STRING:
+			v, err := strconv.ParseBool(strings.Replace(n.Token.Text, "\"", "", -1))
 			if err != nil {
 				return err
 			}
