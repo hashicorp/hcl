@@ -8,6 +8,8 @@ some more complex situations that can benefit from some additional techniques.
 This section lists a few of these situations and ways to use the HCL API to
 accommodate them.
 
+.. _go-interdep-blocks:
+
 Interdependent Blocks
 ---------------------
 

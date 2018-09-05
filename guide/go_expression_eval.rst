@@ -75,6 +75,8 @@ complex structures:
 
    source_file = "${path.module}/foo.txt"
 
+.. _go-expression-funcs:
+
 Defining Functions
 ------------------
 
