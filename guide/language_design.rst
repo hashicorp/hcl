@@ -283,3 +283,36 @@ environment variable values available for use in expressions, and may do so
 either as top-level variables (if no other variables are needed) or as an
 object named ``env``, which can be used as in ``env.HOME``.
 
+Text Editor and IDE Integrations
+--------------------------------
+
+Since HCL defines only low-level syntax, a text editor or IDE integration for
+HCL itself can only really provide basic syntax highlighting.
+
+For non-trivial HCL-based languages, a more specialized editor integration may
+be warranted. For example, users writing configuration for HashiCorp Terraform
+must recall the argument names for numerous different provider plugins, and so
+auto-completion and documentation hovertips can be a great help, and
+configurations are commonly spread over multiple files making "Go to Definition"
+functionality useful. None of this functionality can be implemented generically
+for all HCL-based languages since it relies on knowledge of the structure of
+Terraform's own language.
+
+Writing such text editor integrations is out of the scope of this guide. The
+Go implementation of HCL does have some building blocks to help with this, but
+it will always be an application-specific effort.
+
+However, in order to *enable* such integrations, it is best to establish a
+conventional file extension *other than* `.hcl` for each non-trivial HCL-based
+language, thus allowing text editors to recognize it and enable the suitable
+integration. For example, Terraform requires ``.tf`` and ``.tf.json`` filenames
+for its main configuration, and the ``hcldec`` utility in the HCL repository
+accepts spec files that should conventionally be named with an ``.hcldec``
+extension.
+
+For simple languages that are unlikely to benefit from specific editor
+integrations, using the ``.hcl`` extension is fine and may cause an editor to
+enable basic syntax highlighting, absent any other deeper features. An editor
+extension for a specific HCL-based language should *not* match generically the
+``.hcl`` extension, since this can cause confusing results for users
+attempting to write configuration files targeting other applications.
