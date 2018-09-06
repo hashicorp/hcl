@@ -118,10 +118,16 @@ func (d *decoder) decodeBool(name string, node ast.Node, result reflect.Value) e
 	switch n := node.(type) {
 	case *ast.LiteralType:
 		switch n.Token.Type {
-		case token.BOOL, token.STRING:
-			v, err := strconv.ParseBool(strings.Replace(n.Token.Text, "\"", "", -1))
-			if err != nil {
-				return err
+		case token.BOOL, token.STRING, token.NUMBER:
+			var v bool
+			s := strings.ToLower(strings.Replace(n.Token.Text, "\"", "", -1))
+			switch s {
+			case "1", "true":
+				v = true
+			case "0", "false":
+				v = false
+			default:
+				return fmt.Errorf("decodeBool: Unknown value for boolean: %s", n.Token.Text)
 			}
 
 			result.Set(reflect.ValueOf(v))
