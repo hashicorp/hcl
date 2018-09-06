@@ -794,6 +794,51 @@ func TestDecode_interfaceNonPointer(t *testing.T) {
 	}
 }
 
+func TestDecode_boolString(t *testing.T) {
+	var value struct {
+		Boolean bool
+	}
+
+	err := Decode(&value, testReadFile(t, "basic_bool_string.hcl"))
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	if value.Boolean != true {
+		t.Fatalf("bad: %#v", value.Boolean)
+	}
+}
+
+func TestDecode_boolInt(t *testing.T) {
+	var value struct {
+		Boolean bool
+	}
+
+	err := Decode(&value, testReadFile(t, "basic_bool_int.hcl"))
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	if value.Boolean != true {
+		t.Fatalf("bad: %#v", value.Boolean)
+	}
+}
+
+func TestDecode_bool(t *testing.T) {
+	var value struct {
+		Boolean bool
+	}
+
+	err := Decode(&value, testReadFile(t, "basic_bool.hcl"))
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	if value.Boolean != true {
+		t.Fatalf("bad: %#v", value.Boolean)
+	}
+}
+
 func TestDecode_intString(t *testing.T) {
 	var value struct {
 		Count int
