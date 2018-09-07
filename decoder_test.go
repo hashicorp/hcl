@@ -252,6 +252,34 @@ func TestDecode_interface(t *testing.T) {
 			},
 		},
 		{
+			"structure_list_complex.hcl",
+			false,
+			map[string]interface{}{
+				"foo": []map[string]interface{}{
+					map[string]interface{}{
+						"key":  7,
+						"key2": "asdf",
+						"bar": []map[string]interface{}{
+							map[string]interface{}{
+								"baz":  1,
+								"baz2": "asdf",
+							},
+						},
+					},
+					map[string]interface{}{
+						"key":  9,
+						"key2": "asdf",
+						"bar": []map[string]interface{}{
+							map[string]interface{}{
+								"baz":  3,
+								"baz2": "asdf",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			"structure_list.json",
 			false,
 			map[string]interface{}{
@@ -433,7 +461,7 @@ func TestDecode_interface(t *testing.T) {
 			}
 
 			if !reflect.DeepEqual(out, tc.Out) {
-				t.Fatalf("Input: %s. Actual, Expected.\n\n%#v\n\n%#v", tc.File, out, tc.Out)
+				t.Fatalf("Input: %s. Actual, Expected.\n\n%s\n\n%s", tc.File, spew.Sdump(out), spew.Sdump(tc.Out))
 			}
 
 			var v interface{}
@@ -613,6 +641,41 @@ func TestDecode_structurePtr(t *testing.T) {
 
 	if !reflect.DeepEqual(actual, expected) {
 		t.Fatalf("Actual: %#v\n\nExpected: %#v", actual, expected)
+	}
+}
+
+func TestDecode_structureListComplex(t *testing.T) {
+	type Bar struct {
+		Baz  int
+		Baz2 string
+	}
+
+	type Foo struct {
+		Key  int
+		Key2 string
+		Bars []Bar `hcl:"bar"`
+	}
+
+	type V struct {
+		Foos []Foo `hcl:"foo"`
+	}
+
+	var actual V
+
+	err := Decode(&actual, testReadFile(t, "structure_list_complex.hcl"))
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	expected := V{
+		Foos: []Foo{
+			Foo{Key: 7, Key2: "asdf", Bars: []Bar{Bar{Baz: 1, Baz2: "asdf"}}},
+			Foo{Key: 9, Key2: "asdf", Bars: []Bar{Bar{Baz: 3, Baz2: "asdf"}}},
+		},
+	}
+
+	if !reflect.DeepEqual(actual, expected) {
+		t.Fatalf("Actual: %s\n\nExpected: %s", spew.Sdump(actual), spew.Sdump(expected))
 	}
 }
 
@@ -1244,5 +1307,40 @@ func TestDecode_flattenedJSON(t *testing.T) {
 		if !reflect.DeepEqual(tc.Out, tc.Expected) {
 			t.Fatalf("[%d]\ngot: %s\nexpected: %s\n", i, spew.Sdump(tc.Out), spew.Sdump(tc.Expected))
 		}
+	}
+}
+
+func TestDecode_sliceIntoSameObject(t *testing.T) {
+	type Bar struct {
+		Val  string
+		Val2 string
+	}
+	type Feat struct {
+		Bars []Bar `hcl:"bar"`
+	}
+
+	var actual Feat
+
+	err := Decode(&actual, `
+bar {
+  val = "hello"
+  val2 = "world"
+}
+`)
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	expected := Feat{
+		Bars: []Bar{
+			Bar{
+				Val:  "hello",
+				Val2: "world",
+			},
+		},
+	}
+
+	if !reflect.DeepEqual(actual, expected) {
+		t.Fatalf("Actual, Expected.\n\n%s\n\n%s", spew.Sdump(actual), spew.Sdump(expected))
 	}
 }
