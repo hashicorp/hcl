@@ -8,6 +8,10 @@ import (
 	"github.com/hashicorp/hcl2/hcl"
 )
 
+func init() {
+	deep.MaxDepth = 999
+}
+
 func TestParse(t *testing.T) {
 	tests := []struct {
 		Input     string

@@ -8,6 +8,10 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
+func init() {
+	deep.MaxDepth = 999
+}
+
 func TestParseConfig(t *testing.T) {
 	tests := []struct {
 		input     string
@@ -1393,8 +1397,8 @@ block "valid" {}
 									Val: cty.StringVal("Hello\n"),
 
 									SrcRange: hcl.Range{
-										Start: hcl.Pos{Line: 1, Column: 6, Byte: 5},
-										End:   hcl.Pos{Line: 1, Column: 12, Byte: 11},
+										Start: hcl.Pos{Line: 2, Column: 1, Byte: 10},
+										End:   hcl.Pos{Line: 3, Column: 1, Byte: 16},
 									},
 								},
 							},
@@ -1426,8 +1430,8 @@ block "valid" {}
 									Val: cty.StringVal("Hi"),
 
 									SrcRange: hcl.Range{
-										Start: hcl.Pos{Line: 4, Column: 24, Byte: 5},
-										End:   hcl.Pos{Line: 4, Column: 9, Byte: 28},
+										Start: hcl.Pos{Line: 4, Column: 6, Byte: 25},
+										End:   hcl.Pos{Line: 4, Column: 8, Byte: 27},
 									},
 								},
 							},
@@ -1550,8 +1554,8 @@ block "valid" {}
 									Name: "baz",
 
 									SrcRange: hcl.Range{
-										Start: hcl.Pos{Line: 1, Column: 8, Byte: 7},
-										End:   hcl.Pos{Line: 1, Column: 12, Byte: 11},
+										Start: hcl.Pos{Line: 1, Column: 12, Byte: 11},
+										End:   hcl.Pos{Line: 1, Column: 16, Byte: 15},
 									},
 								},
 							},
