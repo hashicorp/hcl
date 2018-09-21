@@ -2,12 +2,11 @@ package hclsyntax
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 
-	"reflect"
-
-	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/hcl2/hcl"
+	"github.com/kr/pretty"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -217,6 +216,80 @@ func TestVariables(t *testing.T) {
 				},
 			},
 		},
+		{
+			&ScopeTraversalExpr{
+				Traversal: hcl.Traversal{
+					hcl.TraverseRoot{
+						Name: "data",
+					},
+					hcl.TraverseAttr{
+						Name: "null_data_source",
+					},
+					hcl.TraverseAttr{
+						Name: "multi",
+					},
+					hcl.TraverseIndex{
+						Key: cty.NumberFloatVal(0),
+					},
+				},
+			},
+			[]hcl.Traversal{
+				{
+					hcl.TraverseRoot{
+						Name: "data",
+					},
+					hcl.TraverseAttr{
+						Name: "null_data_source",
+					},
+					hcl.TraverseAttr{
+						Name: "multi",
+					},
+					hcl.TraverseIndex{
+						Key: cty.NumberFloatVal(0),
+					},
+				},
+			},
+		},
+		{
+			&RelativeTraversalExpr{
+				Source: &FunctionCallExpr{
+					Name: "sort",
+					Args: []Expression{
+						&ScopeTraversalExpr{
+							Traversal: hcl.Traversal{
+								hcl.TraverseRoot{
+									Name: "data",
+								},
+								hcl.TraverseAttr{
+									Name: "null_data_source",
+								},
+								hcl.TraverseAttr{
+									Name: "multi",
+								},
+							},
+						},
+					},
+				},
+				Traversal: hcl.Traversal{
+					hcl.TraverseIndex{
+						Key: cty.NumberFloatVal(0),
+					},
+				},
+			},
+			[]hcl.Traversal{
+				{
+					hcl.TraverseRoot{
+						Name: "data",
+					},
+					hcl.TraverseAttr{
+						Name: "null_data_source",
+					},
+					hcl.TraverseAttr{
+						Name: "multi",
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -224,7 +297,7 @@ func TestVariables(t *testing.T) {
 			got := Variables(test.Expr)
 
 			if !reflect.DeepEqual(got, test.Want) {
-				t.Errorf("wrong result\ngot:  %s\nwant: %s", spew.Sdump(got), spew.Sdump(test.Want))
+				t.Errorf("wrong result\ngot:  %s\nwant: %s", pretty.Sprint(got), pretty.Sprint(test.Want))
 			}
 		})
 	}
