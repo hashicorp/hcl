@@ -1956,6 +1956,140 @@ block "valid" {}
 				},
 			},
 		},
+		{
+			"a = sort(data.first.ref.attr)[count.index]\n",
+			0,
+			&Body{
+				Attributes: Attributes{
+					"a": {
+						Name: "a",
+						Expr: &IndexExpr{
+							Collection: &FunctionCallExpr{
+								Name: "sort",
+								Args: []Expression{
+									&ScopeTraversalExpr{
+										Traversal: hcl.Traversal{
+											hcl.TraverseRoot{
+												Name: "data",
+												SrcRange: hcl.Range{
+													Filename: "",
+													Start:    hcl.Pos{Line: 1, Column: 10, Byte: 9},
+													End:      hcl.Pos{Line: 1, Column: 14, Byte: 13},
+												},
+											},
+											hcl.TraverseAttr{
+												Name: "first",
+												SrcRange: hcl.Range{
+													Filename: "",
+													Start:    hcl.Pos{Line: 1, Column: 14, Byte: 13},
+													End:      hcl.Pos{Line: 1, Column: 20, Byte: 19},
+												},
+											},
+											hcl.TraverseAttr{
+												Name: "ref",
+												SrcRange: hcl.Range{
+													Filename: "",
+													Start:    hcl.Pos{Line: 1, Column: 20, Byte: 19},
+													End:      hcl.Pos{Line: 1, Column: 24, Byte: 23},
+												},
+											},
+											hcl.TraverseAttr{
+												Name: "attr",
+												SrcRange: hcl.Range{
+													Filename: "",
+													Start:    hcl.Pos{Line: 1, Column: 24, Byte: 23},
+													End:      hcl.Pos{Line: 1, Column: 29, Byte: 28},
+												},
+											},
+										},
+										SrcRange: hcl.Range{
+											Filename: "",
+											Start:    hcl.Pos{Line: 1, Column: 10, Byte: 9},
+											End:      hcl.Pos{Line: 1, Column: 29, Byte: 28},
+										},
+									},
+								},
+								ExpandFinal: false,
+								NameRange: hcl.Range{
+									Filename: "",
+									Start:    hcl.Pos{Line: 1, Column: 5, Byte: 4},
+									End:      hcl.Pos{Line: 1, Column: 9, Byte: 8},
+								},
+								OpenParenRange: hcl.Range{
+									Filename: "",
+									Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+									End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
+								},
+								CloseParenRange: hcl.Range{
+									Filename: "",
+									Start:    hcl.Pos{Line: 1, Column: 29, Byte: 28},
+									End:      hcl.Pos{Line: 1, Column: 30, Byte: 29},
+								},
+							},
+							Key: &ScopeTraversalExpr{
+								Traversal: hcl.Traversal{
+									hcl.TraverseRoot{
+										Name: "count",
+										SrcRange: hcl.Range{
+											Filename: "",
+											Start:    hcl.Pos{Line: 1, Column: 31, Byte: 30},
+											End:      hcl.Pos{Line: 1, Column: 36, Byte: 35},
+										},
+									},
+									hcl.TraverseAttr{
+										Name: "index",
+										SrcRange: hcl.Range{
+											Filename: "",
+											Start:    hcl.Pos{Line: 1, Column: 36, Byte: 35},
+											End:      hcl.Pos{Line: 1, Column: 42, Byte: 41},
+										},
+									},
+								},
+								SrcRange: hcl.Range{
+									Filename: "",
+									Start:    hcl.Pos{Line: 1, Column: 31, Byte: 30},
+									End:      hcl.Pos{Line: 1, Column: 42, Byte: 41},
+								},
+							},
+							SrcRange: hcl.Range{
+								Filename: "",
+								Start:    hcl.Pos{Line: 1, Column: 30, Byte: 29},
+								End:      hcl.Pos{Line: 1, Column: 43, Byte: 42},
+							},
+							OpenRange: hcl.Range{
+								Filename: "",
+								Start:    hcl.Pos{Line: 1, Column: 30, Byte: 29},
+								End:      hcl.Pos{Line: 1, Column: 31, Byte: 30},
+							},
+						},
+						SrcRange: hcl.Range{
+							Filename: "",
+							Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:      hcl.Pos{Line: 1, Column: 43, Byte: 42},
+						},
+						NameRange: hcl.Range{
+							Filename: "",
+							Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:      hcl.Pos{Line: 1, Column: 2, Byte: 1},
+						},
+						EqualsRange: hcl.Range{
+							Filename: "",
+							Start:    hcl.Pos{Line: 1, Column: 3, Byte: 2},
+							End:      hcl.Pos{Line: 1, Column: 4, Byte: 3},
+						},
+					},
+				},
+				Blocks: Blocks{},
+				SrcRange: hcl.Range{
+					Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   hcl.Pos{Line: 2, Column: 1, Byte: 43},
+				},
+				EndRange: hcl.Range{
+					Start: hcl.Pos{Line: 2, Column: 1, Byte: 43},
+					End:   hcl.Pos{Line: 2, Column: 1, Byte: 43},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
