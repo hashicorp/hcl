@@ -47,8 +47,8 @@ type Body struct {
 var assertBodyImplBody hcl.Body = &Body{}
 
 func (b *Body) walkChildNodes(w internalWalkFunc) {
-	b.Attributes = w(b.Attributes).(Attributes)
-	b.Blocks = w(b.Blocks).(Blocks)
+	w(b.Attributes)
+	w(b.Blocks)
 }
 
 func (b *Body) Range() hcl.Range {
@@ -286,8 +286,8 @@ func (b *Body) MissingItemRange() hcl.Range {
 type Attributes map[string]*Attribute
 
 func (a Attributes) walkChildNodes(w internalWalkFunc) {
-	for k, attr := range a {
-		a[k] = w(attr).(*Attribute)
+	for _, attr := range a {
+		w(attr)
 	}
 }
 
@@ -321,7 +321,7 @@ type Attribute struct {
 }
 
 func (a *Attribute) walkChildNodes(w internalWalkFunc) {
-	a.Expr = w(a.Expr).(Expression)
+	w(a.Expr)
 }
 
 func (a *Attribute) Range() hcl.Range {
@@ -346,8 +346,8 @@ func (a *Attribute) AsHCLAttribute() *hcl.Attribute {
 type Blocks []*Block
 
 func (bs Blocks) walkChildNodes(w internalWalkFunc) {
-	for i, block := range bs {
-		bs[i] = w(block).(*Block)
+	for _, block := range bs {
+		w(block)
 	}
 }
 
@@ -378,7 +378,7 @@ type Block struct {
 }
 
 func (b *Block) walkChildNodes(w internalWalkFunc) {
-	b.Body = w(b.Body).(*Body)
+	w(b.Body)
 }
 
 func (b *Block) Range() hcl.Range {
