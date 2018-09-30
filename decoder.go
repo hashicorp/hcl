@@ -635,8 +635,8 @@ func (d *decoder) decodeStruct(name string, node ast.Node, result reflect.Value)
 	decodedFields := make([]string, 0, len(fields))
 	decodedFieldsVal := make([]reflect.Value, 0)
 	unusedKeysVal := make([]reflect.Value, 0)
-	for _, f := range fields {
-		field, fieldValue := f.field, f.val
+	for i := range fields {
+		field, fieldValue := fields[i].field, fields[i].val
 		if !fieldValue.IsValid() {
 			// This should never happen
 			panic("field is not valid")
