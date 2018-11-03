@@ -297,7 +297,16 @@ block "valid" {}
 					&Block{
 						Type:   "block",
 						Labels: []string{"invalid"},
-						Body:   nil,
+						Body: &Body{
+							SrcRange: hcl.Range{
+								Start: hcl.Pos{Line: 2, Column: 1, Byte: 1},
+								End:   hcl.Pos{Line: 2, Column: 6, Byte: 6},
+							},
+							EndRange: hcl.Range{
+								Start: hcl.Pos{Line: 2, Column: 1, Byte: 1},
+								End:   hcl.Pos{Line: 2, Column: 6, Byte: 6},
+							},
+						},
 
 						TypeRange: hcl.Range{
 							Start: hcl.Pos{Line: 2, Column: 1, Byte: 1},
