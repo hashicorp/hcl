@@ -419,14 +419,12 @@ func TestBodyAppendBlock(t *testing.T) {
 		src       string
 		blockType string
 		labels    []string
-		blank     bool
 		want      Tokens
 	}{
 		{
 			"",
 			"foo",
 			nil,
-			false,
 			Tokens{
 				{
 					Type:         hclsyntax.TokenIdent,
@@ -464,7 +462,6 @@ func TestBodyAppendBlock(t *testing.T) {
 			"",
 			"foo",
 			[]string{"bar"},
-			false,
 			Tokens{
 				{
 					Type:         hclsyntax.TokenIdent,
@@ -517,7 +514,6 @@ func TestBodyAppendBlock(t *testing.T) {
 			"",
 			"foo",
 			[]string{"bar", "baz"},
-			false,
 			Tokens{
 				{
 					Type:         hclsyntax.TokenIdent,
@@ -585,7 +581,6 @@ func TestBodyAppendBlock(t *testing.T) {
 			"bar {}\n",
 			"foo",
 			nil,
-			false,
 			Tokens{
 				{
 					Type:         hclsyntax.TokenIdent,
@@ -639,69 +634,6 @@ func TestBodyAppendBlock(t *testing.T) {
 				},
 			},
 		},
-		{
-			"bar_blank_after {}\n",
-			"foo",
-			nil,
-			true,
-			Tokens{
-				{
-					Type:         hclsyntax.TokenIdent,
-					Bytes:        []byte(`bar_blank_after`),
-					SpacesBefore: 0,
-				},
-				{
-					Type:         hclsyntax.TokenOBrace,
-					Bytes:        []byte{'{'},
-					SpacesBefore: 1,
-				},
-				{
-					Type:         hclsyntax.TokenCBrace,
-					Bytes:        []byte{'}'},
-					SpacesBefore: 0,
-				},
-				{
-					Type:         hclsyntax.TokenNewline,
-					Bytes:        []byte{'\n'},
-					SpacesBefore: 0,
-				},
-				{
-					Type:         hclsyntax.TokenNewline,
-					Bytes:        []byte{'\n'},
-					SpacesBefore: 0,
-				},
-				{
-					Type:         hclsyntax.TokenIdent,
-					Bytes:        []byte(`foo`),
-					SpacesBefore: 0,
-				},
-				{
-					Type:         hclsyntax.TokenOBrace,
-					Bytes:        []byte{'{'},
-					SpacesBefore: 1,
-				},
-				{
-					Type:         hclsyntax.TokenNewline,
-					Bytes:        []byte{'\n'},
-					SpacesBefore: 0,
-				},
-				{
-					Type:         hclsyntax.TokenCBrace,
-					Bytes:        []byte{'}'},
-					SpacesBefore: 0,
-				},
-				{
-					Type:         hclsyntax.TokenNewline,
-					Bytes:        []byte{'\n'},
-					SpacesBefore: 0,
-				},
-				{
-					Type:         hclsyntax.TokenEOF,
-					Bytes:        []byte{},
-					SpacesBefore: 0,
-				},
-			},
-		},
 	}
 
 	for _, test := range tests {
@@ -714,7 +646,7 @@ func TestBodyAppendBlock(t *testing.T) {
 				t.Fatalf("unexpected diagnostics")
 			}
 
-			f.Body().AppendBlock(test.blockType, test.labels, test.blank)
+			f.Body().AppendNewBlock(test.blockType, test.labels)
 			got := f.BuildTokens(nil)
 			format(got)
 			if !reflect.DeepEqual(got, test.want) {

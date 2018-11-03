@@ -85,26 +85,23 @@ func (b *Body) SetAttributeTraversal(name string, traversal hcl.Traversal) *Attr
 	panic("Body.SetAttributeTraversal not yet implemented")
 }
 
-// AppendBlock appends a new nested block to the end of the receiving body.
-//
-// If blankLine is set, an additional empty line is added before the block
-// for separation. Usual HCL style suggests that we group together blocks of
-// the same type without intervening blank lines and then put blank lines
-// between blocks of different types. In some languages, some different block
-// types may be conceptually related and so may still be grouped together.
-// It is the caller's responsibility to respect the usual conventions of the
-// language being generated.
-func (b *Body) AppendBlock(typeName string, labels []string, blankLine bool) *Block {
+// AppendNewBlock appends a new nested block to the end of the receiving body
+// with the given type name and labels.
+func (b *Body) AppendNewBlock(typeName string, labels []string) *Block {
 	block := newBlock()
 	block.init(typeName, labels)
-	if blankLine {
-		b.AppendUnstructuredTokens(Tokens{
-			{
-				Type:  hclsyntax.TokenNewline,
-				Bytes: []byte{'\n'},
-			},
-		})
-	}
 	b.appendItem(block)
 	return block
+}
+
+// AppendNewline appends a newline token to th end of the receiving body,
+// which generally serves as a separator between different sets of body
+// contents.
+func (b *Body) AppendNewline() {
+	b.AppendUnstructuredTokens(Tokens{
+		{
+			Type:  hclsyntax.TokenNewline,
+			Bytes: []byte{'\n'},
+		},
+	})
 }
