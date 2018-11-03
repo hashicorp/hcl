@@ -22,7 +22,7 @@ func (f *File) Body() *Body {
 //
 // The tokens first have a simple formatting pass applied that adjusts only
 // the spaces between them.
-func (f *File) WriteTo(wr io.Writer) (int, error) {
+func (f *File) WriteTo(wr io.Writer) (int64, error) {
 	tokens := f.inTree.children.BuildTokens(nil)
 	format(tokens)
 	return tokens.WriteTo(wr)

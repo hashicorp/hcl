@@ -60,7 +60,7 @@ block {
 
 			wr := &bytes.Buffer{}
 			n, err := file.WriteTo(wr)
-			if n != len(test) {
+			if n != int64(len(test)) {
 				t.Errorf("wrong number of bytes %d; want %d", n, len(test))
 			}
 			if err != nil {
