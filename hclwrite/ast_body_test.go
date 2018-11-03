@@ -413,3 +413,314 @@ func TestBodySetAttributeValue(t *testing.T) {
 		})
 	}
 }
+
+func TestBodyAppendBlock(t *testing.T) {
+	tests := []struct {
+		src       string
+		blockType string
+		labels    []string
+		blank     bool
+		want      Tokens
+	}{
+		{
+			"",
+			"foo",
+			nil,
+			false,
+			Tokens{
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte(`foo`),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenOBrace,
+					Bytes:        []byte{'{'},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenNewline,
+					Bytes:        []byte{'\n'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenCBrace,
+					Bytes:        []byte{'}'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenNewline,
+					Bytes:        []byte{'\n'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEOF,
+					Bytes:        []byte{},
+					SpacesBefore: 0,
+				},
+			},
+		},
+		{
+			"",
+			"foo",
+			[]string{"bar"},
+			false,
+			Tokens{
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte(`foo`),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenOQuote,
+					Bytes:        []byte(`"`),
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenQuotedLit,
+					Bytes:        []byte(`bar`),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenCQuote,
+					Bytes:        []byte(`"`),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenOBrace,
+					Bytes:        []byte{'{'},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenNewline,
+					Bytes:        []byte{'\n'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenCBrace,
+					Bytes:        []byte{'}'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenNewline,
+					Bytes:        []byte{'\n'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEOF,
+					Bytes:        []byte{},
+					SpacesBefore: 0,
+				},
+			},
+		},
+		{
+			"",
+			"foo",
+			[]string{"bar", "baz"},
+			false,
+			Tokens{
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte(`foo`),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenOQuote,
+					Bytes:        []byte(`"`),
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenQuotedLit,
+					Bytes:        []byte(`bar`),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenCQuote,
+					Bytes:        []byte(`"`),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenOQuote,
+					Bytes:        []byte(`"`),
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenQuotedLit,
+					Bytes:        []byte(`baz`),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenCQuote,
+					Bytes:        []byte(`"`),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenOBrace,
+					Bytes:        []byte{'{'},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenNewline,
+					Bytes:        []byte{'\n'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenCBrace,
+					Bytes:        []byte{'}'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenNewline,
+					Bytes:        []byte{'\n'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEOF,
+					Bytes:        []byte{},
+					SpacesBefore: 0,
+				},
+			},
+		},
+		{
+			"bar {}\n",
+			"foo",
+			nil,
+			false,
+			Tokens{
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte(`bar`),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenOBrace,
+					Bytes:        []byte{'{'},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenCBrace,
+					Bytes:        []byte{'}'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenNewline,
+					Bytes:        []byte{'\n'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte(`foo`),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenOBrace,
+					Bytes:        []byte{'{'},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenNewline,
+					Bytes:        []byte{'\n'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenCBrace,
+					Bytes:        []byte{'}'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenNewline,
+					Bytes:        []byte{'\n'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEOF,
+					Bytes:        []byte{},
+					SpacesBefore: 0,
+				},
+			},
+		},
+		{
+			"bar_blank_after {}\n",
+			"foo",
+			nil,
+			true,
+			Tokens{
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte(`bar_blank_after`),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenOBrace,
+					Bytes:        []byte{'{'},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenCBrace,
+					Bytes:        []byte{'}'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenNewline,
+					Bytes:        []byte{'\n'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenNewline,
+					Bytes:        []byte{'\n'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte(`foo`),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenOBrace,
+					Bytes:        []byte{'{'},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenNewline,
+					Bytes:        []byte{'\n'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenCBrace,
+					Bytes:        []byte{'}'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenNewline,
+					Bytes:        []byte{'\n'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEOF,
+					Bytes:        []byte{},
+					SpacesBefore: 0,
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%s %#v in %s", test.blockType, test.blockType, test.src), func(t *testing.T) {
+			f, diags := ParseConfig([]byte(test.src), "", hcl.Pos{Line: 1, Column: 1})
+			if len(diags) != 0 {
+				for _, diag := range diags {
+					t.Logf("- %s", diag.Error())
+				}
+				t.Fatalf("unexpected diagnostics")
+			}
+
+			f.Body().AppendBlock(test.blockType, test.labels, test.blank)
+			got := f.BuildTokens(nil)
+			format(got)
+			if !reflect.DeepEqual(got, test.want) {
+				diff := cmp.Diff(test.want, got)
+				t.Errorf("wrong result\ngot:  %s\nwant: %s\ndiff:\n%s", spew.Sdump(got), spew.Sdump(test.want), diff)
+			}
+		})
+	}
+}
