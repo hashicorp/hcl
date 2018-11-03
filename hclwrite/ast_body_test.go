@@ -215,6 +215,7 @@ func TestBodyGetAttribute(t *testing.T) {
 		})
 	}
 }
+
 func TestBodySetAttributeValue(t *testing.T) {
 	tests := []struct {
 		src  string
