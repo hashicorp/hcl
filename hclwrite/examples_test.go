@@ -66,3 +66,28 @@ func Example_generateFromScratch() {
 	//   }
 	// }
 }
+
+func ExampleExpression_RenameVariablePrefix() {
+	src := []byte(
+		"foo = a.x + a.y * b.c\n" +
+			"bar = max(a.z, b.c)\n",
+	)
+	f, diags := hclwrite.ParseConfig(src, "", hcl.Pos{Line: 1, Column: 1})
+	if diags.HasErrors() {
+		fmt.Printf("errors: %s", diags)
+		return
+	}
+
+	// Rename references of variable "a" to "z"
+	for _, attr := range f.Body().Attributes() {
+		attr.Expr().RenameVariablePrefix(
+			[]string{"a"},
+			[]string{"z"},
+		)
+	}
+
+	fmt.Printf("%s", f.Bytes())
+	// Output:
+	// foo = z.x + z.y * b.c
+	// bar = max(z.z, b.c)
+}

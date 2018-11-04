@@ -41,6 +41,31 @@ func (b *Body) AppendUnstructuredTokens(ts Tokens) {
 	b.inTree.children.Append(ts)
 }
 
+// Attributes returns a new map of all of the attributes in the body, with
+// the attribute names as the keys.
+func (b *Body) Attributes() map[string]*Attribute {
+	ret := make(map[string]*Attribute)
+	for n := range b.items {
+		if attr, isAttr := n.content.(*Attribute); isAttr {
+			nameObj := attr.name.content.(*identifier)
+			name := string(nameObj.token.Bytes)
+			ret[name] = attr
+		}
+	}
+	return ret
+}
+
+// Blocks returns a new slice of all the blocks in the body.
+func (b *Body) Blocks() []*Block {
+	ret := make([]*Block, 0, len(b.items))
+	for n := range b.items {
+		if block, isBlock := n.content.(*Block); isBlock {
+			ret = append(ret, block)
+		}
+	}
+	return ret
+}
+
 // GetAttribute returns the attribute from the body that has the given name,
 // or returns nil if there is currently no matching attribute.
 func (b *Body) GetAttribute(name string) *Attribute {
