@@ -32,6 +32,11 @@ func (b *Body) appendItemNode(nn *node) *node {
 	return nn
 }
 
+// Clear removes all of the items from the body, making it empty.
+func (b *Body) Clear() {
+	b.children.Clear()
+}
+
 func (b *Body) AppendUnstructuredTokens(ts Tokens) {
 	b.inTree.children.Append(ts)
 }
@@ -83,6 +88,13 @@ func (b *Body) SetAttributeValue(name string, val cty.Value) *Attribute {
 // created.
 func (b *Body) SetAttributeTraversal(name string, traversal hcl.Traversal) *Attribute {
 	panic("Body.SetAttributeTraversal not yet implemented")
+}
+
+// AppendBlock appends an existing block (which must not be already attached
+// to a body) to the end of the receiving body.
+func (b *Body) AppendBlock(block *Block) *Block {
+	b.appendItem(block)
+	return block
 }
 
 // AppendNewBlock appends a new nested block to the end of the receiving body

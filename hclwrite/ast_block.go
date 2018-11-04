@@ -23,6 +23,13 @@ func newBlock() *Block {
 	}
 }
 
+// NewBlock constructs a new, empty block with the given type name and labels.
+func NewBlock(typeName string, labels []string) *Block {
+	block := newBlock()
+	block.init(typeName, labels)
+	return block
+}
+
 func (b *Block) init(typeName string, labels []string) {
 	nameTok := newIdentToken(typeName)
 	nameObj := newIdentifier(nameTok)
