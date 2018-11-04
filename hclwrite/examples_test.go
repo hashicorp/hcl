@@ -3,6 +3,7 @@ package hclwrite_test
 import (
 	"fmt"
 
+	"github.com/hashicorp/hcl2/hcl"
 	"github.com/hashicorp/hcl2/hclwrite"
 	"github.com/zclconf/go-cty/cty"
 )
@@ -19,6 +20,14 @@ func Example_generateFromScratch() {
 	}))
 	rootBody.SetAttributeValue("string", cty.StringVal("foo"))
 	rootBody.SetAttributeValue("bool", cty.False)
+	rootBody.SetAttributeTraversal("path", hcl.Traversal{
+		hcl.TraverseRoot{
+			Name: "env",
+		},
+		hcl.TraverseAttr{
+			Name: "PATH",
+		},
+	})
 	rootBody.AppendNewline()
 	fooBlock := rootBody.AppendNewBlock("foo", nil)
 	fooBody := fooBlock.Body()
@@ -41,6 +50,7 @@ func Example_generateFromScratch() {
 	//
 	// object = {bar = 5, baz = true, foo = "foo"}
 	// bool   = false
+	// path   = env.PATH
 	//
 	// foo {
 	//   hello = "world"

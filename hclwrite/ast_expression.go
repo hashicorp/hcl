@@ -2,6 +2,7 @@ package hclwrite
 
 import (
 	"github.com/hashicorp/hcl2/hcl"
+	"github.com/hashicorp/hcl2/hcl/hclsyntax"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -41,7 +42,61 @@ func NewExpressionLiteral(val cty.Value) *Expression {
 // NewExpressionAbsTraversal constructs an expression that represents the
 // given traversal, which must be absolute or this function will panic.
 func NewExpressionAbsTraversal(traversal hcl.Traversal) *Expression {
-	panic("NewExpressionAbsTraversal not yet implemented")
+	if traversal.IsRelative() {
+		panic("can't construct expression from relative traversal")
+	}
+
+	physT := newTraversal()
+	rootName := traversal.RootName()
+	steps := traversal[1:]
+
+	{
+		tn := newTraverseName()
+		tn.name = tn.children.Append(newIdentifier(&Token{
+			Type:  hclsyntax.TokenIdent,
+			Bytes: []byte(rootName),
+		}))
+		physT.steps.Add(physT.children.Append(tn))
+	}
+
+	for _, step := range steps {
+		switch ts := step.(type) {
+		case hcl.TraverseAttr:
+			tn := newTraverseName()
+			tn.children.AppendUnstructuredTokens(Tokens{
+				{
+					Type:  hclsyntax.TokenDot,
+					Bytes: []byte{'.'},
+				},
+			})
+			tn.name = tn.children.Append(newIdentifier(&Token{
+				Type:  hclsyntax.TokenIdent,
+				Bytes: []byte(ts.Name),
+			}))
+			physT.steps.Add(physT.children.Append(tn))
+		case hcl.TraverseIndex:
+			ti := newTraverseIndex()
+			ti.children.AppendUnstructuredTokens(Tokens{
+				{
+					Type:  hclsyntax.TokenOBrack,
+					Bytes: []byte{'['},
+				},
+			})
+			indexExpr := NewExpressionLiteral(ts.Key)
+			ti.key = ti.children.Append(indexExpr)
+			ti.children.AppendUnstructuredTokens(Tokens{
+				{
+					Type:  hclsyntax.TokenCBrack,
+					Bytes: []byte{']'},
+				},
+			})
+			physT.steps.Add(physT.children.Append(ti))
+		}
+	}
+
+	expr := newExpression()
+	expr.absTraversals.Add(expr.children.Append(physT))
+	return expr
 }
 
 type Traversal struct {

@@ -87,7 +87,16 @@ func (b *Body) SetAttributeValue(name string, val cty.Value) *Attribute {
 // The return value is the attribute that was either modified in-place or
 // created.
 func (b *Body) SetAttributeTraversal(name string, traversal hcl.Traversal) *Attribute {
-	panic("Body.SetAttributeTraversal not yet implemented")
+	attr := b.GetAttribute(name)
+	expr := NewExpressionAbsTraversal(traversal)
+	if attr != nil {
+		attr.expr = attr.expr.ReplaceWith(expr)
+	} else {
+		attr := newAttribute()
+		attr.init(name, expr)
+		b.appendItem(attr)
+	}
+	return attr
 }
 
 // AppendBlock appends an existing block (which must not be already attached

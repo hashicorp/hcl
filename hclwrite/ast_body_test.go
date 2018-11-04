@@ -414,6 +414,232 @@ func TestBodySetAttributeValue(t *testing.T) {
 	}
 }
 
+func TestBodySetAttributeTraversal(t *testing.T) {
+	tests := []struct {
+		src  string
+		name string
+		trav string
+		want Tokens
+	}{
+		{
+			"",
+			"a",
+			`b`,
+			Tokens{
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte{'a'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte{'='},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte("b"),
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenNewline,
+					Bytes:        []byte{'\n'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEOF,
+					Bytes:        []byte{},
+					SpacesBefore: 0,
+				},
+			},
+		},
+		{
+			"",
+			"a",
+			`b.c.d`,
+			Tokens{
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte{'a'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte{'='},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte("b"),
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenDot,
+					Bytes:        []byte("."),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte("c"),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenDot,
+					Bytes:        []byte("."),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte("d"),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenNewline,
+					Bytes:        []byte{'\n'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEOF,
+					Bytes:        []byte{},
+					SpacesBefore: 0,
+				},
+			},
+		},
+		{
+			"",
+			"a",
+			`b[0]`,
+			Tokens{
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte{'a'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte{'='},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte("b"),
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenOBrack,
+					Bytes:        []byte("["),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenNumberLit,
+					Bytes:        []byte("0"),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenCBrack,
+					Bytes:        []byte("]"),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenNewline,
+					Bytes:        []byte{'\n'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEOF,
+					Bytes:        []byte{},
+					SpacesBefore: 0,
+				},
+			},
+		},
+		{
+			"",
+			"a",
+			`b[0].c`,
+			Tokens{
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte{'a'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte{'='},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte("b"),
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenOBrack,
+					Bytes:        []byte("["),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenNumberLit,
+					Bytes:        []byte("0"),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenCBrack,
+					Bytes:        []byte("]"),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenDot,
+					Bytes:        []byte("."),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte("c"),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenNewline,
+					Bytes:        []byte{'\n'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEOF,
+					Bytes:        []byte{},
+					SpacesBefore: 0,
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%s = %s in %s", test.name, test.trav, test.src), func(t *testing.T) {
+			f, diags := ParseConfig([]byte(test.src), "", hcl.Pos{Line: 1, Column: 1})
+			if len(diags) != 0 {
+				for _, diag := range diags {
+					t.Logf("- %s", diag.Error())
+				}
+				t.Fatalf("unexpected diagnostics")
+			}
+
+			traversal, diags := hclsyntax.ParseTraversalAbs([]byte(test.trav), "", hcl.Pos{Line: 1, Column: 1})
+			if len(diags) != 0 {
+				for _, diag := range diags {
+					t.Logf("- %s", diag.Error())
+				}
+				t.Fatalf("unexpected diagnostics from traversal")
+			}
+
+			f.Body().SetAttributeTraversal(test.name, traversal)
+			got := f.BuildTokens(nil)
+			format(got)
+			if !reflect.DeepEqual(got, test.want) {
+				diff := cmp.Diff(test.want, got)
+				t.Errorf("wrong result\ngot:  %s\nwant: %s\ndiff:\n%s", spew.Sdump(got), spew.Sdump(test.want), diff)
+			}
+		})
+	}
+}
+
 func TestBodyAppendBlock(t *testing.T) {
 	tests := []struct {
 		src       string
