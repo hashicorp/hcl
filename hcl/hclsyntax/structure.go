@@ -86,8 +86,8 @@ func (b *Body) Content(schema *hcl.BodySchema) (*hcl.BodyContent, hcl.Diagnostic
 
 			diags = append(diags, &hcl.Diagnostic{
 				Severity: hcl.DiagError,
-				Summary:  "Unsupported attribute",
-				Detail:   fmt.Sprintf("An attribute named %q is not expected here.%s", name, suggestion),
+				Summary:  "Unsupported argument",
+				Detail:   fmt.Sprintf("An argument named %q is not expected here.%s", name, suggestion),
 				Subject:  &attr.NameRange,
 			})
 		}
@@ -107,7 +107,7 @@ func (b *Body) Content(schema *hcl.BodySchema) (*hcl.BodyContent, hcl.Diagnostic
 				// Is there an attribute of the same name?
 				for _, attrS := range schema.Attributes {
 					if attrS.Name == blockTy {
-						suggestion = fmt.Sprintf(" Did you mean to define attribute %q?", blockTy)
+						suggestion = fmt.Sprintf(" Did you mean to define argument %q? If so, use the equals sign to assign it a value.", blockTy)
 						break
 					}
 				}
@@ -151,8 +151,8 @@ func (b *Body) PartialContent(schema *hcl.BodySchema) (*hcl.BodyContent, hcl.Bod
 			if attrS.Required {
 				diags = append(diags, &hcl.Diagnostic{
 					Severity: hcl.DiagError,
-					Summary:  "Missing required attribute",
-					Detail:   fmt.Sprintf("The attribute %q is required, but no definition was found.", attrS.Name),
+					Summary:  "Missing required argument",
+					Detail:   fmt.Sprintf("The argument %q is required, but no definition was found.", attrS.Name),
 					Subject:  b.MissingItemRange().Ptr(),
 				})
 			}
