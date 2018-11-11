@@ -5,16 +5,19 @@ package hclpack
 import "strconv"
 
 const (
-	_ExprSourceType_name_0 = "ExprNative"
-	_ExprSourceType_name_1 = "ExprTemplate"
+	_ExprSourceType_name_0 = "ExprLiteralJSON"
+	_ExprSourceType_name_1 = "ExprNative"
+	_ExprSourceType_name_2 = "ExprTemplate"
 )
 
 func (i ExprSourceType) String() string {
 	switch {
-	case i == 78:
+	case i == 76:
 		return _ExprSourceType_name_0
-	case i == 84:
+	case i == 78:
 		return _ExprSourceType_name_1
+	case i == 84:
+		return _ExprSourceType_name_2
 	default:
 		return "ExprSourceType(" + strconv.FormatInt(int64(i), 10) + ")"
 	}
