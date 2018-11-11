@@ -1,6 +1,8 @@
 package hclpack
 
 import (
+	"errors"
+
 	"github.com/bsm/go-vlq"
 )
 
@@ -22,6 +24,21 @@ func (b vlqBuf) AppendInt(i int) vlqBuf {
 	l := vlq.PutInt(into, int64(i))
 	b = b[:len(b)+l]
 	return b
+}
+
+func (b vlqBuf) ReadInt() (int, vlqBuf, error) {
+	v, adv := vlq.Int([]byte(b))
+	if adv <= 0 {
+		if adv == 0 {
+			return 0, b, errors.New("missing expected VLQ value")
+		} else {
+			return 0, b, errors.New("invalid VLQ value")
+		}
+	}
+	if int64(int(v)) != v {
+		return 0, b, errors.New("VLQ value too big for integer on this platform")
+	}
+	return int(v), b[adv:], nil
 }
 
 func (b vlqBuf) AppendRawByte(by byte) vlqBuf {

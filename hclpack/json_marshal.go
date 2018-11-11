@@ -87,7 +87,18 @@ func (b *Block) forJSON(pos map[string]map[hcl.Pos]posOfs) blockJSON {
 
 // UnmarshalJSON is an implementation of Unmarshaler from encoding/json,
 // allowing bodies to be included in other types that are JSON-unmarshalable.
-func (b *Body) UnmarshalJSON([]byte) error {
+func (b *Body) UnmarshalJSON(data []byte) error {
+	var head jsonHeader
+	err := json.Unmarshal(data, &head)
+	if err != nil {
+		return err
+	}
+
+	fns := head.Sources
+	positions := head.Pos.Unpack()
+
+	*b = head.Body.decode(fns, positions)
+
 	return nil
 }
 
@@ -107,6 +118,28 @@ type bodyJSON struct {
 	Ranges rangesPacked `json:"r,omitempty"`
 }
 
+func (bj *bodyJSON) decode(fns []string, positions []position) Body {
+	var ret Body
+
+	if len(bj.Attrs) > 0 {
+		ret.Attributes = make(map[string]Attribute, len(bj.Attrs))
+		for name, aj := range bj.Attrs {
+			ret.Attributes[name] = aj.decode(fns, positions)
+		}
+	}
+
+	if len(bj.Blocks) > 0 {
+		ret.ChildBlocks = make([]Block, len(bj.Blocks))
+		for i, blj := range bj.Blocks {
+			ret.ChildBlocks[i] = blj.decode(fns, positions)
+		}
+	}
+
+	ret.MissingItemRange_ = bj.Ranges.UnpackIdx(fns, positions, 0)
+
+	return ret
+}
+
 type attrJSON struct {
 	// To keep things compact, in the JSON encoding we flatten the
 	// expression down into the attribute object, since overhead
@@ -118,6 +151,31 @@ type attrJSON struct {
 	Ranges rangesPacked `json:"r,omitempty"`
 }
 
+func (aj *attrJSON) decode(fns []string, positions []position) Attribute {
+	var ret Attribute
+
+	ret.Expr.Source = []byte(aj.Source)
+	switch aj.Syntax {
+	case 0:
+		ret.Expr.SourceType = ExprNative
+	case 1:
+		ret.Expr.SourceType = ExprTemplate
+	case 2:
+		ret.Expr.SourceType = ExprLiteralJSON
+	}
+
+	ret.Range = aj.Ranges.UnpackIdx(fns, positions, 0)
+	ret.NameRange = aj.Ranges.UnpackIdx(fns, positions, 1)
+	ret.Expr.Range_ = aj.Ranges.UnpackIdx(fns, positions, 2)
+	ret.Expr.StartRange_ = aj.Ranges.UnpackIdx(fns, positions, 3)
+	if ret.Expr.StartRange_ == (hcl.Range{}) {
+		// If the start range wasn't present then we'll just use the Range
+		ret.Expr.StartRange_ = ret.Expr.Range_
+	}
+
+	return ret
+}
+
 type blockJSON struct {
 	// Header is the type followed by any labels. We flatten this here
 	// to keep the JSON encoding compact.
@@ -127,4 +185,27 @@ type blockJSON struct {
 	// Ranges contains the DefRange followed by the TypeRange and then
 	// each of the label ranges in turn.
 	Ranges rangesPacked `json:"r,omitempty"`
+}
+
+func (blj *blockJSON) decode(fns []string, positions []position) Block {
+	var ret Block
+
+	if len(blj.Header) > 0 { // If the header is invalid then we'll end up with an empty type
+		ret.Type = blj.Header[0]
+	}
+	if len(blj.Header) > 1 {
+		ret.Labels = blj.Header[1:]
+	}
+	ret.Body = blj.Body.decode(fns, positions)
+
+	ret.DefRange = blj.Ranges.UnpackIdx(fns, positions, 0)
+	ret.TypeRange = blj.Ranges.UnpackIdx(fns, positions, 1)
+	if len(ret.Labels) > 0 {
+		ret.LabelRanges = make([]hcl.Range, len(ret.Labels))
+		for i := range ret.Labels {
+			ret.LabelRanges[i] = blj.Ranges.UnpackIdx(fns, positions, i+2)
+		}
+	}
+
+	return ret
 }

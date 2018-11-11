@@ -51,6 +51,48 @@ func (pp positionsPacked) MarshalText() ([]byte, error) {
 	return ret, nil
 }
 
+func (pp *positionsPacked) UnmarshalBinary(data []byte) error {
+	buf := vlqBuf(data)
+	var ret positionsPacked
+	fileIdx := 0
+	for len(buf) > 0 {
+		if buf[0] == ';' {
+			// Starting a new file, then.
+			fileIdx++
+			buf = buf[1:]
+			continue
+		}
+
+		var ppr positionPacked
+		var err error
+		ppr.LineDelta, buf, err = buf.ReadInt()
+		if err != nil {
+			return err
+		}
+		ppr.ColumnDelta, buf, err = buf.ReadInt()
+		if err != nil {
+			return err
+		}
+		ppr.ByteDelta, buf, err = buf.ReadInt()
+		if err != nil {
+			return err
+		}
+		ret = append(ret, ppr)
+	}
+	*pp = ret
+	return nil
+}
+
+func (pp *positionsPacked) UnmarshalText(data []byte) error {
+	maxL := base64.RawStdEncoding.DecodedLen(len(data))
+	into := make([]byte, maxL)
+	realL, err := base64.RawStdEncoding.Decode(into, data)
+	if err != nil {
+		return err
+	}
+	return pp.UnmarshalBinary(into[:realL])
+}
+
 type position struct {
 	FileIdx int
 	Pos     hcl.Pos
@@ -175,6 +217,39 @@ func (rp rangesPacked) MarshalText() ([]byte, error) {
 	ret := make([]byte, l)
 	base64.RawStdEncoding.Encode(ret, raw)
 	return ret, nil
+}
+
+func (rp *rangesPacked) UnmarshalBinary(data []byte) error {
+	buf := vlqBuf(data)
+	var ret rangesPacked
+	for len(buf) > 0 {
+		var startInt, endInt int
+		var err error
+		startInt, buf, err = buf.ReadInt()
+		if err != nil {
+			return err
+		}
+		endInt, buf, err = buf.ReadInt()
+		if err != nil {
+			return err
+		}
+		ret = append(ret, rangePacked{
+			Start: posOfs(startInt), // these are stored as 1-based offsets, so safe to convert directly
+			End:   posOfs(endInt),
+		})
+	}
+	*rp = ret
+	return nil
+}
+
+func (rp *rangesPacked) UnmarshalText(data []byte) error {
+	maxL := base64.RawStdEncoding.DecodedLen(len(data))
+	into := make([]byte, maxL)
+	realL, err := base64.RawStdEncoding.Decode(into, data)
+	if err != nil {
+		return err
+	}
+	return rp.UnmarshalBinary(into[:realL])
 }
 
 func (rps rangesPacked) UnpackIdx(fns []string, poss []position, idx int) hcl.Range {
