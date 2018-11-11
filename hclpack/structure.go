@@ -17,6 +17,10 @@ type Body struct {
 var _ hcl.Body = (*Body)(nil)
 
 // Content is an implementation of the method of the same name on hcl.Body.
+//
+// When Content is called directly on a hclpack.Body, all child block bodies
+// are guaranteed to be of type *hclpack.Body, so callers can type-assert
+// to obtain a child Body in order to serialize it separately if needed.
 func (b *Body) Content(schema *hcl.BodySchema) (*hcl.BodyContent, hcl.Diagnostics) {
 	return b.content(schema, nil)
 }
@@ -26,6 +30,11 @@ func (b *Body) Content(schema *hcl.BodySchema) (*hcl.BodyContent, hcl.Diagnostic
 // The returned "remain" body may share some backing objects with the receiver,
 // so neither the receiver nor the returned remain body, or any descendent
 // objects within them, may be mutated after this method is used.
+//
+// When Content is called directly on a hclpack.Body, all child block bodies
+// and the returned "remain" body are guaranteed to be of type *hclpack.Body,
+// so callers can type-assert to obtain a child Body in order to serialize it
+// separately if needed.
 func (b *Body) PartialContent(schema *hcl.BodySchema) (*hcl.BodyContent, hcl.Body, hcl.Diagnostics) {
 	remain := &Body{}
 	content, diags := b.content(schema, remain)
