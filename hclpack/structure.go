@@ -226,6 +226,16 @@ func (b *Body) appendBlock(block Block) {
 	b.ChildBlocks = append(b.ChildBlocks, block)
 }
 
+func (b *Body) addRanges(rngs map[hcl.Range]struct{}) {
+	rngs[b.MissingItemRange_] = struct{}{}
+	for _, attr := range b.Attributes {
+		attr.addRanges(rngs)
+	}
+	for _, block := range b.ChildBlocks {
+		block.addRanges(rngs)
+	}
+}
+
 // Block represents a nested block within a body.
 type Block struct {
 	Type   string
@@ -248,6 +258,15 @@ func (b *Block) asHCLBlock() *hcl.Block {
 	}
 }
 
+func (b *Block) addRanges(rngs map[hcl.Range]struct{}) {
+	rngs[b.DefRange] = struct{}{}
+	rngs[b.TypeRange] = struct{}{}
+	for _, rng := range b.LabelRanges {
+		rngs[rng] = struct{}{}
+	}
+	b.Body.addRanges(rngs)
+}
+
 // Attribute represents an attribute definition within a body.
 type Attribute struct {
 	Expr Expression
@@ -262,4 +281,10 @@ func (a *Attribute) asHCLAttribute(name string) *hcl.Attribute {
 		Range:     a.Range,
 		NameRange: a.NameRange,
 	}
+}
+
+func (a *Attribute) addRanges(rngs map[hcl.Range]struct{}) {
+	rngs[a.Range] = struct{}{}
+	rngs[a.NameRange] = struct{}{}
+	a.Expr.addRanges(rngs)
 }

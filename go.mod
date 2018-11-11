@@ -7,6 +7,7 @@ require (
 	github.com/agext/levenshtein v1.2.1
 	github.com/apparentlymart/go-dump v0.0.0-20180507223929-23540a00eaa3
 	github.com/apparentlymart/go-textseg v1.0.0
+	github.com/bsm/go-vlq v0.0.0-20150828105119-ec6e8d4f5f4e
 	github.com/davecgh/go-spew v1.1.1
 	github.com/go-test/deep v1.0.1
 	github.com/google/go-cmp v0.2.0

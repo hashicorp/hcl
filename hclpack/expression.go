@@ -87,6 +87,11 @@ func (e *Expression) Parse() (hcl.Expression, hcl.Diagnostics) {
 	}
 }
 
+func (e *Expression) addRanges(rngs map[hcl.Range]struct{}) {
+	rngs[e.Range_] = struct{}{}
+	rngs[e.StartRange_] = struct{}{}
+}
+
 // ExprSourceType defines the syntax type used for an expression's source code,
 // which is then used to select a suitable parser for it when evaluating.
 type ExprSourceType rune
