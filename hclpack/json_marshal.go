@@ -56,6 +56,8 @@ func (a *Attribute) forJSON(pos map[string]map[hcl.Pos]posOfs) attrJSON {
 		ret.Syntax = 0
 	case ExprTemplate:
 		ret.Syntax = 1
+	case ExprLiteralJSON:
+		ret.Syntax = 2
 	}
 	ret.Ranges = make(rangesPacked, 4)
 	ret.Ranges[0] = packRange(a.Range, pos)

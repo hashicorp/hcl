@@ -3,9 +3,11 @@ package hclpack
 import (
 	"fmt"
 
+	"github.com/zclconf/go-cty/cty"
+	ctyjson "github.com/zclconf/go-cty/cty/json"
+
 	"github.com/hashicorp/hcl2/hcl"
 	"github.com/hashicorp/hcl2/hcl/hclsyntax"
-	"github.com/zclconf/go-cty/cty"
 )
 
 // Expression is an implementation of hcl.Expression in terms of some raw
@@ -74,6 +76,30 @@ func (e *Expression) Parse() (hcl.Expression, hcl.Diagnostics) {
 		return hclsyntax.ParseExpression(e.Source, e.Range_.Filename, e.Range_.Start)
 	case ExprTemplate:
 		return hclsyntax.ParseTemplate(e.Source, e.Range_.Filename, e.Range_.Start)
+	case ExprLiteralJSON:
+		ty, err := ctyjson.ImpliedType(e.Source)
+		if err != nil {
+			return nil, hcl.Diagnostics{
+				{
+					Severity: hcl.DiagError,
+					Summary:  "Invalid JSON value",
+					Detail:   fmt.Sprintf("The JSON representation of this expression is invalid: %s.", err),
+					Subject:  &e.Range_,
+				},
+			}
+		}
+		val, err := ctyjson.Unmarshal(e.Source, ty)
+		if err != nil {
+			return nil, hcl.Diagnostics{
+				{
+					Severity: hcl.DiagError,
+					Summary:  "Invalid JSON value",
+					Detail:   fmt.Sprintf("The JSON representation of this expression is invalid: %s.", err),
+					Subject:  &e.Range_,
+				},
+			}
+		}
+		return hcl.StaticExpr(val, e.Range_), nil
 	default:
 		// This should never happen for a valid Expression.
 		return nil, hcl.Diagnostics{
@@ -103,7 +129,12 @@ const (
 	// expression syntax, with hclsyntax.ParseExpression.
 	ExprNative ExprSourceType = 'N'
 
-	// ExprTemplate indicates that an expression must be parsed as nave
+	// ExprTemplate indicates that an expression must be parsed as native
 	// template syntax, with hclsyntax.ParseTemplate.
 	ExprTemplate ExprSourceType = 'T'
+
+	// ExprLiteralJSON indicates that an expression must be parsed as JSON and
+	// treated literally, using cty/json. This can be used when populating
+	// literal attribute values from a non-HCL source.
+	ExprLiteralJSON ExprSourceType = 'L'
 )
