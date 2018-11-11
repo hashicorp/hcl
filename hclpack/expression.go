@@ -59,6 +59,26 @@ func (e *Expression) Variables() []hcl.Traversal {
 	return expr.Variables()
 }
 
+// UnwrapExpression parses and returns the underlying expression, if possible.
+//
+// This is essentially the same as Parse but without the ability to return an
+// error; it is here only to support the static analysis facilities in the
+// main HCL package (ExprList, ExprMap, etc). If any error is encountered
+// during parsing, the result is a static expression that always returns
+// cty.DynamicVal.
+//
+// This function does not impose any further conversions on the underlying
+// expression, so the result may still not be suitable for the static analysis
+// functions, depending on the source type of the expression and thus what
+// type of physical expression it becomes after decoding.
+func (e *Expression) UnwrapExpression() hcl.Expression {
+	expr, diags := e.Parse()
+	if diags.HasErrors() {
+		return hcl.StaticExpr(cty.DynamicVal, e.Range_)
+	}
+	return expr
+}
+
 func (e *Expression) Range() hcl.Range {
 	return e.Range_
 }
