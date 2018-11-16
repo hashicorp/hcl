@@ -86,7 +86,7 @@ EOF
 
 		list, ok := item.Val.(*ast.ListType)
 		if !ok {
-			t.Errorf("node should be of type LiteralType, got: %T", item.Val)
+			t.Errorf("node should be of type ListType, got: %T", item.Val)
 		}
 
 		tokens := []token.Type{}
@@ -177,7 +177,7 @@ func TestListType_leadComment(t *testing.T) {
 
 		list, ok := item.Val.(*ast.ListType)
 		if !ok {
-			t.Fatalf("node should be of type LiteralType, got: %T", item.Val)
+			t.Fatalf("node should be of type ListType, got: %T", item.Val)
 		}
 
 		if len(list.List) != len(l.comment) {
@@ -228,7 +228,7 @@ func TestListType_lineComment(t *testing.T) {
 
 		list, ok := item.Val.(*ast.ListType)
 		if !ok {
-			t.Fatalf("node should be of type LiteralType, got: %T", item.Val)
+			t.Fatalf("node should be of type ListType, got: %T", item.Val)
 		}
 
 		if len(list.List) != len(l.comment) {
@@ -240,7 +240,7 @@ func TestListType_lineComment(t *testing.T) {
 			comment := l.comment[i]
 
 			if (lt.LineComment == nil) != (comment == "") {
-				t.Fatalf("bad: %s", lt)
+				t.Fatalf("bad: %#v", lt)
 			}
 
 			if comment == "" {
@@ -321,7 +321,7 @@ func TestObjectType(t *testing.T) {
 		// is the object
 		obj, ok := item.Val.(*ast.ObjectType)
 		if !ok {
-			t.Errorf("node should be of type LiteralType, got: %T", item.Val)
+			t.Errorf("node should be of type ObjectType, got: %T", item.Val)
 			continue
 		}
 
