@@ -67,6 +67,14 @@ func TestListType(t *testing.T) {
 			[]token.Type{token.STRING, token.NUMBER},
 		},
 		{
+			`"foo": ["123", true]`,
+			[]token.Type{token.STRING, token.BOOL},
+		},
+		{
+			`"foo": ["123", false]`,
+			[]token.Type{token.STRING, token.BOOL},
+		},
+		{
 			`"foo": ["123", {}]`,
 			[]token.Type{token.STRING, token.LBRACE},
 		},

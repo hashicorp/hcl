@@ -1,0 +1,12 @@
+{
+  "path": {
+    "capabilities": [
+      "update"
+    ],
+    "params": {
+      "bool": [
+        false
+      ]
+    }
+  }
+}
