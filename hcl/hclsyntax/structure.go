@@ -384,3 +384,7 @@ func (b *Block) walkChildNodes(w internalWalkFunc) {
 func (b *Block) Range() hcl.Range {
 	return hcl.RangeBetween(b.TypeRange, b.CloseBraceRange)
 }
+
+func (b *Block) DefRange() hcl.Range {
+	return hcl.RangeBetween(b.TypeRange, b.OpenBraceRange)
+}
