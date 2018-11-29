@@ -975,6 +975,57 @@ upper(
 			cty.DynamicVal, // don't know what it is yet
 			0,
 		},
+		{
+			`nullstr == "foo"`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"nullstr": cty.NullVal(cty.String),
+				},
+			},
+			cty.False,
+			0,
+		},
+		{
+			`nullstr == nullstr`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"nullstr": cty.NullVal(cty.String),
+				},
+			},
+			cty.True,
+			0,
+		},
+		{
+			`nullstr == null`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"nullstr": cty.NullVal(cty.String),
+				},
+			},
+			cty.True,
+			0,
+		},
+		{
+			`nullstr == nullnum`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"nullstr": cty.NullVal(cty.String),
+					"nullnum": cty.NullVal(cty.Number),
+				},
+			},
+			cty.True,
+			0,
+		},
+		{
+			`"" == nulldyn`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"nulldyn": cty.NullVal(cty.DynamicPseudoType),
+				},
+			},
+			cty.False,
+			0,
+		},
 	}
 
 	for _, test := range tests {

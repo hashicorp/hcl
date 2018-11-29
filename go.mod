@@ -16,13 +16,16 @@ require (
 	github.com/kr/pretty v0.1.0
 	github.com/kylelemons/godebug v0.0.0-20170820004349-d65d576e9348
 	github.com/mitchellh/go-wordwrap v0.0.0-20150314170334-ad45545899c7
+	github.com/onsi/ginkgo v1.7.0 // indirect
+	github.com/onsi/gomega v1.4.3 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/sergi/go-diff v1.0.0
 	github.com/spf13/pflag v1.0.2
 	github.com/stretchr/testify v1.2.2 // indirect
-	github.com/zclconf/go-cty v0.0.0-20180815031001-58bb2bc0302a
+	github.com/zclconf/go-cty v0.0.0-20181129180422-88fbe721e0f8
 	golang.org/x/crypto v0.0.0-20180816225734-aabede6cba87
-	golang.org/x/sys v0.0.0-20180816055513-1c9583448a9c // indirect
+	golang.org/x/net v0.0.0-20181129055619-fae4c4e3ad76 // indirect
+	golang.org/x/sync v0.0.0-20181108010431-42b317875d0f // indirect
 	gopkg.in/yaml.v2 v2.2.1
 	howett.net/plist v0.0.0-20180609054337-500bd5b9081b // indirect
 )
