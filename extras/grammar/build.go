@@ -24,8 +24,8 @@ import (
 	"log"
 	"os"
 
-	plist "github.com/DHowett/go-plist"
 	yaml "gopkg.in/yaml.v2"
+	plist "howett.net/plist"
 
 	multierror "github.com/hashicorp/go-multierror"
 )

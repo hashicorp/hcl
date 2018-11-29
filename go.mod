@@ -3,7 +3,6 @@
 module github.com/hashicorp/hcl2
 
 require (
-	github.com/DHowett/go-plist v0.0.0-20180609054337-500bd5b9081b
 	github.com/agext/levenshtein v1.2.1
 	github.com/apparentlymart/go-dump v0.0.0-20180507223929-23540a00eaa3
 	github.com/apparentlymart/go-textseg v1.0.0
@@ -26,6 +25,6 @@ require (
 	golang.org/x/crypto v0.0.0-20180816225734-aabede6cba87
 	golang.org/x/net v0.0.0-20181129055619-fae4c4e3ad76 // indirect
 	golang.org/x/sync v0.0.0-20181108010431-42b317875d0f // indirect
-	gopkg.in/yaml.v2 v2.2.1
-	howett.net/plist v0.0.0-20180609054337-500bd5b9081b // indirect
+	gopkg.in/yaml.v2 v2.2.2
+	howett.net/plist v0.0.0-20181124034731-591f970eefbb
 )
