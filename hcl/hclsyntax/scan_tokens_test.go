@@ -1526,6 +1526,43 @@ EOF
 				},
 			},
 		},
+		{
+			"/* hello */ howdy /* hey */",
+			[]Token{
+				{
+					Type:  TokenComment,
+					Bytes: []byte("/* hello */"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   hcl.Pos{Byte: 11, Line: 1, Column: 12},
+					},
+				},
+				{
+					Type:  TokenIdent,
+					Bytes: []byte("howdy"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 12, Line: 1, Column: 13},
+						End:   hcl.Pos{Byte: 17, Line: 1, Column: 18},
+					},
+				},
+				{
+					Type:  TokenComment,
+					Bytes: []byte("/* hey */"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 18, Line: 1, Column: 19},
+						End:   hcl.Pos{Byte: 27, Line: 1, Column: 28},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 27, Line: 1, Column: 28},
+						End:   hcl.Pos{Byte: 27, Line: 1, Column: 28},
+					},
+				},
+			},
+		},
 
 		// Invalid things
 		{
