@@ -744,9 +744,64 @@ upper(
 					}),
 				},
 			},
-			cty.TupleVal([]cty.Value{
+			cty.ListVal([]cty.Value{
 				cty.StringVal("Steve"),
 			}),
+			0,
+		},
+		{
+			`unkstr.*.name`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unkstr": cty.UnknownVal(cty.String),
+				},
+			},
+			cty.UnknownVal(cty.Tuple([]cty.Type{cty.DynamicPseudoType})),
+			1, // a string has no attribute "name"
+		},
+		{
+			`unkobj.*.name`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unkobj": cty.UnknownVal(cty.Object(map[string]cty.Type{
+						"name": cty.String,
+					})),
+				},
+			},
+			cty.TupleVal([]cty.Value{
+				cty.UnknownVal(cty.String),
+			}),
+			0,
+		},
+		{
+			`unklistobj.*.name`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unklistobj": cty.UnknownVal(cty.List(cty.Object(map[string]cty.Type{
+						"name": cty.String,
+					}))),
+				},
+			},
+			cty.UnknownVal(cty.List(cty.String)),
+			0,
+		},
+		{
+			`unktupleobj.*.name`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unktupleobj": cty.UnknownVal(
+						cty.Tuple([]cty.Type{
+							cty.Object(map[string]cty.Type{
+								"name": cty.String,
+							}),
+							cty.Object(map[string]cty.Type{
+								"name": cty.Bool,
+							}),
+						}),
+					),
+				},
+			},
+			cty.UnknownVal(cty.Tuple([]cty.Type{cty.String, cty.Bool})),
 			0,
 		},
 		{
