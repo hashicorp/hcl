@@ -760,6 +760,16 @@ upper(
 			1, // a string has no attribute "name"
 		},
 		{
+			`dyn.*.name`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"dyn": cty.DynamicVal,
+				},
+			},
+			cty.DynamicVal,
+			0,
+		},
+		{
 			`unkobj.*.name`,
 			&hcl.EvalContext{
 				Variables: map[string]cty.Value{

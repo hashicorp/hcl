@@ -1228,6 +1228,12 @@ func (e *SplatExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	}
 
 	sourceTy := sourceVal.Type()
+	if sourceTy == cty.DynamicPseudoType {
+		// If we don't even know the _type_ of our source value yet then
+		// we'll need to defer all processing, since we can't decide our
+		// result type either.
+		return cty.DynamicVal, diags
+	}
 
 	// A "special power" of splat expressions is that they can be applied
 	// both to tuples/lists and to other values, and in the latter case
