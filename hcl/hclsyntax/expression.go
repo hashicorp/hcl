@@ -727,8 +727,8 @@ func (e *ObjectConsExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics
 				Severity:    hcl.DiagError,
 				Summary:     "Incorrect key type",
 				Detail:      fmt.Sprintf("Can't use this value as a key: %s.", err.Error()),
-				Subject:     item.ValueExpr.Range().Ptr(),
-				Expression:  item.ValueExpr,
+				Subject:     item.KeyExpr.Range().Ptr(),
+				Expression:  item.KeyExpr,
 				EvalContext: ctx,
 			})
 			known = false

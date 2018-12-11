@@ -404,6 +404,12 @@ upper(
 			0,
 		},
 		{
+			`{[]: "yes"}`,
+			nil,
+			cty.DynamicVal,
+			1, // Incorrect key type; Can't use this value as a key: string required
+		},
+		{
 			`{"hello" = "world", "goodbye" = "cruel world"}`,
 			nil,
 			cty.ObjectVal(map[string]cty.Value{
