@@ -351,6 +351,213 @@ func TestMergedBodiesContent(t *testing.T) {
 	}
 }
 
+func TestMergeBodiesPartialContent(t *testing.T) {
+	tests := []struct {
+		Bodies      []Body
+		Schema      *BodySchema
+		WantContent *BodyContent
+		WantRemain  Body
+		DiagCount   int
+	}{
+		{
+			[]Body{},
+			&BodySchema{},
+			&BodyContent{
+				Attributes: map[string]*Attribute{},
+			},
+			mergedBodies{},
+			0,
+		},
+		{
+			[]Body{
+				&testMergedBodiesVictim{
+					Name:          "first",
+					HasAttributes: []string{"name", "age"},
+				},
+			},
+			&BodySchema{
+				Attributes: []AttributeSchema{
+					{
+						Name: "name",
+					},
+				},
+			},
+			&BodyContent{
+				Attributes: map[string]*Attribute{
+					"name": &Attribute{
+						Name:      "name",
+						NameRange: Range{Filename: "first"},
+					},
+				},
+			},
+			mergedBodies{
+				&testMergedBodiesVictim{
+					Name:          "first",
+					HasAttributes: []string{"age"},
+				},
+			},
+			0,
+		},
+		{
+			[]Body{
+				&testMergedBodiesVictim{
+					Name:          "first",
+					HasAttributes: []string{"name", "age"},
+				},
+				&testMergedBodiesVictim{
+					Name:          "second",
+					HasAttributes: []string{"name", "pizza"},
+				},
+			},
+			&BodySchema{
+				Attributes: []AttributeSchema{
+					{
+						Name: "name",
+					},
+				},
+			},
+			&BodyContent{
+				Attributes: map[string]*Attribute{
+					"name": &Attribute{
+						Name:      "name",
+						NameRange: Range{Filename: "first"},
+					},
+				},
+			},
+			mergedBodies{
+				&testMergedBodiesVictim{
+					Name:          "first",
+					HasAttributes: []string{"age"},
+				},
+				&testMergedBodiesVictim{
+					Name:          "second",
+					HasAttributes: []string{"pizza"},
+				},
+			},
+			1,
+		},
+		{
+			[]Body{
+				&testMergedBodiesVictim{
+					Name:          "first",
+					HasAttributes: []string{"name", "age"},
+				},
+				&testMergedBodiesVictim{
+					Name:          "second",
+					HasAttributes: []string{"pizza", "soda"},
+				},
+			},
+			&BodySchema{
+				Attributes: []AttributeSchema{
+					{
+						Name: "name",
+					},
+					{
+						Name: "soda",
+					},
+				},
+			},
+			&BodyContent{
+				Attributes: map[string]*Attribute{
+					"name": &Attribute{
+						Name:      "name",
+						NameRange: Range{Filename: "first"},
+					},
+					"soda": &Attribute{
+						Name:      "soda",
+						NameRange: Range{Filename: "second"},
+					},
+				},
+			},
+			mergedBodies{
+				&testMergedBodiesVictim{
+					Name:          "first",
+					HasAttributes: []string{"age"},
+				},
+				&testMergedBodiesVictim{
+					Name:          "second",
+					HasAttributes: []string{"pizza"},
+				},
+			},
+			0,
+		},
+		{
+			[]Body{
+				&testMergedBodiesVictim{
+					Name: "first",
+					HasBlocks: map[string]int{
+						"pizza": 1,
+					},
+				},
+				&testMergedBodiesVictim{
+					Name: "second",
+					HasBlocks: map[string]int{
+						"pizza": 1,
+						"soda":  2,
+					},
+				},
+			},
+			&BodySchema{
+				Blocks: []BlockHeaderSchema{
+					{
+						Type: "pizza",
+					},
+				},
+			},
+			&BodyContent{
+				Attributes: map[string]*Attribute{},
+				Blocks: Blocks{
+					{
+						Type: "pizza",
+						DefRange: Range{Filename: "first"},
+					},
+					{
+						Type: "pizza",
+						DefRange: Range{Filename: "second"},
+					},
+				},
+			},
+			mergedBodies{
+				&testMergedBodiesVictim{
+					Name:          "first",
+					HasAttributes: []string{},
+					HasBlocks:     map[string]int{},
+				},
+				&testMergedBodiesVictim{
+					Name:          "second",
+					HasAttributes: []string{},
+					HasBlocks: map[string]int{
+						"soda": 2,
+					},
+				},
+			},
+			0,
+		},
+	}
+
+	for i, test := range tests {
+		t.Run(fmt.Sprintf("%02d", i), func(t *testing.T) {
+			merged := MergeBodies(test.Bodies)
+			got, gotRemain, diags := merged.PartialContent(test.Schema)
+
+			if len(diags) != test.DiagCount {
+				t.Errorf("Wrong number of diagnostics %d; want %d", len(diags), test.DiagCount)
+				for _, diag := range diags {
+					t.Logf(" - %s", diag)
+				}
+			}
+
+			if !reflect.DeepEqual(got, test.WantContent) {
+				t.Errorf("wrong content result\ngot:  %s\nwant: %s", spew.Sdump(got), spew.Sdump(test.WantContent))
+			}
+
+			if !reflect.DeepEqual(gotRemain, test.WantRemain) {
+				t.Errorf("wrong remaining result\ngot:  %s\nwant: %s", spew.Sdump(gotRemain), spew.Sdump(test.WantRemain))
+			}
+		})
+	}
+}
+
 type testMergedBodiesVictim struct {
 	Name          string
 	HasAttributes []string
@@ -364,9 +571,25 @@ func (v *testMergedBodiesVictim) Content(schema *BodySchema) (*BodyContent, Diag
 }
 
 func (v *testMergedBodiesVictim) PartialContent(schema *BodySchema) (*BodyContent, Body, Diagnostics) {
+	remain := &testMergedBodiesVictim{
+		Name:      v.Name,
+		HasAttributes: []string{},
+	}
+
 	hasAttrs := map[string]struct{}{}
 	for _, n := range v.HasAttributes {
 		hasAttrs[n] = struct{}{}
+
+		var found bool
+		for _, attrS := range schema.Attributes {
+			if n == attrS.Name {
+				found = true
+				break
+			}
+		}
+		if !found {
+			remain.HasAttributes = append(remain.HasAttributes, n)
+		}
 	}
 
 	content := &BodyContent{
@@ -397,6 +620,20 @@ func (v *testMergedBodiesVictim) PartialContent(schema *BodySchema) (*BodyConten
 				})
 			}
 		}
+
+		remain.HasBlocks = map[string]int{}
+		for n := range v.HasBlocks {
+			var found bool
+			for _, blockS := range schema.Blocks {
+				if blockS.Type == n {
+					found = true
+					break
+				}
+			}
+			if !found {
+				remain.HasBlocks[n] = v.HasBlocks[n]
+			}
+		}
 	}
 
 	diags := make(Diagnostics, v.DiagCount)
@@ -409,7 +646,7 @@ func (v *testMergedBodiesVictim) PartialContent(schema *BodySchema) (*BodyConten
 		}
 	}
 
-	return content, emptyBody, diags
+	return content, remain, diags
 }
 
 func (v *testMergedBodiesVictim) JustAttributes() (Attributes, Diagnostics) {
