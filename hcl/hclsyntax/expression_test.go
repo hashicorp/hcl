@@ -981,6 +981,16 @@ upper(
 			cty.StringVal("hello"),
 			0,
 		},
+		{
+			`["boop"].foo[index]`, // index is a variable to force IndexExpr instead of traversal
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"index": cty.NumberIntVal(0),
+				},
+			},
+			cty.DynamicVal,
+			1, // expression ["boop"] does not have attributes
+		},
 
 		{
 			`foo`,
