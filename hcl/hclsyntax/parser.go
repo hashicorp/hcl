@@ -273,7 +273,7 @@ Token:
 			return &Block{
 				Type:   blockType,
 				Labels: labels,
-				Body:   &Body{
+				Body: &Body{
 					SrcRange: ident.Range,
 					EndRange: ident.Range,
 				},
@@ -1135,7 +1135,8 @@ func (p *parser) parseObjectCons() (Expression, hcl.Diagnostics) {
 		next = p.Peek()
 		if next.Type != TokenEqual && next.Type != TokenColon {
 			if !p.recovery {
-				if next.Type == TokenNewline || next.Type == TokenComma {
+				switch next.Type {
+				case TokenNewline, TokenComma:
 					diags = append(diags, &hcl.Diagnostic{
 						Severity: hcl.DiagError,
 						Summary:  "Missing attribute value",
@@ -1143,7 +1144,23 @@ func (p *parser) parseObjectCons() (Expression, hcl.Diagnostics) {
 						Subject:  &next.Range,
 						Context:  hcl.RangeBetween(open.Range, next.Range).Ptr(),
 					})
-				} else {
+				case TokenIdent:
+					// Although this might just be a plain old missing equals
+					// sign before a reference, one way to get here is to try
+					// to write an attribute name containing a period followed
+					// by a digit, which was valid in HCL1, like this:
+					//     foo1.2_bar = "baz"
+					// We can't know exactly what the user intended here, but
+					// we'll augment our message with an extra hint in this case
+					// in case it is helpful.
+					diags = append(diags, &hcl.Diagnostic{
+						Severity: hcl.DiagError,
+						Summary:  "Missing key/value separator",
+						Detail:   "Expected an equals sign (\"=\") to mark the beginning of the attribute value. If you intended to given an attribute name containing periods or spaces, write the name in quotes to create a string literal.",
+						Subject:  &next.Range,
+						Context:  hcl.RangeBetween(open.Range, next.Range).Ptr(),
+					})
+				default:
 					diags = append(diags, &hcl.Diagnostic{
 						Severity: hcl.DiagError,
 						Summary:  "Missing key/value separator",

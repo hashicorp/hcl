@@ -410,6 +410,40 @@ upper(
 			1, // Incorrect key type; Can't use this value as a key: string required
 		},
 		{
+			`{"centos_7.2_ap-south-1" = "ami-abc123"}`,
+			nil,
+			cty.ObjectVal(map[string]cty.Value{
+				"centos_7.2_ap-south-1": cty.StringVal("ami-abc123"),
+			}),
+			0,
+		},
+		{
+			// This is syntactically valid (it's similar to foo["bar"])
+			// but is rejected during evaluation to force the user to be explicit
+			// about which of the following interpretations they mean:
+			// -{(foo.bar) = "baz"}
+			// -{"foo.bar" = "baz"}
+			// naked traversals as keys are allowed when analyzing an expression
+			// statically so an application can define object-syntax-based
+			// language constructs with looser requirements, but we reject
+			// this during normal expression evaluation.
+			`{foo.bar = "ami-abc123"}`,
+			nil,
+			cty.DynamicVal,
+			1, // Ambiguous attribute key; If this expression is intended to be a reference, wrap it in parentheses. If it's instead intended as a literal name containing periods, wrap it in quotes to create a string literal.
+		},
+		{
+			// This is a weird variant of the above where a period is followed
+			// by a digit, causing the parser to interpret it as an index
+			// operator using the legacy HIL/Terraform index syntax.
+			// This one _does_ fail parsing, causing it to be subject to
+			// parser recovery behavior.
+			`{centos_7.2_ap-south-1 = "ami-abc123"}`,
+			nil,
+			cty.EmptyObjectVal, // (due to parser recovery behavior)
+			1,                  // Missing key/value separator; Expected an equals sign ("=") to mark the beginning of the attribute value. If you intended to given an attribute name containing periods or spaces, write the name in quotes to create a string literal.
+		},
+		{
 			`{"hello" = "world", "goodbye" = "cruel world"}`,
 			nil,
 			cty.ObjectVal(map[string]cty.Value{

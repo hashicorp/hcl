@@ -797,6 +797,26 @@ func (e *ObjectConsKeyExpr) walkChildNodes(w internalWalkFunc) {
 }
 
 func (e *ObjectConsKeyExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
+	// Because we accept a naked identifier as a literal key rather than a
+	// reference, it's confusing to accept a traversal containing periods
+	// here since we can't tell if the user intends to create a key with
+	// periods or actually reference something. To avoid confusing downstream
+	// errors we'll just prohibit a naked multi-step traversal here and
+	// require the user to state their intent more clearly.
+	// (This is handled at evaluation time rather than parse time because
+	// an application using static analysis _can_ accept a naked multi-step
+	// traversal here, if desired.)
+	if travExpr, isTraversal := e.Wrapped.(*ScopeTraversalExpr); isTraversal && len(travExpr.Traversal) > 1 {
+		var diags hcl.Diagnostics
+		diags = append(diags, &hcl.Diagnostic{
+			Severity: hcl.DiagError,
+			Summary:  "Ambiguous attribute key",
+			Detail:   "If this expression is intended to be a reference, wrap it in parentheses. If it's instead intended as a literal name containing periods, wrap it in quotes to create a string literal.",
+			Subject:  e.Range().Ptr(),
+		})
+		return cty.DynamicVal, diags
+	}
+
 	if ln := e.literalName(); ln != "" {
 		return cty.StringVal(ln), nil
 	}
