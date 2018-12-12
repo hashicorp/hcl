@@ -508,11 +508,11 @@ func TestMergeBodiesPartialContent(t *testing.T) {
 				Attributes: map[string]*Attribute{},
 				Blocks: Blocks{
 					{
-						Type: "pizza",
+						Type:     "pizza",
 						DefRange: Range{Filename: "first"},
 					},
 					{
-						Type: "pizza",
+						Type:     "pizza",
 						DefRange: Range{Filename: "second"},
 					},
 				},
@@ -572,7 +572,7 @@ func (v *testMergedBodiesVictim) Content(schema *BodySchema) (*BodyContent, Diag
 
 func (v *testMergedBodiesVictim) PartialContent(schema *BodySchema) (*BodyContent, Body, Diagnostics) {
 	remain := &testMergedBodiesVictim{
-		Name:      v.Name,
+		Name:          v.Name,
 		HasAttributes: []string{},
 	}
 
