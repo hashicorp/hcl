@@ -1090,12 +1090,12 @@ func (p *parser) parseObjectCons() (Expression, hcl.Diagnostics) {
 		panic("parseObjectCons called without peeker pointing to open brace")
 	}
 
-	p.PushIncludeNewlines(true)
-	defer p.PopIncludeNewlines()
-
 	if forKeyword.TokenMatches(p.Peek()) {
 		return p.finishParsingForExpr(open)
 	}
+
+	p.PushIncludeNewlines(true)
+	defer p.PopIncludeNewlines()
 
 	var close Token
 

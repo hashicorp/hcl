@@ -500,6 +500,14 @@ upper(
 		},
 
 		{
+			"{\n  for k, v in {hello: \"world\"}:\nk => v\n}",
+			nil,
+			cty.ObjectVal(map[string]cty.Value{
+				"hello": cty.StringVal("world"),
+			}),
+			0,
+		},
+		{
 			`{for k, v in {hello: "world"}: k => v if k == "hello"}`,
 			nil,
 			cty.ObjectVal(map[string]cty.Value{
