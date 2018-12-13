@@ -1190,6 +1190,95 @@ func TestJustAttributes(t *testing.T) {
 	}
 }
 
+func TestExpressionVariables(t *testing.T) {
+	tests := []struct {
+		Src  string
+		Want []hcl.Traversal
+	}{
+		{
+			`{"a":true}`,
+			nil,
+		},
+		{
+			`{"a":"${foo}"}`,
+			[]hcl.Traversal{
+				{
+					hcl.TraverseRoot{
+						Name: "foo",
+						SrcRange: hcl.Range{
+							Filename: "test.json",
+							Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+							End:      hcl.Pos{Line: 1, Column: 12, Byte: 11},
+						},
+					},
+				},
+			},
+		},
+		{
+			`{"a":["${foo}"]}`,
+			[]hcl.Traversal{
+				{
+					hcl.TraverseRoot{
+						Name: "foo",
+						SrcRange: hcl.Range{
+							Filename: "test.json",
+							Start:    hcl.Pos{Line: 1, Column: 10, Byte: 9},
+							End:      hcl.Pos{Line: 1, Column: 13, Byte: 12},
+						},
+					},
+				},
+			},
+		},
+		{
+			`{"a":{"b":"${foo}"}}`,
+			[]hcl.Traversal{
+				{
+					hcl.TraverseRoot{
+						Name: "foo",
+						SrcRange: hcl.Range{
+							Filename: "test.json",
+							Start:    hcl.Pos{Line: 1, Column: 14, Byte: 13},
+							End:      hcl.Pos{Line: 1, Column: 17, Byte: 16},
+						},
+					},
+				},
+			},
+		},
+		{
+			`{"a":{"${foo}":"b"}}`,
+			[]hcl.Traversal{
+				{
+					hcl.TraverseRoot{
+						Name: "foo",
+						SrcRange: hcl.Range{
+							Filename: "test.json",
+							Start:    hcl.Pos{Line: 1, Column: 10, Byte: 9},
+							End:      hcl.Pos{Line: 1, Column: 13, Byte: 12},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Src, func(t *testing.T) {
+			file, diags := Parse([]byte(test.Src), "test.json")
+			if len(diags) != 0 {
+				t.Fatalf("Parse produced diagnostics: %s", diags)
+			}
+			attrs, diags := file.Body.JustAttributes()
+			if len(diags) != 0 {
+				t.Fatalf("JustAttributes produced diagnostics: %s", diags)
+			}
+			got := attrs["a"].Expr.Variables()
+			if !reflect.DeepEqual(got, test.Want) {
+				t.Errorf("wrong result\ngot:  %s\nwant: %s", spew.Sdump(got), spew.Sdump(test.Want))
+			}
+		})
+	}
+}
+
 func TestExpressionAsTraversal(t *testing.T) {
 	e := &expression{
 		src: &stringVal{
