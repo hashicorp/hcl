@@ -462,7 +462,14 @@ func (p *parser) parseBinaryOps(ops []map[TokenType]*Operation) (Expression, hcl
 
 func (p *parser) parseExpressionWithTraversals() (Expression, hcl.Diagnostics) {
 	term, diags := p.parseExpressionTerm()
-	ret := term
+	ret, moreDiags := p.parseExpressionTraversals(term)
+	diags = append(diags, moreDiags...)
+	return ret, diags
+}
+
+func (p *parser) parseExpressionTraversals(from Expression) (Expression, hcl.Diagnostics) {
+	var diags hcl.Diagnostics
+	ret := from
 
 Traversal:
 	for {
@@ -660,44 +667,81 @@ Traversal:
 			// the key value is something constant.
 
 			open := p.Read()
-			// TODO: If we have a TokenStar inside our brackets, parse as
-			// a Splat expression: foo[*].baz[0].
-			var close Token
-			p.PushIncludeNewlines(false) // arbitrary newlines allowed in brackets
-			keyExpr, keyDiags := p.ParseExpression()
-			diags = append(diags, keyDiags...)
-			if p.recovery && keyDiags.HasErrors() {
-				close = p.recover(TokenCBrack)
-			} else {
-				close = p.Read()
+			switch p.Peek().Type {
+			case TokenStar:
+				// This is a full splat expression, like foo[*], which consumes
+				// the rest of the traversal steps after it using a recursive
+				// call to this function.
+				p.Read() // consume star
+				close := p.Read()
 				if close.Type != TokenCBrack && !p.recovery {
 					diags = append(diags, &hcl.Diagnostic{
 						Severity: hcl.DiagError,
-						Summary:  "Missing close bracket on index",
-						Detail:   "The index operator must end with a closing bracket (\"]\").",
+						Summary:  "Missing close bracket on splat index",
+						Detail:   "The star for a full splat operator must be immediately followed by a closing bracket (\"]\").",
 						Subject:  &close.Range,
 					})
 					close = p.recover(TokenCBrack)
 				}
-			}
-			p.PopIncludeNewlines()
-
-			if lit, isLit := keyExpr.(*LiteralValueExpr); isLit {
-				litKey, _ := lit.Value(nil)
-				rng := hcl.RangeBetween(open.Range, close.Range)
-				step := hcl.TraverseIndex{
-					Key:      litKey,
-					SrcRange: rng,
+				// Splat expressions use a special "anonymous symbol"  as a
+				// placeholder in an expression to be evaluated once for each
+				// item in the source expression.
+				itemExpr := &AnonSymbolExpr{
+					SrcRange: hcl.RangeBetween(open.Range, close.Range),
 				}
-				ret = makeRelativeTraversal(ret, step, rng)
-			} else {
-				rng := hcl.RangeBetween(open.Range, close.Range)
-				ret = &IndexExpr{
-					Collection: ret,
-					Key:        keyExpr,
+				// Now we'll recursively call this same function to eat any
+				// remaining traversal steps against the anonymous symbol.
+				travExpr, nestedDiags := p.parseExpressionTraversals(itemExpr)
+				diags = append(diags, nestedDiags...)
 
-					SrcRange:  rng,
-					OpenRange: open.Range,
+				ret = &SplatExpr{
+					Source: ret,
+					Each:   travExpr,
+					Item:   itemExpr,
+
+					SrcRange:    hcl.RangeBetween(open.Range, travExpr.Range()),
+					MarkerRange: hcl.RangeBetween(open.Range, close.Range),
+				}
+
+			default:
+
+				var close Token
+				p.PushIncludeNewlines(false) // arbitrary newlines allowed in brackets
+				keyExpr, keyDiags := p.ParseExpression()
+				diags = append(diags, keyDiags...)
+				if p.recovery && keyDiags.HasErrors() {
+					close = p.recover(TokenCBrack)
+				} else {
+					close = p.Read()
+					if close.Type != TokenCBrack && !p.recovery {
+						diags = append(diags, &hcl.Diagnostic{
+							Severity: hcl.DiagError,
+							Summary:  "Missing close bracket on index",
+							Detail:   "The index operator must end with a closing bracket (\"]\").",
+							Subject:  &close.Range,
+						})
+						close = p.recover(TokenCBrack)
+					}
+				}
+				p.PopIncludeNewlines()
+
+				if lit, isLit := keyExpr.(*LiteralValueExpr); isLit {
+					litKey, _ := lit.Value(nil)
+					rng := hcl.RangeBetween(open.Range, close.Range)
+					step := hcl.TraverseIndex{
+						Key:      litKey,
+						SrcRange: rng,
+					}
+					ret = makeRelativeTraversal(ret, step, rng)
+				} else {
+					rng := hcl.RangeBetween(open.Range, close.Range)
+					ret = &IndexExpr{
+						Collection: ret,
+						Key:        keyExpr,
+
+						SrcRange:  rng,
+						OpenRange: open.Range,
+					}
 				}
 			}
 

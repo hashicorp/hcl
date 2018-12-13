@@ -782,6 +782,14 @@ upper(
 			0,
 		},
 		{
+			`{name: "Steve"}[*].name`,
+			nil,
+			cty.TupleVal([]cty.Value{
+				cty.StringVal("Steve"),
+			}),
+			0,
+		},
+		{
 			`set.*.name`,
 			&hcl.EvalContext{
 				Variables: map[string]cty.Value{
@@ -913,6 +921,31 @@ upper(
 			`[{name: "Steve"}, {name: "Ermintrude"}].*.name[0]`,
 			nil,
 			cty.StringVal("Steve"),
+			0,
+		},
+		{
+			// For a "full" splat, an index operator is consumed as part
+			// of the splat's traversal.
+			`[{names: ["Steve"]}, {names: ["Ermintrude"]}][*].names[0]`,
+			nil,
+			cty.TupleVal([]cty.Value{cty.StringVal("Steve"), cty.StringVal("Ermintrude")}),
+			0,
+		},
+		{
+			// Another "full" splat, this time with the index first.
+			`[[{name: "Steve"}], [{name: "Ermintrude"}]][*][0].name`,
+			nil,
+			cty.TupleVal([]cty.Value{cty.StringVal("Steve"), cty.StringVal("Ermintrude")}),
+			0,
+		},
+		{
+			// Full splats can nest, which produces nested tuples.
+			`[[{name: "Steve"}], [{name: "Ermintrude"}]][*][*].name`,
+			nil,
+			cty.TupleVal([]cty.Value{
+				cty.TupleVal([]cty.Value{cty.StringVal("Steve")}),
+				cty.TupleVal([]cty.Value{cty.StringVal("Ermintrude")}),
+			}),
 			0,
 		},
 		{
