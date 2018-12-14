@@ -283,7 +283,7 @@ func (r *Runner) runTestInput(specFilename, inputFilename string, tf *TestFile) 
 						"No %s diagnostic was expected %s. The unexpected diagnostic was shown above.",
 						severityString(gotEntry.Severity), rangeString(gotEntry.Range),
 					),
-					Subject: &gotEntry.Range,
+					Subject: gotEntry.Range.Ptr(),
 				})
 			}
 		}
@@ -297,7 +297,7 @@ func (r *Runner) runTestInput(specFilename, inputFilename string, tf *TestFile) 
 						"No %s diagnostic was generated %s.",
 						severityString(wantEntry.Severity), rangeString(wantEntry.Range),
 					),
-					Subject: &declRange,
+					Subject: declRange.Ptr(),
 				})
 			}
 		}
