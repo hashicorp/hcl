@@ -131,7 +131,7 @@ func (p *parser) ParseBodyItem() (Node, hcl.Diagnostics) {
 
 	switch next.Type {
 	case TokenEqual:
-		return p.finishParsingBodyAttribute(ident)
+		return p.finishParsingBodyAttribute(ident, false)
 	case TokenOQuote, TokenOBrace, TokenIdent:
 		return p.finishParsingBodyBlock(ident)
 	default:
@@ -149,7 +149,72 @@ func (p *parser) ParseBodyItem() (Node, hcl.Diagnostics) {
 	return nil, nil
 }
 
-func (p *parser) finishParsingBodyAttribute(ident Token) (Node, hcl.Diagnostics) {
+// parseSingleAttrBody is a weird variant of ParseBody that deals with the
+// body of a nested block containing only one attribute value all on a single
+// line, like foo { bar = baz } . It expects to find a single attribute item
+// immediately followed by the end token type with no intervening newlines.
+func (p *parser) parseSingleAttrBody(end TokenType) (*Body, hcl.Diagnostics) {
+	ident := p.Read()
+	if ident.Type != TokenIdent {
+		p.recoverAfterBodyItem()
+		return nil, hcl.Diagnostics{
+			{
+				Severity: hcl.DiagError,
+				Summary:  "Argument or block definition required",
+				Detail:   "An argument or block definition is required here.",
+				Subject:  &ident.Range,
+			},
+		}
+	}
+
+	var attr *Attribute
+	var diags hcl.Diagnostics
+
+	next := p.Peek()
+
+	switch next.Type {
+	case TokenEqual:
+		node, attrDiags := p.finishParsingBodyAttribute(ident, true)
+		diags = append(diags, attrDiags...)
+		attr = node.(*Attribute)
+	case TokenOQuote, TokenOBrace, TokenIdent:
+		p.recoverAfterBodyItem()
+		return nil, hcl.Diagnostics{
+			{
+				Severity: hcl.DiagError,
+				Summary:  "Argument definition required",
+				Detail:   fmt.Sprintf("A single-line block definition can contain only a single argument. If you meant to define argument %q, use an equals sign to assign it a value. To define a nested block, place it on a line of its own within its parent block.", ident.Bytes),
+				Subject:  hcl.RangeBetween(ident.Range, next.Range).Ptr(),
+			},
+		}
+	default:
+		p.recoverAfterBodyItem()
+		return nil, hcl.Diagnostics{
+			{
+				Severity: hcl.DiagError,
+				Summary:  "Argument or block definition required",
+				Detail:   "An argument or block definition is required here. To set an argument, use the equals sign \"=\" to introduce the argument value.",
+				Subject:  &ident.Range,
+			},
+		}
+	}
+
+	return &Body{
+		Attributes: Attributes{
+			string(ident.Bytes): attr,
+		},
+
+		SrcRange: attr.SrcRange,
+		EndRange: hcl.Range{
+			Filename: attr.SrcRange.Filename,
+			Start:    attr.SrcRange.End,
+			End:      attr.SrcRange.End,
+		},
+	}, diags
+
+}
+
+func (p *parser) finishParsingBodyAttribute(ident Token, singleLine bool) (Node, hcl.Diagnostics) {
 	eqTok := p.Read() // eat equals token
 	if eqTok.Type != TokenEqual {
 		// should never happen if caller behaves
@@ -166,22 +231,25 @@ func (p *parser) finishParsingBodyAttribute(ident Token) (Node, hcl.Diagnostics)
 		endRange = p.PrevRange()
 		p.recoverAfterBodyItem()
 	} else {
-		end := p.Peek()
-		if end.Type != TokenNewline && end.Type != TokenEOF {
-			if !p.recovery {
-				diags = append(diags, &hcl.Diagnostic{
-					Severity: hcl.DiagError,
-					Summary:  "Missing newline after argument",
-					Detail:   "An argument definition must end with a newline.",
-					Subject:  &end.Range,
-					Context:  hcl.RangeBetween(ident.Range, end.Range).Ptr(),
-				})
+		endRange = p.PrevRange()
+		if !singleLine {
+			end := p.Peek()
+			if end.Type != TokenNewline && end.Type != TokenEOF {
+				if !p.recovery {
+					diags = append(diags, &hcl.Diagnostic{
+						Severity: hcl.DiagError,
+						Summary:  "Missing newline after argument",
+						Detail:   "An argument definition must end with a newline.",
+						Subject:  &end.Range,
+						Context:  hcl.RangeBetween(ident.Range, end.Range).Ptr(),
+					})
+				}
+				endRange = p.PrevRange()
+				p.recoverAfterBodyItem()
+			} else {
+				endRange = p.PrevRange()
+				p.Read() // eat newline
 			}
-			endRange = p.PrevRange()
-			p.recoverAfterBodyItem()
-		} else {
-			endRange = p.PrevRange()
-			p.Read() // eat newline
 		}
 	}
 
@@ -288,7 +356,51 @@ Token:
 
 	// Once we fall out here, the peeker is pointed just after our opening
 	// brace, so we can begin our nested body parsing.
-	body, bodyDiags := p.ParseBody(TokenCBrace)
+	var body *Body
+	var bodyDiags hcl.Diagnostics
+	switch p.Peek().Type {
+	case TokenNewline, TokenEOF, TokenCBrace:
+		body, bodyDiags = p.ParseBody(TokenCBrace)
+	default:
+		// Special one-line, single-attribute block parsing mode.
+		body, bodyDiags = p.parseSingleAttrBody(TokenCBrace)
+		switch p.Peek().Type {
+		case TokenCBrace:
+			p.Read() // the happy path - just consume the closing brace
+		case TokenComma:
+			// User seems to be trying to use the object-constructor
+			// comma-separated style, which isn't permitted for blocks.
+			diags = append(diags, &hcl.Diagnostic{
+				Severity: hcl.DiagError,
+				Summary:  "Invalid single-argument block definition",
+				Detail:   "Single-line block syntax can include only one argument definition. To define multiple arguments, use the multi-line block syntax with one argument definition per line.",
+				Subject:  p.Peek().Range.Ptr(),
+			})
+			p.recover(TokenCBrace)
+		case TokenNewline:
+			// We don't allow weird mixtures of single and multi-line syntax.
+			diags = append(diags, &hcl.Diagnostic{
+				Severity: hcl.DiagError,
+				Summary:  "Invalid single-argument block definition",
+				Detail:   "An argument definition on the same line as its containing block creates a single-line block definition, which must also be closed on the same line. Place the block's closing brace immediately after the argument definition.",
+				Subject:  p.Peek().Range.Ptr(),
+			})
+			p.recover(TokenCBrace)
+		default:
+			// Some other weird thing is going on. Since we can't guess a likely
+			// user intent for this one, we'll skip it if we're already in
+			// recovery mode.
+			if !p.recovery {
+				diags = append(diags, &hcl.Diagnostic{
+					Severity: hcl.DiagError,
+					Summary:  "Invalid single-argument block definition",
+					Detail:   "A single-line block definition must end with a closing brace immediately after its single argument definition.",
+					Subject:  p.Peek().Range.Ptr(),
+				})
+			}
+			p.recover(TokenCBrace)
+		}
+	}
 	diags = append(diags, bodyDiags...)
 	cBraceRange := p.PrevRange()
 

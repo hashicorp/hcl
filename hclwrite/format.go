@@ -283,6 +283,17 @@ func spaceAfterToken(subject, before, after *Token) bool {
 			return true
 		}
 
+	case subject.Type == hclsyntax.TokenOBrace || (after != nil && after.Type == hclsyntax.TokenCBrace):
+		// Unlike other bracket types, braces have spaces on both sides of them,
+		// both in single-line nested blocks foo { bar = baz } and in object
+		// constructor expressions foo = { bar = baz }.
+		if subject.Type == hclsyntax.TokenOBrace && after.Type == hclsyntax.TokenCBrace {
+			// An open brace followed by a close brace is an exception, however.
+			// e.g. foo {} rather than foo { }
+			return false
+		}
+		return true
+
 	case tokenBracketChange(subject) > 0:
 		// No spaces after open brackets
 		return false

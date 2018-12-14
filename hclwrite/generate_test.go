@@ -340,8 +340,9 @@ func TestTokensForValue(t *testing.T) {
 					Bytes: []byte(`{`),
 				},
 				{
-					Type:  hclsyntax.TokenIdent,
-					Bytes: []byte(`foo`),
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte(`foo`),
+					SpacesBefore: 1,
 				},
 				{
 					Type:         hclsyntax.TokenEqual,
@@ -354,8 +355,9 @@ func TestTokensForValue(t *testing.T) {
 					SpacesBefore: 1,
 				},
 				{
-					Type:  hclsyntax.TokenCBrace,
-					Bytes: []byte(`}`),
+					Type:         hclsyntax.TokenCBrace,
+					Bytes:        []byte(`}`),
+					SpacesBefore: 1,
 				},
 			},
 		},
@@ -370,8 +372,9 @@ func TestTokensForValue(t *testing.T) {
 					Bytes: []byte(`{`),
 				},
 				{
-					Type:  hclsyntax.TokenIdent,
-					Bytes: []byte(`bar`),
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte(`bar`),
+					SpacesBefore: 1,
 				},
 				{
 					Type:         hclsyntax.TokenEqual,
@@ -403,8 +406,9 @@ func TestTokensForValue(t *testing.T) {
 					SpacesBefore: 1,
 				},
 				{
-					Type:  hclsyntax.TokenCBrace,
-					Bytes: []byte(`}`),
+					Type:         hclsyntax.TokenCBrace,
+					Bytes:        []byte(`}`),
+					SpacesBefore: 1,
 				},
 			},
 		},
@@ -418,8 +422,9 @@ func TestTokensForValue(t *testing.T) {
 					Bytes: []byte(`{`),
 				},
 				{
-					Type:  hclsyntax.TokenOQuote,
-					Bytes: []byte(`"`),
+					Type:         hclsyntax.TokenOQuote,
+					Bytes:        []byte(`"`),
+					SpacesBefore: 1,
 				},
 				{
 					Type:  hclsyntax.TokenQuotedLit,
@@ -440,8 +445,9 @@ func TestTokensForValue(t *testing.T) {
 					SpacesBefore: 1,
 				},
 				{
-					Type:  hclsyntax.TokenCBrace,
-					Bytes: []byte(`}`),
+					Type:         hclsyntax.TokenCBrace,
+					Bytes:        []byte(`}`),
+					SpacesBefore: 1,
 				},
 			},
 		},
