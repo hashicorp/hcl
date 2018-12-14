@@ -54,14 +54,22 @@ func formatIndent(lines []formatLine) {
 	// which should be more than enough for reasonable HCL uses.
 	indents := make([]int, 0, 10)
 
+	inHeredoc := false
 	for i := range lines {
-		// TODO: need to track when we're inside a multi-line template and
-		// suspend indentation processing.
-
 		line := &lines[i]
 		if len(line.lead) == 0 {
 			continue
 		}
+
+		if inHeredoc {
+			for _, token := range line.lead {
+				if token.Type == hclsyntax.TokenCHeredoc {
+					inHeredoc = false
+				}
+			}
+			continue // don't touch indentation inside heredocs
+		}
+
 		if line.lead[0].Type == hclsyntax.TokenNewline {
 			// Never place spaces before a newline
 			line.lead[0].SpacesBefore = 0
@@ -74,6 +82,9 @@ func formatIndent(lines []formatLine) {
 		}
 		for _, token := range line.assign {
 			netBrackets += tokenBracketChange(token)
+			if token.Type == hclsyntax.TokenOHeredoc {
+				inHeredoc = true
+			}
 		}
 
 		switch {
@@ -309,6 +320,15 @@ func spaceAfterToken(subject, before, after *Token) bool {
 		// Never spaces before colons
 		return false
 
+	// In the unlikely event that an interpolation expression is just
+	// a single object constructor, we'll put a space between the ${ and
+	// the following { to make this more obvious, and then the same
+	// thing for the two braces at the end.
+	case (subject.Type == hclsyntax.TokenTemplateInterp || subject.Type == hclsyntax.TokenTemplateControl) && after.Type == hclsyntax.TokenOBrace:
+		return true
+	case subject.Type == hclsyntax.TokenCBrace && after.Type == hclsyntax.TokenTemplateSeqEnd:
+		return true
+
 	case tokenBracketChange(subject) > 0:
 		// No spaces after open brackets
 		return false
@@ -371,6 +391,7 @@ func linesForFormat(tokens Tokens) []formatLine {
 
 	// Now we'll pick off any trailing comments and attribute assignments
 	// to shuffle off into the "comment" and "assign" cells.
+	inHeredoc := false
 	for i := range lines {
 		line := &lines[i]
 		if len(line.lead) == 0 {
@@ -378,6 +399,26 @@ func linesForFormat(tokens Tokens) []formatLine {
 			// (this should happen only for the final line, because all other
 			// lines would have a newline token of some kind)
 			continue
+		}
+
+		if inHeredoc {
+			for _, tok := range line.lead {
+				if tok.Type == hclsyntax.TokenCHeredoc {
+					inHeredoc = false
+					break
+				}
+			}
+			// Inside a heredoc everything is "lead", even if there's a
+			// template interpolation embedded in there that might otherwise
+			// confuse our logic below.
+			continue
+		}
+
+		for _, tok := range line.lead {
+			if tok.Type == hclsyntax.TokenOHeredoc {
+				inHeredoc = true
+				break
+			}
 		}
 
 		if len(line.lead) > 1 && line.lead[len(line.lead)-1].Type == hclsyntax.TokenComment {

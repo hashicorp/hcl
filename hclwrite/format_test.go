@@ -418,6 +418,86 @@ foo {
 }
 `,
 		},
+		{
+			`
+foo {
+bar = <<EOT
+Foo bar baz
+EOT
+}
+`,
+			`
+foo {
+  bar = <<EOT
+Foo bar baz
+EOT
+}
+`,
+		},
+		{
+			`
+foo {
+bar = <<-EOT
+Foo bar baz
+EOT
+}
+`,
+			`
+foo {
+  bar = <<-EOT
+Foo bar baz
+EOT
+}
+`,
+		},
+		{
+			`
+foo {
+bar = <<-EOT
+  Foo bar baz
+EOT
+}
+`,
+			`
+foo {
+  bar = <<-EOT
+  Foo bar baz
+EOT
+}
+`,
+		},
+		{
+			`
+foo {
+bar = <<-EOT
+  blahblahblah = x
+EOT
+}
+`,
+			`
+foo {
+  bar = <<-EOT
+  blahblahblah = x
+EOT
+}
+`,
+		},
+		{
+			`
+foo {
+bar = <<-EOT
+  ${{ blahblahblah = x }}
+EOT
+}
+`,
+			`
+foo {
+  bar = <<-EOT
+  ${ { blahblahblah = x } }
+EOT
+}
+`,
+		},
 	}
 
 	for i, test := range tests {
