@@ -316,10 +316,6 @@ func spaceAfterToken(subject, before, after *Token) bool {
 		}
 		return true
 
-	case after.Type == hclsyntax.TokenColon:
-		// Never spaces before colons
-		return false
-
 	// In the unlikely event that an interpolation expression is just
 	// a single object constructor, we'll put a space between the ${ and
 	// the following { to make this more obvious, and then the same

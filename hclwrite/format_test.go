@@ -108,16 +108,20 @@ foo(
 `,
 		},
 		{
+			`a?b:c`,
+			`a ? b : c`,
+		},
+		{
 			`[ [ ] ]`,
 			`[[]]`,
 		},
 		{
-			`[for x in y: x]`,
-			`[for x in y: x]`,
+			`[for x in y : x]`,
+			`[for x in y : x]`,
 		},
 		{
-			`[for x in [y]: x]`,
-			`[for x in [y]: x]`,
+			`[for x in [y] : x]`,
+			`[for x in [y] : x]`,
 		},
 		{
 			`
