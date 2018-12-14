@@ -112,6 +112,14 @@ foo(
 			`[[]]`,
 		},
 		{
+			`[for x in y: x]`,
+			`[for x in y: x]`,
+		},
+		{
+			`[for x in [y]: x]`,
+			`[for x in [y]: x]`,
+		},
+		{
 			`
 [
 [

@@ -4,6 +4,8 @@ import (
 	"github.com/hashicorp/hcl2/hcl/hclsyntax"
 )
 
+var inKeyword = hclsyntax.Keyword([]byte{'i', 'n'})
+
 // placeholder token used when we don't have a token but we don't want
 // to pass a real "nil" and complicate things with nil pointer checks
 var nilToken = &Token{
@@ -247,6 +249,15 @@ func spaceAfterToken(subject, before, after *Token) bool {
 		// No extra spaces within templates
 		return false
 
+	case inKeyword.TokenMatches(subject.asHCLSyntax()) && before.Type == hclsyntax.TokenIdent:
+		// This is a special case for inside for expressions where a user
+		// might want to use a literal tuple constructor:
+		// [for x in [foo]: x]
+		// ... in that case, we would normally produce in[foo] thinking that
+		// in is a reference, but we'll recognize it as a keyword here instead
+		// to make the result less confusing.
+		return true
+
 	case after.Type == hclsyntax.TokenOBrack && (subject.Type == hclsyntax.TokenIdent || subject.Type == hclsyntax.TokenNumberLit || tokenBracketChange(subject) < 0):
 		return false
 
@@ -283,7 +294,7 @@ func spaceAfterToken(subject, before, after *Token) bool {
 			return true
 		}
 
-	case subject.Type == hclsyntax.TokenOBrace || (after != nil && after.Type == hclsyntax.TokenCBrace):
+	case subject.Type == hclsyntax.TokenOBrace || after.Type == hclsyntax.TokenCBrace:
 		// Unlike other bracket types, braces have spaces on both sides of them,
 		// both in single-line nested blocks foo { bar = baz } and in object
 		// constructor expressions foo = { bar = baz }.
@@ -293,6 +304,10 @@ func spaceAfterToken(subject, before, after *Token) bool {
 			return false
 		}
 		return true
+
+	case after.Type == hclsyntax.TokenColon:
+		// Never spaces before colons
+		return false
 
 	case tokenBracketChange(subject) > 0:
 		// No spaces after open brackets
