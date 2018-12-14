@@ -1163,6 +1163,62 @@ EOT
 			cty.TupleVal([]cty.Value{cty.StringVal("  Foo\n  Bar\n  Baz\n")}),
 			0,
 		},
+		{
+			`[
+  <<-EOT
+  Foo
+  Bar
+  Baz
+  EOT
+]
+`,
+			nil,
+			cty.TupleVal([]cty.Value{cty.StringVal("Foo\nBar\nBaz\n")}),
+			0,
+		},
+		{
+			`[
+  <<-EOT
+  Foo
+    Bar
+    Baz
+  EOT
+]
+`,
+			nil,
+			cty.TupleVal([]cty.Value{cty.StringVal("Foo\n  Bar\n  Baz\n")}),
+			0,
+		},
+		{
+			`[
+  <<-EOT
+    Foo
+  Bar
+    Baz
+  EOT
+]
+`,
+			nil,
+			cty.TupleVal([]cty.Value{cty.StringVal("  Foo\nBar\n  Baz\n")}),
+			0,
+		},
+		{
+			`[
+  <<-EOT
+    Foo
+  ${bar}
+    Baz
+    EOT
+]
+`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"bar": cty.StringVal("  Bar"), // Spaces in the interpolation result don't affect the outcome
+				},
+			},
+			cty.TupleVal([]cty.Value{cty.StringVal("  Foo\n  Bar\n  Baz\n")}),
+			0,
+		},
 
 		{
 			`unk["baz"]`,

@@ -1,6 +1,7 @@
 package hclsyntax
 
 import (
+	"bytes"
 	"fmt"
 
 	"github.com/apparentlymart/go-textseg/textseg"
@@ -159,6 +160,13 @@ func (f *tokenAccum) emitToken(ty TokenType, startOfs, endOfs int) {
 type heredocInProgress struct {
 	Marker      []byte
 	StartOfLine bool
+}
+
+func tokenOpensFlushHeredoc(tok Token) bool {
+	if tok.Type != TokenOHeredoc {
+		return false
+	}
+	return bytes.HasPrefix(tok.Bytes, []byte{'<', '<', '-'})
 }
 
 // checkInvalidTokens does a simple pass across the given tokens and generates

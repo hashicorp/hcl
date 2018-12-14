@@ -860,7 +860,7 @@ func (p *parser) parseExpressionTerm() (Expression, hcl.Diagnostics) {
 	case TokenOQuote, TokenOHeredoc:
 		open := p.Read() // eat opening marker
 		closer := p.oppositeBracket(open.Type)
-		exprs, passthru, _, diags := p.parseTemplateInner(closer)
+		exprs, passthru, _, diags := p.parseTemplateInner(closer, tokenOpensFlushHeredoc(open))
 
 		closeRange := p.PrevRange()
 
