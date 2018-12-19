@@ -72,6 +72,71 @@ func TestScanTokens_normal(t *testing.T) {
 			},
 		},
 
+		// Byte-order mark
+		{
+			"\xef\xbb\xbf", // Leading UTF-8 byte-order mark is ignored...
+			[]Token{
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: hcl.Range{ // ...but its bytes still count when producing ranges
+						Start: hcl.Pos{Byte: 3, Line: 1, Column: 1},
+						End:   hcl.Pos{Byte: 3, Line: 1, Column: 1},
+					},
+				},
+			},
+		},
+		{
+			" \xef\xbb\xbf", // Non-leading BOM is invalid
+			[]Token{
+				{
+					Type:  TokenInvalid,
+					Bytes: utf8BOM,
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 1, Line: 1, Column: 2},
+						End:   hcl.Pos{Byte: 4, Line: 1, Column: 3},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 4, Line: 1, Column: 3},
+						End:   hcl.Pos{Byte: 4, Line: 1, Column: 3},
+					},
+				},
+			},
+		},
+		{
+			"\xfe\xff", // UTF-16 BOM is invalid
+			[]Token{
+				{
+					Type:  TokenBadUTF8,
+					Bytes: []byte{0xfe},
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   hcl.Pos{Byte: 1, Line: 1, Column: 2},
+					},
+				},
+				{
+					Type:  TokenBadUTF8,
+					Bytes: []byte{0xff},
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 1, Line: 1, Column: 2},
+						End:   hcl.Pos{Byte: 2, Line: 1, Column: 3},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 2, Line: 1, Column: 3},
+						End:   hcl.Pos{Byte: 2, Line: 1, Column: 3},
+					},
+				},
+			},
+		},
+
 		// TokenNumberLit
 		{
 			`1`,
