@@ -146,6 +146,52 @@ func TestExpand(t *testing.T) {
 				}),
 			},
 			{
+				Type:        "dynamic",
+				Labels:      []string{"b"},
+				LabelRanges: []hcl.Range{hcl.Range{}},
+				Body: hcltest.MockBody(&hcl.BodyContent{
+					Attributes: hcltest.MockAttrs(map[string]hcl.Expression{
+						"for_each": hcltest.MockExprLiteral(cty.MapVal(map[string]cty.Value{
+							"foo": cty.ListVal([]cty.Value{
+								cty.StringVal("dynamic c nested 0"),
+								cty.StringVal("dynamic c nested 1"),
+							}),
+						})),
+						"iterator": hcltest.MockExprVariable("dyn_b"),
+					}),
+					Blocks: hcl.Blocks{
+						{
+							Type: "content",
+							Body: hcltest.MockBody(&hcl.BodyContent{
+								Blocks: hcl.Blocks{
+									{
+										Type:        "dynamic",
+										Labels:      []string{"c"},
+										LabelRanges: []hcl.Range{hcl.Range{}},
+										Body: hcltest.MockBody(&hcl.BodyContent{
+											Attributes: hcltest.MockAttrs(map[string]hcl.Expression{
+												"for_each": hcltest.MockExprTraversalSrc("dyn_b.value"),
+											}),
+											Blocks: hcl.Blocks{
+												{
+													Type: "content",
+													Body: hcltest.MockBody(&hcl.BodyContent{
+														Attributes: hcltest.MockAttrs(map[string]hcl.Expression{
+															"val0": hcltest.MockExprTraversalSrc("c.value"),
+															"val1": hcltest.MockExprTraversalSrc("dyn_b.key"),
+														}),
+													}),
+												},
+											},
+										}),
+									},
+								},
+							}),
+						},
+					},
+				}),
+			},
+			{
 				Type:        "a",
 				Labels:      []string{"static1"},
 				LabelRanges: []hcl.Range{hcl.Range{}},
@@ -266,6 +312,16 @@ func TestExpand(t *testing.T) {
 				cty.ObjectVal(map[string]cty.Value{
 					"val0": cty.StringVal("dynamic c 3"),
 					"val1": cty.StringVal("dynamic b 1"),
+				}),
+			}),
+			cty.ListVal([]cty.Value{
+				cty.ObjectVal(map[string]cty.Value{
+					"val0": cty.StringVal("dynamic c nested 0"),
+					"val1": cty.StringVal("foo"),
+				}),
+				cty.ObjectVal(map[string]cty.Value{
+					"val0": cty.StringVal("dynamic c nested 1"),
+					"val1": cty.StringVal("foo"),
 				}),
 			}),
 		})
