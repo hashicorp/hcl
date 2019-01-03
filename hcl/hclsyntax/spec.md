@@ -567,10 +567,10 @@ elements in a tuple, list, or set value.
 
 There are two kinds of "splat" operator:
 
-* The _attribute-only_ splat operator supports only attribute lookups into
+- The _attribute-only_ splat operator supports only attribute lookups into
   the elements from a list, but supports an arbitrary number of them.
 
-* The _full_ splat operator additionally supports indexing into the elements
+- The _full_ splat operator additionally supports indexing into the elements
   from a list, and allows any combination of attribute access and index
   operations.
 
@@ -583,9 +583,9 @@ fullSplat = "[" "*" "]" (GetAttr | Index)*;
 The splat operators can be thought of as shorthands for common operations that
 could otherwise be performed using _for expressions_:
 
-* `tuple.*.foo.bar[0]` is approximately equivalent to
+- `tuple.*.foo.bar[0]` is approximately equivalent to
   `[for v in tuple: v.foo.bar][0]`.
-* `tuple[*].foo.bar[0]` is approximately equivalent to
+- `tuple[*].foo.bar[0]` is approximately equivalent to
   `[for v in tuple: v.foo.bar[0]]`
 
 Note the difference in how the trailing index operator is interpreted in
@@ -597,13 +597,15 @@ _for expressions_ shown above: if a splat operator is applied to a value that
 is _not_ of tuple, list, or set type, the value is coerced automatically into
 a single-value list of the value type:
 
-* `any_object.*.id` is equivalent to `[any_object.id]`, assuming that `any_object`
+- `any_object.*.id` is equivalent to `[any_object.id]`, assuming that `any_object`
   is a single object.
-* `any_number.*` is equivalent to `[any_number]`, assuming that `any_number`
+- `any_number.*` is equivalent to `[any_number]`, assuming that `any_number`
   is a single number.
 
-If the left operand of a splat operator is an unknown value of any type, the
-result is a value of the dynamic pseudo-type.
+If applied to a null value that is not tuple, list, or set, the result is always
+an empty tuple, which allows conveniently converting a possibly-null scalar
+value into a tuple of zero or one elements. It is illegal to apply a splat
+operator to a null value of tuple, list, or set type.
 
 ### Operations
 

@@ -871,6 +871,30 @@ upper(
 			0,
 		},
 		{
+			`nullobj.*.name`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"nullobj": cty.NullVal(cty.Object(map[string]cty.Type{
+						"name": cty.String,
+					})),
+				},
+			},
+			cty.TupleVal([]cty.Value{}),
+			0,
+		},
+		{
+			`nulllist.*.name`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"nulllist": cty.NullVal(cty.List(cty.Object(map[string]cty.Type{
+						"name": cty.String,
+					}))),
+				},
+			},
+			cty.DynamicVal,
+			1, // splat cannot be applied to null sequence
+		},
+		{
 			`["hello", "goodbye"].*`,
 			nil,
 			cty.TupleVal([]cty.Value{
