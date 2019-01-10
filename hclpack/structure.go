@@ -114,6 +114,10 @@ func (b *Body) content(schema *hcl.BodySchema, remain *Body) (*hcl.BodyContent, 
 
 	var blocks []*hcl.Block
 	for _, block := range b.ChildBlocks {
+		// Redeclare block on stack so the pointer to the body is set on the
+		// correct block. https://github.com/hashicorp/hcl2/issues/72
+		block := block
+
 		blockTy := block.Type
 		blockS, wanted := blocksWanted[blockTy]
 		if !wanted {
