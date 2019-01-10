@@ -36,7 +36,9 @@ func (b *Body) Content(schema *hcl.BodySchema) (*hcl.BodyContent, hcl.Diagnostic
 // so callers can type-assert to obtain a child Body in order to serialize it
 // separately if needed.
 func (b *Body) PartialContent(schema *hcl.BodySchema) (*hcl.BodyContent, hcl.Body, hcl.Diagnostics) {
-	remain := &Body{}
+	remain := &Body{
+		MissingItemRange_: b.MissingItemRange_,
+	}
 	content, diags := b.content(schema, remain)
 	return content, remain, diags
 }
