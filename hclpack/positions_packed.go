@@ -28,6 +28,7 @@ func (pp positionsPacked) MarshalBinary() ([]byte, error) {
 		// for a body to be entirely in one file, this can lead to considerable
 		// savings in that case.
 		delims := ppr.FileIdx - lastFileIdx
+		lastFileIdx = ppr.FileIdx
 		for i := 0; i < delims; i++ {
 			buf = buf.AppendRawByte(';')
 		}
@@ -65,6 +66,7 @@ func (pp *positionsPacked) UnmarshalBinary(data []byte) error {
 
 		var ppr positionPacked
 		var err error
+		ppr.FileIdx = fileIdx
 		ppr.LineDelta, buf, err = buf.ReadInt()
 		if err != nil {
 			return err
