@@ -72,6 +72,10 @@ func TestFormat(t *testing.T) {
 			`a = "hello ${~name~}"`,
 		},
 		{
+			`a="${b}${c}${ d } ${e}"`,
+			`a = "${b}${c}${d} ${e}"`,
+		},
+		{
 			`b{}`,
 			`b {}`,
 		},
@@ -498,6 +502,22 @@ EOT
 foo {
   bar = <<-EOT
   ${ { blahblahblah = x } }
+EOT
+}
+`,
+		},
+		{
+			`
+foo {
+  bar = <<-EOT
+  ${a}${b}${ c } ${d}
+EOT
+}
+`,
+			`
+foo {
+  bar = <<-EOT
+  ${a}${b}${c} ${d}
 EOT
 }
 `,
