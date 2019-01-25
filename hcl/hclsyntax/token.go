@@ -90,6 +90,7 @@ const (
 	TokenBitwiseNot TokenType = '~'
 	TokenBitwiseXor TokenType = '^'
 	TokenStarStar   TokenType = '➚'
+	TokenApostrophe TokenType = '\''
 	TokenBacktick   TokenType = '`'
 	TokenSemicolon  TokenType = ';'
 	TokenTabs       TokenType = '␉'
