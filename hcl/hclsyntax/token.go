@@ -227,14 +227,15 @@ func checkInvalidTokens(tokens Tokens) hcl.Diagnostics {
 		case TokenBacktick:
 			// Only report for alternating (even) backticks, so we won't report both start and ends of the same
 			// backtick-quoted string.
-			if toldExponent < 4 && (toldExponent%2) == 0 {
+			if (toldBacktick % 2) == 0 {
 				diags = append(diags, &hcl.Diagnostic{
 					Severity: hcl.DiagError,
 					Summary:  "Invalid character",
 					Detail:   "The \"`\" character is not valid. To create a multi-line string, use the \"heredoc\" syntax, like \"<<EOT\".",
 					Subject:  &tok.Range,
 				})
-
+			}
+			if toldBacktick <= 2 {
 				toldBacktick++
 			}
 		case TokenSemicolon:
@@ -277,8 +278,6 @@ func checkInvalidTokens(tokens Tokens) hcl.Diagnostics {
 				Detail:   "This character is not used within the language.",
 				Subject:  &tok.Range,
 			})
-
-			toldTabs++
 		}
 	}
 	return diags
