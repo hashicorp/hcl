@@ -184,6 +184,7 @@ func checkInvalidTokens(tokens Tokens) hcl.Diagnostics {
 	toldBitwise := 0
 	toldExponent := 0
 	toldBacktick := 0
+	toldApostrophe := 0
 	toldSemicolon := 0
 	toldTabs := 0
 	toldBadUTF8 := 0
@@ -237,6 +238,19 @@ func checkInvalidTokens(tokens Tokens) hcl.Diagnostics {
 			}
 			if toldBacktick <= 2 {
 				toldBacktick++
+			}
+		case TokenApostrophe:
+			if (toldApostrophe % 2) == 0 {
+				newDiag := &hcl.Diagnostic{
+					Severity: hcl.DiagError,
+					Summary:  "Invalid character",
+					Detail:   "The ' character is not valid. Use double quotes (\") to enclose strings.",
+					Subject:  &tok.Range,
+				}
+				diags = append(diags, newDiag)
+			}
+			if toldApostrophe <= 2 {
+				toldApostrophe++
 			}
 		case TokenSemicolon:
 			if toldSemicolon < 1 {
