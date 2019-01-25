@@ -189,6 +189,9 @@ func checkInvalidTokens(tokens Tokens) hcl.Diagnostics {
 	toldBadUTF8 := 0
 
 	for _, tok := range tokens {
+		// copy token so it's safe to point to it
+		tok := tok
+
 		switch tok.Type {
 		case TokenBitwiseAnd, TokenBitwiseOr, TokenBitwiseXor, TokenBitwiseNot:
 			if toldBitwise < 4 {
