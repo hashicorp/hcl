@@ -244,7 +244,7 @@ func checkInvalidTokens(tokens Tokens) hcl.Diagnostics {
 				newDiag := &hcl.Diagnostic{
 					Severity: hcl.DiagError,
 					Summary:  "Invalid character",
-					Detail:   "The ' character is not valid. Use double quotes (\") to enclose strings.",
+					Detail:   "Single quotes are not valid. Use double quotes (\") to enclose strings.",
 					Subject:  &tok.Range,
 				}
 				diags = append(diags, newDiag)
