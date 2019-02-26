@@ -508,6 +508,20 @@ upper(
 			0,
 		},
 		{
+			// This one is different than the previous because the extra level of
+			// object constructor causes the inner for expression to begin parsing
+			// in newline-sensitive mode, which it must then properly disable in
+			// order to peek the "for" keyword.
+			"{\n  a = {\n  for k, v in {hello: \"world\"}:\nk => v\n  }\n}",
+			nil,
+			cty.ObjectVal(map[string]cty.Value{
+				"a": cty.ObjectVal(map[string]cty.Value{
+					"hello": cty.StringVal("world"),
+				}),
+			}),
+			0,
+		},
+		{
 			`{for k, v in {hello: "world"}: k => v if k == "hello"}`,
 			nil,
 			cty.ObjectVal(map[string]cty.Value{
