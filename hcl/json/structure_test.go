@@ -8,6 +8,7 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/go-test/deep"
 	"github.com/hashicorp/hcl2/hcl"
+	"github.com/zclconf/go-cty/cty"
 )
 
 func TestBodyPartialContent(t *testing.T) {
@@ -1350,4 +1351,63 @@ func TestStaticExpressionList(t *testing.T) {
 	if exprs[0].(*expression).src != e.src.(*arrayVal).Values[0] {
 		t.Fatalf("wrong first expression node")
 	}
+}
+
+func TestExpression_Value(t *testing.T) {
+	src := `{
+  "string": "string_val",
+  "number": 5,
+  "bool_true": true,
+  "bool_false": false,
+  "array": ["a"],
+  "object": {"key": "value"},
+  "null": null
+}`
+	expected := map[string]cty.Value{
+		"string":     cty.StringVal("string_val"),
+		"number":     cty.NumberIntVal(5),
+		"bool_true":  cty.BoolVal(true),
+		"bool_false": cty.BoolVal(false),
+		"array":      cty.TupleVal([]cty.Value{cty.StringVal("a")}),
+		"object": cty.ObjectVal(map[string]cty.Value{
+			"key": cty.StringVal("value"),
+		}),
+		"null": cty.NullVal(cty.DynamicPseudoType),
+	}
+
+	file, diags := Parse([]byte(src), "")
+	if len(diags) != 0 {
+		t.Errorf("got %d diagnostics on parse; want 0", len(diags))
+		for _, diag := range diags {
+			t.Logf("- %s", diag.Error())
+		}
+	}
+	if file == nil {
+		t.Errorf("got nil File; want actual file")
+	}
+	if file.Body == nil {
+		t.Fatalf("got nil Body; want actual body")
+	}
+	attrs, diags := file.Body.JustAttributes()
+	if len(diags) != 0 {
+		t.Errorf("got %d diagnostics on decode; want 0", len(diags))
+		for _, diag := range diags {
+			t.Logf("- %s", diag.Error())
+		}
+	}
+
+	for ek, ev := range expected {
+		val, diags := attrs[ek].Expr.Value(&hcl.EvalContext{})
+		if len(diags) != 0 {
+			t.Errorf("got %d diagnostics on eval; want 0", len(diags))
+			for _, diag := range diags {
+				t.Logf("- %s", diag.Error())
+			}
+		}
+
+		if !val.RawEquals(ev) {
+			t.Errorf("wrong result %#v; want %#v", val, ev)
+		}
+	}
+
 }
