@@ -522,6 +522,30 @@ EOT
 }
 `,
 		},
+		{
+			`
+foo {
+bar = <<EOT
+Foo bar baz
+EOT
+}
+
+baz {
+default="string"
+}
+`,
+			`
+foo {
+  bar = <<EOT
+Foo bar baz
+EOT
+}
+
+baz {
+  default = "string"
+}
+`,
+		},
 	}
 
 	for i, test := range tests {
