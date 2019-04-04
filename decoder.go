@@ -631,10 +631,19 @@ func (d *decoder) decodeStruct(name string, node ast.Node, result reflect.Value)
 		}
 	}
 
-	usedKeys := make(map[string]struct{})
 	decodedFields := make([]string, 0, len(fields))
 	decodedFieldsVal := make([]reflect.Value, 0)
 	unusedKeysVal := make([]reflect.Value, 0)
+
+	// fill unusedNodeKeys with keys from the AST
+	// a slice because we have to do equals case fold to match Filter
+	unusedNodeKeys := make([]string, 0)
+	for _, item := range list.Items {
+		for _, k := range item.Keys {
+			unusedNodeKeys = append(unusedNodeKeys, k.Token.Value().(string))
+		}
+	}
+
 	for _, f := range fields {
 		field, fieldValue := f.field, f.val
 		if !fieldValue.IsValid() {
@@ -689,8 +698,8 @@ func (d *decoder) decodeStruct(name string, node ast.Node, result reflect.Value)
 			continue
 		}
 
-		// Track the used key
-		usedKeys[fieldName] = struct{}{}
+		// Track the used keys
+		unusedNodeKeys = removeCaseFold(unusedNodeKeys, fieldName)
 
 		// Create the field name and decode. We range over the elements
 		// because we actually want the value.
@@ -723,6 +732,14 @@ func (d *decoder) decodeStruct(name string, node ast.Node, result reflect.Value)
 		}
 	}
 
+	if len(unusedNodeKeys) > 0 {
+		// like decodedFields, populated the unusedKeys field(s)
+		sort.Strings(unusedNodeKeys)
+		for _, v := range unusedKeysVal {
+			v.Set(reflect.ValueOf(unusedNodeKeys))
+		}
+	}
+
 	return nil
 }
 
@@ -733,4 +750,13 @@ func findNodeType() reflect.Type {
 	}
 	value := reflect.ValueOf(nodeContainer).FieldByName("Node")
 	return value.Type()
+}
+
+func removeCaseFold(xs []string, y string) []string {
+	for i, x := range xs {
+		if strings.EqualFold(x, y) {
+			return append(xs[:i], xs[i+1:]...)
+		}
+	}
+	return xs
 }
