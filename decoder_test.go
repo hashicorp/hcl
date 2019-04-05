@@ -786,6 +786,40 @@ func TestDecode_structureMapInvalid(t *testing.T) {
 	}
 }
 
+func TestDecode_structureMapExtraKeys(t *testing.T) {
+	type hclVariable struct {
+		A     int
+		B     int
+		Found []string `hcl:",decodedFields"`
+		Extra []string `hcl:",unusedKeys"`
+	}
+
+	q := hclVariable{
+		A:     1,
+		B:     2,
+		Found: []string{"A", "B"},
+		Extra: []string{"extra1", "extra2"},
+	}
+
+	var p hclVariable
+	ast, _ := Parse(testReadFile(t, "structure_map_extra_keys.hcl"))
+	DecodeObject(&p, ast)
+	if !(p.A == q.A && p.B == q.B &&
+		reflect.DeepEqual(p.Found, q.Found) &&
+		reflect.DeepEqual(p.Extra, q.Extra)) {
+		t.Fatal("not equal")
+	}
+
+	var j hclVariable
+	ast, _ = Parse(testReadFile(t, "structure_map_extra_keys.json"))
+	DecodeObject(&j, ast)
+	if !(j.A == q.A && j.B == q.B &&
+		reflect.DeepEqual(j.Found, q.Found) &&
+		reflect.DeepEqual(j.Extra, q.Extra)) {
+		t.Fatal("not equal")
+	}
+}
+
 func TestDecode_interfaceNonPointer(t *testing.T) {
 	var value interface{}
 	err := Decode(value, testReadFile(t, "basic_int_string.hcl"))
