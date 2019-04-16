@@ -66,6 +66,14 @@ func TestApplyPath(t *testing.T) {
 			cty.ListVal([]cty.Value{
 				cty.StringVal("hello"),
 			}),
+			(cty.Path)(nil).Index(cty.NumberFloatVal(0.5)),
+			cty.NilVal,
+			`Invalid index`,
+		},
+		{
+			cty.ListVal([]cty.Value{
+				cty.StringVal("hello"),
+			}),
 			(cty.Path)(nil).Index(cty.NumberIntVal(0)).GetAttr("foo"),
 			cty.NilVal,
 			`Unsupported attribute`,
