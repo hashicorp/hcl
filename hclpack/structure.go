@@ -101,11 +101,12 @@ func (b *Body) content(schema *hcl.BodySchema, remain *Body) (*hcl.BodyContent, 
 				}
 			}
 		}
+
 		diags = append(diags, &hcl.Diagnostic{
 			Severity: hcl.DiagError,
 			Summary:  "Unsupported argument",
 			Detail:   fmt.Sprintf("An argument named %q is not expected here.%s", name, suggestion),
-			Subject:  &attr.NameRange,
+			Subject:  attr.NameRange.Ptr(),
 		})
 	}
 
