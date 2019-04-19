@@ -810,6 +810,27 @@ func TestScan(t *testing.T) {
 				},
 			},
 		},
+		{
+			`&`,
+			[]token{
+				{
+					Type:  tokenInvalid,
+					Bytes: []byte(`&`),
+					Range: hcl.Range{
+						Start: hcl.Pos{
+							Byte:   0,
+							Line:   1,
+							Column: 1,
+						},
+						End: hcl.Pos{
+							Byte:   1,
+							Line:   1,
+							Column: 2,
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
