@@ -517,7 +517,7 @@ func expandObject(node ast.Node, result reflect.Value) ast.Node {
 	// we need to un-flatten the ast enough to decode
 	newNode := &ast.ObjectItem{
 		Keys: []*ast.ObjectKey{
-			&ast.ObjectKey{
+			{
 				Token: keyToken,
 			},
 		},
