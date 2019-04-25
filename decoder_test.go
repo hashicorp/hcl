@@ -804,18 +804,14 @@ func TestDecode_structureMapExtraKeys(t *testing.T) {
 	var p hclVariable
 	ast, _ := Parse(testReadFile(t, "structure_map_extra_keys.hcl"))
 	DecodeObject(&p, ast)
-	if !(p.A == q.A && p.B == q.B &&
-		reflect.DeepEqual(p.Found, q.Found) &&
-		reflect.DeepEqual(p.Extra, q.Extra)) {
+	if !reflect.DeepEqual(p, q) {
 		t.Fatal("not equal")
 	}
 
 	var j hclVariable
 	ast, _ = Parse(testReadFile(t, "structure_map_extra_keys.json"))
 	DecodeObject(&j, ast)
-	if !(j.A == q.A && j.B == q.B &&
-		reflect.DeepEqual(j.Found, q.Found) &&
-		reflect.DeepEqual(j.Extra, q.Extra)) {
+	if !reflect.DeepEqual(p, j) {
 		t.Fatal("not equal")
 	}
 }
