@@ -616,6 +616,35 @@ func TestDecode_structurePtr(t *testing.T) {
 	}
 }
 
+func TestDecode_nonNilStructurePtr(t *testing.T) {
+	type V struct {
+		Key        int
+		Foo        string
+		DontChange string
+	}
+
+	actual := &V{
+		Key:        42,
+		Foo:        "foo",
+		DontChange: "don't change me",
+	}
+
+	err := Decode(&actual, testReadFile(t, "flat.hcl"))
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	expected := &V{
+		Key:        7,
+		Foo:        "bar",
+		DontChange: "don't change me",
+	}
+
+	if !reflect.DeepEqual(actual, expected) {
+		t.Fatalf("Actual: %#v\n\nExpected: %#v", actual, expected)
+	}
+}
+
 func TestDecode_structureArray(t *testing.T) {
 	// This test is extracted from a failure in Consul (consul.io),
 	// hence the interesting structure naming.
@@ -783,6 +812,36 @@ func TestDecode_structureMapInvalid(t *testing.T) {
 	err := Decode(&actual, testReadFile(t, "terraform_variable_invalid.json"))
 	if err == nil {
 		t.Fatal("expected error")
+	}
+}
+
+func TestDecode_structureMapExtraKeys(t *testing.T) {
+	type hclVariable struct {
+		A     int
+		B     int
+		Found []string `hcl:",decodedFields"`
+		Extra []string `hcl:",unusedKeys"`
+	}
+
+	q := hclVariable{
+		A:     1,
+		B:     2,
+		Found: []string{"A", "B"},
+		Extra: []string{"extra1", "extra2"},
+	}
+
+	var p hclVariable
+	ast, _ := Parse(testReadFile(t, "structure_map_extra_keys.hcl"))
+	DecodeObject(&p, ast)
+	if !reflect.DeepEqual(p, q) {
+		t.Fatal("not equal")
+	}
+
+	var j hclVariable
+	ast, _ = Parse(testReadFile(t, "structure_map_extra_keys.json"))
+	DecodeObject(&j, ast)
+	if !reflect.DeepEqual(p, j) {
+		t.Fatal("not equal")
 	}
 }
 
