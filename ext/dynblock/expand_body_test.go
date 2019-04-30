@@ -3,9 +3,8 @@ package dynblock
 import (
 	"testing"
 
-	"github.com/hashicorp/hcl2/hcldec"
-
 	"github.com/hashicorp/hcl2/hcl"
+	"github.com/hashicorp/hcl2/hcldec"
 	"github.com/hashicorp/hcl2/hcltest"
 	"github.com/zclconf/go-cty/cty"
 )
@@ -192,6 +191,47 @@ func TestExpand(t *testing.T) {
 				}),
 			},
 			{
+				Type:        "dynamic",
+				Labels:      []string{"b"},
+				LabelRanges: []hcl.Range{hcl.Range{}},
+				Body: hcltest.MockBody(&hcl.BodyContent{
+					Attributes: hcltest.MockAttrs(map[string]hcl.Expression{
+						"for_each": hcltest.MockExprLiteral(cty.UnknownVal(cty.Map(cty.String))),
+						"iterator": hcltest.MockExprVariable("dyn_b"),
+					}),
+					Blocks: hcl.Blocks{
+						{
+							Type: "content",
+							Body: hcltest.MockBody(&hcl.BodyContent{
+								Blocks: hcl.Blocks{
+									{
+										Type:        "dynamic",
+										Labels:      []string{"c"},
+										LabelRanges: []hcl.Range{hcl.Range{}},
+										Body: hcltest.MockBody(&hcl.BodyContent{
+											Attributes: hcltest.MockAttrs(map[string]hcl.Expression{
+												"for_each": hcltest.MockExprTraversalSrc("dyn_b.value"),
+											}),
+											Blocks: hcl.Blocks{
+												{
+													Type: "content",
+													Body: hcltest.MockBody(&hcl.BodyContent{
+														Attributes: hcltest.MockAttrs(map[string]hcl.Expression{
+															"val0": hcltest.MockExprTraversalSrc("c.value"),
+															"val1": hcltest.MockExprTraversalSrc("dyn_b.key"),
+														}),
+													}),
+												},
+											},
+										}),
+									},
+								},
+							}),
+						},
+					},
+				}),
+			},
+			{
 				Type:        "a",
 				Labels:      []string{"static1"},
 				LabelRanges: []hcl.Range{hcl.Range{}},
@@ -322,6 +362,15 @@ func TestExpand(t *testing.T) {
 				cty.ObjectVal(map[string]cty.Value{
 					"val0": cty.StringVal("dynamic c nested 1"),
 					"val1": cty.StringVal("foo"),
+				}),
+			}),
+			cty.ListVal([]cty.Value{
+				// This one comes from a dynamic block with an unknown for_each
+				// value, so we produce a single block object with all of the
+				// leaf attribute values set to unknown values.
+				cty.ObjectVal(map[string]cty.Value{
+					"val0": cty.UnknownVal(cty.String),
+					"val1": cty.UnknownVal(cty.String),
 				}),
 			}),
 		})
