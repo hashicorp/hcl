@@ -22,9 +22,11 @@ require (
 	github.com/spf13/pflag v1.0.2
 	github.com/stretchr/testify v1.2.2 // indirect
 	github.com/zclconf/go-cty v0.0.0-20190426224007-b18a157db9e2
-	golang.org/x/crypto v0.0.0-20180816225734-aabede6cba87
-	golang.org/x/net v0.0.0-20181129055619-fae4c4e3ad76 // indirect
-	golang.org/x/sync v0.0.0-20181108010431-42b317875d0f // indirect
+	golang.org/x/crypto v0.0.0-20190426145343-a29dc8fdc734
+	golang.org/x/net v0.0.0-20190502183928-7f726cade0ab // indirect
+	golang.org/x/sync v0.0.0-20190423024810-112230192c58 // indirect
+	golang.org/x/sys v0.0.0-20190502175342-a43fa875dd82 // indirect
+	golang.org/x/text v0.3.2 // indirect
 	gopkg.in/yaml.v2 v2.2.2
 	howett.net/plist v0.0.0-20181124034731-591f970eefbb
 )

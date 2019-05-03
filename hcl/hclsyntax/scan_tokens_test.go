@@ -440,6 +440,43 @@ func TestScanTokens_normal(t *testing.T) {
 			},
 		},
 		{
+			`"hello, \"world\"!"`,
+			[]Token{
+				{
+					Type:  TokenOQuote,
+					Bytes: []byte(`"`),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   hcl.Pos{Byte: 1, Line: 1, Column: 2},
+					},
+				},
+				{
+					Type:  TokenQuotedLit,
+					Bytes: []byte(`hello, \"world\"!`), // The escapes are handled by the parser, not the scanner
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 1, Line: 1, Column: 2},
+						End:   hcl.Pos{Byte: 18, Line: 1, Column: 19},
+					},
+				},
+				{
+					Type:  TokenCQuote,
+					Bytes: []byte(`"`),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 18, Line: 1, Column: 19},
+						End:   hcl.Pos{Byte: 19, Line: 1, Column: 20},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 19, Line: 1, Column: 20},
+						End:   hcl.Pos{Byte: 19, Line: 1, Column: 20},
+					},
+				},
+			},
+		},
+		{
 			`"hello $$"`,
 			[]Token{
 				{
@@ -452,16 +489,24 @@ func TestScanTokens_normal(t *testing.T) {
 				},
 				{
 					Type:  TokenQuotedLit,
-					Bytes: []byte(`hello $`),
+					Bytes: []byte(`hello `),
 					Range: hcl.Range{
 						Start: hcl.Pos{Byte: 1, Line: 1, Column: 2},
-						End:   hcl.Pos{Byte: 8, Line: 1, Column: 9},
+						End:   hcl.Pos{Byte: 7, Line: 1, Column: 8},
 					},
 				},
 				// This one scans a little oddly because of how the scanner
 				// handles the escaping of the dollar sign, but it's still
 				// good enough for the parser since it'll just concatenate
 				// these two string literals together anyway.
+				{
+					Type:  TokenQuotedLit,
+					Bytes: []byte(`$`),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 7, Line: 1, Column: 8},
+						End:   hcl.Pos{Byte: 8, Line: 1, Column: 9},
+					},
+				},
 				{
 					Type:  TokenQuotedLit,
 					Bytes: []byte(`$`),
@@ -501,16 +546,24 @@ func TestScanTokens_normal(t *testing.T) {
 				},
 				{
 					Type:  TokenQuotedLit,
-					Bytes: []byte(`hello %`),
+					Bytes: []byte(`hello `),
 					Range: hcl.Range{
 						Start: hcl.Pos{Byte: 1, Line: 1, Column: 2},
-						End:   hcl.Pos{Byte: 8, Line: 1, Column: 9},
+						End:   hcl.Pos{Byte: 7, Line: 1, Column: 8},
 					},
 				},
 				// This one scans a little oddly because of how the scanner
-				// handles the escaping of the dollar sign, but it's still
+				// handles the escaping of the percent sign, but it's still
 				// good enough for the parser since it'll just concatenate
 				// these two string literals together anyway.
+				{
+					Type:  TokenQuotedLit,
+					Bytes: []byte(`%`),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 7, Line: 1, Column: 8},
+						End:   hcl.Pos{Byte: 8, Line: 1, Column: 9},
+					},
+				},
 				{
 					Type:  TokenQuotedLit,
 					Bytes: []byte(`%`),
@@ -550,9 +603,17 @@ func TestScanTokens_normal(t *testing.T) {
 				},
 				{
 					Type:  TokenQuotedLit,
-					Bytes: []byte(`hello $`),
+					Bytes: []byte(`hello `),
 					Range: hcl.Range{
 						Start: hcl.Pos{Byte: 1, Line: 1, Column: 2},
+						End:   hcl.Pos{Byte: 7, Line: 1, Column: 8},
+					},
+				},
+				{
+					Type:  TokenQuotedLit,
+					Bytes: []byte(`$`),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 7, Line: 1, Column: 8},
 						End:   hcl.Pos{Byte: 8, Line: 1, Column: 9},
 					},
 				},
@@ -587,9 +648,17 @@ func TestScanTokens_normal(t *testing.T) {
 				},
 				{
 					Type:  TokenQuotedLit,
-					Bytes: []byte(`hello %`),
+					Bytes: []byte(`hello `),
 					Range: hcl.Range{
 						Start: hcl.Pos{Byte: 1, Line: 1, Column: 2},
+						End:   hcl.Pos{Byte: 7, Line: 1, Column: 8},
+					},
+				},
+				{
+					Type:  TokenQuotedLit,
+					Bytes: []byte(`%`),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 7, Line: 1, Column: 8},
 						End:   hcl.Pos{Byte: 8, Line: 1, Column: 9},
 					},
 				},
@@ -607,6 +676,181 @@ func TestScanTokens_normal(t *testing.T) {
 					Range: hcl.Range{
 						Start: hcl.Pos{Byte: 9, Line: 1, Column: 10},
 						End:   hcl.Pos{Byte: 9, Line: 1, Column: 10},
+					},
+				},
+			},
+		},
+		{
+			`"hello $${world}"`,
+			[]Token{
+				{
+					Type:  TokenOQuote,
+					Bytes: []byte(`"`),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   hcl.Pos{Byte: 1, Line: 1, Column: 2},
+					},
+				},
+				{
+					Type:  TokenQuotedLit,
+					Bytes: []byte(`hello `),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 1, Line: 1, Column: 2},
+						End:   hcl.Pos{Byte: 7, Line: 1, Column: 8},
+					},
+				},
+				{
+					Type:  TokenQuotedLit,
+					Bytes: []byte(`$${`),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 7, Line: 1, Column: 8},
+						End:   hcl.Pos{Byte: 10, Line: 1, Column: 11},
+					},
+				},
+				{
+					Type:  TokenQuotedLit,
+					Bytes: []byte(`world}`),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 10, Line: 1, Column: 11},
+						End:   hcl.Pos{Byte: 16, Line: 1, Column: 17},
+					},
+				},
+				{
+					Type:  TokenCQuote,
+					Bytes: []byte(`"`),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 16, Line: 1, Column: 17},
+						End:   hcl.Pos{Byte: 17, Line: 1, Column: 18},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 17, Line: 1, Column: 18},
+						End:   hcl.Pos{Byte: 17, Line: 1, Column: 18},
+					},
+				},
+			},
+		},
+		{
+			`"hello %%{world}"`,
+			[]Token{
+				{
+					Type:  TokenOQuote,
+					Bytes: []byte(`"`),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   hcl.Pos{Byte: 1, Line: 1, Column: 2},
+					},
+				},
+				{
+					Type:  TokenQuotedLit,
+					Bytes: []byte(`hello `),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 1, Line: 1, Column: 2},
+						End:   hcl.Pos{Byte: 7, Line: 1, Column: 8},
+					},
+				},
+				{
+					Type:  TokenQuotedLit,
+					Bytes: []byte(`%%{`),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 7, Line: 1, Column: 8},
+						End:   hcl.Pos{Byte: 10, Line: 1, Column: 11},
+					},
+				},
+				{
+					Type:  TokenQuotedLit,
+					Bytes: []byte(`world}`),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 10, Line: 1, Column: 11},
+						End:   hcl.Pos{Byte: 16, Line: 1, Column: 17},
+					},
+				},
+				{
+					Type:  TokenCQuote,
+					Bytes: []byte(`"`),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 16, Line: 1, Column: 17},
+						End:   hcl.Pos{Byte: 17, Line: 1, Column: 18},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 17, Line: 1, Column: 18},
+						End:   hcl.Pos{Byte: 17, Line: 1, Column: 18},
+					},
+				},
+			},
+		},
+		{
+			`"hello %${world}"`,
+			[]Token{
+				{
+					Type:  TokenOQuote,
+					Bytes: []byte(`"`),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   hcl.Pos{Byte: 1, Line: 1, Column: 2},
+					},
+				},
+				{
+					Type:  TokenQuotedLit,
+					Bytes: []byte(`hello `),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 1, Line: 1, Column: 2},
+						End:   hcl.Pos{Byte: 7, Line: 1, Column: 8},
+					},
+				},
+				{
+					Type:  TokenQuotedLit,
+					Bytes: []byte(`%`),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 7, Line: 1, Column: 8},
+						End:   hcl.Pos{Byte: 8, Line: 1, Column: 9},
+					},
+				},
+				{
+					Type:  TokenTemplateInterp,
+					Bytes: []byte(`${`),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 8, Line: 1, Column: 9},
+						End:   hcl.Pos{Byte: 10, Line: 1, Column: 11},
+					},
+				},
+				{
+					Type:  TokenIdent,
+					Bytes: []byte(`world`),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 10, Line: 1, Column: 11},
+						End:   hcl.Pos{Byte: 15, Line: 1, Column: 16},
+					},
+				},
+				{
+					Type:  TokenTemplateSeqEnd,
+					Bytes: []byte(`}`),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 15, Line: 1, Column: 16},
+						End:   hcl.Pos{Byte: 16, Line: 1, Column: 17},
+					},
+				},
+				{
+					Type:  TokenCQuote,
+					Bytes: []byte(`"`),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 16, Line: 1, Column: 17},
+						End:   hcl.Pos{Byte: 17, Line: 1, Column: 18},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 17, Line: 1, Column: 18},
+						End:   hcl.Pos{Byte: 17, Line: 1, Column: 18},
 					},
 				},
 			},
@@ -1731,6 +1975,157 @@ EOF
 					Range: hcl.Range{
 						Start: hcl.Pos{Byte: 2, Line: 1, Column: 3},
 						End:   hcl.Pos{Byte: 2, Line: 1, Column: 3},
+					},
+				},
+			},
+		},
+
+		// Misc combinations that have come up in bug reports, etc.
+		{
+			"locals {\n  is_percent = percent_sign == \"%\" ? true : false\n}\n",
+			[]Token{
+				{
+					Type:  TokenIdent,
+					Bytes: []byte(`locals`),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   hcl.Pos{Byte: 6, Line: 1, Column: 7},
+					},
+				},
+				{
+					Type:  TokenOBrace,
+					Bytes: []byte{'{'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 7, Line: 1, Column: 8},
+						End:   hcl.Pos{Byte: 8, Line: 1, Column: 9},
+					},
+				},
+				{
+					Type:  TokenNewline,
+					Bytes: []byte{'\n'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 8, Line: 1, Column: 9},
+						End:   hcl.Pos{Byte: 9, Line: 2, Column: 1},
+					},
+				},
+				{
+					Type:  TokenIdent,
+					Bytes: []byte(`is_percent`),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 11, Line: 2, Column: 3},
+						End:   hcl.Pos{Byte: 21, Line: 2, Column: 13},
+					},
+				},
+				{
+					Type:  TokenEqual,
+					Bytes: []byte(`=`),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 22, Line: 2, Column: 14},
+						End:   hcl.Pos{Byte: 23, Line: 2, Column: 15},
+					},
+				},
+				{
+					Type:  TokenIdent,
+					Bytes: []byte(`percent_sign`),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 24, Line: 2, Column: 16},
+						End:   hcl.Pos{Byte: 36, Line: 2, Column: 28},
+					},
+				},
+				{
+					Type:  TokenEqualOp,
+					Bytes: []byte(`==`),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 37, Line: 2, Column: 29},
+						End:   hcl.Pos{Byte: 39, Line: 2, Column: 31},
+					},
+				},
+				{
+					Type:  TokenOQuote,
+					Bytes: []byte(`"`),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 40, Line: 2, Column: 32},
+						End:   hcl.Pos{Byte: 41, Line: 2, Column: 33},
+					},
+				},
+				{
+					Type:  TokenQuotedLit,
+					Bytes: []byte(`%`),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 41, Line: 2, Column: 33},
+						End:   hcl.Pos{Byte: 42, Line: 2, Column: 34},
+					},
+				},
+				{
+					Type:  TokenCQuote,
+					Bytes: []byte(`"`),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 42, Line: 2, Column: 34},
+						End:   hcl.Pos{Byte: 43, Line: 2, Column: 35},
+					},
+				},
+				{
+					Type:  TokenQuestion,
+					Bytes: []byte(`?`),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 44, Line: 2, Column: 36},
+						End:   hcl.Pos{Byte: 45, Line: 2, Column: 37},
+					},
+				},
+				{
+					Type:  TokenIdent,
+					Bytes: []byte(`true`),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 46, Line: 2, Column: 38},
+						End:   hcl.Pos{Byte: 50, Line: 2, Column: 42},
+					},
+				},
+				{
+					Type:  TokenColon,
+					Bytes: []byte(`:`),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 51, Line: 2, Column: 43},
+						End:   hcl.Pos{Byte: 52, Line: 2, Column: 44},
+					},
+				},
+				{
+					Type:  TokenIdent,
+					Bytes: []byte(`false`),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 53, Line: 2, Column: 45},
+						End:   hcl.Pos{Byte: 58, Line: 2, Column: 50},
+					},
+				},
+				{
+					Type:  TokenNewline,
+					Bytes: []byte{'\n'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 58, Line: 2, Column: 50},
+						End:   hcl.Pos{Byte: 59, Line: 3, Column: 1},
+					},
+				},
+				{
+					Type:  TokenCBrace,
+					Bytes: []byte{'}'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 59, Line: 3, Column: 1},
+						End:   hcl.Pos{Byte: 60, Line: 3, Column: 2},
+					},
+				},
+				{
+					Type:  TokenNewline,
+					Bytes: []byte{'\n'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 60, Line: 3, Column: 2},
+						End:   hcl.Pos{Byte: 61, Line: 4, Column: 1},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 61, Line: 4, Column: 1},
+						End:   hcl.Pos{Byte: 61, Line: 4, Column: 1},
 					},
 				},
 			},

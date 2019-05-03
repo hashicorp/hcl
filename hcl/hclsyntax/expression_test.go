@@ -237,6 +237,18 @@ func TestExpressionParseAndValue(t *testing.T) {
 			0,
 		},
 		{
+			`"$"`,
+			nil,
+			cty.StringVal("$"),
+			0,
+		},
+		{
+			`"%"`,
+			nil,
+			cty.StringVal("%"),
+			0,
+		},
+		{
 			`upper("foo")`,
 			&hcl.EvalContext{
 				Functions: map[string]function.Function{

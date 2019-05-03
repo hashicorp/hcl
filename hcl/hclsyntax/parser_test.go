@@ -693,10 +693,26 @@ block "valid" {}
 						Expr: &TemplateExpr{
 							Parts: []Expression{
 								&LiteralValueExpr{
-									Val: cty.StringVal("hello ${true}"),
+									Val: cty.StringVal("hello "),
 
 									SrcRange: hcl.Range{
 										Start: hcl.Pos{Line: 1, Column: 6, Byte: 5},
+										End:   hcl.Pos{Line: 1, Column: 12, Byte: 11},
+									},
+								},
+								&LiteralValueExpr{
+									Val: cty.StringVal("${"),
+
+									SrcRange: hcl.Range{
+										Start: hcl.Pos{Line: 1, Column: 12, Byte: 11},
+										End:   hcl.Pos{Line: 1, Column: 15, Byte: 14},
+									},
+								},
+								&LiteralValueExpr{
+									Val: cty.StringVal("true}"),
+
+									SrcRange: hcl.Range{
+										Start: hcl.Pos{Line: 1, Column: 15, Byte: 14},
 										End:   hcl.Pos{Line: 1, Column: 20, Byte: 19},
 									},
 								},
@@ -743,10 +759,26 @@ block "valid" {}
 						Expr: &TemplateExpr{
 							Parts: []Expression{
 								&LiteralValueExpr{
-									Val: cty.StringVal("hello %{true}"),
+									Val: cty.StringVal("hello "),
 
 									SrcRange: hcl.Range{
 										Start: hcl.Pos{Line: 1, Column: 6, Byte: 5},
+										End:   hcl.Pos{Line: 1, Column: 12, Byte: 11},
+									},
+								},
+								&LiteralValueExpr{
+									Val: cty.StringVal("%{"),
+
+									SrcRange: hcl.Range{
+										Start: hcl.Pos{Line: 1, Column: 12, Byte: 11},
+										End:   hcl.Pos{Line: 1, Column: 15, Byte: 14},
+									},
+								},
+								&LiteralValueExpr{
+									Val: cty.StringVal("true}"),
+
+									SrcRange: hcl.Range{
+										Start: hcl.Pos{Line: 1, Column: 15, Byte: 14},
 										End:   hcl.Pos{Line: 1, Column: 20, Byte: 19},
 									},
 								},
@@ -793,16 +825,24 @@ block "valid" {}
 						Expr: &TemplateExpr{
 							Parts: []Expression{
 								&LiteralValueExpr{
-									Val: cty.StringVal("hello $"),
+									Val: cty.StringVal("hello "),
 
 									SrcRange: hcl.Range{
 										Start: hcl.Pos{Line: 1, Column: 6, Byte: 5},
-										End:   hcl.Pos{Line: 1, Column: 13, Byte: 12},
+										End:   hcl.Pos{Line: 1, Column: 12, Byte: 11},
 									},
 								},
 								// This parses oddly due to how the scanner
 								// handles escaping of the $ sequence, but it's
 								// functionally equivalent to a single literal.
+								&LiteralValueExpr{
+									Val: cty.StringVal("$"),
+
+									SrcRange: hcl.Range{
+										Start: hcl.Pos{Line: 1, Column: 12, Byte: 11},
+										End:   hcl.Pos{Line: 1, Column: 13, Byte: 12},
+									},
+								},
 								&LiteralValueExpr{
 									Val: cty.StringVal("$"),
 
@@ -854,10 +894,18 @@ block "valid" {}
 						Expr: &TemplateExpr{
 							Parts: []Expression{
 								&LiteralValueExpr{
-									Val: cty.StringVal("hello $"),
+									Val: cty.StringVal("hello "),
 
 									SrcRange: hcl.Range{
 										Start: hcl.Pos{Line: 1, Column: 6, Byte: 5},
+										End:   hcl.Pos{Line: 1, Column: 12, Byte: 11},
+									},
+								},
+								&LiteralValueExpr{
+									Val: cty.StringVal("$"),
+
+									SrcRange: hcl.Range{
+										Start: hcl.Pos{Line: 1, Column: 12, Byte: 11},
 										End:   hcl.Pos{Line: 1, Column: 13, Byte: 12},
 									},
 								},
@@ -904,16 +952,24 @@ block "valid" {}
 						Expr: &TemplateExpr{
 							Parts: []Expression{
 								&LiteralValueExpr{
-									Val: cty.StringVal("hello %"),
+									Val: cty.StringVal("hello "),
 
 									SrcRange: hcl.Range{
 										Start: hcl.Pos{Line: 1, Column: 6, Byte: 5},
-										End:   hcl.Pos{Line: 1, Column: 13, Byte: 12},
+										End:   hcl.Pos{Line: 1, Column: 12, Byte: 11},
 									},
 								},
 								// This parses oddly due to how the scanner
-								// handles escaping of the $ sequence, but it's
+								// handles escaping of the % sequence, but it's
 								// functionally equivalent to a single literal.
+								&LiteralValueExpr{
+									Val: cty.StringVal("%"),
+
+									SrcRange: hcl.Range{
+										Start: hcl.Pos{Line: 1, Column: 12, Byte: 11},
+										End:   hcl.Pos{Line: 1, Column: 13, Byte: 12},
+									},
+								},
 								&LiteralValueExpr{
 									Val: cty.StringVal("%"),
 
@@ -965,10 +1021,18 @@ block "valid" {}
 						Expr: &TemplateExpr{
 							Parts: []Expression{
 								&LiteralValueExpr{
-									Val: cty.StringVal("hello %"),
+									Val: cty.StringVal("hello "),
 
 									SrcRange: hcl.Range{
 										Start: hcl.Pos{Line: 1, Column: 6, Byte: 5},
+										End:   hcl.Pos{Line: 1, Column: 12, Byte: 11},
+									},
+								},
+								&LiteralValueExpr{
+									Val: cty.StringVal("%"),
+
+									SrcRange: hcl.Range{
+										Start: hcl.Pos{Line: 1, Column: 12, Byte: 11},
 										End:   hcl.Pos{Line: 1, Column: 13, Byte: 12},
 									},
 								},
@@ -2285,6 +2349,7 @@ block "valid" {}
 
 	for _, test := range tests {
 		t.Run(test.input, func(t *testing.T) {
+			t.Logf("\n%s", test.input)
 			file, diags := ParseConfig([]byte(test.input), "", hcl.Pos{Byte: 0, Line: 1, Column: 1})
 			if len(diags) != test.diagCount {
 				t.Errorf("wrong number of diagnostics %d; want %d", len(diags), test.diagCount)
