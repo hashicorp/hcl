@@ -180,6 +180,51 @@ func TestParseConfig(t *testing.T) {
 			},
 		},
 		{
+			"block { block {} }\n",
+			1, // can't nest another block in the single-line block syntax
+			&Body{
+				Attributes: Attributes{},
+				Blocks: Blocks{
+					&Block{
+						Type:   "block",
+						Labels: nil,
+						Body: &Body{
+							SrcRange: hcl.Range{
+								Start: hcl.Pos{Line: 1, Column: 7, Byte: 6},
+								End:   hcl.Pos{Line: 2, Column: 1, Byte: 19},
+							},
+							EndRange: hcl.Range{ // Parser recovery behavior leaves us after this whole construct, on the next line
+								Start: hcl.Pos{Line: 2, Column: 1, Byte: 19},
+								End:   hcl.Pos{Line: 2, Column: 1, Byte: 19},
+							},
+						},
+
+						TypeRange: hcl.Range{
+							Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   hcl.Pos{Line: 1, Column: 6, Byte: 5},
+						},
+						LabelRanges: nil,
+						OpenBraceRange: hcl.Range{
+							Start: hcl.Pos{Line: 1, Column: 7, Byte: 6},
+							End:   hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						},
+						CloseBraceRange: hcl.Range{ // Parser recovery behavior leaves us after this whole construct, on the next line
+							Start: hcl.Pos{Line: 2, Column: 1, Byte: 19},
+							End:   hcl.Pos{Line: 2, Column: 1, Byte: 19},
+						},
+					},
+				},
+				SrcRange: hcl.Range{
+					Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   hcl.Pos{Line: 2, Column: 1, Byte: 19},
+				},
+				EndRange: hcl.Range{
+					Start: hcl.Pos{Line: 2, Column: 1, Byte: 19},
+					End:   hcl.Pos{Line: 2, Column: 1, Byte: 19},
+				},
+			},
+		},
+		{
 			"block \"foo\" {}\n",
 			0,
 			&Body{
