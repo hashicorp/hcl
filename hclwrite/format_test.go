@@ -64,6 +64,10 @@ func TestFormat(t *testing.T) {
 			`foo(1, -2, a * b, b, c)`,
 		},
 		{
+			`foo(a,b...)`,
+			`foo(a, b...)`,
+		},
+		{
 			`a="hello ${ name }"`,
 			`a = "hello ${name}"`,
 		},
