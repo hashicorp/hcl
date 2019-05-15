@@ -1,13 +1,10 @@
 package hclsyntax
 
 import (
-	"reflect"
 	"testing"
 
-	"github.com/go-test/deep"
-
+	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/hcl2/hcl"
-	"github.com/kylelemons/godebug/pretty"
 )
 
 func TestScanTokens_normal(t *testing.T) {
@@ -1815,6 +1812,154 @@ EOF
 			},
 		},
 		{
+			"// hello\n// hello",
+			[]Token{
+				{
+					Type:  TokenComment,
+					Bytes: []byte("// hello\n"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   hcl.Pos{Byte: 9, Line: 2, Column: 1},
+					},
+				},
+				{
+					Type:  TokenComment,
+					Bytes: []byte("// hello"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 9, Line: 2, Column: 1},
+						End:   hcl.Pos{Byte: 17, Line: 2, Column: 9},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 17, Line: 2, Column: 9},
+						End:   hcl.Pos{Byte: 17, Line: 2, Column: 9},
+					},
+				},
+			},
+		},
+		{
+			"// hello\nfoo\n// hello",
+			[]Token{
+				{
+					Type:  TokenComment,
+					Bytes: []byte("// hello\n"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   hcl.Pos{Byte: 9, Line: 2, Column: 1},
+					},
+				},
+				{
+					Type:  TokenIdent,
+					Bytes: []byte("foo"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 9, Line: 2, Column: 1},
+						End:   hcl.Pos{Byte: 12, Line: 2, Column: 4},
+					},
+				},
+				{
+					Type:  TokenNewline,
+					Bytes: []byte("\n"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 12, Line: 2, Column: 4},
+						End:   hcl.Pos{Byte: 13, Line: 3, Column: 1},
+					},
+				},
+				{
+					Type:  TokenComment,
+					Bytes: []byte("// hello"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 13, Line: 3, Column: 1},
+						End:   hcl.Pos{Byte: 21, Line: 3, Column: 9},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 21, Line: 3, Column: 9},
+						End:   hcl.Pos{Byte: 21, Line: 3, Column: 9},
+					},
+				},
+			},
+		},
+		{
+			"# hello\n# hello",
+			[]Token{
+				{
+					Type:  TokenComment,
+					Bytes: []byte("# hello\n"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   hcl.Pos{Byte: 8, Line: 2, Column: 1},
+					},
+				},
+				{
+					Type:  TokenComment,
+					Bytes: []byte("# hello"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 8, Line: 2, Column: 1},
+						End:   hcl.Pos{Byte: 15, Line: 2, Column: 8},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 15, Line: 2, Column: 8},
+						End:   hcl.Pos{Byte: 15, Line: 2, Column: 8},
+					},
+				},
+			},
+		},
+		{
+			"# hello\nfoo\n# hello",
+			[]Token{
+				{
+					Type:  TokenComment,
+					Bytes: []byte("# hello\n"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   hcl.Pos{Byte: 8, Line: 2, Column: 1},
+					},
+				},
+				{
+					Type:  TokenIdent,
+					Bytes: []byte("foo"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 8, Line: 2, Column: 1},
+						End:   hcl.Pos{Byte: 11, Line: 2, Column: 4},
+					},
+				},
+				{
+					Type:  TokenNewline,
+					Bytes: []byte("\n"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 11, Line: 2, Column: 4},
+						End:   hcl.Pos{Byte: 12, Line: 3, Column: 1},
+					},
+				},
+				{
+					Type:  TokenComment,
+					Bytes: []byte("# hello"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 12, Line: 3, Column: 1},
+						End:   hcl.Pos{Byte: 19, Line: 3, Column: 8},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 19, Line: 3, Column: 8},
+						End:   hcl.Pos{Byte: 19, Line: 3, Column: 8},
+					},
+				},
+			},
+		},
+		{
 			"/* hello */",
 			[]Token{
 				{
@@ -2132,30 +2277,13 @@ EOF
 		},
 	}
 
-	prettyConfig := &pretty.Config{
-		Diffable:          true,
-		IncludeUnexported: true,
-		PrintStringers:    true,
-	}
-
 	for _, test := range tests {
 		t.Run(test.input, func(t *testing.T) {
 			got := scanTokens([]byte(test.input), "", hcl.Pos{Byte: 0, Line: 1, Column: 1}, scanNormal)
 
-			if !reflect.DeepEqual(got, test.want) {
-				diff := prettyConfig.Compare(test.want, got)
-				t.Errorf(
-					"wrong result\ninput: %s\ndiff:  %s",
-					test.input, diff,
-				)
+			if diff := cmp.Diff(test.want, got); diff != "" {
+				t.Errorf("wrong result\n%s", diff)
 			}
-
-			// "pretty" diff output is not helpful for all differences, so
-			// we'll also print out a list of specific differences.
-			for _, problem := range deep.Equal(got, test.want) {
-				t.Error(problem)
-			}
-
 		})
 	}
 }
@@ -2339,22 +2467,12 @@ func TestScanTokens_template(t *testing.T) {
 		},
 	}
 
-	prettyConfig := &pretty.Config{
-		Diffable:          true,
-		IncludeUnexported: true,
-		PrintStringers:    true,
-	}
-
 	for _, test := range tests {
 		t.Run(test.input, func(t *testing.T) {
 			got := scanTokens([]byte(test.input), "", hcl.Pos{Byte: 0, Line: 1, Column: 1}, scanTemplate)
 
-			if !reflect.DeepEqual(got, test.want) {
-				diff := prettyConfig.Compare(test.want, got)
-				t.Errorf(
-					"wrong result\ninput: %s\ndiff:  %s",
-					test.input, diff,
-				)
+			if diff := cmp.Diff(test.want, got); diff != "" {
+				t.Errorf("wrong result\n%s", diff)
 			}
 		})
 	}
