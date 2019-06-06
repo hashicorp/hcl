@@ -21,7 +21,7 @@ require (
 	github.com/sergi/go-diff v1.0.0
 	github.com/spf13/pflag v1.0.2
 	github.com/stretchr/testify v1.2.2 // indirect
-	github.com/zclconf/go-cty v0.0.0-20190426224007-b18a157db9e2
+	github.com/zclconf/go-cty v1.0.0
 	golang.org/x/crypto v0.0.0-20190426145343-a29dc8fdc734
 	golang.org/x/net v0.0.0-20190502183928-7f726cade0ab // indirect
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58 // indirect
