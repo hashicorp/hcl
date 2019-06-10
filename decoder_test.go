@@ -951,6 +951,28 @@ func TestDecode_float64(t *testing.T) {
 	}
 }
 
+func TestDecode_string(t *testing.T) {
+	type value struct {
+		A string `hcl:"a"`
+		B string `hcl:"b"`
+		C string `hcl:"c"`
+		D string `hcl:"d"`
+		E string `hcl:"e"`
+	}
+
+	got := value{}
+	err := Decode(&got, testReadFile(t, "string.hcl"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := value{"s", "2", "2.718", "true", "false"}
+	if !reflect.DeepEqual(want, got) {
+		t.Fatalf("expected %#v; got %#v", want, got)
+	}
+
+}
+
 func TestDecode_intStringAliased(t *testing.T) {
 	var value struct {
 		Count time.Duration
