@@ -3,6 +3,7 @@ package json
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/davecgh/go-spew/spew"
@@ -1408,6 +1409,123 @@ func TestExpression_Value(t *testing.T) {
 		if !val.RawEquals(ev) {
 			t.Errorf("wrong result %#v; want %#v", val, ev)
 		}
+	}
+
+}
+
+// TestExpressionValue_Diags asserts that Value() returns diagnostics
+// from nested evaluations for complex objects (e.g. ObjectVal, ArrayVal)
+func TestExpressionValue_Diags(t *testing.T) {
+	cases := []struct {
+		name     string
+		src      string
+		expected cty.Value
+		error    string
+	}{
+		{
+			name:     "string: happy",
+			src:      `{"v": "happy ${VAR1}"}`,
+			expected: cty.StringVal("happy case"),
+		},
+		{
+			name:     "string: unhappy",
+			src:      `{"v": "happy ${UNKNOWN}"}`,
+			expected: cty.UnknownVal(cty.String),
+			error:    "Unknown variable",
+		},
+		{
+			name: "object_val: happy",
+			src:  `{"v": {"key": "happy ${VAR1}"}}`,
+			expected: cty.ObjectVal(map[string]cty.Value{
+				"key": cty.StringVal("happy case"),
+			}),
+		},
+		{
+			name: "object_val: unhappy",
+			src:  `{"v": {"key": "happy ${UNKNOWN}"}}`,
+			expected: cty.ObjectVal(map[string]cty.Value{
+				"key": cty.UnknownVal(cty.String),
+			}),
+			error: "Unknown variable",
+		},
+		{
+			name: "object_key: happy",
+			src:  `{"v": {"happy ${VAR1}": "val"}}`,
+			expected: cty.ObjectVal(map[string]cty.Value{
+				"happy case": cty.StringVal("val"),
+			}),
+		},
+		{
+			name:     "object_key: unhappy",
+			src:      `{"v": {"happy ${UNKNOWN}": "val"}}`,
+			expected: cty.DynamicVal,
+			error:    "Unknown variable",
+		},
+		{
+			name:     "array: happy",
+			src:      `{"v": ["happy ${VAR1}"]}`,
+			expected: cty.TupleVal([]cty.Value{cty.StringVal("happy case")}),
+		},
+		{
+			name:     "array: unhappy",
+			src:      `{"v": ["happy ${UNKNOWN}"]}`,
+			expected: cty.TupleVal([]cty.Value{cty.UnknownVal(cty.String)}),
+			error:    "Unknown variable",
+		},
+	}
+
+	ctx := &hcl.EvalContext{
+		Variables: map[string]cty.Value{
+			"VAR1": cty.StringVal("case"),
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			file, diags := Parse([]byte(c.src), "")
+
+			if len(diags) != 0 {
+				t.Errorf("got %d diagnostics on parse; want 0", len(diags))
+				for _, diag := range diags {
+					t.Logf("- %s", diag.Error())
+				}
+				t.FailNow()
+			}
+			if file == nil {
+				t.Errorf("got nil File; want actual file")
+			}
+			if file.Body == nil {
+				t.Fatalf("got nil Body; want actual body")
+			}
+
+			attrs, diags := file.Body.JustAttributes()
+			if len(diags) != 0 {
+				t.Errorf("got %d diagnostics on decode; want 0", len(diags))
+				for _, diag := range diags {
+					t.Logf("- %s", diag.Error())
+				}
+				t.FailNow()
+			}
+
+			val, diags := attrs["v"].Expr.Value(ctx)
+			if c.error == "" && len(diags) != 0 {
+				t.Errorf("got %d diagnostics on eval; want 0", len(diags))
+				for _, diag := range diags {
+					t.Logf("- %s", diag.Error())
+				}
+				t.FailNow()
+			} else if c.error != "" && len(diags) == 0 {
+				t.Fatalf("got 0 diagnostics on eval, want 1 with %s", c.error)
+			} else if c.error != "" && len(diags) != 0 {
+				if !strings.Contains(diags[0].Error(), c.error) {
+					t.Fatalf("found error: %s; want %s", diags[0].Error(), c.error)
+				}
+			}
+
+			if !val.RawEquals(c.expected) {
+				t.Errorf("wrong result %#v; want %#v", val, c.expected)
+			}
+		})
 	}
 
 }
