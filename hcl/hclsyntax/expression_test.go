@@ -1351,6 +1351,56 @@ EOT
 			cty.False,
 			0,
 		},
+		{
+			`true ? var : null`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"var": cty.ObjectVal(map[string]cty.Value{"a": cty.StringVal("A")}),
+				},
+			},
+			cty.ObjectVal(map[string]cty.Value{"a": cty.StringVal("A")}),
+			0,
+		},
+		{
+			`true ? var : null`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"var": cty.UnknownVal(cty.DynamicPseudoType),
+				},
+			},
+			cty.UnknownVal(cty.DynamicPseudoType),
+			0,
+		},
+		{
+			`true ? ["a", "b"] : null`,
+			nil,
+			cty.TupleVal([]cty.Value{cty.StringVal("a"), cty.StringVal("b")}),
+			0,
+		},
+		{
+			`true ? null: ["a", "b"]`,
+			nil,
+			cty.NullVal(cty.Tuple([]cty.Type{cty.String, cty.String})),
+			0,
+		},
+		{
+			`false ? ["a", "b"] : null`,
+			nil,
+			cty.NullVal(cty.Tuple([]cty.Type{cty.String, cty.String})),
+			0,
+		},
+		{
+			`false ? null: ["a", "b"]`,
+			nil,
+			cty.TupleVal([]cty.Value{cty.StringVal("a"), cty.StringVal("b")}),
+			0,
+		},
+		{
+			`false ? null: null`,
+			nil,
+			cty.NullVal(cty.DynamicPseudoType),
+			0,
+		},
 	}
 
 	for _, test := range tests {
