@@ -1401,6 +1401,51 @@ EOT
 			cty.NullVal(cty.DynamicPseudoType),
 			0,
 		},
+		{
+			`false ? var: {a = "b"}`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"var": cty.DynamicVal,
+				},
+			},
+			cty.ObjectVal(map[string]cty.Value{
+				"a": cty.StringVal("b"),
+			}),
+			0,
+		},
+		{
+			`true ? ["a", "b"]: var`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"var": cty.UnknownVal(cty.DynamicPseudoType),
+				},
+			},
+			cty.TupleVal([]cty.Value{
+				cty.StringVal("a"),
+				cty.StringVal("b"),
+			}),
+			0,
+		},
+		{
+			`false ? ["a", "b"]: var`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"var": cty.DynamicVal,
+				},
+			},
+			cty.DynamicVal,
+			0,
+		},
+		{
+			`false ? ["a", "b"]: var`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"var": cty.UnknownVal(cty.DynamicPseudoType),
+				},
+			},
+			cty.DynamicVal,
+			0,
+		},
 	}
 
 	for _, test := range tests {
