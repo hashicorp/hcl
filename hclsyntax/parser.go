@@ -1661,7 +1661,7 @@ Token:
 			break Token
 
 		case TokenQuotedLit:
-			s, sDiags := p.decodeStringLit(tok)
+			s, sDiags := ParseStringLiteralToken(tok)
 			diags = append(diags, sDiags...)
 			ret.WriteString(s)
 
@@ -1721,13 +1721,13 @@ Token:
 	return ret.String(), hcl.RangeBetween(oQuote.Range, cQuote.Range), diags
 }
 
-// decodeStringLit processes the given token, which must be either a
+// ParseStringLiteralToken processes the given token, which must be either a
 // TokenQuotedLit or a TokenStringLit, returning the string resulting from
 // resolving any escape sequences.
 //
 // If any error diagnostics are returned, the returned string may be incomplete
 // or otherwise invalid.
-func (p *parser) decodeStringLit(tok Token) (string, hcl.Diagnostics) {
+func ParseStringLiteralToken(tok Token) (string, hcl.Diagnostics) {
 	var quoted bool
 	switch tok.Type {
 	case TokenQuotedLit:
@@ -1735,7 +1735,7 @@ func (p *parser) decodeStringLit(tok Token) (string, hcl.Diagnostics) {
 	case TokenStringLit:
 		quoted = false
 	default:
-		panic("decodeQuotedLit can only be used with TokenStringLit and TokenQuotedLit tokens")
+		panic("ParseStringLiteralToken can only be used with TokenStringLit and TokenQuotedLit tokens")
 	}
 	var diags hcl.Diagnostics
 

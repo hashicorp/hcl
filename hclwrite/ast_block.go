@@ -72,3 +72,47 @@ func (b *Block) init(typeName string, labels []string) {
 func (b *Block) Body() *Body {
 	return b.body.content.(*Body)
 }
+
+// Type returns the type name of the block.
+func (b *Block) Type() string {
+	typeNameObj := b.typeName.content.(*identifier)
+	return string(typeNameObj.token.Bytes)
+}
+
+// Labels returns the labels of the block.
+func (b *Block) Labels() []string {
+	labelNames := make([]string, 0, len(b.labels))
+	list := b.labels.List()
+
+	for _, label := range list {
+		switch labelObj := label.content.(type) {
+		case *identifier:
+			if labelObj.token.Type == hclsyntax.TokenIdent {
+				labelString := string(labelObj.token.Bytes)
+				labelNames = append(labelNames, labelString)
+			}
+
+		case *quoted:
+			tokens := labelObj.tokens
+			if len(tokens) == 3 &&
+				tokens[0].Type == hclsyntax.TokenOQuote &&
+				tokens[1].Type == hclsyntax.TokenQuotedLit &&
+				tokens[2].Type == hclsyntax.TokenCQuote {
+				// Note that TokenQuotedLit may contain escape sequences.
+				labelString, diags := hclsyntax.ParseStringLiteralToken(tokens[1].asHCLSyntax())
+
+				// If parsing the string literal returns error diagnostics
+				// then we can just assume the label doesn't match, because it's invalid in some way.
+				if !diags.HasErrors() {
+					labelNames = append(labelNames, labelString)
+				}
+			}
+
+		default:
+			// If neither of the previous cases are true (should be impossible)
+			// then we can just ignore it, because it's invalid too.
+		}
+	}
+
+	return labelNames
+}
