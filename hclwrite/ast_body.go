@@ -1,6 +1,8 @@
 package hclwrite
 
 import (
+	"reflect"
+
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/zclconf/go-cty/cty"
@@ -75,6 +77,23 @@ func (b *Body) GetAttribute(name string) *Attribute {
 			if nameObj.hasName(name) {
 				// We've found it!
 				return attr
+			}
+		}
+	}
+
+	return nil
+}
+
+// FirstMatchingBlock returns a first matching block from the body that has the
+// given name and labels or returns nil if there is currently no matching
+// block.
+func (b *Body) FirstMatchingBlock(typeName string, labels []string) *Block {
+	for _, block := range b.Blocks() {
+		if typeName == block.Type() {
+			labelNames := block.Labels()
+			if reflect.DeepEqual(labels, labelNames) {
+				// We've found it!
+				return block
 			}
 		}
 	}

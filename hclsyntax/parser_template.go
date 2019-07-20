@@ -383,7 +383,7 @@ Token:
 
 		switch next.Type {
 		case TokenStringLit, TokenQuotedLit:
-			str, strDiags := p.decodeStringLit(next)
+			str, strDiags := ParseStringLiteralToken(next)
 			diags = append(diags, strDiags...)
 
 			if ltrim {

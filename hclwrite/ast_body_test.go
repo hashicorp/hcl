@@ -3,6 +3,7 @@ package hclwrite
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/davecgh/go-spew/spew"
@@ -210,6 +211,131 @@ func TestBodyGetAttribute(t *testing.T) {
 				got := attr.BuildTokens(nil)
 				if !reflect.DeepEqual(got, test.want) {
 					t.Errorf("wrong result\ngot:  %s\nwant: %s", spew.Sdump(got), spew.Sdump(test.want))
+				}
+			}
+		})
+	}
+}
+
+func TestBodyFirstMatchingBlock(t *testing.T) {
+	src := `a = "b"
+service {
+  attr0 = "val0"
+}
+service "label1" {
+  attr1 = "val1"
+}
+service "label1" "label2" {
+  attr2 = "val2"
+}
+parent {
+  attr3 = "val3"
+  child {
+    attr4 = "val4"
+  }
+}
+`
+
+	tests := []struct {
+		src      string
+		typeName string
+		labels   []string
+		want     string
+	}{
+		{
+			src,
+			"service",
+			[]string{},
+			`service {
+  attr0 = "val0"
+}
+`,
+		},
+		{
+			src,
+			"service",
+			[]string{"label1"},
+			`service "label1" {
+  attr1 = "val1"
+}
+`,
+		},
+		{
+			src,
+			"service",
+			[]string{"label1", "label2"},
+			`service "label1" "label2" {
+  attr2 = "val2"
+}
+`,
+		},
+		{
+			src,
+			"parent",
+			[]string{},
+			`parent {
+  attr3 = "val3"
+  child {
+    attr4 = "val4"
+  }
+}
+`,
+		},
+		{
+			src,
+			"hoge",
+			[]string{},
+			"",
+		},
+		{
+			src,
+			"hoge",
+			[]string{"label1"},
+			"",
+		},
+		{
+			src,
+			"service",
+			[]string{"label2"},
+			"",
+		},
+		{
+			src,
+			"service",
+			[]string{"label2", "label1"},
+			"",
+		},
+		{
+			src,
+			"child",
+			[]string{},
+			"",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%s %s", test.typeName, strings.Join(test.labels, " ")), func(t *testing.T) {
+			f, diags := ParseConfig([]byte(test.src), "", hcl.Pos{Line: 1, Column: 1})
+			if len(diags) != 0 {
+				for _, diag := range diags {
+					t.Logf("- %s", diag.Error())
+				}
+				t.Fatalf("unexpected diagnostics")
+			}
+
+			block := f.Body().FirstMatchingBlock(test.typeName, test.labels)
+			if block == nil {
+				if test.want != "" {
+					t.Fatal("block not found, but want it to exist")
+				}
+			} else {
+				if test.want == "" {
+					t.Fatal("block found, but expecting not found")
+				}
+
+				got := string(block.BuildTokens(nil).Bytes())
+				if got != test.want {
+					t.Errorf("wrong result\ngot:  %s\nwant: %s", got, test.want)
 				}
 			}
 		})
@@ -635,6 +761,109 @@ func TestBodySetAttributeTraversal(t *testing.T) {
 			if !reflect.DeepEqual(got, test.want) {
 				diff := cmp.Diff(test.want, got)
 				t.Errorf("wrong result\ngot:  %s\nwant: %s\ndiff:\n%s", spew.Sdump(got), spew.Sdump(test.want), diff)
+			}
+		})
+	}
+}
+
+func TestBodySetAttributeValueInBlock(t *testing.T) {
+	src := `service "label1" {
+  attr1 = "val1"
+}
+`
+	tests := []struct {
+		src      string
+		typeName string
+		labels   []string
+		attr     string
+		val      cty.Value
+		want     string
+	}{
+		{
+			src,
+			"service",
+			[]string{"label1"},
+			"attr1",
+			cty.StringVal("updated1"),
+			`service "label1" {
+  attr1 = "updated1"
+}
+`,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%s = %#v in %s %s", test.attr, test.val, test.typeName, strings.Join(test.labels, " ")), func(t *testing.T) {
+			f, diags := ParseConfig([]byte(test.src), "", hcl.Pos{Line: 1, Column: 1})
+			if len(diags) != 0 {
+				for _, diag := range diags {
+					t.Logf("- %s", diag.Error())
+				}
+				t.Fatalf("unexpected diagnostics")
+			}
+
+			b := f.Body().FirstMatchingBlock(test.typeName, test.labels)
+			b.Body().SetAttributeValue(test.attr, test.val)
+			tokens := f.BuildTokens(nil)
+			format(tokens)
+			got := string(tokens.Bytes())
+			if got != test.want {
+				t.Errorf("wrong result\ngot:  %s\nwant: %s\n", got, test.want)
+			}
+		})
+	}
+}
+
+func TestBodySetAttributeValueInNestedBlock(t *testing.T) {
+	src := `parent {
+  attr1 = "val1"
+  child {
+    attr2 = "val2"
+  }
+}
+`
+	tests := []struct {
+		src            string
+		parentTypeName string
+		childTypeName  string
+		attr           string
+		val            cty.Value
+		want           string
+	}{
+		{
+			src,
+			"parent",
+			"child",
+			"attr2",
+			cty.StringVal("updated2"),
+			`parent {
+  attr1 = "val1"
+  child {
+    attr2 = "updated2"
+  }
+}
+`,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%s = %#v in %s in %s", test.attr, test.val, test.childTypeName, test.parentTypeName), func(t *testing.T) {
+			f, diags := ParseConfig([]byte(test.src), "", hcl.Pos{Line: 1, Column: 1})
+			if len(diags) != 0 {
+				for _, diag := range diags {
+					t.Logf("- %s", diag.Error())
+				}
+				t.Fatalf("unexpected diagnostics")
+			}
+
+			parent := f.Body().FirstMatchingBlock(test.parentTypeName, []string{})
+			child := parent.Body().FirstMatchingBlock(test.childTypeName, []string{})
+			child.Body().SetAttributeValue(test.attr, test.val)
+			tokens := f.BuildTokens(nil)
+			format(tokens)
+			got := string(tokens.Bytes())
+			if got != test.want {
+				t.Errorf("wrong result\ngot:  %s\nwant: %s\n", got, test.want)
 			}
 		})
 	}
