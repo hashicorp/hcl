@@ -23,6 +23,20 @@ func TestDecodeBody(t *testing.T) {
 		Name hcl.Expression `hcl:"name"`
 	}
 
+	type withTwoAttributes struct {
+		A string `hcl:"a,optional"`
+		B string `hcl:"b,optional"`
+	}
+
+	type withNestedBlock struct {
+		Plain  string             `hcl:"plain,optional"`
+		Nested *withTwoAttributes `hcl:"nested,block"`
+	}
+
+	type withListofNestedBlocks struct {
+		Nested []*withTwoAttributes `hcl:"nested,block"`
+	}
+
 	tests := []struct {
 		Body      map[string]interface{}
 		Target    func() interface{}
@@ -517,6 +531,96 @@ func TestDecodeBody(t *testing.T) {
 				"name":   cty.StringVal("Ermintrude"),
 				"living": cty.True,
 			}),
+			0,
+		},
+		{
+			// Retain "nested" block while decoding
+			map[string]interface{}{
+				"plain": "foo",
+			},
+			func() interface{} {
+				return &withNestedBlock{
+					Plain: "bar",
+					Nested: &withTwoAttributes{
+						A: "bar",
+					},
+				}
+			},
+			func(gotI interface{}) bool {
+				foo := gotI.(withNestedBlock)
+				return foo.Plain == "foo" && foo.Nested != nil && foo.Nested.A == "bar"
+			},
+			0,
+		},
+		{
+			// Retain values in "nested" block while decoding
+			map[string]interface{}{
+				"nested": map[string]interface{}{
+					"a": "foo",
+				},
+			},
+			func() interface{} {
+				return &withNestedBlock{
+					Nested: &withTwoAttributes{
+						B: "bar",
+					},
+				}
+			},
+			func(gotI interface{}) bool {
+				foo := gotI.(withNestedBlock)
+				return foo.Nested.A == "foo" && foo.Nested.B == "bar"
+			},
+			0,
+		},
+		{
+			// Retain values in "nested" block list while decoding
+			map[string]interface{}{
+				"nested": []map[string]interface{}{
+					{
+						"a": "foo",
+					},
+				},
+			},
+			func() interface{} {
+				return &withListofNestedBlocks{
+					Nested: []*withTwoAttributes{
+						&withTwoAttributes{
+							B: "bar",
+						},
+					},
+				}
+			},
+			func(gotI interface{}) bool {
+				n := gotI.(withListofNestedBlocks)
+				return n.Nested[0].A == "foo" && n.Nested[0].B == "bar"
+			},
+			0,
+		},
+		{
+			// Remove additional elements from the list while decoding nested blocks
+			map[string]interface{}{
+				"nested": []map[string]interface{}{
+					{
+						"a": "foo",
+					},
+				},
+			},
+			func() interface{} {
+				return &withListofNestedBlocks{
+					Nested: []*withTwoAttributes{
+						&withTwoAttributes{
+							B: "bar",
+						},
+						&withTwoAttributes{
+							B: "bar",
+						},
+					},
+				}
+			},
+			func(gotI interface{}) bool {
+				n := gotI.(withListofNestedBlocks)
+				return len(n.Nested) == 1
+			},
 			0,
 		},
 	}
