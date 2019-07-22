@@ -41,12 +41,12 @@ spec blocks:
 ```hcl
 object {
   attr "name" {
-    type = "string"
+    type = string
   }
   block "address" {
     object {
       attr "street" {
-        type = "string"
+        type = string
       }
       # ...
     }
@@ -73,11 +73,11 @@ any nested spec blocks:
 array {
   attr {
     name = "first_element"
-    type = "string"
+    type = string
   }
   attr {
     name = "second_element"
-    type = "string"
+    type = string
   }
 }
 ```
