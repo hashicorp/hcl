@@ -93,7 +93,7 @@ available in a ``stdlib`` package within the :go:pkg:`cty` repository, avoiding
 the need for each application to re-implement basic functions for string
 manipulation, list manipulation, etc. It also includes function-shaped versions
 of several operations that are native operators in HCL, which should generally
-*not* be exposed as functions in HCL-based configurationf formats to avoid user
+*not* be exposed as functions in HCL-based configuration formats to avoid user
 confusion.
 
 You can define functions in the ``Functions`` field of :go:type:`hcl.EvalContext`:

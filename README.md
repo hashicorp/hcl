@@ -56,7 +56,7 @@ such as Ruby. HCL syntax is designed to be easily read and written by humans,
 and allows _declarative_ logic to permit its use in more complex applications.
 
 HCL is intended as a base syntax for configuration formats built
-around key-value pairs and heirarchical blocks whose structure is well-defined
+around key-value pairs and hierarchical blocks whose structure is well-defined
 by the calling application, and this definition of the configuration structure
 allows for better error messages and more convenient definition within the
 calling application.
