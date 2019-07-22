@@ -54,20 +54,10 @@ func formatIndent(lines []formatLine) {
 	// which should be more than enough for reasonable HCL uses.
 	indents := make([]int, 0, 10)
 
-	inHeredoc := false
 	for i := range lines {
 		line := &lines[i]
 		if len(line.lead) == 0 {
 			continue
-		}
-
-		if inHeredoc {
-			for _, token := range line.lead {
-				if token.Type == hclsyntax.TokenCHeredoc {
-					inHeredoc = false
-				}
-			}
-			continue // don't touch indentation inside heredocs
 		}
 
 		if line.lead[0].Type == hclsyntax.TokenNewline {
@@ -80,9 +70,10 @@ func formatIndent(lines []formatLine) {
 		for _, token := range line.lead {
 			netBrackets += tokenBracketChange(token)
 			if token.Type == hclsyntax.TokenOHeredoc {
-				inHeredoc = true
+				break
 			}
 		}
+
 		for _, token := range line.assign {
 			netBrackets += tokenBracketChange(token)
 		}

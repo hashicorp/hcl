@@ -550,6 +550,36 @@ baz {
 }
 `,
 		},
+		{
+			`
+foo {
+bar = <<EOT
+Foo bar baz
+EOT
+baz = <<EOT
+Foo bar baz
+EOT
+}
+
+bar {
+foo = "bar"
+}
+`,
+			`
+foo {
+  bar = <<EOT
+Foo bar baz
+EOT
+  baz = <<EOT
+Foo bar baz
+EOT
+}
+
+bar {
+  foo = "bar"
+}
+`,
+		},
 	}
 
 	for i, test := range tests {
