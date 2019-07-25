@@ -580,6 +580,30 @@ bar {
 }
 `,
 		},
+		{
+			`
+module "foo" {
+foo = <<EOF
+5
+EOF
+}
+
+module "x" {
+a = "b"
+abcde = "456"
+}`,
+			`
+module "foo" {
+  foo = <<EOF
+5
+EOF
+}
+
+module "x" {
+  a     = "b"
+  abcde = "456"
+}`,
+		},
 	}
 
 	for i, test := range tests {
