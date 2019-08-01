@@ -632,6 +632,35 @@ func TestDecode_structurePtr(t *testing.T) {
 	}
 }
 
+func TestDecode_nonNilStructurePtr(t *testing.T) {
+	type V struct {
+		Key        int
+		Foo        string
+		DontChange string
+	}
+
+	actual := &V{
+		Key:        42,
+		Foo:        "foo",
+		DontChange: "don't change me",
+	}
+
+	err := Decode(&actual, testReadFile(t, "flat.hcl"))
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	expected := &V{
+		Key:        7,
+		Foo:        "bar",
+		DontChange: "don't change me",
+	}
+
+	if !reflect.DeepEqual(actual, expected) {
+		t.Fatalf("Actual: %#v\n\nExpected: %#v", actual, expected)
+	}
+}
+
 func TestDecode_structureArray(t *testing.T) {
 	// This test is extracted from a failure in Consul (consul.io),
 	// hence the interesting structure naming.
@@ -802,6 +831,36 @@ func TestDecode_structureMapInvalid(t *testing.T) {
 	}
 }
 
+func TestDecode_structureMapExtraKeys(t *testing.T) {
+	type hclVariable struct {
+		A     int
+		B     int
+		Found []string `hcl:",decodedFields"`
+		Extra []string `hcl:",unusedKeys"`
+	}
+
+	q := hclVariable{
+		A:     1,
+		B:     2,
+		Found: []string{"A", "B"},
+		Extra: []string{"extra1", "extra2"},
+	}
+
+	var p hclVariable
+	ast, _ := Parse(testReadFile(t, "structure_map_extra_keys.hcl"))
+	DecodeObject(&p, ast)
+	if !reflect.DeepEqual(p, q) {
+		t.Fatal("not equal")
+	}
+
+	var j hclVariable
+	ast, _ = Parse(testReadFile(t, "structure_map_extra_keys.json"))
+	DecodeObject(&j, ast)
+	if !reflect.DeepEqual(p, j) {
+		t.Fatal("not equal")
+	}
+}
+
 func TestDecode_interfaceNonPointer(t *testing.T) {
 	var value interface{}
 	err := Decode(value, testReadFile(t, "basic_int_string.hcl"))
@@ -906,6 +965,28 @@ func TestDecode_float64(t *testing.T) {
 	if got, want := value.B, float64(2); got != want {
 		t.Fatalf("wrong result %#v; want %#v", got, want)
 	}
+}
+
+func TestDecode_string(t *testing.T) {
+	type value struct {
+		A string `hcl:"a"`
+		B string `hcl:"b"`
+		C string `hcl:"c"`
+		D string `hcl:"d"`
+		E string `hcl:"e"`
+	}
+
+	got := value{}
+	err := Decode(&got, testReadFile(t, "string.hcl"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := value{"s", "2", "2.718", "true", "false"}
+	if !reflect.DeepEqual(want, got) {
+		t.Fatalf("expected %#v; got %#v", want, got)
+	}
+
 }
 
 func TestDecode_intStringAliased(t *testing.T) {
