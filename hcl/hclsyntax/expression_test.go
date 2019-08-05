@@ -1269,6 +1269,36 @@ EOT
 			cty.TupleVal([]cty.Value{cty.StringVal("  Foo\n  Bar\n  Baz\n")}),
 			0,
 		},
+		{
+			`[
+  <<EOT
+  Foo
+
+  Bar
+
+  Baz
+  EOT
+]
+`,
+			nil,
+			cty.TupleVal([]cty.Value{cty.StringVal("  Foo\n\n  Bar\n\n  Baz\n")}),
+			0,
+		},
+		{
+			`[
+  <<-EOT
+  Foo
+
+  Bar
+
+  Baz
+  EOT
+]
+`,
+			nil,
+			cty.TupleVal([]cty.Value{cty.StringVal("Foo\n\nBar\n\nBaz\n")}),
+			0,
+		},
 
 		{
 			`unk["baz"]`,

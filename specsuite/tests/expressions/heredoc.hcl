@@ -19,6 +19,20 @@ EOT
     ${bar}
     Baz
   EOT
+  newlines_between = <<EOT
+Foo
+
+Bar
+
+Baz
+EOT
+  indented_newlines_between = <<EOT
+    Foo
+
+    Bar
+
+    Baz
+  EOT
 
   marker_at_suffix = <<EOT
     NOT EOT
@@ -68,6 +82,20 @@ EOT
   unicode_spaces = <<-EOT
      Foo (there's two "em spaces" before Foo there)
     Bar
+    Baz
+  EOT
+  newlines_between = <<-EOT
+Foo
+
+Bar
+
+Baz
+EOT
+  indented_newlines_between = <<-EOT
+    Foo
+
+    Bar
+
     Baz
   EOT
 }
