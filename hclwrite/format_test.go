@@ -80,6 +80,10 @@ func TestFormat(t *testing.T) {
 			`a = "${b}${c}${d} ${e}"`,
 		},
 		{
+			`"%{if true}${var.foo}%{endif}"`,
+			`"%{if true}${var.foo}%{endif}"`,
+		},
+		{
 			`b{}`,
 			`b {}`,
 		},
