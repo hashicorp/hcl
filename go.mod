@@ -8,7 +8,7 @@ require (
 	github.com/apparentlymart/go-textseg v1.0.0
 	github.com/bsm/go-vlq v0.0.0-20150828105119-ec6e8d4f5f4e
 	github.com/davecgh/go-spew v1.1.1
-	github.com/go-test/deep v1.0.1
+	github.com/go-test/deep v1.0.3
 	github.com/google/go-cmp v0.2.0
 	github.com/hashicorp/errwrap v0.0.0-20180715044906-d6c0cd880357 // indirect
 	github.com/hashicorp/go-multierror v0.0.0-20180717150148-3d5d8f294aa0
