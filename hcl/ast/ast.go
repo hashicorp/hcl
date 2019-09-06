@@ -151,8 +151,9 @@ func (o *ObjectKey) Pos() token.Pos {
 	return o.Token.Pos
 }
 
-// LiteralType represents a literal of basic type. Valid types are:
+// LiteralType represents a literal of basic type. Some valid types are:
 // token.NUMBER, token.FLOAT, token.BOOL and token.STRING
+// See 'token' package for more
 type LiteralType struct {
 	Token token.Token
 
