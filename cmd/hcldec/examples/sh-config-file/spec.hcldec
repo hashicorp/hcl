@@ -1,0 +1,23 @@
+object {
+  attr "name" {
+    type     = string
+    required = true
+  }
+  default "greeting" {
+    attr {
+      name = "greeting"
+      type = string
+    }
+    literal {
+      value = "Hello"
+    }
+  }
+  block_list "friends" {
+    block_type = "friend"
+    attr {
+      name     = "name"
+      type     = string
+      required = true
+    }
+  }
+}

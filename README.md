@@ -1,125 +1,172 @@
 # HCL
 
-[![GoDoc](https://godoc.org/github.com/hashicorp/hcl?status.png)](https://godoc.org/github.com/hashicorp/hcl) [![Build Status](https://travis-ci.org/hashicorp/hcl.svg?branch=master)](https://travis-ci.org/hashicorp/hcl)
+HCL is a toolkit for creating structured configuration languages that are
+both human- and machine-friendly, for use with command-line tools.
+Although intended to be generally useful, it is primarily targeted
+towards devops tools, servers, etc.
 
-HCL (HashiCorp Configuration Language) is a configuration language built
-by HashiCorp. The goal of HCL is to build a structured configuration language
-that is both human and machine friendly for use with command-line tools, but
-specifically targeted towards DevOps tools, servers, etc.
+HCL has both a _native syntax_, intended to be pleasant to read and write for
+humans, and a JSON-based variant that is easier for machines to generate
+and parse.
 
-HCL is also fully JSON compatible. That is, JSON can be used as completely
-valid input to a system expecting HCL. This helps makes systems
-interoperable with other systems.
+The HCL native syntax is inspired by [libucl](https://github.com/vstakhov/libucl),
+[nginx configuration](http://nginx.org/en/docs/beginners_guide.html#conf_structure),
+and others.
 
-HCL is heavily inspired by
-[libucl](https://github.com/vstakhov/libucl),
-nginx configuration, and others similar.
+It includes an expression syntax that allows basic inline computation and,
+with support from the calling application, use of variables and functions
+for more dynamic configuration languages.
+
+HCL provides a set of constructs that can be used by a calling application to
+construct a configuration language. The application defines which attribute
+names and nested block types are expected, and HCL parses the configuration
+file, verifies that it conforms to the expected structure, and returns
+high-level objects that the application can use for further processing.
+
+## Experimental HCL2
+
+This repository contains the experimental version 2 of HCL. This new version
+combines the initial iteration of HCL with the interpolation language HIL
+to produce a single configuration language that supports arbitrary expressions.
+
+At this time the HCL2 syntax and the Go API are still evolving.
+Backward-compatibility is not guaranteed and so any application using this
+library should use vendoring.
+
+The new implementation has a completely new parser and Go API, with no direct
+migration path. Although the syntax is similar, the implementation takes some
+very different approaches to improve on some "rough edges" that existed with
+the original implementation and to allow for more robust error handling.
+
+Once this new implementation reaches stability, its package paths will be
+changed to reflect that it is the _current_ HCL implementation. At that time,
+the original implementation will be archived.
 
 ## Why?
 
-A common question when viewing HCL is to ask the question: why not
-JSON, YAML, etc.?
+Newcomers to HCL often ask: why not JSON, YAML, etc?
 
-Prior to HCL, the tools we built at [HashiCorp](http://www.hashicorp.com)
-used a variety of configuration languages from full programming languages
-such as Ruby to complete data structure languages such as JSON. What we
-learned is that some people wanted human-friendly configuration languages
-and some people wanted machine-friendly languages.
+Whereas JSON and YAML are formats for serializing data structures, HCL is
+a syntax and API specifically designed for building structured configuration
+formats.
 
-JSON fits a nice balance in this, but is fairly verbose and most
-importantly doesn't support comments. With YAML, we found that beginners
-had a really hard time determining what the actual structure was, and
-ended up guessing more often than not whether to use a hyphen, colon, etc.
-in order to represent some configuration key.
+HCL attempts to strike a compromise between generic serialization formats
+such as JSON and configuration formats built around full programming languages
+such as Ruby. HCL syntax is designed to be easily read and written by humans,
+and allows _declarative_ logic to permit its use in more complex applications.
 
-Full programming languages such as Ruby enable complex behavior
-a configuration language shouldn't usually allow, and also forces
-people to learn some set of Ruby.
+HCL is intended as a base syntax for configuration formats built
+around key-value pairs and hierarchical blocks whose structure is well-defined
+by the calling application, and this definition of the configuration structure
+allows for better error messages and more convenient definition within the
+calling application.
 
-Because of this, we decided to create our own configuration language
-that is JSON-compatible. Our configuration language (HCL) is designed
-to be written and modified by humans. The API for HCL allows JSON
-as an input so that it is also machine-friendly (machines can generate
-JSON instead of trying to generate HCL).
+It can't be denied that JSON is very convenient as a _lingua franca_
+for interoperability between different pieces of software. Because of this,
+HCL defines a common configuration model that can be parsed from either its
+native syntax or from a well-defined equivalent JSON structure. This allows
+configuration to be provided as a mixture of human-authored configuration
+files in the native syntax and machine-generated files in JSON.
 
-Our goal with HCL is not to alienate other configuration languages.
-It is instead to provide HCL as a specialized language for our tools,
-and JSON as the interoperability layer.
+## Information Model and Syntax
 
-## Syntax
+HCL is built around two primary concepts: _attributes_ and _blocks_. In
+native syntax, a configuration file for a hypothetical application might look
+something like this:
 
-For a complete grammar, please see the parser itself. A high-level overview
-of the syntax and grammar is listed here.
+```hcl
+io_mode = "async"
 
-  * Single line comments start with `#` or `//`
+service "http" "web_proxy" {
+  listen_addr = "127.0.0.1:8080"
+  
+  process "main" {
+    command = ["/usr/local/bin/awesome-app", "server"]
+  }
 
-  * Multi-line comments are wrapped in `/*` and `*/`. Nested block comments
-    are not allowed. A multi-line comment (also known as a block comment)
-    terminates at the first `*/` found.
-
-  * Values are assigned with the syntax `key = value` (whitespace doesn't
-    matter). The value can be any primitive: a string, number, boolean,
-    object, or list.
-
-  * Strings are double-quoted and can contain any UTF-8 characters.
-    Example: `"Hello, World"`
-
-  * Multi-line strings start with `<<EOF` at the end of a line, and end
-    with `EOF` on its own line ([here documents](https://en.wikipedia.org/wiki/Here_document)).
-    Any text may be used in place of `EOF`. Example:
-```
-<<FOO
-hello
-world
-FOO
-```
-
-  * Numbers are assumed to be base 10. If you prefix a number with 0x,
-    it is treated as a hexadecimal. If it is prefixed with 0, it is
-    treated as an octal. Numbers can be in scientific notation: "1e10".
-
-  * Boolean values: `true`, `false`
-
-  * Arrays can be made by wrapping it in `[]`. Example:
-    `["foo", "bar", 42]`. Arrays can contain primitives,
-    other arrays, and objects. As an alternative, lists
-    of objects can be created with repeated blocks, using
-    this structure:
-
-    ```hcl
-    service {
-        key = "value"
-    }
-
-    service {
-        key = "value"
-    }
-    ```
-
-Objects and nested objects are created using the structure shown below:
-
-```
-variable "ami" {
-    description = "the AMI to use"
+  process "mgmt" {
+    command = ["/usr/local/bin/awesome-app", "mgmt"]
+  }
 }
 ```
-This would be equivalent to the following json:
-``` json
+
+The JSON equivalent of this configuration is the following:
+
+```json
 {
-  "variable": {
-      "ami": {
-          "description": "the AMI to use"
+  "io_mode": "async",
+  "service": {
+    "http": {
+      "web_proxy": {
+        "listen_addr": "127.0.0.1:8080",
+        "process": {
+          "main": {
+            "command": ["/usr/local/bin/awesome-app", "server"]
+          },
+          "mgmt": {
+            "command": ["/usr/local/bin/awesome-app", "mgmt"]
+          },
         }
+      }
     }
+  }
 }
 ```
 
-## Thanks
+Regardless of which syntax is used, the API within the calling application
+is the same. It can either work directly with the low-level attributes and
+blocks, for more advanced use-cases, or it can use one of the _decoder_
+packages to declaratively extract into either Go structs or dynamic value
+structures.
 
-Thanks to:
+Attribute values can be expressions as well as just literal values:
 
-  * [@vstakhov](https://github.com/vstakhov) - The original libucl parser
-    and syntax that HCL was based off of.
+```hcl
+# Arithmetic with literals and application-provided variables
+sum = 1 + addend
 
-  * [@fatih](https://github.com/fatih) - The rewritten HCL parser
-    in pure Go (no goyacc) and support for a printer.
+# String interpolation and templates
+message = "Hello, ${name}!"
+
+# Application-provided functions
+shouty_message = upper(message)
+```
+
+Although JSON syntax doesn't permit direct use of expressions, the interpolation
+syntax allows use of arbitrary expressions within JSON strings:
+
+```json
+{
+  "sum": "${1 + addend}",
+  "message": "Hello, ${name}!",
+  "shouty_message": "${upper(message)}"
+}
+```
+
+For more information, see the detailed specifications:
+
+* [Syntax-agnostic Information Model](hcl/spec.md)
+* [HCL Native Syntax](hcl/hclsyntax/spec.md)
+* [JSON Representation](hcl/json/spec.md)
+
+## Acknowledgements
+
+HCL was heavily inspired by [libucl](https://github.com/vstakhov/libucl),
+by [Vsevolod Stakhov](https://github.com/vstakhov).
+
+HCL and HIL originate in [HashiCorp Terraform](https://terraform.io/),
+with the original parsers for each written by
+[Mitchell Hashimoto](https://github.com/mitchellh).
+
+The original HCL parser was ported to pure Go (from yacc) by
+[Fatih Arslan](https://github.com/fatih). The structure-related portions of
+the new native syntax parser build on that work.
+
+The original HIL parser was ported to pure Go (from yacc) by
+[Martin Atkins](https://github.com/apparentlymart). The expression-related
+portions of the new native syntax parser build on that work.
+
+HCL2, which merged the original HCL and HIL languages into this single new
+language, builds on design and prototyping work by
+[Martin Atkins](https://github.com/apparentlymart) in
+[zcl](https://github.com/zclconf/go-zcl).
