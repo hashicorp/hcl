@@ -23,25 +23,6 @@ names and nested block types are expected, and HCL parses the configuration
 file, verifies that it conforms to the expected structure, and returns
 high-level objects that the application can use for further processing.
 
-## Experimental HCL2
-
-This repository contains the experimental version 2 of HCL. This new version
-combines the initial iteration of HCL with the interpolation language HIL
-to produce a single configuration language that supports arbitrary expressions.
-
-At this time the HCL2 syntax and the Go API are still evolving.
-Backward-compatibility is not guaranteed and so any application using this
-library should use vendoring.
-
-The new implementation has a completely new parser and Go API, with no direct
-migration path. Although the syntax is similar, the implementation takes some
-very different approaches to improve on some "rough edges" that existed with
-the original implementation and to allow for more robust error handling.
-
-Once this new implementation reaches stability, its package paths will be
-changed to reflect that it is the _current_ HCL implementation. At that time,
-the original implementation will be archived.
-
 ## Why?
 
 Newcomers to HCL often ask: why not JSON, YAML, etc?
@@ -149,6 +130,27 @@ For more information, see the detailed specifications:
 * [HCL Native Syntax](hcl/hclsyntax/spec.md)
 * [JSON Representation](hcl/json/spec.md)
 
+## Changes in 2.0
+
+Version 2.0 of HCL combines the features of HCL 1.0 with those of the
+interpolation language HIL to produce a single configuration language that
+supports arbitrary expressions.
+
+This new version has a completely new parser and Go API, with no direct
+migration path. Although the syntax is similar, the implementation takes some
+very different approaches to improve on some "rough edges" that existed with
+the original implementation and to allow for more robust error handling.
+
+It's possible to import both HCL 1 and HCL 2 into the same program using Go's
+_semantic import versioning_ mechanism:
+
+```go
+import (
+    hcl1 "github.com/hashicorp/hcl"
+    hcl2 "github.com/hashicorp/hcl/v2"
+)
+```
+
 ## Acknowledgements
 
 HCL was heavily inspired by [libucl](https://github.com/vstakhov/libucl),
@@ -166,7 +168,7 @@ The original HIL parser was ported to pure Go (from yacc) by
 [Martin Atkins](https://github.com/apparentlymart). The expression-related
 portions of the new native syntax parser build on that work.
 
-HCL2, which merged the original HCL and HIL languages into this single new
+HCL 2, which merged the original HCL and HIL languages into this single new
 language, builds on design and prototyping work by
 [Martin Atkins](https://github.com/apparentlymart) in
 [zcl](https://github.com/zclconf/go-zcl).
