@@ -17,7 +17,7 @@ also exercise that implementation's own programmatic API.
 To run the suite, first build the harness using Go:
 
 ```
-go install github.com/hashicorp/hcl2/cmd/hclspecsuite
+go install github.com/hashicorp/hcl/v2/cmd/hclspecsuite
 ```
 
 Then run it, passing it the directory containing the test definitions (the

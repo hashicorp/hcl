@@ -61,4 +61,4 @@ Package ``hclparse``
 
 The above list just highlights the main functions in this package.
 For full documentation, see
-`the hclparse godoc <https://godoc.org/github.com/hashicorp/hcl2/hclparse>`_.
+`the hclparse godoc <https://godoc.org/github.com/hashicorp/hcl/v2/hclparse>`_.

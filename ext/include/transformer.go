@@ -1,9 +1,9 @@
 package include
 
 import (
-	"github.com/hashicorp/hcl2/ext/transform"
-	"github.com/hashicorp/hcl2/gohcl"
-	"github.com/hashicorp/hcl2/hcl"
+	"github.com/hashicorp/hcl/v2/ext/transform"
+	"github.com/hashicorp/hcl/v2/gohcl"
+	"github.com/hashicorp/hcl/v2/hcl"
 )
 
 // Transformer builds a transformer that finds any "include" blocks in a body

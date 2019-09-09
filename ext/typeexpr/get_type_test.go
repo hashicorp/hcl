@@ -3,11 +3,11 @@ package typeexpr
 import (
 	"testing"
 
-	"github.com/hashicorp/hcl2/gohcl"
+	"github.com/hashicorp/hcl/v2/gohcl"
 
-	"github.com/hashicorp/hcl2/hcl"
-	"github.com/hashicorp/hcl2/hcl/hclsyntax"
-	"github.com/hashicorp/hcl2/hcl/json"
+	"github.com/hashicorp/hcl/v2/hcl"
+	"github.com/hashicorp/hcl/v2/hcl/hclsyntax"
+	"github.com/hashicorp/hcl/v2/hcl/json"
 	"github.com/zclconf/go-cty/cty"
 )
 

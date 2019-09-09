@@ -12,7 +12,7 @@ fuzz-exec-%: fuzz%-fuzz.zip
 	go-fuzz -bin=./fuzz$*-fuzz.zip -workdir=$(FUZZ_WORK_DIR)
 
 fuzz%-fuzz.zip: %/fuzz.go
-	go-fuzz-build github.com/hashicorp/hcl2/hcl/json/fuzz/$*
+	go-fuzz-build github.com/hashicorp/hcl/v2/hcl/json/fuzz/$*
 
 tools:
 	go get -u github.com/dvyukov/go-fuzz/go-fuzz

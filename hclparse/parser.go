@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/hashicorp/hcl2/hcl"
-	"github.com/hashicorp/hcl2/hcl/hclsyntax"
-	"github.com/hashicorp/hcl2/hcl/json"
+	"github.com/hashicorp/hcl/v2/hcl"
+	"github.com/hashicorp/hcl/v2/hcl/hclsyntax"
+	"github.com/hashicorp/hcl/v2/hcl/json"
 )
 
 // NOTE: This is the public interface for parsing. The actual parsers are

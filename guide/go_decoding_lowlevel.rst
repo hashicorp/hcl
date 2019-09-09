@@ -34,7 +34,7 @@ to the more detailed information where needed while using the higher-level APIs
 for the more straightforward portions of a configuration language.
 
 The following subsections will give an overview of the low-level API. For full
-details, see `the godoc reference <https://godoc.org/github.com/hashicorp/hcl2/hcl>`_.
+details, see `the godoc reference <https://godoc.org/github.com/hashicorp/hcl/v2/hcl>`_.
 
 Structural Decoding
 -------------------

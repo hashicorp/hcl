@@ -22,7 +22,7 @@ If you have a working Go development environment, you can install this tool
 with `go get` in the usual way:
 
 ```
-$ go get -u github.com/hashicorp/hcl2/cmd/hcldec
+$ go get -u github.com/hashicorp/hcl/v2/cmd/hcldec
 ```
 
 This will install `hcldec` in `$GOPATH/bin`, which usually places it into

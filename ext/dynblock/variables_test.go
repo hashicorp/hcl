@@ -4,13 +4,13 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/hashicorp/hcl2/hcldec"
+	"github.com/hashicorp/hcl/v2/hcldec"
 	"github.com/zclconf/go-cty/cty"
 
 	"github.com/davecgh/go-spew/spew"
 
-	"github.com/hashicorp/hcl2/hcl"
-	"github.com/hashicorp/hcl2/hcl/hclsyntax"
+	"github.com/hashicorp/hcl/v2/hcl"
+	"github.com/hashicorp/hcl/v2/hcl/hclsyntax"
 )
 
 func TestVariables(t *testing.T) {

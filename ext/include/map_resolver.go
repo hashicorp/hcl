@@ -3,7 +3,7 @@ package include
 import (
 	"fmt"
 
-	"github.com/hashicorp/hcl2/hcl"
+	"github.com/hashicorp/hcl/v2/hcl"
 )
 
 // MapResolver returns a Resolver that consults the given map for preloaded

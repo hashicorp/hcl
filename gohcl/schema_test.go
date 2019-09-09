@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/hashicorp/hcl2/hcl"
+	"github.com/hashicorp/hcl/v2/hcl"
 )
 
 func TestImpliedBodySchema(t *testing.T) {

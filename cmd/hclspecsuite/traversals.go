@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/hashicorp/hcl2/hcl"
+	"github.com/hashicorp/hcl/v2/hcl"
 )
 
 func findTraversalSpec(got hcl.Traversal, candidates []*TestFileExpectTraversal) *TestFileExpectTraversal {

@@ -5,8 +5,8 @@ import (
 	"io"
 
 	"github.com/apparentlymart/go-textseg/textseg"
-	"github.com/hashicorp/hcl2/hcl"
-	"github.com/hashicorp/hcl2/hcl/hclsyntax"
+	"github.com/hashicorp/hcl/v2/hcl"
+	"github.com/hashicorp/hcl/v2/hcl/hclsyntax"
 )
 
 // Token is a single sequence of bytes annotated with a type. It is similar

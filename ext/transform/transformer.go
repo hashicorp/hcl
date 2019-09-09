@@ -1,7 +1,7 @@
 package transform
 
 import (
-	"github.com/hashicorp/hcl2/hcl"
+	"github.com/hashicorp/hcl/v2/hcl"
 )
 
 // A Transformer takes a given body, applies some (possibly no-op)

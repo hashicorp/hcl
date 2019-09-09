@@ -4,7 +4,7 @@ package hclsyntax
 import (
     "bytes"
 
-    "github.com/hashicorp/hcl2/hcl"
+    "github.com/hashicorp/hcl/v2/hcl"
 )
 
 // This file is generated from scan_tokens.rl. DO NOT EDIT.

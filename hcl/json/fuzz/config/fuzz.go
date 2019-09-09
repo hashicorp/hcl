@@ -1,7 +1,7 @@
 package fuzzconfig
 
 import (
-	"github.com/hashicorp/hcl2/hcl/json"
+	"github.com/hashicorp/hcl/v2/hcl/json"
 )
 
 func Fuzz(data []byte) int {

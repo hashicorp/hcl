@@ -7,8 +7,8 @@ import (
 	"github.com/apparentlymart/go-dump/dump"
 	"github.com/zclconf/go-cty/cty"
 
-	"github.com/hashicorp/hcl2/hcl"
-	"github.com/hashicorp/hcl2/hcl/hclsyntax"
+	"github.com/hashicorp/hcl/v2/hcl"
+	"github.com/hashicorp/hcl/v2/hcl/hclsyntax"
 )
 
 // Verify that all of our spec types implement the necessary interfaces

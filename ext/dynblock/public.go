@@ -1,7 +1,7 @@
 package dynblock
 
 import (
-	"github.com/hashicorp/hcl2/hcl"
+	"github.com/hashicorp/hcl/v2/hcl"
 )
 
 // Expand "dynamic" blocks in the given body, returning a new body that

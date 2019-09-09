@@ -89,7 +89,7 @@ const outputPreamble = `package hclsyntax
 // Run 'go generate' on this package to update the set of functions here.
 
 import (
-	"github.com/hashicorp/hcl2/hcl"
+	"github.com/hashicorp/hcl/v2/hcl"
 )`
 
 const outputMethodFmt = `
