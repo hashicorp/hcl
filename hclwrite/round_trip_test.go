@@ -9,8 +9,8 @@ import (
 	"github.com/zclconf/go-cty/cty/function"
 	"github.com/zclconf/go-cty/cty/function/stdlib"
 
-	"github.com/hashicorp/hcl/v2/hcl"
-	"github.com/hashicorp/hcl/v2/hcl/hclsyntax"
+	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/hclsyntax"
 )
 
 func TestRoundTripVerbatim(t *testing.T) {

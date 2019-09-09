@@ -1,7 +1,7 @@
 package include
 
 import (
-	"github.com/hashicorp/hcl/v2/hcl"
+	"github.com/hashicorp/hcl/v2"
 )
 
 // A Resolver maps an include path (an arbitrary string, but usually something

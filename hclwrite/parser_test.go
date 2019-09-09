@@ -11,8 +11,8 @@ import (
 
 	"github.com/kylelemons/godebug/pretty"
 
-	"github.com/hashicorp/hcl/v2/hcl"
-	"github.com/hashicorp/hcl/v2/hcl/hclsyntax"
+	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/hclsyntax"
 )
 
 func TestParse(t *testing.T) {

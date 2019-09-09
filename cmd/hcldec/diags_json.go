@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"io"
 
-	"github.com/hashicorp/hcl/v2/hcl"
+	"github.com/hashicorp/hcl/v2"
 )
 
 type jsonDiagWriter struct {

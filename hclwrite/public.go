@@ -3,7 +3,7 @@ package hclwrite
 import (
 	"bytes"
 
-	"github.com/hashicorp/hcl/v2/hcl"
+	"github.com/hashicorp/hcl/v2"
 )
 
 // NewFile creates a new file object that is empty and ready to have constructs

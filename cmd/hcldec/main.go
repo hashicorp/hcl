@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/hashicorp/hcl/v2/hcl"
+	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hcldec"
 	"github.com/hashicorp/hcl/v2/hclparse"
 	flag "github.com/spf13/pflag"

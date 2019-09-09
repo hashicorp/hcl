@@ -1,7 +1,7 @@
 package hcldec
 
 import (
-	"github.com/hashicorp/hcl/v2/hcl"
+	"github.com/hashicorp/hcl/v2"
 )
 
 // ImpliedSchema returns the *hcl.BodySchema implied by the given specification.
