@@ -225,6 +225,84 @@ func TestParse(t *testing.T) {
 			},
 		},
 		{
+			"b label {}\n",
+			TestTreeNode{
+				Type: "Body",
+				Children: []TestTreeNode{
+					{
+						Type: "Block",
+						Children: []TestTreeNode{
+							{
+								Type: "comments",
+							},
+							{
+								Type: "identifier",
+								Val:  "b",
+							},
+							{
+								Type: "identifier",
+								Val:  ` label`,
+							},
+							{
+								Type: "Tokens",
+								Val:  " {",
+							},
+							{
+								Type: "Body",
+							},
+							{
+								Type: "Tokens",
+								Val:  "}",
+							},
+							{
+								Type: "Tokens",
+								Val:  "\n",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			"b \"label\" {}\n",
+			TestTreeNode{
+				Type: "Body",
+				Children: []TestTreeNode{
+					{
+						Type: "Block",
+						Children: []TestTreeNode{
+							{
+								Type: "comments",
+							},
+							{
+								Type: "identifier",
+								Val:  "b",
+							},
+							{
+								Type: "quoted",
+								Val:  ` "label"`,
+							},
+							{
+								Type: "Tokens",
+								Val:  " {",
+							},
+							{
+								Type: "Body",
+							},
+							{
+								Type: "Tokens",
+								Val:  "}",
+							},
+							{
+								Type: "Tokens",
+								Val:  "\n",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			"b {\n  a = 1\n}\n",
 			TestTreeNode{
 				Type: "Body",
