@@ -1,0 +1,29 @@
+version: 2
+orbs:
+  codecov: codecov/codecov@1.0.2
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.12
+        environment:
+          GO111MODULE: "on"
+    working_directory: /hcl
+    steps:
+      - checkout
+      - run:
+          name: "Prepare Artifact Store"
+          command: |
+            mkdir -p /artifacts
+      - restore_cache:
+          keys:
+            - v1-mod-cache
+      - run:
+          name: "Tests"
+          command: |
+            .circleci/test.sh
+      - save_cache:
+          key: v1-mod-cache
+          paths:
+            - "/go/pkg/mod"
+      - codecov/upload:
+          file: /artifacts/coverage.txt
