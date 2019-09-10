@@ -5,13 +5,12 @@ jobs:
       - image: circleci/golang:1.12
         environment:
           GO111MODULE: "on"
-    working_directory: /hcl
     steps:
       - checkout
       - run:
           name: "Prepare Artifact Store"
           command: |
-            mkdir -p /artifacts
+            mkdir -p /tmp/artifacts
       - restore_cache:
           keys:
             - v1-mod-cache
