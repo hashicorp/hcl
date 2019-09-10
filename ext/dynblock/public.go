@@ -1,3 +1,6 @@
+// Package dynblock provides an extension to HCL that allows dynamic
+// declaration of nested blocks in certain contexts via a special block type
+// named "dynamic".
 package dynblock
 
 import (
