@@ -106,3 +106,56 @@ JSON strings.
 
 .. todo:: Once the language specification documents have settled into a
    final location, link to the native syntax specification from above.
+
+Simple Decoding
+---------------
+
+If you are using HCL as a simple configuration format for an application, the
+easiest way to get started is to use the "simple decode" and "simple parse"
+functions, which are wrappers around lower-level functionality that allow
+parsing and decoding of HCL input (in either syntax) in one convenient
+function call:
+
+.. code-block:: go
+
+    import (
+        "fmt"
+        "log"
+
+        "github.com/hashicorp/hcl/v2/gohcl"
+
+        // These anonymous import configures SimpleDecode to recognize .hcl files
+        // as being in the HCL native syntax and .json files as being in the
+        // JSON-based syntax.
+        _ "github.com/hashicorp/hcl/v2/hclparse/jsonsyntax"
+        _ "github.com/hashicorp/hcl/v2/hclparse/nativesyntax"
+    )
+
+    type ServiceConfig struct {
+        Type       string `hcl:"type,label"`
+        Name       string `hcl:"name,label"`
+        ListenAddr string `hcl:"listen_addr"`
+    }
+    type Config struct {
+        IOMode   string          `hcl:"io_mode"`
+        Services []ServiceConfig `hcl:"service,block"`
+    }
+
+    func main() {
+        var c Config
+        err := gohcl.SimpleDecodeFile("example.hcl", nil, &c)
+        if err != nil {
+            log.Fatal(err)
+        }
+        fmt.Printf("Configuration is %#v\n", c)
+    }
+
+Package ``gohcl`` contains functionality for decoding HCL configuration into
+Go ``struct`` values, which is the simplest way to integrate HCL into your
+application.
+
+In subsequent sections we'll see increasingly more complex usage patterns that
+allow the calling application more control over the parsing and decoding
+processes, but for the common situation where you just need to read one
+configuration file and decode it into a Go ``struct``, the
+``gohcl.SimpleDecodeFile`` function could be all you need!
