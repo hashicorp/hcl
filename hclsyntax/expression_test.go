@@ -456,6 +456,46 @@ upper(
 			1,                  // Missing key/value separator; Expected an equals sign ("=") to mark the beginning of the attribute value. If you intended to given an attribute name containing periods or spaces, write the name in quotes to create a string literal.
 		},
 		{
+			`{var.greeting = "world"}`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"var": cty.ObjectVal(map[string]cty.Value{
+						"greeting": cty.StringVal("hello"),
+					}),
+				},
+			},
+			cty.DynamicVal,
+			1, // Ambiguous attribute key
+		},
+		{
+			`{(var.greeting) = "world"}`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"var": cty.ObjectVal(map[string]cty.Value{
+						"greeting": cty.StringVal("hello"),
+					}),
+				},
+			},
+			cty.ObjectVal(map[string]cty.Value{
+				"hello": cty.StringVal("world"),
+			}),
+			0,
+		},
+		{
+			`{"${var.greeting}" = "world"}`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"var": cty.ObjectVal(map[string]cty.Value{
+						"greeting": cty.StringVal("hello"),
+					}),
+				},
+			},
+			cty.ObjectVal(map[string]cty.Value{
+				"hello": cty.StringVal("world"),
+			}),
+			0,
+		},
+		{
 			`{"hello" = "world", "goodbye" = "cruel world"}`,
 			nil,
 			cty.ObjectVal(map[string]cty.Value{

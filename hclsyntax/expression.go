@@ -804,7 +804,8 @@ func (e *ObjectConsExpr) ExprMap() []hcl.KeyValuePair {
 // which deals with the special case that a naked identifier in that position
 // must be interpreted as a literal string rather than evaluated directly.
 type ObjectConsKeyExpr struct {
-	Wrapped Expression
+	Wrapped         Expression
+	ForceNonLiteral bool
 }
 
 func (e *ObjectConsKeyExpr) literalName() string {
@@ -834,19 +835,21 @@ func (e *ObjectConsKeyExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnost
 	// (This is handled at evaluation time rather than parse time because
 	// an application using static analysis _can_ accept a naked multi-step
 	// traversal here, if desired.)
-	if travExpr, isTraversal := e.Wrapped.(*ScopeTraversalExpr); isTraversal && len(travExpr.Traversal) > 1 {
-		var diags hcl.Diagnostics
-		diags = append(diags, &hcl.Diagnostic{
-			Severity: hcl.DiagError,
-			Summary:  "Ambiguous attribute key",
-			Detail:   "If this expression is intended to be a reference, wrap it in parentheses. If it's instead intended as a literal name containing periods, wrap it in quotes to create a string literal.",
-			Subject:  e.Range().Ptr(),
-		})
-		return cty.DynamicVal, diags
-	}
+	if !e.ForceNonLiteral {
+		if travExpr, isTraversal := e.Wrapped.(*ScopeTraversalExpr); isTraversal && len(travExpr.Traversal) > 1 {
+			var diags hcl.Diagnostics
+			diags = append(diags, &hcl.Diagnostic{
+				Severity: hcl.DiagError,
+				Summary:  "Ambiguous attribute key",
+				Detail:   "If this expression is intended to be a reference, wrap it in parentheses. If it's instead intended as a literal name containing periods, wrap it in quotes to create a string literal.",
+				Subject:  e.Range().Ptr(),
+			})
+			return cty.DynamicVal, diags
+		}
 
-	if ln := e.literalName(); ln != "" {
-		return cty.StringVal(ln), nil
+		if ln := e.literalName(); ln != "" {
+			return cty.StringVal(ln), nil
+		}
 	}
 	return e.Wrapped.Value(ctx)
 }
@@ -861,6 +864,12 @@ func (e *ObjectConsKeyExpr) StartRange() hcl.Range {
 
 // Implementation for hcl.AbsTraversalForExpr.
 func (e *ObjectConsKeyExpr) AsTraversal() hcl.Traversal {
+	// If we're forcing a non-literal then we can never be interpreted
+	// as a traversal.
+	if e.ForceNonLiteral {
+		return nil
+	}
+
 	// We can produce a traversal only if our wrappee can.
 	st, diags := hcl.AbsTraversalForExpr(e.Wrapped)
 	if diags.HasErrors() {
