@@ -542,6 +542,22 @@ return type.
 Within the brackets that delimit the index key, newline sequences are ignored
 as whitespace.
 
+The HCL native syntax also includes a _legacy_ index operator that exists
+only for compatibility with the precursor language HIL:
+
+```ebnf
+LegacyIndex = '.' digit+
+```
+
+This legacy index operator must be supported by parser for compatibility but
+should not be used in new configurations. This allows an attribute-access-like
+syntax for indexing, must still be interpreted as an index operation rather
+than attribute access.
+
+The legacy syntax does not support chaining of index operations, like
+`foo.0.0.bar`, because the interpretation of `0.0` as a number literal token
+takes priority and thus renders the resulting sequence invalid.
+
 ### Attribute Access Operator
 
 The _attribute access_ operator returns the value of a single attribute in
