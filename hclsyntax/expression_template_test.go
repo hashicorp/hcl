@@ -85,6 +85,12 @@ hello world
 			0,
 		},
 		{
+			`hello %${"world"}`,
+			nil,
+			cty.StringVal("hello %world"),
+			0,
+		},
+		{
 			`${true}`,
 			nil,
 			cty.True, // any single expression is unwrapped without stringification
@@ -252,6 +258,30 @@ trim`,
 			nil,
 			cty.StringVal("%%"),
 			0,
+		},
+		{
+			`hello %%{ if true }world%%{ endif }`,
+			nil,
+			cty.StringVal(`hello %{ if true }world%{ endif }`),
+			0,
+		},
+		{
+			`hello $%{ if true }world%{ endif }`,
+			nil,
+			cty.StringVal("hello $world"),
+			0,
+		},
+		{
+			`%{ endif }`,
+			nil,
+			cty.UnknownVal(cty.String),
+			1, // Unexpected endif directive
+		},
+		{
+			`%{ endfor }`,
+			nil,
+			cty.UnknownVal(cty.String),
+			1, // Unexpected endfor directive
 		},
 	}
 
