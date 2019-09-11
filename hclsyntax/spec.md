@@ -71,14 +71,13 @@ except as described below.
 Whitespace is defined as a sequence of zero or more space characters
 (U+0020). Newline sequences (either U+000A or U+000D followed by U+000A)
 are _not_ considered whitespace but are ignored as such in certain contexts.
-
-Horizontal tab characters (U+0009) are not considered to be whitespace and
-are not valid within HCL native syntax.
+Horizontal tab characters (U+0009) are also treated as whitespace, but are
+counted only as one "column" for the purpose of reporting source positions.
 
 Comments serve as program documentation and come in two forms:
 
 - _Line comments_ start with either the `//` or `#` sequences and end with
-  the next newline sequence. A line comments is considered equivalent to a
+  the next newline sequence. A line comment is considered equivalent to a
   newline sequence.
 
 - _Inline comments_ start with the `/*` sequence and end with the `*/`
