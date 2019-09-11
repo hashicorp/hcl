@@ -1291,6 +1291,13 @@ func (p *parser) parseObjectCons() (Expression, hcl.Diagnostics) {
 			break
 		}
 
+		// Wrapping parens are not explicitly represented in the AST, but
+		// we want to use them here to disambiguate intepreting a mapping
+		// key as a full expression rather than just a name, and so
+		// we'll remember this was present and use it to force the
+		// behavior of our final ObjectConsKeyExpr.
+		forceNonLiteral := (p.Peek().Type == TokenOParen)
+
 		var key Expression
 		var keyDiags hcl.Diagnostics
 		key, keyDiags = p.ParseExpression()
@@ -1307,7 +1314,10 @@ func (p *parser) parseObjectCons() (Expression, hcl.Diagnostics) {
 		// We wrap up the key expression in a special wrapper that deals
 		// with our special case that naked identifiers as object keys
 		// are interpreted as literal strings.
-		key = &ObjectConsKeyExpr{Wrapped: key}
+		key = &ObjectConsKeyExpr{
+			Wrapped:         key,
+			ForceNonLiteral: forceNonLiteral,
+		}
 
 		next = p.Peek()
 		if next.Type != TokenEqual && next.Type != TokenColon {
