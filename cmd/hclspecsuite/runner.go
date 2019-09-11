@@ -15,8 +15,8 @@ import (
 	"github.com/zclconf/go-cty/cty/convert"
 	ctyjson "github.com/zclconf/go-cty/cty/json"
 
-	"github.com/hashicorp/hcl/v2/ext/typeexpr"
 	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/ext/typeexpr"
 	"github.com/hashicorp/hcl/v2/hclparse"
 )
 
@@ -318,6 +318,7 @@ func (r *Runner) hcldecTransform(specFile, inputFile string) (cty.Value, hcl.Dia
 			"--spec=" + specFile,
 			"--diags=json",
 			"--with-type",
+			"--keep-nulls",
 			inputFile,
 		},
 		Stdout: &outBuffer,
