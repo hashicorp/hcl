@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -30,6 +31,7 @@ var (
 	showVarRefs = flag.BoolP("var-refs", "", false, "rather than decoding input, produce a JSON description of the variables referenced by it")
 	withType    = flag.BoolP("with-type", "", false, "include an additional object level at the top describing the HCL-oriented type of the result value")
 	showVersion = flag.BoolP("version", "v", false, "show the version number and immediately exit")
+	keepNulls   = flag.BoolP("keep-nulls", "", false, "retain object properties that have null as their value (they are removed by default)")
 )
 
 var parser = hclparse.NewParser()
@@ -207,7 +209,9 @@ func realmain(args []string) error {
 	// that refers to a missing item, but that'll probably be annoying for
 	// a consumer of our output to deal with so we'll just strip those
 	// out and reduce to only the non-null values.
-	out = stripJSONNullProperties(out)
+	if !*keepNulls {
+		out = stripJSONNullProperties(out)
+	}
 
 	target := os.Stdout
 	if *outputFile != "" {
@@ -331,8 +335,11 @@ func showVarRefsJSON(vars []hcl.Traversal, ctx *hcl.EvalContext) error {
 }
 
 func stripJSONNullProperties(src []byte) []byte {
+	dec := json.NewDecoder(bytes.NewReader(src))
+	dec.UseNumber()
+
 	var v interface{}
-	err := json.Unmarshal(src, &v)
+	err := dec.Decode(&v)
 	if err != nil {
 		// We expect valid JSON
 		panic(err)
