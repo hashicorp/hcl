@@ -869,6 +869,119 @@ func TestBodySetAttributeValueInNestedBlock(t *testing.T) {
 	}
 }
 
+func TestBodyRemoveAttribute(t *testing.T) {
+	tests := []struct {
+		src  string
+		name string
+		want Tokens
+	}{
+		{
+			"",
+			"a",
+			Tokens{
+				{
+					Type:         hclsyntax.TokenEOF,
+					Bytes:        []byte{},
+					SpacesBefore: 0,
+				},
+			},
+		},
+		{
+			"b = false\n",
+			"a",
+			Tokens{
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte{'b'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte{'='},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte("false"),
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenNewline,
+					Bytes:        []byte{'\n'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEOF,
+					Bytes:        []byte{},
+					SpacesBefore: 0,
+				},
+			},
+		},
+		{
+			"a = false\n",
+			"a",
+			Tokens{
+				{
+					Type:         hclsyntax.TokenEOF,
+					Bytes:        []byte{},
+					SpacesBefore: 0,
+				},
+			},
+		},
+		{
+			"a = 1\nb = false\n",
+			"a",
+			Tokens{
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte{'b'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte{'='},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte("false"),
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenNewline,
+					Bytes:        []byte{'\n'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEOF,
+					Bytes:        []byte{},
+					SpacesBefore: 0,
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%s in %s", test.name, test.src), func(t *testing.T) {
+			f, diags := ParseConfig([]byte(test.src), "", hcl.Pos{Line: 1, Column: 1})
+			if len(diags) != 0 {
+				for _, diag := range diags {
+					t.Logf("- %s", diag.Error())
+				}
+				t.Fatalf("unexpected diagnostics")
+			}
+
+			f.Body().RemoveAttribute(test.name)
+			got := f.BuildTokens(nil)
+			format(got)
+			if !reflect.DeepEqual(got, test.want) {
+				diff := cmp.Diff(test.want, got)
+				t.Errorf("wrong result\ngot:  %s\nwant: %s\ndiff:\n%s", spew.Sdump(got), spew.Sdump(test.want), diff)
+			}
+		})
+	}
+}
+
 func TestBodyAppendBlock(t *testing.T) {
 	tests := []struct {
 		src       string
@@ -1110,4 +1223,203 @@ func TestBodyAppendBlock(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestBodyRemoveBlock(t *testing.T) {
+	src := strings.TrimSpace(`
+a = 1
+
+# Foo
+foo {
+  b = 1
+}
+foo {
+  b = 2
+}
+bar {}
+`)
+	f, diags := ParseConfig([]byte(src), "", hcl.Pos{Line: 1, Column: 1})
+	if len(diags) != 0 {
+		for _, diag := range diags {
+			t.Logf("- %s", diag.Error())
+		}
+		t.Fatalf("unexpected diagnostics")
+	}
+
+	t.Logf("Removing the first block")
+	t.Logf("initial content:\n%s", f.Bytes())
+	body := f.Body()
+	block := body.FirstMatchingBlock("foo", nil)
+	if block == nil {
+		t.Fatalf("didn't find a 'foo' block")
+	}
+	removed := body.RemoveBlock(block)
+	if !removed {
+		t.Fatalf("didn't remove first block")
+	}
+	t.Logf("updated content:\n%s", f.Bytes())
+	got := f.BuildTokens(nil)
+	want := Tokens{
+		0: {
+			Type:         hclsyntax.TokenIdent,
+			Bytes:        []byte(`a`),
+			SpacesBefore: 0,
+		},
+		1: {
+			Type:         hclsyntax.TokenEqual,
+			Bytes:        []byte(`=`),
+			SpacesBefore: 1,
+		},
+		2: {
+			Type:         hclsyntax.TokenNumberLit,
+			Bytes:        []byte(`1`),
+			SpacesBefore: 1,
+		},
+		3: {
+			Type:         hclsyntax.TokenNewline,
+			Bytes:        []byte("\n"),
+			SpacesBefore: 0,
+		},
+		4: {
+			Type:         hclsyntax.TokenNewline,
+			Bytes:        []byte("\n"),
+			SpacesBefore: 0,
+		},
+		5: {
+			Type:         hclsyntax.TokenIdent,
+			Bytes:        []byte(`foo`),
+			SpacesBefore: 0,
+		},
+		6: {
+			Type:         hclsyntax.TokenOBrace,
+			Bytes:        []byte(`{`),
+			SpacesBefore: 1,
+		},
+		7: {
+			Type:         hclsyntax.TokenNewline,
+			Bytes:        []byte("\n"),
+			SpacesBefore: 0,
+		},
+		8: {
+			Type:         hclsyntax.TokenIdent,
+			Bytes:        []byte(`b`),
+			SpacesBefore: 2,
+		},
+		9: {
+			Type:         hclsyntax.TokenEqual,
+			Bytes:        []byte(`=`),
+			SpacesBefore: 1,
+		},
+		10: {
+			Type:         hclsyntax.TokenNumberLit,
+			Bytes:        []byte(`2`),
+			SpacesBefore: 1,
+		},
+		11: {
+			Type:         hclsyntax.TokenNewline,
+			Bytes:        []byte("\n"),
+			SpacesBefore: 0,
+		},
+		12: {
+			Type:         hclsyntax.TokenCBrace,
+			Bytes:        []byte(`}`),
+			SpacesBefore: 0,
+		},
+		13: {
+			Type:         hclsyntax.TokenNewline,
+			Bytes:        []byte("\n"),
+			SpacesBefore: 0,
+		},
+		14: {
+			Type:         hclsyntax.TokenIdent,
+			Bytes:        []byte(`bar`),
+			SpacesBefore: 0,
+		},
+		15: {
+			Type:         hclsyntax.TokenOBrace,
+			Bytes:        []byte(`{`),
+			SpacesBefore: 1,
+		},
+		16: {
+			Type:         hclsyntax.TokenCBrace,
+			Bytes:        []byte(`}`),
+			SpacesBefore: 0,
+		},
+		17: {
+			Type:         hclsyntax.TokenEOF,
+			Bytes:        []byte(""),
+			SpacesBefore: 0,
+		},
+	}
+	format(got)
+	if !reflect.DeepEqual(got, want) {
+		diff := cmp.Diff(want, got)
+		t.Errorf("wrong result\ngot:  %s\nwant: %s\ndiff:\n%s", spew.Sdump(got), spew.Sdump(want), diff)
+	}
+
+	t.Logf("removing the second block")
+	t.Logf("initial content:\n%s", f.Bytes())
+	block = body.FirstMatchingBlock("foo", nil)
+	if block == nil {
+		t.Fatalf("didn't find a 'foo' block")
+	}
+	removed = body.RemoveBlock(block)
+	if !removed {
+		t.Fatalf("didn't remove second block")
+	}
+	t.Logf("updated content:\n%s", f.Bytes())
+	got = f.BuildTokens(nil)
+	want = Tokens{
+		0: {
+			Type:         hclsyntax.TokenIdent,
+			Bytes:        []byte(`a`),
+			SpacesBefore: 0,
+		},
+		1: {
+			Type:         hclsyntax.TokenEqual,
+			Bytes:        []byte(`=`),
+			SpacesBefore: 1,
+		},
+		2: {
+			Type:         hclsyntax.TokenNumberLit,
+			Bytes:        []byte(`1`),
+			SpacesBefore: 1,
+		},
+		3: {
+			Type:         hclsyntax.TokenNewline,
+			Bytes:        []byte("\n"),
+			SpacesBefore: 0,
+		},
+		4: {
+			Type:         hclsyntax.TokenNewline,
+			Bytes:        []byte("\n"),
+			SpacesBefore: 0,
+		},
+		5: {
+			Type:         hclsyntax.TokenIdent,
+			Bytes:        []byte(`bar`),
+			SpacesBefore: 0,
+		},
+		6: {
+			Type:         hclsyntax.TokenOBrace,
+			Bytes:        []byte(`{`),
+			SpacesBefore: 1,
+		},
+		7: {
+			Type:         hclsyntax.TokenCBrace,
+			Bytes:        []byte(`}`),
+			SpacesBefore: 0,
+		},
+		8: {
+			Type:         hclsyntax.TokenEOF,
+			Bytes:        []byte(""),
+			SpacesBefore: 0,
+		},
+	}
+	format(got)
+	if !reflect.DeepEqual(got, want) {
+		diff := cmp.Diff(want, got)
+		t.Errorf("wrong result\ngot:  %s\nwant: %s\ndiff:\n%s", spew.Sdump(got), spew.Sdump(want), diff)
+	}
+
 }

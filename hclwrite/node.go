@@ -140,6 +140,18 @@ func (ns *nodes) AppendUnstructuredTokens(tokens Tokens) *node {
 	return n
 }
 
+// FindNodeWithContent searches the nodes for a node whose content equals
+// the given content. If it finds one then it returns it. Otherwise it returns
+// nil.
+func (ns *nodes) FindNodeWithContent(content nodeContent) *node {
+	for n := ns.first; n != nil; n = n.after {
+		if n.content == content {
+			return n
+		}
+	}
+	return nil
+}
+
 // nodeSet is an unordered set of nodes. It is used to describe a set of nodes
 // that all belong to the same list that have some role or characteristic
 // in common.
@@ -190,6 +202,18 @@ func (ns nodeSet) List() []*node {
 		}
 	}
 	return ret
+}
+
+// FindNodeWithContent searches the nodes for a node whose content equals
+// the given content. If it finds one then it returns it. Otherwise it returns
+// nil.
+func (ns nodeSet) FindNodeWithContent(content nodeContent) *node {
+	for n := range ns {
+		if n.content == content {
+			return n
+		}
+	}
+	return nil
 }
 
 type internalWalkFunc func(*node)
