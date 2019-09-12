@@ -84,6 +84,22 @@ func (b *Body) GetAttribute(name string) *Attribute {
 	return nil
 }
 
+// getAttributeNode is like GetAttribute but it returns the node containing
+// the selected attribute (if one is found) rather than the attribute itself.
+func (b *Body) getAttributeNode(name string) *node {
+	for n := range b.items {
+		if attr, isAttr := n.content.(*Attribute); isAttr {
+			nameObj := attr.name.content.(*identifier)
+			if nameObj.hasName(name) {
+				// We've found it!
+				return n
+			}
+		}
+	}
+
+	return nil
+}
+
 // FirstMatchingBlock returns a first matching block from the body that has the
 // given name and labels or returns nil if there is currently no matching
 // block.
@@ -91,14 +107,31 @@ func (b *Body) FirstMatchingBlock(typeName string, labels []string) *Block {
 	for _, block := range b.Blocks() {
 		if typeName == block.Type() {
 			labelNames := block.Labels()
+			if len(labels) == 0 && len(labelNames) == 0 {
+				return block
+			}
 			if reflect.DeepEqual(labels, labelNames) {
-				// We've found it!
 				return block
 			}
 		}
 	}
 
 	return nil
+}
+
+// RemoveBlock removes the given block from the body, if it's in that body.
+// If it isn't present, this is a no-op.
+//
+// Returns true if it removed something, or false otherwise.
+func (b *Body) RemoveBlock(block *Block) bool {
+	for n := range b.items {
+		if n.content == block {
+			n.Detach()
+			b.items.Remove(n)
+			return true
+		}
+	}
+	return false
 }
 
 // SetAttributeValue either replaces the expression of an existing attribute
@@ -141,6 +174,20 @@ func (b *Body) SetAttributeTraversal(name string, traversal hcl.Traversal) *Attr
 		b.appendItem(attr)
 	}
 	return attr
+}
+
+// RemoveAttribute removes the attribute with the given name from the body.
+//
+// The return value is the attribute that was removed, or nil if there was
+// no such attribute (in which case the call was a no-op).
+func (b *Body) RemoveAttribute(name string) *Attribute {
+	node := b.getAttributeNode(name)
+	if node == nil {
+		return nil
+	}
+	node.Detach()
+	b.items.Remove(node)
+	return node.content.(*Attribute)
 }
 
 // AppendBlock appends an existing block (which must not be already attached
