@@ -23,6 +23,31 @@ names and nested block types are expected, and HCL parses the configuration
 file, verifies that it conforms to the expected structure, and returns
 high-level objects that the application can use for further processing.
 
+```go
+package main
+
+import (
+	"log"
+	"github.com/hashicorp/hcl/v2/hclsimple"
+)
+
+type Config struct {
+	LogLevel string `hcl:"log_level"`
+}
+
+func main() {
+	var config Config
+	err := hclsimple.DecodeFile("config.hcl", nil, &config)
+	if err != nil {
+		log.Fatalf("Failed to load configuration: %s", err)
+	}
+	log.Printf("Configuration is %#v", config)
+}
+```
+
+A lower-level API is available for applications that need more control over
+the parsing, decoding, and evaluation of configuration.
+
 ## Why?
 
 Newcomers to HCL often ask: why not JSON, YAML, etc?
