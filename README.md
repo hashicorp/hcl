@@ -5,6 +5,11 @@ both human- and machine-friendly, for use with command-line tools.
 Although intended to be generally useful, it is primarily targeted
 towards devops tools, servers, etc.
 
+> **NOTE:** This is major version 2 of HCL, whose Go API is incompatible with
+> major version 1. Both versions are available for selection in Go Modules
+> projects. HCL 2 _cannot_ be imported from Go projects that are not using Go Modules. For more information, see
+> [our version selection guide](https://github.com/golang/go/wiki/Version-Selection).
+
 HCL has both a _native syntax_, intended to be pleasant to read and write for
 humans, and a JSON-based variant that is easier for machines to generate
 and parse.
