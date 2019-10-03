@@ -156,9 +156,9 @@ syntax allows use of arbitrary expressions within JSON strings:
 
 For more information, see the detailed specifications:
 
-* [Syntax-agnostic Information Model](hcl/spec.md)
-* [HCL Native Syntax](hcl/hclsyntax/spec.md)
-* [JSON Representation](hcl/json/spec.md)
+* [Syntax-agnostic Information Model](spec.md)
+* [HCL Native Syntax](hclsyntax/spec.md)
+* [JSON Representation](json/spec.md)
 
 ## Changes in 2.0
 
