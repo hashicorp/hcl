@@ -25,21 +25,21 @@ func TestDecodeBody(t *testing.T) {
 
 	tests := []struct {
 		Body      map[string]interface{}
-		Target    interface{}
+		Target    func() interface{}
 		Check     func(v interface{}) bool
 		DiagCount int
 	}{
 		{
 			map[string]interface{}{},
-			struct{}{},
+			makeInstantiateType(struct{}{}),
 			deepEquals(struct{}{}),
 			0,
 		},
 		{
 			map[string]interface{}{},
-			struct {
+			makeInstantiateType(struct {
 				Name string `hcl:"name"`
-			}{},
+			}{}),
 			deepEquals(struct {
 				Name string `hcl:"name"`
 			}{}),
@@ -47,9 +47,9 @@ func TestDecodeBody(t *testing.T) {
 		},
 		{
 			map[string]interface{}{},
-			struct {
+			makeInstantiateType(struct {
 				Name *string `hcl:"name"`
-			}{},
+			}{}),
 			deepEquals(struct {
 				Name *string `hcl:"name"`
 			}{}),
@@ -57,9 +57,9 @@ func TestDecodeBody(t *testing.T) {
 		}, // name nil
 		{
 			map[string]interface{}{},
-			struct {
+			makeInstantiateType(struct {
 				Name string `hcl:"name,optional"`
-			}{},
+			}{}),
 			deepEquals(struct {
 				Name string `hcl:"name,optional"`
 			}{}),
@@ -67,7 +67,7 @@ func TestDecodeBody(t *testing.T) {
 		}, // name optional
 		{
 			map[string]interface{}{},
-			withNameExpression{},
+			makeInstantiateType(withNameExpression{}),
 			func(v interface{}) bool {
 				if v == nil {
 					return false
@@ -95,7 +95,7 @@ func TestDecodeBody(t *testing.T) {
 			map[string]interface{}{
 				"name": "Ermintrude",
 			},
-			withNameExpression{},
+			makeInstantiateType(withNameExpression{}),
 			func(v interface{}) bool {
 				if v == nil {
 					return false
@@ -123,9 +123,9 @@ func TestDecodeBody(t *testing.T) {
 			map[string]interface{}{
 				"name": "Ermintrude",
 			},
-			struct {
+			makeInstantiateType(struct {
 				Name string `hcl:"name"`
-			}{},
+			}{}),
 			deepEquals(struct {
 				Name string `hcl:"name"`
 			}{"Ermintrude"}),
@@ -136,9 +136,9 @@ func TestDecodeBody(t *testing.T) {
 				"name": "Ermintrude",
 				"age":  23,
 			},
-			struct {
+			makeInstantiateType(struct {
 				Name string `hcl:"name"`
-			}{},
+			}{}),
 			deepEquals(struct {
 				Name string `hcl:"name"`
 			}{"Ermintrude"}),
@@ -149,10 +149,10 @@ func TestDecodeBody(t *testing.T) {
 				"name": "Ermintrude",
 				"age":  50,
 			},
-			struct {
+			makeInstantiateType(struct {
 				Name  string         `hcl:"name"`
 				Attrs hcl.Attributes `hcl:",remain"`
-			}{},
+			}{}),
 			func(gotI interface{}) bool {
 				got := gotI.(struct {
 					Name  string         `hcl:"name"`
@@ -167,10 +167,10 @@ func TestDecodeBody(t *testing.T) {
 				"name": "Ermintrude",
 				"age":  50,
 			},
-			struct {
+			makeInstantiateType(struct {
 				Name   string   `hcl:"name"`
 				Remain hcl.Body `hcl:",remain"`
-			}{},
+			}{}),
 			func(gotI interface{}) bool {
 				got := gotI.(struct {
 					Name   string   `hcl:"name"`
@@ -188,10 +188,10 @@ func TestDecodeBody(t *testing.T) {
 				"name":   "Ermintrude",
 				"living": true,
 			},
-			struct {
+			makeInstantiateType(struct {
 				Name   string               `hcl:"name"`
 				Remain map[string]cty.Value `hcl:",remain"`
-			}{},
+			}{}),
 			deepEquals(struct {
 				Name   string               `hcl:"name"`
 				Remain map[string]cty.Value `hcl:",remain"`
@@ -207,9 +207,9 @@ func TestDecodeBody(t *testing.T) {
 			map[string]interface{}{
 				"noodle": map[string]interface{}{},
 			},
-			struct {
+			makeInstantiateType(struct {
 				Noodle struct{} `hcl:"noodle,block"`
-			}{},
+			}{}),
 			func(gotI interface{}) bool {
 				// Generating no diagnostics is good enough for this one.
 				return true
@@ -220,9 +220,9 @@ func TestDecodeBody(t *testing.T) {
 			map[string]interface{}{
 				"noodle": []map[string]interface{}{{}},
 			},
-			struct {
+			makeInstantiateType(struct {
 				Noodle struct{} `hcl:"noodle,block"`
-			}{},
+			}{}),
 			func(gotI interface{}) bool {
 				// Generating no diagnostics is good enough for this one.
 				return true
@@ -233,9 +233,9 @@ func TestDecodeBody(t *testing.T) {
 			map[string]interface{}{
 				"noodle": []map[string]interface{}{{}, {}},
 			},
-			struct {
+			makeInstantiateType(struct {
 				Noodle struct{} `hcl:"noodle,block"`
-			}{},
+			}{}),
 			func(gotI interface{}) bool {
 				// Generating one diagnostic is good enough for this one.
 				return true
@@ -244,9 +244,9 @@ func TestDecodeBody(t *testing.T) {
 		},
 		{
 			map[string]interface{}{},
-			struct {
+			makeInstantiateType(struct {
 				Noodle struct{} `hcl:"noodle,block"`
-			}{},
+			}{}),
 			func(gotI interface{}) bool {
 				// Generating one diagnostic is good enough for this one.
 				return true
@@ -257,9 +257,9 @@ func TestDecodeBody(t *testing.T) {
 			map[string]interface{}{
 				"noodle": []map[string]interface{}{},
 			},
-			struct {
+			makeInstantiateType(struct {
 				Noodle struct{} `hcl:"noodle,block"`
-			}{},
+			}{}),
 			func(gotI interface{}) bool {
 				// Generating one diagnostic is good enough for this one.
 				return true
@@ -270,9 +270,9 @@ func TestDecodeBody(t *testing.T) {
 			map[string]interface{}{
 				"noodle": map[string]interface{}{},
 			},
-			struct {
+			makeInstantiateType(struct {
 				Noodle *struct{} `hcl:"noodle,block"`
-			}{},
+			}{}),
 			func(gotI interface{}) bool {
 				return gotI.(struct {
 					Noodle *struct{} `hcl:"noodle,block"`
@@ -284,9 +284,9 @@ func TestDecodeBody(t *testing.T) {
 			map[string]interface{}{
 				"noodle": []map[string]interface{}{{}},
 			},
-			struct {
+			makeInstantiateType(struct {
 				Noodle *struct{} `hcl:"noodle,block"`
-			}{},
+			}{}),
 			func(gotI interface{}) bool {
 				return gotI.(struct {
 					Noodle *struct{} `hcl:"noodle,block"`
@@ -298,9 +298,9 @@ func TestDecodeBody(t *testing.T) {
 			map[string]interface{}{
 				"noodle": []map[string]interface{}{},
 			},
-			struct {
+			makeInstantiateType(struct {
 				Noodle *struct{} `hcl:"noodle,block"`
-			}{},
+			}{}),
 			func(gotI interface{}) bool {
 				return gotI.(struct {
 					Noodle *struct{} `hcl:"noodle,block"`
@@ -312,9 +312,9 @@ func TestDecodeBody(t *testing.T) {
 			map[string]interface{}{
 				"noodle": []map[string]interface{}{{}, {}},
 			},
-			struct {
+			makeInstantiateType(struct {
 				Noodle *struct{} `hcl:"noodle,block"`
-			}{},
+			}{}),
 			func(gotI interface{}) bool {
 				// Generating one diagnostic is good enough for this one.
 				return true
@@ -325,9 +325,9 @@ func TestDecodeBody(t *testing.T) {
 			map[string]interface{}{
 				"noodle": []map[string]interface{}{},
 			},
-			struct {
+			makeInstantiateType(struct {
 				Noodle []struct{} `hcl:"noodle,block"`
-			}{},
+			}{}),
 			func(gotI interface{}) bool {
 				noodle := gotI.(struct {
 					Noodle []struct{} `hcl:"noodle,block"`
@@ -340,9 +340,9 @@ func TestDecodeBody(t *testing.T) {
 			map[string]interface{}{
 				"noodle": []map[string]interface{}{{}},
 			},
-			struct {
+			makeInstantiateType(struct {
 				Noodle []struct{} `hcl:"noodle,block"`
-			}{},
+			}{}),
 			func(gotI interface{}) bool {
 				noodle := gotI.(struct {
 					Noodle []struct{} `hcl:"noodle,block"`
@@ -355,9 +355,9 @@ func TestDecodeBody(t *testing.T) {
 			map[string]interface{}{
 				"noodle": []map[string]interface{}{{}, {}},
 			},
-			struct {
+			makeInstantiateType(struct {
 				Noodle []struct{} `hcl:"noodle,block"`
-			}{},
+			}{}),
 			func(gotI interface{}) bool {
 				noodle := gotI.(struct {
 					Noodle []struct{} `hcl:"noodle,block"`
@@ -370,11 +370,11 @@ func TestDecodeBody(t *testing.T) {
 			map[string]interface{}{
 				"noodle": map[string]interface{}{},
 			},
-			struct {
+			makeInstantiateType(struct {
 				Noodle struct {
 					Name string `hcl:"name,label"`
 				} `hcl:"noodle,block"`
-			}{},
+			}{}),
 			func(gotI interface{}) bool {
 				// Generating two diagnostics is good enough for this one.
 				// (one for the missing noodle block and the other for
@@ -390,11 +390,11 @@ func TestDecodeBody(t *testing.T) {
 					"foo_foo": map[string]interface{}{},
 				},
 			},
-			struct {
+			makeInstantiateType(struct {
 				Noodle struct {
 					Name string `hcl:"name,label"`
 				} `hcl:"noodle,block"`
-			}{},
+			}{}),
 			func(gotI interface{}) bool {
 				noodle := gotI.(struct {
 					Noodle struct {
@@ -412,11 +412,11 @@ func TestDecodeBody(t *testing.T) {
 					"bar_baz": map[string]interface{}{},
 				},
 			},
-			struct {
+			makeInstantiateType(struct {
 				Noodle struct {
 					Name string `hcl:"name,label"`
 				} `hcl:"noodle,block"`
-			}{},
+			}{}),
 			func(gotI interface{}) bool {
 				// One diagnostic is enough for this one.
 				return true
@@ -430,11 +430,11 @@ func TestDecodeBody(t *testing.T) {
 					"bar_baz": map[string]interface{}{},
 				},
 			},
-			struct {
+			makeInstantiateType(struct {
 				Noodles []struct {
 					Name string `hcl:"name,label"`
 				} `hcl:"noodle,block"`
-			}{},
+			}{}),
 			func(gotI interface{}) bool {
 				noodles := gotI.(struct {
 					Noodles []struct {
@@ -453,12 +453,12 @@ func TestDecodeBody(t *testing.T) {
 					},
 				},
 			},
-			struct {
+			makeInstantiateType(struct {
 				Noodle struct {
 					Name string `hcl:"name,label"`
 					Type string `hcl:"type"`
 				} `hcl:"noodle,block"`
-			}{},
+			}{}),
 			func(gotI interface{}) bool {
 				noodle := gotI.(struct {
 					Noodle struct {
@@ -476,7 +476,7 @@ func TestDecodeBody(t *testing.T) {
 				"name": "Ermintrude",
 				"age":  34,
 			},
-			map[string]string(nil),
+			makeInstantiateType(map[string]string(nil)),
 			deepEquals(map[string]string{
 				"name": "Ermintrude",
 				"age":  "34",
@@ -488,7 +488,7 @@ func TestDecodeBody(t *testing.T) {
 				"name": "Ermintrude",
 				"age":  89,
 			},
-			map[string]*hcl.Attribute(nil),
+			makeInstantiateType(map[string]*hcl.Attribute(nil)),
 			func(gotI interface{}) bool {
 				got := gotI.(map[string]*hcl.Attribute)
 				return len(got) == 2 && got["name"] != nil && got["age"] != nil
@@ -500,7 +500,7 @@ func TestDecodeBody(t *testing.T) {
 				"name": "Ermintrude",
 				"age":  13,
 			},
-			map[string]hcl.Expression(nil),
+			makeInstantiateType(map[string]hcl.Expression(nil)),
 			func(gotI interface{}) bool {
 				got := gotI.(map[string]hcl.Expression)
 				return len(got) == 2 && got["name"] != nil && got["age"] != nil
@@ -512,7 +512,7 @@ func TestDecodeBody(t *testing.T) {
 				"name":   "Ermintrude",
 				"living": true,
 			},
-			map[string]cty.Value(nil),
+			makeInstantiateType(map[string]cty.Value(nil)),
 			deepEquals(map[string]cty.Value{
 				"name":   cty.StringVal("Ermintrude"),
 				"living": cty.True,
@@ -535,7 +535,7 @@ func TestDecodeBody(t *testing.T) {
 				t.Fatalf("diagnostics while parsing: %s", diags.Error())
 			}
 
-			targetVal := reflect.New(reflect.TypeOf(test.Target))
+			targetVal := reflect.ValueOf(test.Target())
 
 			diags = DecodeBody(file.Body, nil, targetVal.Interface())
 			if len(diags) != test.DiagCount {
@@ -642,4 +642,10 @@ func (e *fixedExpression) StartRange() (r hcl.Range) {
 
 func (e *fixedExpression) Variables() []hcl.Traversal {
 	return nil
+}
+
+func makeInstantiateType(target interface{}) func() interface{} {
+	return func() interface{} {
+		return reflect.New(reflect.TypeOf(target)).Interface()
+	}
 }
