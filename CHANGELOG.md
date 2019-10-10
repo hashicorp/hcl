@@ -2,6 +2,9 @@
 
 ## v2.1.0 (Unreleased)
 
+### Enhancements
+
+* gohcl: When decoding into a struct value with some fields already populated, those values will be retained if not explicitly overwritten in the given HCL body, with similar overriding/merging behavior as `json.Unmarshal` in the Go standard library.
 
 ## v2.0.0 (Oct 2, 2019)
 
