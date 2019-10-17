@@ -60,7 +60,7 @@ func (b *Body) Attributes() map[string]*Attribute {
 // Blocks returns a new slice of all the blocks in the body.
 func (b *Body) Blocks() []*Block {
 	ret := make([]*Block, 0, len(b.items))
-	for n := range b.items {
+	for _, n := range b.items.List() {
 		if block, isBlock := n.content.(*Block); isBlock {
 			ret = append(ret, block)
 		}
