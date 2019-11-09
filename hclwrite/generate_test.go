@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/zclconf/go-cty/cty"
 )
@@ -470,5 +471,47 @@ func TestTokensForValue(t *testing.T) {
 				)
 			}
 		})
+	}
+}
+
+func TestTokensForTraversal(t *testing.T) {
+	tests := []struct {
+		Val  hcl.Traversal
+		Want Tokens
+	}{
+		{
+			hcl.Traversal{
+				hcl.TraverseRoot{Name: "root"},
+				hcl.TraverseAttr{Name: "attr"},
+				hcl.TraverseIndex{Key: cty.StringVal("index")},
+			},
+			Tokens{
+				{Type: hclsyntax.TokenIdent, Bytes: []byte("root")},
+				{Type: hclsyntax.TokenDot, Bytes: []byte(".")},
+				{Type: hclsyntax.TokenIdent, Bytes: []byte("attr")},
+				{Type: hclsyntax.TokenOBrack, Bytes: []byte{'['}},
+				{Type: hclsyntax.TokenOQuote, Bytes: []byte(`"`)},
+				{Type: hclsyntax.TokenQuotedLit, Bytes: []byte("index")},
+				{Type: hclsyntax.TokenCQuote, Bytes: []byte(`"`)},
+				{Type: hclsyntax.TokenCBrack, Bytes: []byte{']'}},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		got := TokensForTraversal(test.Val)
+
+		if !cmp.Equal(got, test.Want) {
+			diff := cmp.Diff(got, test.Want, cmp.Comparer(func(a, b []byte) bool {
+				return bytes.Equal(a, b)
+			}))
+			var gotBuf, wantBuf bytes.Buffer
+			got.WriteTo(&gotBuf)
+			test.Want.WriteTo(&wantBuf)
+			t.Errorf(
+				"wrong result\nvalue: %#v\ngot:   %s\nwant:  %s\ndiff:  %s",
+				test.Val, gotBuf.String(), wantBuf.String(), diff,
+			)
+		}
 	}
 }
