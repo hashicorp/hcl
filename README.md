@@ -51,7 +51,8 @@ func main() {
 ```
 
 A lower-level API is available for applications that need more control over
-the parsing, decoding, and evaluation of configuration.
+the parsing, decoding, and evaluation of configuration. For more information,
+see [the package documentation](https://pkg.go.dev/github.com/hashicorp/hcl/v2).
 
 ## Why?
 
