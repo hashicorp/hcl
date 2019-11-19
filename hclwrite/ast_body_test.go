@@ -766,6 +766,170 @@ func TestBodySetAttributeTraversal(t *testing.T) {
 	}
 }
 
+func TestBodySetAttributeRaw(t *testing.T) {
+	tests := []struct {
+		src    string
+		name   string
+		tokens Tokens
+		want   Tokens
+	}{
+		{
+			"",
+			"a",
+			Tokens{
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte(`true`),
+					SpacesBefore: 0,
+				},
+			},
+			Tokens{
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte{'a'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte{'='},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte("true"),
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenNewline,
+					Bytes:        []byte{'\n'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEOF,
+					Bytes:        []byte{},
+					SpacesBefore: 0,
+				},
+			},
+		},
+		{
+			"a = 23\n",
+			"a",
+			Tokens{
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte(`true`),
+					SpacesBefore: 0,
+				},
+			},
+			Tokens{
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte{'a'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte{'='},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte("true"),
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenNewline,
+					Bytes:        []byte{'\n'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEOF,
+					Bytes:        []byte{},
+					SpacesBefore: 0,
+				},
+			},
+		},
+		{
+			"b = 23\n",
+			"a",
+			Tokens{
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte(`true`),
+					SpacesBefore: 0,
+				},
+			},
+			Tokens{
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte{'b'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte{'='},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenNumberLit,
+					Bytes:        []byte("23"),
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenNewline,
+					Bytes:        []byte{'\n'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte{'a'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte{'='},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte("true"),
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenNewline,
+					Bytes:        []byte{'\n'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEOF,
+					Bytes:        []byte{},
+					SpacesBefore: 0,
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%s = %s in %s", test.name, test.tokens.Bytes(), test.src), func(t *testing.T) {
+			f, diags := ParseConfig([]byte(test.src), "", hcl.Pos{Line: 1, Column: 1})
+			if len(diags) != 0 {
+				for _, diag := range diags {
+					t.Logf("- %s", diag.Error())
+				}
+				t.Fatalf("unexpected diagnostics")
+			}
+
+			f.Body().SetAttributeRaw(test.name, test.tokens)
+			got := f.BuildTokens(nil)
+			format(got)
+			if !reflect.DeepEqual(got, test.want) {
+				diff := cmp.Diff(test.want, got)
+				t.Errorf("wrong result\ngot:  %s\nwant: %s\ndiff:\n%s", spew.Sdump(got), spew.Sdump(test.want), diff)
+			}
+		})
+	}
+}
+
 func TestBodySetAttributeValueInBlock(t *testing.T) {
 	src := `service "label1" {
   attr1 = "val1"
