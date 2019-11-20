@@ -102,14 +102,16 @@ func TestListType(t *testing.T) {
 
 func TestObjectType(t *testing.T) {
 	var literals = []struct {
-		src      string
-		nodeType []ast.Node
-		itemLen  int
+		src       string
+		nodeType  []ast.Node
+		itemLen   int
+		wantError bool
 	}{
 		{
 			`"foo": {}`,
 			nil,
 			0,
+			false,
 		},
 		{
 			`"foo": {
@@ -117,6 +119,7 @@ func TestObjectType(t *testing.T) {
 			 }`,
 			[]ast.Node{&ast.LiteralType{}},
 			1,
+			false,
 		},
 		{
 			`"foo": {
@@ -128,6 +131,7 @@ func TestObjectType(t *testing.T) {
 				&ast.ListType{},
 			},
 			2,
+			false,
 		},
 		{
 			`"foo": {
@@ -137,6 +141,7 @@ func TestObjectType(t *testing.T) {
 				&ast.ObjectType{},
 			},
 			1,
+			false,
 		},
 		{
 			`"foo": {
@@ -148,6 +153,19 @@ func TestObjectType(t *testing.T) {
 				&ast.LiteralType{},
 			},
 			2,
+			false,
+		},
+		{
+			`"foo": {
+				"bar": "blah"
+				"foo": "blahblah"
+			 }`,
+			[]ast.Node{
+				&ast.LiteralType{},
+				&ast.LiteralType{},
+			},
+			2,
+			true,
 		},
 	}
 
@@ -157,8 +175,11 @@ func TestObjectType(t *testing.T) {
 		p := newParser([]byte(l.src))
 		// p.enableTrace = true
 		item, err := p.objectItem()
+		if (err != nil) != l.wantError {
+			t.Fatalf("error is not expected: got=%v, want=%v", err, l.wantError)
+		}
 		if err != nil {
-			t.Error(err)
+			continue
 		}
 
 		// we know that the ObjectKey name is foo for all cases, what matters
