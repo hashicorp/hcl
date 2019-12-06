@@ -2,6 +2,11 @@
 
 ## v2.2.0 (Unreleased)
 
+### Bugs Fixed
+
+* hclsyntax: `IndexExpr`, `SplatExpr`, and `RelativeTraversalExpr` will now report a source range that covers all of their child expression  nodes. Previously they would report only the operator part, such as `["foo"]`, `[*]`, or `.foo`, which was problematic for callers using source ranges for code analysis. ([#328](https://github.com/hashicorp/hcl/pull/328))
+* hclwrite: Parser will no longer panic when the input includes index, splat, or relative traversal syntax.  ([#328](https://github.com/hashicorp/hcl/pull/328))
+
 ## v2.1.0 (Nov 19, 2019)
 
 ### Enhancements
