@@ -1834,12 +1834,16 @@ block "valid" {}
 									},
 								},
 								SrcRange: hcl.Range{
-									Start: hcl.Pos{Line: 1, Column: 26, Byte: 25},
+									Start: hcl.Pos{Line: 1, Column: 8, Byte: 7},
 									End:   hcl.Pos{Line: 1, Column: 39, Byte: 38},
 								},
 								OpenRange: hcl.Range{
 									Start: hcl.Pos{Line: 1, Column: 26, Byte: 25},
 									End:   hcl.Pos{Line: 1, Column: 27, Byte: 26},
+								},
+								BracketRange: hcl.Range{
+									Start: hcl.Pos{Line: 1, Column: 26, Byte: 25},
+									End:   hcl.Pos{Line: 1, Column: 39, Byte: 38},
 								},
 							},
 							SrcRange: hcl.Range{
@@ -1869,6 +1873,91 @@ block "valid" {}
 				EndRange: hcl.Range{
 					Start: hcl.Pos{Line: 2, Column: 1, Byte: 41},
 					End:   hcl.Pos{Line: 2, Column: 1, Byte: 41},
+				},
+			},
+		},
+		{
+			"a = \"${var.public_subnets[*]}\"\n",
+			0,
+			&Body{
+				Attributes: Attributes{
+					"a": {
+						Name: "a",
+						Expr: &TemplateWrapExpr{
+							Wrapped: &SplatExpr{
+								Source: &ScopeTraversalExpr{
+									Traversal: hcl.Traversal{
+										hcl.TraverseRoot{
+											Name: "var",
+
+											SrcRange: hcl.Range{
+												Start: hcl.Pos{Line: 1, Column: 8, Byte: 7},
+												End:   hcl.Pos{Line: 1, Column: 11, Byte: 10},
+											},
+										},
+										hcl.TraverseAttr{
+											Name: "public_subnets",
+
+											SrcRange: hcl.Range{
+												Start: hcl.Pos{Line: 1, Column: 11, Byte: 10},
+												End:   hcl.Pos{Line: 1, Column: 26, Byte: 25},
+											},
+										},
+									},
+
+									SrcRange: hcl.Range{
+										Start: hcl.Pos{Line: 1, Column: 8, Byte: 7},
+										End:   hcl.Pos{Line: 1, Column: 26, Byte: 25},
+									},
+								},
+								Each: &AnonSymbolExpr{
+									SrcRange: hcl.Range{
+										Start: hcl.Pos{Line: 1, Column: 26, Byte: 25},
+										End:   hcl.Pos{Line: 1, Column: 29, Byte: 28},
+									},
+								},
+								Item: &AnonSymbolExpr{
+									SrcRange: hcl.Range{
+										Start: hcl.Pos{Line: 1, Column: 26, Byte: 25},
+										End:   hcl.Pos{Line: 1, Column: 29, Byte: 28},
+									},
+								},
+								SrcRange: hcl.Range{
+									Start: hcl.Pos{Line: 1, Column: 8, Byte: 7},
+									End:   hcl.Pos{Line: 1, Column: 29, Byte: 28},
+								},
+								MarkerRange: hcl.Range{
+									Start: hcl.Pos{Line: 1, Column: 26, Byte: 25},
+									End:   hcl.Pos{Line: 1, Column: 29, Byte: 28},
+								},
+							},
+							SrcRange: hcl.Range{
+								Start: hcl.Pos{Line: 1, Column: 5, Byte: 4},
+								End:   hcl.Pos{Line: 1, Column: 31, Byte: 30},
+							},
+						},
+						SrcRange: hcl.Range{
+							Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   hcl.Pos{Line: 1, Column: 31, Byte: 30},
+						},
+						NameRange: hcl.Range{
+							Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   hcl.Pos{Line: 1, Column: 2, Byte: 1},
+						},
+						EqualsRange: hcl.Range{
+							Start: hcl.Pos{Line: 1, Column: 3, Byte: 2},
+							End:   hcl.Pos{Line: 1, Column: 4, Byte: 3},
+						},
+					},
+				},
+				Blocks: Blocks{},
+				SrcRange: hcl.Range{
+					Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   hcl.Pos{Line: 2, Column: 1, Byte: 31},
+				},
+				EndRange: hcl.Range{
+					Start: hcl.Pos{Line: 2, Column: 1, Byte: 31},
+					End:   hcl.Pos{Line: 2, Column: 1, Byte: 31},
 				},
 			},
 		},
@@ -2353,13 +2442,18 @@ block "valid" {}
 							},
 							SrcRange: hcl.Range{
 								Filename: "",
-								Start:    hcl.Pos{Line: 1, Column: 30, Byte: 29},
+								Start:    hcl.Pos{Line: 1, Column: 5, Byte: 4},
 								End:      hcl.Pos{Line: 1, Column: 43, Byte: 42},
 							},
 							OpenRange: hcl.Range{
 								Filename: "",
 								Start:    hcl.Pos{Line: 1, Column: 30, Byte: 29},
 								End:      hcl.Pos{Line: 1, Column: 31, Byte: 30},
+							},
+							BracketRange: hcl.Range{
+								Filename: "",
+								Start:    hcl.Pos{Line: 1, Column: 30, Byte: 29},
+								End:      hcl.Pos{Line: 1, Column: 43, Byte: 42},
 							},
 						},
 						SrcRange: hcl.Range{
