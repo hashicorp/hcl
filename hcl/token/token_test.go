@@ -57,7 +57,11 @@ func TestTokenValue(t *testing.T) {
 				Text: `"${replace("foo", ".", "\\.")}"`,
 			},
 			`${replace("foo", ".", "\\.")}`},
-		{Token{Type: HEREDOC, Text: "<<EOF\nfoo\nbar\nEOF"}, "foo\nbar"},
+		{Token{Type: HEREDOC, Text: "<<EOF\nfoo\nbar\nEOF\n"}, "foo\nbar\n"},
+		{Token{Type: HEREDOC, Text: "<<EOF\n  foo\n  bar\nEOF\n"}, "  foo\n  bar\n"},
+		{Token{Type: HEREDOC, Text: "<<-EOF\n  foo\n  bar\n  EOF\n"}, "foo\nbar\n"},
+		{Token{Type: HEREDOC, Text: "<<-EOF\n  foo\n    bar\n  EOF\n"}, "foo\n  bar\n"},
+		{Token{Type: HEREDOC, Text: "<<-EOF\n  foo\n\n    bar\n   \n  EOF\n"}, "foo\n\n  bar\n\n"},
 	}
 
 	for _, token := range tokens {
