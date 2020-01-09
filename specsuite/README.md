@@ -10,7 +10,7 @@ the Go implementation. As a result, other HCL implementations must also
 include a version of `hcldec` in order to run this spec.
 
 The tests defined in this suite each correspond to a detail of
-[the HCL spec](../hcl/spec.md). This suite is separate from and not a
+[the HCL spec](../spec.md). This suite is separate from and not a
 substitute for direct unit tests of a given implementation that would presumably
 also exercise that implementation's own programmatic API.
 

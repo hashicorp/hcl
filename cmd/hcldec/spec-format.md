@@ -480,7 +480,7 @@ The following type names and type constructors are supported:
   types.
 
 The above types are as defined by
-[the HCL syntax-agnostic information model](../../hcl/spec.md). After
+[the HCL syntax-agnostic information model](../../spec.md). After
 validation, values are lowered to JSON's type system, which is a subset
 of the HCL type system.
 
