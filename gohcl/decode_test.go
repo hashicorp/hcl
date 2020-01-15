@@ -37,6 +37,10 @@ func TestDecodeBody(t *testing.T) {
 		Nested []*withTwoAttributes `hcl:"nested,block"`
 	}
 
+	type withListofNestedBlocksNoPointers struct {
+		Nested []withTwoAttributes `hcl:"nested,block"`
+	}
+
 	tests := []struct {
 		Body      map[string]interface{}
 		Target    func() interface{}
@@ -620,6 +624,33 @@ func TestDecodeBody(t *testing.T) {
 			func(gotI interface{}) bool {
 				n := gotI.(withListofNestedBlocks)
 				return len(n.Nested) == 1
+			},
+			0,
+		},
+		{
+			// Make sure decoding value slices works the same as pointer slices.
+			map[string]interface{}{
+				"nested": []map[string]interface{}{
+					{
+						"b": "bar",
+					},
+					{
+						"b": "baz",
+					},
+				},
+			},
+			func() interface{} {
+				return &withListofNestedBlocksNoPointers{
+					Nested: []withTwoAttributes{
+						{
+							B: "foo",
+						},
+					},
+				}
+			},
+			func(gotI interface{}) bool {
+				n := gotI.(withListofNestedBlocksNoPointers)
+				return n.Nested[0].B == "bar" && len(n.Nested) == 2
 			},
 			0,
 		},
