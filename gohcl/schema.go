@@ -86,7 +86,7 @@ func ImpliedBodySchema(val interface{}) (schema *hcl.BodySchema, partial bool) {
 			))
 		}
 		ftags := getFieldTags(fty)
-		labelNames := []string{}
+		var labelNames []string
 		for _, l := range ftags.Labels {
 			labelNames = append(labelNames, l.Name)
 		}
@@ -95,9 +95,11 @@ func ImpliedBodySchema(val interface{}) (schema *hcl.BodySchema, partial bool) {
 		if ftags.Remain != nil {
 			remainIdx := *ftags.Remain
 			remain := fty.Field(remainIdx)
-			remainTags := getFieldTags(remain.Type)
-			for _, l := range remainTags.Labels {
-				labelNames = append(labelNames, l.Name)
+			if remain.Type.Kind() == reflect.Struct {
+				remainTags := getFieldTags(remain.Type)
+				for _, l := range remainTags.Labels {
+					labelNames = append(labelNames, l.Name)
+				}
 			}
 		}
 
