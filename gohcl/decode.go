@@ -263,11 +263,22 @@ func decodeBlockToValue(block *hcl.Block, ctx *hcl.EvalContext, v reflect.Value)
 		if len(block.Labels) > 0 {
 			blockTags := getFieldTags(ty)
 			for li, lv := range block.Labels {
-				lfieldIdx := blockTags.Labels[li].FieldIndex
-				v.Field(lfieldIdx).Set(reflect.ValueOf(lv))
+				// Fill in the labels from the block itself and then fill in labels located in embedded structs
+				if li < len(blockTags.Labels) {
+					lfieldIdx := blockTags.Labels[li].FieldIndex
+					v.Field(lfieldIdx).Set(reflect.ValueOf(lv))
+				} else {
+					labelIdx := li - len(blockTags.Labels)
+					remainIdx := *blockTags.Remain
+					remain := v.Type().Field(remainIdx)
+					remainV := v.Field(remainIdx)
+					remainTags := getFieldTags(remain.Type)
+					lfieldIdx := remainTags.Labels[labelIdx].FieldIndex
+					value := reflect.ValueOf(lv)
+					remainV.Field(lfieldIdx).Set(value)
+				}
 			}
 		}
-
 	}
 
 	return diags

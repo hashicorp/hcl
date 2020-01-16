@@ -37,6 +37,22 @@ func TestDecodeBody(t *testing.T) {
 		Nested []*withTwoAttributes `hcl:"nested,block"`
 	}
 
+	type WithTwoAttributesAndLabel struct {
+		Name string `hcl:"name,label"`
+		A    string `hcl:"a,optional"`
+		B    string `hcl:"b,optional"`
+	}
+
+	type blockWithEmbeddedStruct struct {
+		TopLevelName              string `hcl:"top_name,label"`
+		WithTwoAttributesAndLabel `hcl:",remain"`
+	}
+
+	type withNestedEmbeddedBlock struct {
+		Plain  string                   `hcl:"plain,optional"`
+		Nested *blockWithEmbeddedStruct `hcl:"nested,block"`
+	}
+
 	tests := []struct {
 		Body      map[string]interface{}
 		Target    func() interface{}
@@ -620,6 +636,30 @@ func TestDecodeBody(t *testing.T) {
 			func(gotI interface{}) bool {
 				n := gotI.(withListofNestedBlocks)
 				return len(n.Nested) == 1
+			},
+			0,
+		},
+		{
+			// Remaining values and label are sent into the embedded struct because it is set as `remain`
+			// The "top_level" label has priority because it is sent in the parent struct, then the embedded level is filled
+			map[string]interface{}{
+				"plain": "plain",
+				"nested": map[string]interface{}{
+					"top_level_name": map[string]interface{}{
+						"nested_name": map[string]interface{}{
+							"a": "foo",
+						},
+					},
+				},
+			},
+			func() interface{} {
+				return &withNestedEmbeddedBlock{
+					Nested: &blockWithEmbeddedStruct{},
+				}
+			},
+			func(gotI interface{}) bool {
+				foo := gotI.(withNestedEmbeddedBlock)
+				return foo.Nested.A == "foo" && foo.Nested.Name == "nested_name" && foo.Nested.TopLevelName == "top_level_name" && foo.Plain == "plain"
 			},
 			0,
 		},
