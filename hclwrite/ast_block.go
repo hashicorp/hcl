@@ -79,6 +79,13 @@ func (b *Block) Type() string {
 	return string(typeNameObj.token.Bytes)
 }
 
+// SetType updates the type name of the block to a given name.
+func (b *Block) SetType(typeName string) {
+	nameTok := newIdentToken(typeName)
+	nameObj := newIdentifier(nameTok)
+	b.typeName.ReplaceWith(nameObj)
+}
+
 // Labels returns the labels of the block.
 func (b *Block) Labels() []string {
 	labelNames := make([]string, 0, len(b.labels))
@@ -115,4 +122,26 @@ func (b *Block) Labels() []string {
 	}
 
 	return labelNames
+}
+
+// SetLabels updates the labels of the block to given labels.
+// Since we cannot assume that old and new labels are equal in length,
+// remove old labels and insert new ones before TokenOBrace.
+func (b *Block) SetLabels(labels []string) {
+	// Remove old labels
+	for oldLabel := range b.labels {
+		oldLabel.Detach()
+		b.labels.Remove(oldLabel)
+	}
+
+	// Insert new labels before TokenOBrace.
+	for _, label := range labels {
+		labelToks := TokensForValue(cty.StringVal(label))
+		// Force a new label to use the quoted form even if the old one is unquoted.
+		// The unquoted form is supported in HCL 2 only for compatibility with some
+		// historical use in HCL 1.
+		labelObj := newQuoted(labelToks)
+		labelNode := b.children.Insert(b.open, labelObj)
+		b.labels.Add(labelNode)
+	}
 }
