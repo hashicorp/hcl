@@ -329,7 +329,7 @@ func parseBlock(nativeBlock *hclsyntax.Block, from, leadComments, lineComments, 
 
 	before, oBrace, from := from.Partition(nativeBlock.OpenBraceRange)
 	children.AppendUnstructuredTokens(before.Tokens())
-	children.AppendUnstructuredTokens(oBrace.Tokens())
+	block.open = children.AppendUnstructuredTokens(oBrace.Tokens())
 
 	// We go a bit out of order here: we go hunting for the closing brace
 	// so that we have a delimited body, but then we'll deal with the body
@@ -342,7 +342,7 @@ func parseBlock(nativeBlock *hclsyntax.Block, from, leadComments, lineComments, 
 	children.AppendNode(body)
 	children.AppendUnstructuredTokens(after.Tokens())
 
-	children.AppendUnstructuredTokens(cBrace.Tokens())
+	block.close = children.AppendUnstructuredTokens(cBrace.Tokens())
 
 	// stragglers
 	children.AppendUnstructuredTokens(from.Tokens())
