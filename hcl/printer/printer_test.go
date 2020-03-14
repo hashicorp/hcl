@@ -27,6 +27,7 @@ var data = []entry{
 	{"complexhcl.input", "complexhcl.golden"},
 	{"list.input", "list.golden"},
 	{"list_comment.input", "list_comment.golden"},
+	{"collapse_trailing_newlines.input", "collapse_trailing_newlines.golden"},
 	{"comment.input", "comment.golden"},
 	{"comment_crlf.input", "comment.golden"},
 	{"comment_aligned.input", "comment_aligned.golden"},
