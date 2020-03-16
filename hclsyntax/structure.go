@@ -34,6 +34,9 @@ type Body struct {
 	Attributes Attributes
 	Blocks     Blocks
 
+	// attrNames keeps attribute names in order which they were declared.
+	attrNames []string
+
 	// These are used with PartialContent to produce a "remaining items"
 	// body to return. They are nil on all bodies fresh out of the parser.
 	hiddenAttrs  map[string]struct{}
@@ -49,6 +52,13 @@ var assertBodyImplBody hcl.Body = &Body{}
 func (b *Body) walkChildNodes(w internalWalkFunc) {
 	w(b.Attributes)
 	w(b.Blocks)
+}
+
+// AttributeNames returns names of attributes in order which they were declared.
+//
+// This is useful when attributes declaration order matters.
+func (b *Body) AttributeNames() []string {
+	return b.attrNames
 }
 
 func (b *Body) Range() hcl.Range {

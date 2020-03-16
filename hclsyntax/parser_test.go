@@ -587,11 +587,11 @@ block "valid" {}
 				},
 			},
 		},
-
 		{
 			"a = 1\n",
 			0,
 			&Body{
+				attrNames: []string{"a"},
 				Attributes: Attributes{
 					"a": {
 						Name: "a",
@@ -633,6 +633,7 @@ block "valid" {}
 			"a = 1",
 			0,
 			&Body{
+				attrNames: []string{"a"},
 				Attributes: Attributes{
 					"a": {
 						Name: "a",
@@ -674,6 +675,7 @@ block "valid" {}
 			"a = \"hello ${true}\"\n",
 			0,
 			&Body{
+				attrNames: []string{"a"},
 				Attributes: Attributes{
 					"a": {
 						Name: "a",
@@ -732,6 +734,7 @@ block "valid" {}
 			"a = \"hello $${true}\"\n",
 			0,
 			&Body{
+				attrNames: []string{"a"},
 				Attributes: Attributes{
 					"a": {
 						Name: "a",
@@ -798,6 +801,7 @@ block "valid" {}
 			"a = \"hello %%{true}\"\n",
 			0,
 			&Body{
+				attrNames: []string{"a"},
 				Attributes: Attributes{
 					"a": {
 						Name: "a",
@@ -864,6 +868,7 @@ block "valid" {}
 			"a = \"hello $$\"\n",
 			0,
 			&Body{
+				attrNames: []string{"a"},
 				Attributes: Attributes{
 					"a": {
 						Name: "a",
@@ -933,6 +938,7 @@ block "valid" {}
 			"a = \"hello $\"\n",
 			0, // unterminated template interpolation sequence
 			&Body{
+				attrNames: []string{"a"},
 				Attributes: Attributes{
 					"a": {
 						Name: "a",
@@ -991,6 +997,7 @@ block "valid" {}
 			"a = \"hello %%\"\n",
 			0,
 			&Body{
+				attrNames: []string{"a"},
 				Attributes: Attributes{
 					"a": {
 						Name: "a",
@@ -1060,6 +1067,7 @@ block "valid" {}
 			"a = \"hello %\"\n",
 			0, // unterminated template control sequence
 			&Body{
+				attrNames: []string{"a"},
 				Attributes: Attributes{
 					"a": {
 						Name: "a",
@@ -1118,6 +1126,7 @@ block "valid" {}
 			"a = \"hello!\"\n",
 			0,
 			&Body{
+				attrNames: []string{"a"},
 				Attributes: Attributes{
 					"a": {
 						Name: "a",
@@ -1168,6 +1177,7 @@ block "valid" {}
 			"a = \"\\u2022\"\n",
 			0,
 			&Body{
+				attrNames: []string{"a"},
 				Attributes: Attributes{
 					"a": {
 						Name: "a",
@@ -1218,6 +1228,7 @@ block "valid" {}
 			"a = \"\\uu2022\"\n",
 			1, // \u must be followed by four hex digits
 			&Body{
+				attrNames: []string{"a"},
 				Attributes: Attributes{
 					"a": {
 						Name: "a",
@@ -1268,6 +1279,7 @@ block "valid" {}
 			"a = \"\\U0001d11e\"\n",
 			0,
 			&Body{
+				attrNames: []string{"a"},
 				Attributes: Attributes{
 					"a": {
 						Name: "a",
@@ -1318,6 +1330,7 @@ block "valid" {}
 			"a = \"\\u0001d11e\"\n",
 			0, // This is valid, but probably not what the user intended :(
 			&Body{
+				attrNames: []string{"a"},
 				Attributes: Attributes{
 					"a": {
 						Name: "a",
@@ -1371,6 +1384,7 @@ block "valid" {}
 			"a = \"\\U2022\"\n",
 			1, // Invalid escape sequence, since we need eight hex digits for \U
 			&Body{
+				attrNames: []string{"a"},
 				Attributes: Attributes{
 					"a": {
 						Name: "a",
@@ -1421,6 +1435,7 @@ block "valid" {}
 			"a = \"\\u20m2\"\n",
 			1, // Invalid escape sequence
 			&Body{
+				attrNames: []string{"a"},
 				Attributes: Attributes{
 					"a": {
 						Name: "a",
@@ -1471,6 +1486,7 @@ block "valid" {}
 			"a = \"\\U00300000\"\n",
 			1, // Invalid unicode character (can't encode in UTF-8)
 			&Body{
+				attrNames: []string{"a"},
 				Attributes: Attributes{
 					"a": {
 						Name: "a",
@@ -1521,6 +1537,7 @@ block "valid" {}
 			"a = \"\\Ub2705550\"\n",
 			1, // Invalid unicode character (can't encode in UTF-8)
 			&Body{
+				attrNames: []string{"a"},
 				Attributes: Attributes{
 					"a": {
 						Name: "a",
@@ -1571,6 +1588,7 @@ block "valid" {}
 			"a = <<EOT\nHello\nEOT\nb = \"Hi\"",
 			0,
 			&Body{
+				attrNames: []string{"a"},
 				Attributes: Attributes{
 					"a": {
 						Name: "a",
@@ -1654,6 +1672,7 @@ block "valid" {}
 			"a = foo.bar\n",
 			0,
 			&Body{
+				attrNames: []string{"a"},
 				Attributes: Attributes{
 					"a": {
 						Name: "a",
@@ -1712,6 +1731,7 @@ block "valid" {}
 			"a = foo.0.1.baz\n",
 			1, // Chaining legacy index syntax is not supported
 			&Body{
+				attrNames: []string{"a"},
 				Attributes: Attributes{
 					"a": {
 						Name: "a",
@@ -1778,6 +1798,7 @@ block "valid" {}
 			"a = \"${var.public_subnets[count.index]}\"\n",
 			0,
 			&Body{
+				attrNames: []string{"a"},
 				Attributes: Attributes{
 					"a": {
 						Name: "a",
@@ -1880,6 +1901,7 @@ block "valid" {}
 			"a = \"${var.public_subnets[*]}\"\n",
 			0,
 			&Body{
+				attrNames: []string{"a"},
 				Attributes: Attributes{
 					"a": {
 						Name: "a",
@@ -1965,6 +1987,7 @@ block "valid" {}
 			"a = 1 # line comment\n",
 			0,
 			&Body{
+				attrNames: []string{"a"},
 				Attributes: Attributes{
 					"a": {
 						Name: "a",
@@ -2007,6 +2030,7 @@ block "valid" {}
 			"a = [for k, v in foo: v if true]\n",
 			0,
 			&Body{
+				attrNames: []string{"a"},
 				Attributes: Attributes{
 					"a": {
 						Name: "a",
@@ -2095,6 +2119,7 @@ block "valid" {}
 			"a = [for k, v in foo: k => v... if true]\n",
 			2, // can't use => or ... in a tuple for
 			&Body{
+				attrNames: []string{"a"},
 				Attributes: Attributes{
 					"a": {
 						Name: "a",
@@ -2232,6 +2257,7 @@ block "valid" {}
 			"a = 1,",
 			1,
 			&Body{
+				attrNames: []string{"a"},
 				Attributes: Attributes{
 					"a": {
 						Name: "a",
@@ -2273,6 +2299,7 @@ block "valid" {}
 			"a = `str`",
 			2, // Invalid character and expression
 			&Body{
+				attrNames: []string{"a"},
 				Attributes: Attributes{
 					"a": {
 						Name: "a",
@@ -2311,6 +2338,7 @@ block "valid" {}
 			`a = 'str'`,
 			2, // Invalid character and expression
 			&Body{
+				attrNames: []string{"a"},
 				Attributes: Attributes{
 					"a": {
 						Name: "a",
@@ -2349,6 +2377,7 @@ block "valid" {}
 			"a = sort(data.first.ref.attr)[count.index]\n",
 			0,
 			&Body{
+				attrNames: []string{"a"},
 				Attributes: Attributes{
 					"a": {
 						Name: "a",

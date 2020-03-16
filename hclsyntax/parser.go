@@ -24,6 +24,7 @@ type parser struct {
 func (p *parser) ParseBody(end TokenType) (*Body, hcl.Diagnostics) {
 	attrs := Attributes{}
 	blocks := Blocks{}
+	var attrNames []string
 	var diags hcl.Diagnostics
 
 	startRange := p.PrevRange()
@@ -61,6 +62,7 @@ Token:
 					})
 				} else {
 					attrs[titem.Name] = titem
+					attrNames = append(attrNames, titem.Name)
 				}
 			default:
 				// This should never happen for valid input, but may if a
@@ -100,6 +102,7 @@ Token:
 	}
 
 	return &Body{
+		attrNames:  attrNames,
 		Attributes: attrs,
 		Blocks:     blocks,
 
