@@ -1,6 +1,6 @@
 # HCL Changelog
 
-## v2.4.0 (Unreleased)
+## v2.4.0 (Apr 13, 2020)
 
 ### Enhancements
 
