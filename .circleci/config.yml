@@ -1,25 +1,63 @@
 version: 2.1
-jobs:
-  build:
-    branches:
-      only:
-        - master
-        - hcl2
+
+executors:
+  go:
     docker:
-      - image: circleci/golang:1.12
-        environment:
-          GO111MODULE: "on"
-          GOPROXY: "https://proxy.golang.org"
+      - image: circleci/golang:1.14
+    environment:
+      GOMAXPROCS: 4
+      GO111MODULE: "on"
+      GOPROXY: https://proxy.golang.org/
+      TEST_RESULTS_DIR: &TEST_RESULTS_DIR /tmp/test-results
+
+jobs:
+  go-checks:
+    executor:
+      name: go
     steps:
       - checkout
-      - restore_cache:
-          keys:
-            - v1-mod-cache
+      - run: go mod verify
+      - run: make fmt
       - run:
-          name: "Tests"
+          name: verify no code was generated
           command: |
-            go test ./...
-      - save_cache:
-          key: v1-mod-cache
+            if [[ -z $(git status --porcelain) ]]; then
+              echo "Git directory is clean."
+            else
+              echo "Git is dirty. Run `make fmt` and `make generate` locally and commit any formatting fixes or generated code."
+              git status --porcelain
+              exit 1
+            fi
+
+  go-test:
+    executor:
+      name: go
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run: mkdir -p $TEST_RESULTS_DIR
+      - run:
+          name: Run Go Tests
+          command: |
+            PACKAGE_NAMES=$(go list ./... | circleci tests split --split-by=timings --timings-type=classname)
+            echo "Running $(echo $PACKAGE_NAMES | wc -w) packages"
+            echo $PACKAGE_NAMES
+            gotestsum --format=short-verbose --junitfile $TEST_RESULTS_DIR/gotestsum-report.xml -- -p 2 -cover -coverprofile=cov_$CIRCLE_NODE_INDEX.part $PACKAGE_NAMES
+
+      # save coverage report parts
+      - persist_to_workspace:
+          root: .
           paths:
-            - "/go/pkg/mod"
+            - cov_*.part
+
+      - store_test_results:
+          path: *TEST_RESULTS_DIR
+      - store_artifacts:
+          path: *TEST_RESULTS_DIR
+
+workflows:
+  version: 2
+  test:
+    jobs:
+      - go-test
