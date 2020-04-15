@@ -1,6 +1,10 @@
 version: 2.1
 jobs:
   build:
+    branches:
+      only:
+        - master
+        - hcl2
     docker:
       - image: circleci/golang:1.12
         environment:
