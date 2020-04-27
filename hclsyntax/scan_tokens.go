@@ -260,7 +260,7 @@ var _hcltok_trans_keys []byte = []byte{
 	233, 234, 237, 239, 240, 243, 48, 57,
 	65, 90, 97, 122, 196, 218, 229, 236,
 	10, 170, 181, 183, 186, 128, 150, 152,
-	182, 184, 255, 192, 255, 128, 255, 173,
+	182, 184, 255, 192, 255, 0, 127, 173,
 	130, 133, 146, 159, 165, 171, 175, 255,
 	181, 190, 184, 185, 192, 255, 140, 134,
 	138, 142, 161, 163, 255, 182, 130, 136,
@@ -842,8 +842,8 @@ var _hcltok_trans_keys []byte = []byte{
 	192, 255, 128, 163, 164, 191, 128, 140,
 	141, 143, 144, 153, 154, 189, 190, 191,
 	128, 136, 137, 191, 173, 128, 168, 169,
-	177, 178, 180, 181, 182, 183, 191, 0,
-	127, 192, 255, 150, 151, 158, 159, 152,
+	177, 178, 180, 181, 182, 183, 191, 128,
+	255, 192, 255, 150, 151, 158, 159, 152,
 	154, 156, 158, 134, 135, 142, 143, 190,
 	191, 192, 255, 181, 189, 191, 128, 190,
 	133, 181, 128, 129, 130, 140, 141, 143,
@@ -1265,7 +1265,7 @@ var _hcltok_trans_keys []byte = []byte{
 	164, 191, 128, 140, 141, 143, 144, 153,
 	154, 189, 190, 191, 128, 136, 137, 191,
 	173, 128, 168, 169, 177, 178, 180, 181,
-	182, 183, 191, 0, 127, 192, 255, 150,
+	182, 183, 191, 128, 255, 192, 255, 150,
 	151, 158, 159, 152, 154, 156, 158, 134,
 	135, 142, 143, 190, 191, 192, 255, 181,
 	189, 191, 128, 190, 133, 181, 128, 129,
@@ -2162,7 +2162,7 @@ var _hcltok_indicies []int16 = []int16{
 	61, 62, 37, 39, 63, 41, 64, 65,
 	66, 11, 11, 11, 14, 38, 0, 44,
 	0, 11, 11, 11, 11, 0, 11, 11,
-	11, 0, 11, 0, 11, 11, 0, 0,
+	11, 0, 11, 0, 11, 0, 11, 0,
 	0, 0, 0, 0, 11, 0, 0, 0,
 	0, 11, 11, 11, 11, 11, 0, 0,
 	11, 0, 0, 11, 0, 11, 0, 0,
@@ -2626,7 +2626,7 @@ var _hcltok_indicies []int16 = []int16{
 	419, 670, 419, 670, 419, 669, 670, 669,
 	419, 419, 670, 669, 670, 419, 670, 419,
 	670, 669, 419, 670, 669, 670, 670, 419,
-	670, 419, 670, 669, 669, 419, 669, 419,
+	670, 419, 670, 669, 419, 669, 669, 419,
 	670, 670, 419, 670, 670, 670, 670, 670,
 	670, 670, 669, 419, 670, 670, 670, 419,
 	669, 670, 670, 670, 419, 670, 419, 670,
@@ -2953,7 +2953,7 @@ var _hcltok_indicies []int16 = []int16{
 	795, 1046, 795, 1046, 795, 1045, 1046, 1045,
 	795, 795, 1046, 1045, 1046, 795, 1046, 795,
 	1046, 1045, 795, 1046, 1045, 1046, 1046, 795,
-	1046, 795, 1046, 1045, 1045, 795, 1045, 795,
+	1046, 795, 1046, 1045, 795, 1045, 1045, 795,
 	1046, 1046, 795, 1046, 1046, 1046, 1046, 1046,
 	1046, 1046, 1045, 795, 1046, 1046, 1046, 795,
 	1045, 1046, 1046, 1046, 795, 1046, 795, 1046,
@@ -4229,7 +4229,7 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 		StartByte: start.Byte,
 	}
 
-//line scan_tokens.rl:305
+//line scan_tokens.rl:313
 
 	// Ragel state
 	p := 0          // "Pointer" into data
@@ -4257,7 +4257,7 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 	var retBraces []int              // stack of brace levels that cause us to use fret
 	var heredocs []heredocInProgress // stack of heredocs we're currently processing
 
-//line scan_tokens.rl:340
+//line scan_tokens.rl:348
 
 	// Make Go compiler happy
 	_ = ts
@@ -4381,7 +4381,7 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 			_acts++
 			switch _hcltok_actions[_acts-1] {
 			case 0:
-//line scan_tokens.rl:224
+//line scan_tokens.rl:232
 				p--
 
 			case 4:
@@ -4389,13 +4389,13 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 				te = p + 1
 
 			case 5:
-//line scan_tokens.rl:248
+//line scan_tokens.rl:256
 				act = 4
 			case 6:
-//line scan_tokens.rl:250
+//line scan_tokens.rl:258
 				act = 6
 			case 7:
-//line scan_tokens.rl:160
+//line scan_tokens.rl:168
 				te = p + 1
 				{
 					token(TokenTemplateInterp)
@@ -4413,7 +4413,7 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 					}
 				}
 			case 8:
-//line scan_tokens.rl:170
+//line scan_tokens.rl:178
 				te = p + 1
 				{
 					token(TokenTemplateControl)
@@ -4431,7 +4431,7 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 					}
 				}
 			case 9:
-//line scan_tokens.rl:84
+//line scan_tokens.rl:92
 				te = p + 1
 				{
 					token(TokenCQuote)
@@ -4444,19 +4444,19 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 
 				}
 			case 10:
-//line scan_tokens.rl:248
+//line scan_tokens.rl:256
 				te = p + 1
 				{
 					token(TokenQuotedLit)
 				}
 			case 11:
-//line scan_tokens.rl:251
+//line scan_tokens.rl:259
 				te = p + 1
 				{
 					token(TokenBadUTF8)
 				}
 			case 12:
-//line scan_tokens.rl:160
+//line scan_tokens.rl:168
 				te = p
 				p--
 				{
@@ -4475,7 +4475,7 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 					}
 				}
 			case 13:
-//line scan_tokens.rl:170
+//line scan_tokens.rl:178
 				te = p
 				p--
 				{
@@ -4494,41 +4494,41 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 					}
 				}
 			case 14:
-//line scan_tokens.rl:248
+//line scan_tokens.rl:256
 				te = p
 				p--
 				{
 					token(TokenQuotedLit)
 				}
 			case 15:
-//line scan_tokens.rl:249
+//line scan_tokens.rl:257
 				te = p
 				p--
 				{
 					token(TokenQuotedNewline)
 				}
 			case 16:
-//line scan_tokens.rl:250
+//line scan_tokens.rl:258
 				te = p
 				p--
 				{
 					token(TokenInvalid)
 				}
 			case 17:
-//line scan_tokens.rl:251
+//line scan_tokens.rl:259
 				te = p
 				p--
 				{
 					token(TokenBadUTF8)
 				}
 			case 18:
-//line scan_tokens.rl:248
+//line scan_tokens.rl:256
 				p = (te) - 1
 				{
 					token(TokenQuotedLit)
 				}
 			case 19:
-//line scan_tokens.rl:251
+//line scan_tokens.rl:259
 				p = (te) - 1
 				{
 					token(TokenBadUTF8)
@@ -4549,13 +4549,13 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 				}
 
 			case 21:
-//line scan_tokens.rl:148
+//line scan_tokens.rl:156
 				act = 11
 			case 22:
-//line scan_tokens.rl:259
+//line scan_tokens.rl:267
 				act = 12
 			case 23:
-//line scan_tokens.rl:160
+//line scan_tokens.rl:168
 				te = p + 1
 				{
 					token(TokenTemplateInterp)
@@ -4573,7 +4573,7 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 					}
 				}
 			case 24:
-//line scan_tokens.rl:170
+//line scan_tokens.rl:178
 				te = p + 1
 				{
 					token(TokenTemplateControl)
@@ -4591,7 +4591,7 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 					}
 				}
 			case 25:
-//line scan_tokens.rl:111
+//line scan_tokens.rl:119
 				te = p + 1
 				{
 					// This action is called specificially when a heredoc literal
@@ -4636,13 +4636,13 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 					token(TokenStringLit)
 				}
 			case 26:
-//line scan_tokens.rl:259
+//line scan_tokens.rl:267
 				te = p + 1
 				{
 					token(TokenBadUTF8)
 				}
 			case 27:
-//line scan_tokens.rl:160
+//line scan_tokens.rl:168
 				te = p
 				p--
 				{
@@ -4661,7 +4661,7 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 					}
 				}
 			case 28:
-//line scan_tokens.rl:170
+//line scan_tokens.rl:178
 				te = p
 				p--
 				{
@@ -4680,7 +4680,7 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 					}
 				}
 			case 29:
-//line scan_tokens.rl:148
+//line scan_tokens.rl:156
 				te = p
 				p--
 				{
@@ -4691,14 +4691,14 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 					token(TokenStringLit)
 				}
 			case 30:
-//line scan_tokens.rl:259
+//line scan_tokens.rl:267
 				te = p
 				p--
 				{
 					token(TokenBadUTF8)
 				}
 			case 31:
-//line scan_tokens.rl:148
+//line scan_tokens.rl:156
 				p = (te) - 1
 				{
 					// This action is called when a heredoc literal _doesn't_ end
@@ -4733,13 +4733,13 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 				}
 
 			case 33:
-//line scan_tokens.rl:156
+//line scan_tokens.rl:164
 				act = 15
 			case 34:
-//line scan_tokens.rl:266
+//line scan_tokens.rl:274
 				act = 16
 			case 35:
-//line scan_tokens.rl:160
+//line scan_tokens.rl:168
 				te = p + 1
 				{
 					token(TokenTemplateInterp)
@@ -4757,7 +4757,7 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 					}
 				}
 			case 36:
-//line scan_tokens.rl:170
+//line scan_tokens.rl:178
 				te = p + 1
 				{
 					token(TokenTemplateControl)
@@ -4775,19 +4775,19 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 					}
 				}
 			case 37:
-//line scan_tokens.rl:156
+//line scan_tokens.rl:164
 				te = p + 1
 				{
 					token(TokenStringLit)
 				}
 			case 38:
-//line scan_tokens.rl:266
+//line scan_tokens.rl:274
 				te = p + 1
 				{
 					token(TokenBadUTF8)
 				}
 			case 39:
-//line scan_tokens.rl:160
+//line scan_tokens.rl:168
 				te = p
 				p--
 				{
@@ -4806,7 +4806,7 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 					}
 				}
 			case 40:
-//line scan_tokens.rl:170
+//line scan_tokens.rl:178
 				te = p
 				p--
 				{
@@ -4825,21 +4825,21 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 					}
 				}
 			case 41:
-//line scan_tokens.rl:156
+//line scan_tokens.rl:164
 				te = p
 				p--
 				{
 					token(TokenStringLit)
 				}
 			case 42:
-//line scan_tokens.rl:266
+//line scan_tokens.rl:274
 				te = p
 				p--
 				{
 					token(TokenBadUTF8)
 				}
 			case 43:
-//line scan_tokens.rl:156
+//line scan_tokens.rl:164
 				p = (te) - 1
 				{
 					token(TokenStringLit)
@@ -4866,45 +4866,45 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 				}
 
 			case 45:
-//line scan_tokens.rl:270
+//line scan_tokens.rl:278
 				act = 17
 			case 46:
-//line scan_tokens.rl:271
+//line scan_tokens.rl:279
 				act = 18
 			case 47:
-//line scan_tokens.rl:271
+//line scan_tokens.rl:279
 				te = p + 1
 				{
 					token(TokenBadUTF8)
 				}
 			case 48:
-//line scan_tokens.rl:272
+//line scan_tokens.rl:280
 				te = p + 1
 				{
 					token(TokenInvalid)
 				}
 			case 49:
-//line scan_tokens.rl:270
+//line scan_tokens.rl:278
 				te = p
 				p--
 				{
 					token(TokenIdent)
 				}
 			case 50:
-//line scan_tokens.rl:271
+//line scan_tokens.rl:279
 				te = p
 				p--
 				{
 					token(TokenBadUTF8)
 				}
 			case 51:
-//line scan_tokens.rl:270
+//line scan_tokens.rl:278
 				p = (te) - 1
 				{
 					token(TokenIdent)
 				}
 			case 52:
-//line scan_tokens.rl:271
+//line scan_tokens.rl:279
 				p = (te) - 1
 				{
 					token(TokenBadUTF8)
@@ -4925,86 +4925,86 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 				}
 
 			case 54:
-//line scan_tokens.rl:278
+//line scan_tokens.rl:286
 				act = 22
 			case 55:
-//line scan_tokens.rl:301
+//line scan_tokens.rl:309
 				act = 39
 			case 56:
-//line scan_tokens.rl:280
+//line scan_tokens.rl:288
 				te = p + 1
 				{
 					token(TokenComment)
 				}
 			case 57:
-//line scan_tokens.rl:281
+//line scan_tokens.rl:289
 				te = p + 1
 				{
 					token(TokenNewline)
 				}
 			case 58:
-//line scan_tokens.rl:283
+//line scan_tokens.rl:291
 				te = p + 1
 				{
 					token(TokenEqualOp)
 				}
 			case 59:
-//line scan_tokens.rl:284
+//line scan_tokens.rl:292
 				te = p + 1
 				{
 					token(TokenNotEqual)
 				}
 			case 60:
-//line scan_tokens.rl:285
+//line scan_tokens.rl:293
 				te = p + 1
 				{
 					token(TokenGreaterThanEq)
 				}
 			case 61:
-//line scan_tokens.rl:286
+//line scan_tokens.rl:294
 				te = p + 1
 				{
 					token(TokenLessThanEq)
 				}
 			case 62:
-//line scan_tokens.rl:287
+//line scan_tokens.rl:295
 				te = p + 1
 				{
 					token(TokenAnd)
 				}
 			case 63:
-//line scan_tokens.rl:288
+//line scan_tokens.rl:296
 				te = p + 1
 				{
 					token(TokenOr)
 				}
 			case 64:
-//line scan_tokens.rl:289
+//line scan_tokens.rl:297
 				te = p + 1
 				{
 					token(TokenEllipsis)
 				}
 			case 65:
-//line scan_tokens.rl:290
+//line scan_tokens.rl:298
 				te = p + 1
 				{
 					token(TokenFatArrow)
 				}
 			case 66:
-//line scan_tokens.rl:291
+//line scan_tokens.rl:299
 				te = p + 1
 				{
 					selfToken()
 				}
 			case 67:
-//line scan_tokens.rl:180
+//line scan_tokens.rl:188
 				te = p + 1
 				{
 					token(TokenOBrace)
 					braces++
 				}
 			case 68:
-//line scan_tokens.rl:185
+//line scan_tokens.rl:193
 				te = p + 1
 				{
 					if len(retBraces) > 0 && retBraces[len(retBraces)-1] == braces {
@@ -5024,7 +5024,7 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 					}
 				}
 			case 69:
-//line scan_tokens.rl:197
+//line scan_tokens.rl:205
 				te = p + 1
 				{
 					// Only consume from the retBraces stack and return if we are at
@@ -5053,7 +5053,7 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 					}
 				}
 			case 70:
-//line scan_tokens.rl:79
+//line scan_tokens.rl:87
 				te = p + 1
 				{
 					token(TokenOQuote)
@@ -5066,7 +5066,7 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 					}
 				}
 			case 71:
-//line scan_tokens.rl:89
+//line scan_tokens.rl:97
 				te = p + 1
 				{
 					token(TokenOHeredoc)
@@ -5096,84 +5096,84 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 					}
 				}
 			case 72:
-//line scan_tokens.rl:301
+//line scan_tokens.rl:309
 				te = p + 1
 				{
 					token(TokenBadUTF8)
 				}
 			case 73:
-//line scan_tokens.rl:302
+//line scan_tokens.rl:310
 				te = p + 1
 				{
 					token(TokenInvalid)
 				}
 			case 74:
-//line scan_tokens.rl:276
+//line scan_tokens.rl:284
 				te = p
 				p--
 
 			case 75:
-//line scan_tokens.rl:277
+//line scan_tokens.rl:285
 				te = p
 				p--
 				{
 					token(TokenNumberLit)
 				}
 			case 76:
-//line scan_tokens.rl:278
+//line scan_tokens.rl:286
 				te = p
 				p--
 				{
 					token(TokenIdent)
 				}
 			case 77:
-//line scan_tokens.rl:280
+//line scan_tokens.rl:288
 				te = p
 				p--
 				{
 					token(TokenComment)
 				}
 			case 78:
-//line scan_tokens.rl:291
+//line scan_tokens.rl:299
 				te = p
 				p--
 				{
 					selfToken()
 				}
 			case 79:
-//line scan_tokens.rl:301
+//line scan_tokens.rl:309
 				te = p
 				p--
 				{
 					token(TokenBadUTF8)
 				}
 			case 80:
-//line scan_tokens.rl:302
+//line scan_tokens.rl:310
 				te = p
 				p--
 				{
 					token(TokenInvalid)
 				}
 			case 81:
-//line scan_tokens.rl:277
+//line scan_tokens.rl:285
 				p = (te) - 1
 				{
 					token(TokenNumberLit)
 				}
 			case 82:
-//line scan_tokens.rl:278
+//line scan_tokens.rl:286
 				p = (te) - 1
 				{
 					token(TokenIdent)
 				}
 			case 83:
-//line scan_tokens.rl:291
+//line scan_tokens.rl:299
 				p = (te) - 1
 				{
 					selfToken()
 				}
 			case 84:
-//line scan_tokens.rl:301
+//line scan_tokens.rl:309
 				p = (te) - 1
 				{
 					token(TokenBadUTF8)
@@ -5238,7 +5238,7 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 		}
 	}
 
-//line scan_tokens.rl:363
+//line scan_tokens.rl:371
 
 	// If we fall out here without being in a final state then we've
 	// encountered something that the scanner can't match, which we'll

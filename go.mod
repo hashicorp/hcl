@@ -1,7 +1,5 @@
 module github.com/hashicorp/hcl/v2
 
-go 1.12
-
 require (
 	github.com/agext/levenshtein v1.2.1
 	github.com/apparentlymart/go-dump v0.0.0-20180507223929-23540a00eaa3
@@ -17,7 +15,10 @@ require (
 	github.com/spf13/pflag v1.0.2
 	github.com/stretchr/testify v1.2.2 // indirect
 	github.com/zclconf/go-cty v1.2.0
-	golang.org/x/crypto v0.0.0-20190426145343-a29dc8fdc734
+	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550
 	golang.org/x/sys v0.0.0-20190502175342-a43fa875dd82 // indirect
 	golang.org/x/text v0.3.2 // indirect
+	golang.org/x/tools v0.0.0-20200426102838-f3a5411a4c3b // indirect
 )
+
+go 1.14
