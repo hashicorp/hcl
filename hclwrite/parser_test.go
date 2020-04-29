@@ -691,6 +691,91 @@ func TestParse(t *testing.T) {
 			},
 		},
 		{
+			"a = foo[bar.baz]\n",
+			TestTreeNode{
+				Type: "Body",
+				Children: []TestTreeNode{
+					{
+						Type: "Attribute",
+						Children: []TestTreeNode{
+							{
+								Type: "comments",
+							},
+							{
+								Type: "identifier",
+								Val:  "a",
+							},
+							{
+								Type: "Tokens",
+								Val:  " =",
+							},
+							{
+								Type: "Expression",
+								Children: []TestTreeNode{
+									{
+										Type: "Traversal",
+										Children: []TestTreeNode{
+											{
+												Type: "TraverseName",
+												Children: []TestTreeNode{
+													{
+														Type: "identifier",
+														Val:  " foo",
+													},
+												},
+											},
+										},
+									},
+									{
+										Type: "Tokens",
+										Val:  "[",
+									},
+									{
+										Type: "Traversal",
+										Children: []TestTreeNode{
+											{
+												Type: "TraverseName",
+												Children: []TestTreeNode{
+													{
+														Type: "identifier",
+														Val:  "bar",
+													},
+												},
+											},
+											{
+												Type: "TraverseName",
+												Children: []TestTreeNode{
+													{
+														Type: "Tokens",
+														Val:  ".",
+													},
+													{
+														Type: "identifier",
+														Val:  "baz",
+													},
+												},
+											},
+										},
+									},
+									{
+										Type: "Tokens",
+										Val:  "]",
+									},
+								},
+							},
+							{
+								Type: "comments",
+							},
+							{
+								Type: "Tokens",
+								Val:  "\n",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			"a = foo[bar].baz\n",
 			TestTreeNode{
 				Type: "Body",
