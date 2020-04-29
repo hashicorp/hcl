@@ -2,7 +2,6 @@ package hclwrite
 
 import (
 	"fmt"
-	"reflect"
 	"testing"
 
 	"github.com/davecgh/go-spew/spew"
@@ -1094,7 +1093,7 @@ foo "bar" "baz" {
 		t.Run(test.input, func(t *testing.T) {
 			got := lexConfig([]byte(test.input))
 
-			if !reflect.DeepEqual(got, test.want) {
+			if !got.Equal(test.want, false) {
 				diff := prettyConfig.Compare(test.want, got)
 				t.Errorf(
 					"wrong result\ninput: %s\ndiff:  %s", test.input, diff,

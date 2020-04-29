@@ -43,6 +43,22 @@ func (t *Token) asHCLSyntax() hclsyntax.Token {
 // Tokens is a flat list of tokens.
 type Tokens []*Token
 
+// Equal returns whether the token sequence is strictly equal to another series. If ignoreSpaces is set, it will ignore differences in SpacesBefore.
+func (ts Tokens) Equal(tokens Tokens, ignoreSpaces bool) bool {
+	if len(ts) != len(tokens) {
+		return false
+	}
+
+	for i, a := range ts {
+		b := tokens[i]
+		if a.Type != b.Type || (!ignoreSpaces && a.SpacesBefore != b.SpacesBefore) || !bytes.Equal(a.Bytes, b.Bytes) {
+			return false
+		}
+	}
+
+	return true
+}
+
 func (ts Tokens) Bytes() []byte {
 	buf := &bytes.Buffer{}
 	ts.WriteTo(buf)

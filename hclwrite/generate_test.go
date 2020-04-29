@@ -458,7 +458,7 @@ func TestTokensForValue(t *testing.T) {
 		t.Run(test.Val.GoString(), func(t *testing.T) {
 			got := TokensForValue(test.Val)
 
-			if !cmp.Equal(got, test.Want) {
+			if !got.Equal(test.Want, false) {
 				diff := cmp.Diff(got, test.Want, cmp.Comparer(func(a, b []byte) bool {
 					return bytes.Equal(a, b)
 				}))
@@ -501,7 +501,7 @@ func TestTokensForTraversal(t *testing.T) {
 	for _, test := range tests {
 		got := TokensForTraversal(test.Val)
 
-		if !cmp.Equal(got, test.Want) {
+		if !got.Equal(test.Want, false) {
 			diff := cmp.Diff(got, test.Want, cmp.Comparer(func(a, b []byte) bool {
 				return bytes.Equal(a, b)
 			}))

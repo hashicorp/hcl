@@ -209,7 +209,7 @@ func TestBodyGetAttribute(t *testing.T) {
 				}
 
 				got := attr.BuildTokens(nil)
-				if !reflect.DeepEqual(got, test.want) {
+				if !got.Equal(test.want, false) {
 					t.Errorf("wrong result\ngot:  %s\nwant: %s", spew.Sdump(got), spew.Sdump(test.want))
 				}
 			}
@@ -532,7 +532,7 @@ func TestBodySetAttributeValue(t *testing.T) {
 			f.Body().SetAttributeValue(test.name, test.val)
 			got := f.BuildTokens(nil)
 			format(got)
-			if !reflect.DeepEqual(got, test.want) {
+			if !got.Equal(test.want, false) {
 				diff := cmp.Diff(test.want, got)
 				t.Errorf("wrong result\ngot:  %s\nwant: %s\ndiff:\n%s", spew.Sdump(got), spew.Sdump(test.want), diff)
 			}
@@ -758,7 +758,7 @@ func TestBodySetAttributeTraversal(t *testing.T) {
 			f.Body().SetAttributeTraversal(test.name, traversal)
 			got := f.BuildTokens(nil)
 			format(got)
-			if !reflect.DeepEqual(got, test.want) {
+			if !got.Equal(test.want, false) {
 				diff := cmp.Diff(test.want, got)
 				t.Errorf("wrong result\ngot:  %s\nwant: %s\ndiff:\n%s", spew.Sdump(got), spew.Sdump(test.want), diff)
 			}
@@ -922,7 +922,7 @@ func TestBodySetAttributeRaw(t *testing.T) {
 			f.Body().SetAttributeRaw(test.name, test.tokens)
 			got := f.BuildTokens(nil)
 			format(got)
-			if !reflect.DeepEqual(got, test.want) {
+			if !got.Equal(test.want, false) {
 				diff := cmp.Diff(test.want, got)
 				t.Errorf("wrong result\ngot:  %s\nwant: %s\ndiff:\n%s", spew.Sdump(got), spew.Sdump(test.want), diff)
 			}
@@ -1138,7 +1138,7 @@ func TestBodyRemoveAttribute(t *testing.T) {
 			f.Body().RemoveAttribute(test.name)
 			got := f.BuildTokens(nil)
 			format(got)
-			if !reflect.DeepEqual(got, test.want) {
+			if !got.Equal(test.want, false) {
 				diff := cmp.Diff(test.want, got)
 				t.Errorf("wrong result\ngot:  %s\nwant: %s\ndiff:\n%s", spew.Sdump(got), spew.Sdump(test.want), diff)
 			}
@@ -1381,7 +1381,7 @@ func TestBodyAppendBlock(t *testing.T) {
 			f.Body().AppendNewBlock(test.blockType, test.labels)
 			got := f.BuildTokens(nil)
 			format(got)
-			if !reflect.DeepEqual(got, test.want) {
+			if !got.Equal(test.want, false) {
 				diff := cmp.Diff(test.want, got)
 				t.Errorf("wrong result\ngot:  %s\nwant: %s\ndiff:\n%s", spew.Sdump(got), spew.Sdump(test.want), diff)
 			}
