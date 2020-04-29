@@ -2,7 +2,6 @@ package hclwrite
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 	"testing"
 
@@ -1516,7 +1515,7 @@ bar {}
 		},
 	}
 	format(got)
-	if !reflect.DeepEqual(got, want) {
+	if !got.Equal(want, false) {
 		diff := cmp.Diff(want, got)
 		t.Errorf("wrong result\ngot:  %s\nwant: %s\ndiff:\n%s", spew.Sdump(got), spew.Sdump(want), diff)
 	}
@@ -1581,7 +1580,7 @@ bar {}
 		},
 	}
 	format(got)
-	if !reflect.DeepEqual(got, want) {
+	if !got.Equal(want, false) {
 		diff := cmp.Diff(want, got)
 		t.Errorf("wrong result\ngot:  %s\nwant: %s\ndiff:\n%s", spew.Sdump(got), spew.Sdump(want), diff)
 	}
