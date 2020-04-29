@@ -43,7 +43,7 @@ func (t *Token) asHCLSyntax() hclsyntax.Token {
 // Tokens is a flat list of tokens.
 type Tokens []*Token
 
-// Equal returns whether the token sequence is strictly equal to another series. If ignoreSpaces is set, it will ignore differences in SpacesBefore.
+// Equal returns whether a sequence of tokens is equal to another.
 func (ts Tokens) Equal(tokens Tokens, ignoreSpaces bool) bool {
 	if len(ts) != len(tokens) {
 		return false
