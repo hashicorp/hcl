@@ -1,7 +1,10 @@
 # HCL Changelog
 
-## v2.5.0 (unreleased)
+## v2.5.0 (May 6, 2020)
 
+### Enhancements
+
+* hclwrite: Generate multi-line objects and maps. ([#372](https://github.com/hashicorp/hcl/pull/372))
 
 ## v2.4.0 (Apr 13, 2020)
 
