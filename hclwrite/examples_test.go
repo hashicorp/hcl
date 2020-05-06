@@ -48,9 +48,13 @@ func Example_generateFromScratch() {
 	// Output:
 	// string = "foo"
 	//
-	// object = { bar = 5, baz = true, foo = "foo" }
-	// bool   = false
-	// path   = env.PATH
+	// object = {
+	//   bar = 5
+	//   baz = true
+	//   foo = "foo"
+	// }
+	// bool = false
+	// path = env.PATH
 	//
 	// foo {
 	//   hello = "world"
