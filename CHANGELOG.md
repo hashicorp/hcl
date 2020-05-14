@@ -1,6 +1,6 @@
 # HCL Changelog
 
-## v2.5.1 (May 14, 20202)
+## v2.5.1 (May 14, 2020)
 
 ### Bugs Fixed
 
