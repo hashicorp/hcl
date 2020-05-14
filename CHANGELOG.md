@@ -1,7 +1,11 @@
 # HCL Changelog
 
-## v2.6.0 (unreleased)
+## v2.5.1 (May 14, 20202)
 
+### Bugs Fixed
+
+* hclwrite: handle legacy dot access of numeric indexes. ([#369](https://github.com/hashicorp/hcl/pull/369))
+* hclwrite: Fix panic for dotted full splat (`foo.*`) ([#374](https://github.com/hashicorp/hcl/pull/374))
 
 ## v2.5.0 (May 6, 2020)
 
