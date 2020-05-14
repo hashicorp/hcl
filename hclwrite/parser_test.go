@@ -619,6 +619,222 @@ func TestParse(t *testing.T) {
 			},
 		},
 		{
+			"a = foo.*\n",
+			TestTreeNode{
+				Type: "Body",
+				Children: []TestTreeNode{
+					{
+						Type: "Attribute",
+						Children: []TestTreeNode{
+							{
+								Type: "comments",
+							},
+							{
+								Type: "identifier",
+								Val:  "a",
+							},
+							{
+								Type: "Tokens",
+								Val:  " =",
+							},
+							{
+								Type: "Expression",
+								Children: []TestTreeNode{
+									{
+										Type: "Traversal",
+										Children: []TestTreeNode{
+											{
+												Type: "TraverseName",
+												Children: []TestTreeNode{
+													{
+														Type: "identifier",
+														Val:  " foo",
+													},
+												},
+											},
+										},
+									},
+									{
+										Type: "Tokens",
+										Val:  ".*",
+									},
+								},
+							},
+							{
+								Type: "comments",
+							},
+							{
+								Type: "Tokens",
+								Val:  "\n",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			"a = foo.*.bar\n",
+			TestTreeNode{
+				Type: "Body",
+				Children: []TestTreeNode{
+					{
+						Type: "Attribute",
+						Children: []TestTreeNode{
+							{
+								Type: "comments",
+							},
+							{
+								Type: "identifier",
+								Val:  "a",
+							},
+							{
+								Type: "Tokens",
+								Val:  " =",
+							},
+							{
+								Type: "Expression",
+								Children: []TestTreeNode{
+									{
+										Type: "Traversal",
+										Children: []TestTreeNode{
+											{
+												Type: "TraverseName",
+												Children: []TestTreeNode{
+													{
+														Type: "identifier",
+														Val:  " foo",
+													},
+												},
+											},
+										},
+									},
+									{
+										Type: "Tokens",
+										Val:  ".*.bar",
+									},
+								},
+							},
+							{
+								Type: "comments",
+							},
+							{
+								Type: "Tokens",
+								Val:  "\n",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			"a = foo[*]\n",
+			TestTreeNode{
+				Type: "Body",
+				Children: []TestTreeNode{
+					{
+						Type: "Attribute",
+						Children: []TestTreeNode{
+							{
+								Type: "comments",
+							},
+							{
+								Type: "identifier",
+								Val:  "a",
+							},
+							{
+								Type: "Tokens",
+								Val:  " =",
+							},
+							{
+								Type: "Expression",
+								Children: []TestTreeNode{
+									{
+										Type: "Traversal",
+										Children: []TestTreeNode{
+											{
+												Type: "TraverseName",
+												Children: []TestTreeNode{
+													{
+														Type: "identifier",
+														Val:  " foo",
+													},
+												},
+											},
+										},
+									},
+									{
+										Type: "Tokens",
+										Val:  "[*]",
+									},
+								},
+							},
+							{
+								Type: "comments",
+							},
+							{
+								Type: "Tokens",
+								Val:  "\n",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			"a = foo[*].bar\n",
+			TestTreeNode{
+				Type: "Body",
+				Children: []TestTreeNode{
+					{
+						Type: "Attribute",
+						Children: []TestTreeNode{
+							{
+								Type: "comments",
+							},
+							{
+								Type: "identifier",
+								Val:  "a",
+							},
+							{
+								Type: "Tokens",
+								Val:  " =",
+							},
+							{
+								Type: "Expression",
+								Children: []TestTreeNode{
+									{
+										Type: "Traversal",
+										Children: []TestTreeNode{
+											{
+												Type: "TraverseName",
+												Children: []TestTreeNode{
+													{
+														Type: "identifier",
+														Val:  " foo",
+													},
+												},
+											},
+										},
+									},
+									{
+										Type: "Tokens",
+										Val:  "[*].bar",
+									},
+								},
+							},
+							{
+								Type: "comments",
+							},
+							{
+								Type: "Tokens",
+								Val:  "\n",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			"a = foo[bar]\n",
 			TestTreeNode{
 				Type: "Body",
