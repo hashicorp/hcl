@@ -3,21 +3,46 @@
 This directory contains helper functions and corpuses that can be used to
 fuzz-test the HCL JSON parser using [go-fuzz](https://github.com/dvyukov/go-fuzz).
 
-To fuzz, first install go-fuzz and its build tool in your `GOPATH`:
+## Work directory
+
+`go-fuzz` needs a working directory where it can keep state as it works.  This
+should ideally be in a ramdisk for efficiency, and should probably _not_ be on
+an SSD to avoid thrashing it. Here's how to create a ramdisk:
+
+### macOS
 
 ```
-$ make tools
+$ SIZE_IN_MB=1024
+$ DEVICE=`hdiutil attach -nobrowse -nomount ram://$(($SIZE_IN_MB*2048))`
+$ diskutil erasevolume HFS+ RamDisk $DEVICE
+$ export RAMDISK=/Volumes/RamDisk
 ```
 
-Now you can fuzz one or all of the parsers:
+### Linux
 
 ```
-$ make fuzz-config FUZZ_WORK_DIR=/tmp/hcl2-fuzz-config
+$ mkdir /mnt/ramdisk
+$ mount -t tmpfs -o size=1024M tmpfs /mnt/ramdisk
+$ export RAMDISK=/mnt/ramdisk
 ```
 
-In all cases, set `FUZZ_WORK_DIR` to a directory where `go-fuzz` can keep state
-as it works. This should ideally be in a ramdisk for efficiency, and should
-probably _not_ be on an SSD to avoid thrashing it.
+## Running the fuzzer
+
+Next, install `go-fuzz` and its build tool in your `GOPATH`:
+
+```
+$ make tools FUZZ_WORK_DIR=$RAMDISK
+```
+
+Now you can fuzz the parser:
+
+```
+$ make fuzz-config FUZZ_WORK_DIR=$RAMDISK/json-fuzz-config
+```
+
+~> Note: `go-fuzz` does not interact well with `goenv`. If you encounter build
+errors where the package `go.fuzz.main` could not be found, you may need to use
+a machine with a direct installation of Go.
 
 ## Understanding the result
 
