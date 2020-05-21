@@ -202,7 +202,7 @@ func checkInvalidTokens(tokens Tokens) hcl.Diagnostics {
 				case TokenBitwiseAnd:
 					suggestion = " Did you mean boolean AND (\"&&\")?"
 				case TokenBitwiseOr:
-					suggestion = " Did you mean boolean OR (\"&&\")?"
+					suggestion = " Did you mean boolean OR (\"||\")?"
 				case TokenBitwiseNot:
 					suggestion = " Did you mean boolean NOT (\"!\")?"
 				}
