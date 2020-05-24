@@ -71,6 +71,20 @@ func ParseWithStartPos(src []byte, filename string, start hcl.Pos) (*hcl.File, h
 	return file, diags
 }
 
+// ParseExpression parses the given buffer as a standalone JSON expression,
+// returning it as an instance of Expression.
+func ParseExpression(src []byte, filename string) (hcl.Expression, hcl.Diagnostics) {
+	return ParseExpressionWithStartPos(src, filename, hcl.Pos{Byte: 0, Line: 1, Column: 1})
+}
+
+// ParseExpressionWithStartPos parses like json.ParseExpression, but unlike
+// json.ParseExpression you can pass a start position of the given JSON
+// expression as a hcl.Pos.
+func ParseExpressionWithStartPos(src []byte, filename string, start hcl.Pos) (hcl.Expression, hcl.Diagnostics) {
+	node, diags := parseExpression(src, filename, start)
+	return &expression{src: node}, diags
+}
+
 // ParseFile is a convenience wrapper around Parse that first attempts to load
 // data from the given filename, passing the result to Parse if successful.
 //
