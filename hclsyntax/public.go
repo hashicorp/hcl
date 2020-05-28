@@ -1,6 +1,8 @@
 package hclsyntax
 
 import (
+	"fmt"
+
 	"github.com/hashicorp/hcl/v2"
 )
 
@@ -34,6 +36,98 @@ func ParseConfig(src []byte, filename string, start hcl.Pos) (*hcl.File, hcl.Dia
 			root: body,
 		},
 	}, diags
+}
+
+// ParseBodyFromTokens parses given tokens as a body of a whole HCL config file,
+// returning a *Body representing its contents.
+func ParseBodyFromTokens(tokens Tokens, end TokenType) (*Body, hcl.Diagnostics) {
+	peeker := newPeeker(tokens, false)
+	parser := &parser{peeker: peeker}
+	return parser.ParseBody(end)
+}
+
+// ParseBodyItemFromTokens parses given tokens as a body item
+// such as an attribute or a block, returning such item as Node
+func ParseBodyItemFromTokens(tokens Tokens) (Node, hcl.Diagnostics) {
+	if len(tokens) == 0 {
+		return nil, nil
+	}
+
+	peeker := newPeeker(tokens, false)
+
+	// Sanity checks to avoid surprises
+	firstToken := peeker.Peek()
+	if firstToken.Type != TokenIdent {
+		return nil, hcl.Diagnostics{
+				&hcl.Diagnostic{
+					Severity: hcl.DiagError,
+					Summary:  "Identifier not found",
+					Detail:   fmt.Sprintf("Expected definition to start with an identifier, %s found",
+						firstToken.Type),
+					Subject:  &firstToken.Range,
+				},
+			}
+	}
+	lastToken := peeker.lastToken()
+	if lastToken.Type != TokenEOF &&
+		lastToken.Type != TokenNewline {
+			return nil, hcl.Diagnostics{
+				&hcl.Diagnostic{
+					Severity: hcl.DiagError,
+					Summary:  "Unterminated definition",
+					Detail:   fmt.Sprintf("Expected definition terminated either by a newline or EOF, %s found",
+						lastToken.Type),
+					Subject:  &lastToken.Range,
+				},
+			}
+	}
+
+	parser := &parser{peeker: peeker}
+	return parser.ParseBodyItem()
+}
+
+// ParseBlockFromTokens parses given tokens as a block, returning
+// diagnostic error in case the body item isn't a block
+func ParseBlockFromTokens(tokens Tokens) (*Block, hcl.Diagnostics) {
+	bi, diags := ParseBodyItemFromTokens(tokens)
+	if bi == nil {
+		return nil, diags
+	}
+
+	block, ok := bi.(*Block)
+	if !ok {
+		rng := bi.Range()
+		diags = append(diags, &hcl.Diagnostic{
+			Severity: hcl.DiagError,
+			Summary:  fmt.Sprintf("Unexpected definition (%T)", bi),
+			Detail:   fmt.Sprintf("Expected a block definition, but found %T instead", bi),
+			Subject:  &rng,
+		})
+	}
+
+	return block, diags
+}
+
+// ParseAttributeFromTokens parses given tokens as an attribute
+// diagnostic error in case the body item isn't an attribute
+func ParseAttributeFromTokens(tokens Tokens) (*Attribute, hcl.Diagnostics) {
+	bi, diags := ParseBodyItemFromTokens(tokens)
+	if bi == nil {
+		return nil, diags
+	}
+
+	block, ok := bi.(*Attribute)
+	if !ok {
+		rng := bi.Range()
+		diags = append(diags, &hcl.Diagnostic{
+			Severity: hcl.DiagError,
+			Summary:  fmt.Sprintf("Unexpected definition (%T)", bi),
+			Detail:   fmt.Sprintf("Expected an attribute, but found %T instead", bi),
+			Subject:  &rng,
+		})
+	}
+
+	return block, diags
 }
 
 // ParseExpression parses the given buffer as a standalone HCL expression,

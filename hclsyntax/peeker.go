@@ -112,7 +112,11 @@ func (p *peeker) nextToken() (Token, int) {
 	// if we fall out here then we'll return the EOF token, and leave
 	// our index pointed off the end of the array so we'll keep
 	// returning EOF in future too.
-	return p.Tokens[len(p.Tokens)-1], len(p.Tokens)
+	return p.lastToken(), len(p.Tokens)
+}
+
+func (p *peeker) lastToken() Token {
+	return p.Tokens[len(p.Tokens)-1]
 }
 
 func (p *peeker) includingNewlines() bool {
