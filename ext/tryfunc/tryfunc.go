@@ -27,6 +27,9 @@ var TryFunc function.Function
 // CanFunc tries to evaluate the expression given in its first argument.
 var CanFunc function.Function
 
+// RaiseFunc raises its argument's text as a custom error message.
+var RaiseFunc function.Function
+
 func init() {
 	TryFunc = function.New(&function.Spec{
 		VarParam: &function.Parameter{
@@ -42,6 +45,16 @@ func init() {
 		},
 		Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
 			return try(args)
+		},
+	})
+	RaiseFunc = function.New(&function.Spec{
+		VarParam: &function.Parameter{
+			Name: "expressions",
+			Type: customdecode.ExpressionClosureType,
+		},
+		Type: function.StaticReturnType(error),
+		Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
+			return raise(args[0])
 		},
 	})
 	CanFunc = function.New(&function.Spec{
@@ -103,6 +116,22 @@ func try(args []cty.Value) (cty.Value, error) {
 		}
 	}
 	buf.WriteString("\nAt least one expression must produce a successful result")
+	return cty.NilVal, errors.New(buf.String())
+}
+
+func raise(arg cty.Value) (cty.NilVal, error) {
+	closure := customdecode.ExpressionClosureFromVal(arg)
+	if dependsOnUnknowns(closure.Expression, closure.EvalContext) {
+		// Can't decide yet, then.
+		return cty.UnknownVal(cty.Bool), nil
+	}
+
+	err_msg, diags := closure.Value()
+	if diags.HasErrors() {
+		return cty.NilVal, diags
+	}
+	var buf strings.Builder
+	buf.WriteString(err_msg)
 	return cty.NilVal, errors.New(buf.String())
 }
 
