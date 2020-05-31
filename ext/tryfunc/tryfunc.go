@@ -52,7 +52,7 @@ func init() {
 			Name: "expressions",
 			Type: customdecode.ExpressionClosureType,
 		},
-		Type: function.StaticReturnType(error),
+		Type: function.StaticReturnType(cty.Bool),
 		Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
 			return raise(args[0])
 		},
@@ -119,7 +119,7 @@ func try(args []cty.Value) (cty.Value, error) {
 	return cty.NilVal, errors.New(buf.String())
 }
 
-func raise(arg cty.Value) (cty.NilVal, error) {
+func raise(arg cty.Value) (cty.Value, error) {
 	closure := customdecode.ExpressionClosureFromVal(arg)
 	if dependsOnUnknowns(closure.Expression, closure.EvalContext) {
 		// Can't decide yet, then.
@@ -131,7 +131,7 @@ func raise(arg cty.Value) (cty.NilVal, error) {
 		return cty.NilVal, diags
 	}
 	var buf strings.Builder
-	buf.WriteString(err_msg)
+	buf.WriteString(err_msg.AsString())
 	return cty.NilVal, errors.New(buf.String())
 }
 

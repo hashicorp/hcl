@@ -138,9 +138,9 @@ func TestRaiseFunc(t *testing.T) {
 		"custom error raised": {
 			`raise(foo)`,
 			map[string]cty.Value{
-				"foo": "foo",
+				"foo": cty.StringVal("foo"),
 			},
-			nil,
+			cty.NilVal,
 			`foo`,
 		},
 		"no arguments": {
