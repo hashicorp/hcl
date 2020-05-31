@@ -128,6 +128,66 @@ At least one expression must produce a successful result.`,
 	}
 }
 
+func TestRaiseFunc(t *testing.T) {
+	tests := map[string]struct {
+		expr    string
+		vars    map[string]cty.Value
+		want    cty.Value
+		wantErr string
+	}{
+		"custom error raised": {
+			`raise(foo)`,
+			map[string]cty.Value{
+				"foo": "foo",
+			},
+			nil,
+			`foo`,
+		},
+		"no arguments": {
+			`raise()`,
+			nil,
+			cty.NilVal,
+			`test.hcl:1,1-7: Error in function call; Call to function "raise" failed: exactly one argument is required.`,
+		},
+	}
+
+	for k, test := range tests {
+		t.Run(k, func(t *testing.T) {
+			expr, diags := hclsyntax.ParseExpression([]byte(test.expr), "test.hcl", hcl.Pos{Line: 1, Column: 1})
+			if diags.HasErrors() {
+				t.Fatalf("unexpected problems: %s", diags.Error())
+			}
+
+			ctx := &hcl.EvalContext{
+				Variables: test.vars,
+				Functions: map[string]function.Function{
+					"raise": RaiseFunc,
+				},
+			}
+
+			got, err := expr.Value(ctx)
+
+			if err != nil {
+				if test.wantErr != "" {
+					if got, want := err.Error(), test.wantErr; got != want {
+						t.Errorf("wrong error\ngot:  %s\nwant: %s", got, want)
+					}
+				} else {
+					t.Errorf("unexpected error\ngot:  %s\nwant: <nil>", err)
+				}
+				return
+			}
+			if test.wantErr != "" {
+				t.Errorf("wrong error\ngot:  <nil>\nwant: %s", test.wantErr)
+			}
+
+			if !test.want.RawEquals(got) {
+				t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.want)
+			}
+		})
+	}
+}
+
 func TestCanFunc(t *testing.T) {
 	tests := map[string]struct {
 		expr string
