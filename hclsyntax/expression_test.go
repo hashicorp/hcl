@@ -1516,6 +1516,92 @@ EOT
 			cty.DynamicVal,
 			0,
 		},
+		{
+			`true ? ["a", "b"]: []`,
+			nil,
+			cty.ListVal([]cty.Value{cty.StringVal("a"), cty.StringVal("b")}),
+			0,
+		},
+		{
+			`false ? ["a", "b"]: []`,
+			nil,
+			cty.ListValEmpty(cty.String),
+			0,
+		},
+		{
+			`true ? { a = true, b = "two" }: {}`,
+			nil,
+			cty.MapVal(map[string]cty.Value{"a": cty.StringVal("true"), "b": cty.StringVal("two")}),
+			0,
+		},
+		{
+			`false ? { a = true, b = "two" }: {}`,
+			nil,
+			cty.MapValEmpty(cty.String),
+			0,
+		},
+		{
+			`true ? { a = [1], b = "two" }: {}`,
+			nil,
+			cty.ObjectVal(map[string]cty.Value{"a": cty.TupleVal([]cty.Value{cty.NumberIntVal(1)}), "b": cty.StringVal("two")}),
+			0,
+		},
+		{
+			`false ? { a = [1], b = "two" }: {}`,
+			nil,
+			cty.EmptyObjectVal,
+			0,
+		},
+		{
+			`merge({ a = [1], b = [2] }, cond ? { b = "two", c = [3] } : { c = "three" })`,
+			&hcl.EvalContext{
+				Functions: map[string]function.Function{
+					"merge": stdlib.MergeFunc,
+				},
+				Variables: map[string]cty.Value{
+					"cond": cty.True,
+				},
+			},
+			cty.ObjectVal(map[string]cty.Value{
+				"a": cty.TupleVal([]cty.Value{cty.NumberIntVal(1)}),
+				"b": cty.StringVal("two"),
+				"c": cty.TupleVal([]cty.Value{cty.NumberIntVal(3)}),
+			}),
+			0,
+		},
+		{
+			`merge({ a = [1], b = [2] }, cond ? { b = "two", c = [3] } : { c = "three" })`,
+			&hcl.EvalContext{
+				Functions: map[string]function.Function{
+					"merge": stdlib.MergeFunc,
+				},
+				Variables: map[string]cty.Value{
+					"cond": cty.False,
+				},
+			},
+			cty.ObjectVal(map[string]cty.Value{
+				"a": cty.TupleVal([]cty.Value{cty.NumberIntVal(1)}),
+				"b": cty.TupleVal([]cty.Value{cty.NumberIntVal(2)}),
+				"c": cty.StringVal("three"),
+			}),
+			0,
+		},
+		{
+			`merge({ a = [1], b = [2] }, cond ? { b = "two", c = [3] } : {})`,
+			&hcl.EvalContext{
+				Functions: map[string]function.Function{
+					"merge": stdlib.MergeFunc,
+				},
+				Variables: map[string]cty.Value{
+					"cond": cty.False,
+				},
+			},
+			cty.ObjectVal(map[string]cty.Value{
+				"a": cty.TupleVal([]cty.Value{cty.NumberIntVal(1)}),
+				"b": cty.TupleVal([]cty.Value{cty.NumberIntVal(2)}),
+			}),
+			0,
+		},
 	}
 
 	for _, test := range tests {

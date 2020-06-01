@@ -512,27 +512,13 @@ func (e *ConditionalExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostic
 
 	default:
 		// Try to find a type that both results can be converted to.
-		resultType, convs = convert.UnifyUnsafe([]cty.Type{trueResult.Type(), falseResult.Type()})
-	}
+		resultType, maybeConvs := convert.UnifyUnsafe([]cty.Type{trueResult.Type(), falseResult.Type()})
 
-	if resultType == cty.NilType {
-		return cty.DynamicVal, hcl.Diagnostics{
-			{
-				Severity: hcl.DiagError,
-				Summary:  "Inconsistent conditional result types",
-				Detail: fmt.Sprintf(
-					// FIXME: Need a helper function for showing natural-language type diffs,
-					// since this will generate some useless messages in some cases, like
-					// "These expressions are object and object respectively" if the
-					// object types don't exactly match.
-					"The true and false result expressions must have consistent types. The given expressions are %s and %s, respectively.",
-					trueResult.Type().FriendlyName(), falseResult.Type().FriendlyName(),
-				),
-				Subject:     hcl.RangeBetween(e.TrueResult.Range(), e.FalseResult.Range()).Ptr(),
-				Context:     &e.SrcRange,
-				Expression:  e,
-				EvalContext: ctx,
-			},
+		// If unification is possible, we will use the conversion functions
+		// later to convert the result into the common type. Otherwise we will
+		// return the original value.
+		if resultType != cty.NilType {
+			convs = maybeConvs
 		}
 	}
 
