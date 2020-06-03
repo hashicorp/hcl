@@ -261,6 +261,18 @@ func (e *FunctionCallExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnosti
 
 		switch {
 		case expandVal.Type().Equals(cty.DynamicPseudoType):
+			if expandVal.IsNull() {
+				diags = append(diags, &hcl.Diagnostic{
+					Severity:    hcl.DiagError,
+					Summary:     "Invalid expanding argument value",
+					Detail:      "The expanding argument (indicated by ...) must not be null.",
+					Subject:     expandExpr.Range().Ptr(),
+					Context:     e.Range().Ptr(),
+					Expression:  expandExpr,
+					EvalContext: ctx,
+				})
+				return cty.DynamicVal, diags
+			}
 			return cty.DynamicVal, diags
 		case expandVal.Type().IsTupleType() || expandVal.Type().IsListType() || expandVal.Type().IsSetType():
 			if expandVal.IsNull() {
