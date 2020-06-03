@@ -260,6 +260,8 @@ func (e *FunctionCallExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnosti
 		}
 
 		switch {
+		case expandVal.Type().Equals(cty.DynamicPseudoType):
+			return cty.DynamicVal, diags
 		case expandVal.Type().IsTupleType() || expandVal.Type().IsListType() || expandVal.Type().IsSetType():
 			if expandVal.IsNull() {
 				diags = append(diags, &hcl.Diagnostic{

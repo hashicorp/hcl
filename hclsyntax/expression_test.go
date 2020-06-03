@@ -323,6 +323,21 @@ upper(
 			1, // argument cannot be null
 		},
 		{
+			`concat(var.unknownlist...)`,
+			&hcl.EvalContext{
+				Functions: map[string]function.Function{
+					"concat": stdlib.ConcatFunc,
+				},
+				Variables: map[string]cty.Value{
+					"var": cty.ObjectVal(map[string]cty.Value{
+						"unknownlist": cty.UnknownVal(cty.DynamicPseudoType),
+					}),
+				},
+			},
+			cty.DynamicVal,
+			0,
+		},
+		{
 			`[]`,
 			nil,
 			cty.EmptyTupleVal,
