@@ -1,5 +1,11 @@
 # HCL Changelog
 
+## v2.5.2 (unreleased)
+
+### Bugs Fixed
+* hclsyntax: Fix panic with combination of sequences and null arguments ([#386](https://github.com/hashicorp/hcl/pull/386))
+* hclsyntax: Fix handling of unknown values and sequences ([#386](https://github.com/hashicorp/hcl/pull/386))
+
 ## v2.5.1 (May 14, 2020)
 
 ### Bugs Fixed
