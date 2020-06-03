@@ -406,22 +406,39 @@ func (e *FunctionCallExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnosti
 			} else {
 				param = varParam
 			}
-			argExpr := e.Args[i]
 
-			// TODO: we should also unpick a PathError here and show the
-			// path to the deep value where the error was detected.
-			diags = append(diags, &hcl.Diagnostic{
-				Severity: hcl.DiagError,
-				Summary:  "Invalid function argument",
-				Detail: fmt.Sprintf(
-					"Invalid value for %q parameter: %s.",
-					param.Name, err,
-				),
-				Subject:     argExpr.StartRange().Ptr(),
-				Context:     e.Range().Ptr(),
-				Expression:  argExpr,
-				EvalContext: ctx,
-			})
+			// this can happen if an argument is (incorrectly) null.
+			if i > len(e.Args)-1 {
+				diags = append(diags, &hcl.Diagnostic{
+					Severity: hcl.DiagError,
+					Summary:  "Invalid function argument",
+					Detail: fmt.Sprintf(
+						"Invalid value for %q parameter: %s.",
+						param.Name, err,
+					),
+					Subject:     args[len(params)].StartRange().Ptr(),
+					Context:     e.Range().Ptr(),
+					Expression:  e,
+					EvalContext: ctx,
+				})
+			} else {
+				argExpr := e.Args[i]
+
+				// TODO: we should also unpick a PathError here and show the
+				// path to the deep value where the error was detected.
+				diags = append(diags, &hcl.Diagnostic{
+					Severity: hcl.DiagError,
+					Summary:  "Invalid function argument",
+					Detail: fmt.Sprintf(
+						"Invalid value for %q parameter: %s.",
+						param.Name, err,
+					),
+					Subject:     argExpr.StartRange().Ptr(),
+					Context:     e.Range().Ptr(),
+					Expression:  argExpr,
+					EvalContext: ctx,
+				})
+			}
 
 		default:
 			diags = append(diags, &hcl.Diagnostic{

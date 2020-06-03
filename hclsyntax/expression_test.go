@@ -313,6 +313,16 @@ upper(
 			1, // too many function arguments
 		},
 		{
+			`concat([1, null]...)`,
+			&hcl.EvalContext{
+				Functions: map[string]function.Function{
+					"concat": stdlib.ConcatFunc,
+				},
+			},
+			cty.DynamicVal,
+			1, // argument cannot be null
+		},
+		{
 			`[]`,
 			nil,
 			cty.EmptyTupleVal,
