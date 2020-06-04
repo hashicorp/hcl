@@ -1,8 +1,13 @@
 # HCL Changelog
 
-## v2.5.2 (unreleased)
+## v2.6.0 (unreleased)
+
+### Enhancements
+
+* hcldec: Add a new Spec, ValidateSpec, which allows custom validation of values at decode-time. ([#387](https://github.com/hashicorp/hcl/pull/387))
 
 ### Bugs Fixed
+
 * hclsyntax: Fix panic with combination of sequences and null arguments ([#386](https://github.com/hashicorp/hcl/pull/386))
 * hclsyntax: Fix handling of unknown values and sequences ([#386](https://github.com/hashicorp/hcl/pull/386))
 
