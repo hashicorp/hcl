@@ -4,7 +4,7 @@
 
 ### Enhancements
 
-* hcldec: Add a new Spec, ValidateSpec, which allows custom validation of values at decode-time. ([#387](https://github.com/hashicorp/hcl/pull/387))
+* hcldec: Add a new `Spec`, `ValidateSpec`, which allows custom validation of values at decode-time. ([#387](https://github.com/hashicorp/hcl/pull/387))
 
 ### Bugs Fixed
 
