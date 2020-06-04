@@ -1541,6 +1541,24 @@ EOT
 			cty.DynamicVal,
 			0,
 		},
+		{
+			`true ? { a = "x", b = 1 } : {}`,
+			nil,
+			cty.MapVal(map[string]cty.Value{
+				"a": cty.StringVal("x"),
+				"b": cty.StringVal("1"),
+			}),
+			1, // this should be a warning diagnostic
+		},
+		{
+			`true ? { a = "x", b = 1 } : null`,
+			nil,
+			cty.ObjectVal(map[string]cty.Value{
+				"a": cty.StringVal("x"),
+				"b": cty.NumberIntVal(1),
+			}),
+			0,
+		},
 	}
 
 	for _, test := range tests {
@@ -1566,7 +1584,70 @@ EOT
 			}
 		})
 	}
+}
 
+func TestConditionalExprDiagnostics(t *testing.T) {
+	tests := []struct {
+		input string
+		want  cty.Value
+		diags hcl.Diagnostics
+	}{
+		{
+			`true ? { a = "x", b = 1 } : {}`,
+			cty.MapVal(map[string]cty.Value{
+				"a": cty.StringVal("x"),
+				"b": cty.StringVal("1"),
+			}),
+			hcl.Diagnostics{
+				{
+					Severity: hcl.DiagWarning,
+					Summary:  "Possibly unintentional type conversion",
+					Detail:   `The true and false result expressions are object and object. This will result in a value of type map of string. If this conversion is not intended, you can use "null" instead of "{}".`,
+				},
+			},
+		},
+		{
+			`true ? { a = "x", b = [1] } : {}`,
+			cty.DynamicVal,
+			hcl.Diagnostics{
+				{
+					Severity: hcl.DiagError,
+					Summary:  "Inconsistent conditional result types",
+					Detail:   `The true and false result expressions must have consistent types. The given expressions are object and object, respectively. Did you mean to use "null" instead of "{}"?`,
+				},
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.input, func(t *testing.T) {
+			expr, _ := ParseExpression([]byte(test.input), "", hcl.Pos{Line: 1, Column: 1, Byte: 0})
+
+			got, diags := expr.Value(nil)
+
+			if !got.RawEquals(test.want) {
+				t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.want)
+			}
+
+			if len(diags) != len(test.diags) {
+				t.Errorf("wrong number of diagnostics %d; want %d", len(diags), len(test.diags))
+				for _, diag := range diags {
+					t.Logf(" - %s", diag.Error())
+				}
+			}
+			for i, wantDiag := range test.diags {
+				gotDiag := diags[i]
+				if gotDiag.Severity != wantDiag.Severity {
+					t.Errorf("wrong severity, got %#v, want %#v", gotDiag.Severity, wantDiag.Severity)
+				}
+				if gotDiag.Summary != wantDiag.Summary {
+					t.Errorf("wrong summary\ngot:  %q\nwant: %q", gotDiag.Summary, wantDiag.Summary)
+				}
+				if gotDiag.Detail != wantDiag.Detail {
+					t.Errorf("wrong detail\ngot:  %q\nwant: %q", gotDiag.Detail, wantDiag.Detail)
+				}
+			}
+		})
+	}
 }
 
 func TestFunctionCallExprValue(t *testing.T) {

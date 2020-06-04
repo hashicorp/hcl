@@ -546,7 +546,26 @@ func (e *ConditionalExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostic
 		resultType, convs = convert.UnifyUnsafe([]cty.Type{trueResult.Type(), falseResult.Type()})
 	}
 
+	// A common mistake is an expression like this:
+	//
+	//   cond ? { a = "x", b = 5 } : {}
+	//
+	// In this case, the user means "if cond, use this object, otherwise fall
+	// back to an empty object". However, an empty object cannot be unified
+	// with a non-empty object, and what the user really wants is the "nothing"
+	// equivalent for their value object. The correct value for this is null,
+	// so we want to nudge them in that direction with a suggestion, either as
+	// part of an error diagnostic or as a separate warning.
+	emptyObjectMixup := (trueResult.Type().IsObjectType() && falseResult.RawEquals(cty.EmptyObjectVal)) ||
+		(falseResult.Type().IsObjectType() && trueResult.RawEquals(cty.EmptyObjectVal))
+
 	if resultType == cty.NilType {
+		var suggestion string
+
+		if emptyObjectMixup {
+			suggestion = ` Did you mean to use "null" instead of "{}"?`
+		}
+
 		return cty.DynamicVal, hcl.Diagnostics{
 			{
 				Severity: hcl.DiagError,
@@ -556,8 +575,9 @@ func (e *ConditionalExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostic
 					// since this will generate some useless messages in some cases, like
 					// "These expressions are object and object respectively" if the
 					// object types don't exactly match.
-					"The true and false result expressions must have consistent types. The given expressions are %s and %s, respectively.",
+					"The true and false result expressions must have consistent types. The given expressions are %s and %s, respectively.%s",
 					trueResult.Type().FriendlyName(), falseResult.Type().FriendlyName(),
+					suggestion,
 				),
 				Subject:     hcl.RangeBetween(e.TrueResult.Range(), e.FalseResult.Range()).Ptr(),
 				Context:     &e.SrcRange,
@@ -565,6 +585,23 @@ func (e *ConditionalExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostic
 				EvalContext: ctx,
 			},
 		}
+	}
+
+	if emptyObjectMixup {
+		diags = append(diags, &hcl.Diagnostic{
+			Severity: hcl.DiagWarning,
+			Summary:  "Possibly unintentional type conversion",
+			Detail: fmt.Sprintf(
+				"The true and false result expressions are %s and %s. This will result in a value of type %s. If this conversion is not intended, you can use \"null\" instead of \"{}\".",
+				trueResult.Type().FriendlyName(),
+				falseResult.Type().FriendlyName(),
+				resultType.FriendlyName(),
+			),
+			Subject:     hcl.RangeBetween(e.TrueResult.Range(), e.FalseResult.Range()).Ptr(),
+			Context:     &e.SrcRange,
+			Expression:  e,
+			EvalContext: ctx,
+		})
 	}
 
 	condResult, condDiags := e.Condition.Value(ctx)
