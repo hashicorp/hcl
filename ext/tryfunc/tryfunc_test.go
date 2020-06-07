@@ -141,7 +141,7 @@ func TestRaiseFunc(t *testing.T) {
 				"foo": cty.StringVal("foo"),
 			},
 			cty.NilVal,
-			`foo`,
+			`test.hcl:1,1-7: Error in function call; Call to function "raise" failed: foo.`,
 		},
 		"no arguments": {
 			`raise()`,
