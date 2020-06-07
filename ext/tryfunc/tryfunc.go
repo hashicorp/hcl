@@ -48,9 +48,11 @@ func init() {
 		},
 	})
 	RaiseFunc = function.New(&function.Spec{
-		VarParam: &function.Parameter{
-			Name: "expressions",
-			Type: customdecode.ExpressionClosureType,
+		Params: []function.Parameter{
+			{
+				Name: "error_message",
+				Type: customdecode.ExpressionClosureType,
+			},
 		},
 		Type: function.StaticReturnType(cty.Bool),
 		Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {

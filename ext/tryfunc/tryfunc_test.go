@@ -147,7 +147,7 @@ func TestRaiseFunc(t *testing.T) {
 			`raise()`,
 			nil,
 			cty.NilVal,
-			`test.hcl:1,1-7: Error in function call; Call to function "raise" failed: exactly one argument is required.`,
+			`test.hcl:1,7-8: Not enough function arguments; Function "raise" expects 1 argument(s). Missing value for "error_message".`,
 		},
 	}
 
