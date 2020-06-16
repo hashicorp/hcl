@@ -37,7 +37,7 @@ func ParseConfig(src []byte, filename string, start hcl.Pos) (*File, hcl.Diagnos
 // desirable.
 func Format(src []byte) []byte {
 	tokens := lexConfig(src)
-	format(tokens)
+	tokens = format(tokens)
 	buf := &bytes.Buffer{}
 	tokens.WriteTo(buf)
 	return buf.Bytes()

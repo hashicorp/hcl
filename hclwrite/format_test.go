@@ -608,12 +608,32 @@ module "x" {
   abcde = "456"
 }`,
 		},
+		{
+			`
+module foo {
+source="./modules/foo"
+}
+
+resource null_resource nowt {}
+
+resource null_resource "nada"{
+}`,
+			`
+module "foo" {
+  source = "./modules/foo"
+}
+
+resource "null_resource" "nowt" {}
+
+resource "null_resource" "nada" {
+}`,
+		},
 	}
 
 	for i, test := range tests {
 		t.Run(fmt.Sprintf("%02d", i), func(t *testing.T) {
 			tokens := lexConfig([]byte(test.input))
-			format(tokens)
+			tokens = format(tokens)
 			t.Logf("tokens %s\n", spew.Sdump(tokens))
 			got := string(tokens.Bytes())
 

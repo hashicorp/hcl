@@ -15,12 +15,13 @@ var nilToken = &Token{
 }
 
 // format rewrites tokens within the given sequence, in-place, to adjust the
-// whitespace around their content to achieve canonical formatting.
-func format(tokens Tokens) {
+// whitespace and quotes around their content to achieve canonical formatting.
+func format(tokens Tokens) Tokens {
 	// Formatting is a multi-pass process. More details on the passes below,
 	// but this is the overview:
 	// - adjust the leading space on each line to create appropriate
 	//   indentation
+	// - replace label identifiers with quoted strings
 	// - adjust spaces between tokens in a single cell using a set of rules
 	// - adjust the leading space in the "assign" and "comment" cells on each
 	//   line to vertically align with neighboring lines.
@@ -33,8 +34,10 @@ func format(tokens Tokens) {
 
 	lines := linesForFormat(tokens)
 	formatIndent(lines)
+	formatLabels(lines)
 	formatSpaces(lines)
 	formatCells(lines)
+	return tokensFromLines(lines)
 }
 
 func formatIndent(lines []formatLine) {
@@ -104,6 +107,63 @@ func formatIndent(lines []formatLine) {
 		default:
 			line.lead[0].SpacesBefore = 2 * len(indents)
 		}
+	}
+}
+
+func formatLabels(lines []formatLine) {
+	for i := range lines {
+		line := &lines[i]
+
+		// Ignore empty lines, or those which cannot be blocks
+		if len(line.lead) == 0 || line.lead[0].Type != hclsyntax.TokenIdent {
+			continue
+		}
+
+		// If the line starts with an identifier, it can have zero or more
+		// labels. Split the rest of the line into a list of labels and the
+		// rest of the tokens.
+		labels := Tokens{}
+		for _, token := range line.lead[1:] {
+			if token.Type == hclsyntax.TokenIdent ||
+				token.Type == hclsyntax.TokenOQuote ||
+				token.Type == hclsyntax.TokenQuotedLit ||
+				token.Type == hclsyntax.TokenCQuote {
+				labels = append(labels, token)
+			} else {
+				break
+			}
+		}
+		rest := line.lead[1+len(labels):]
+
+		// Replace any identifier labels with quoted strings.
+		quotedLabels := Tokens{}
+		for _, token := range labels {
+			if token.Type == hclsyntax.TokenIdent {
+				quotedLabels = append(
+					quotedLabels,
+					&Token{
+						Type:         hclsyntax.TokenOQuote,
+						Bytes:        []byte(`"`),
+						SpacesBefore: token.SpacesBefore,
+					},
+					&Token{
+						Type:  hclsyntax.TokenQuotedLit,
+						Bytes: token.Bytes,
+					},
+					&Token{
+						Type:  hclsyntax.TokenCQuote,
+						Bytes: []byte(`"`),
+					},
+				)
+			} else {
+				quotedLabels = append(quotedLabels, token)
+			}
+		}
+
+		// The new lead for the line is the original first token (the block
+		// type), a list of quoted labels, and the rest of the tokens.
+		lead := append(Tokens{line.lead[0]}, quotedLabels...)
+		line.lead = append(lead, rest...)
 	}
 }
 
@@ -442,6 +502,16 @@ func tokenBracketChange(tok *Token) int {
 	default:
 		return 0
 	}
+}
+
+func tokensFromLines(lines []formatLine) Tokens {
+	var tokens Tokens
+	for _, line := range lines {
+		tokens = append(tokens, line.lead...)
+		tokens = append(tokens, line.assign...)
+		tokens = append(tokens, line.comment...)
+	}
+	return tokens
 }
 
 // formatLine represents a single line of source code for formatting purposes,
