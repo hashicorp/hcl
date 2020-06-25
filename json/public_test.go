@@ -1,6 +1,7 @@
 package json
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/hcl/v2"
@@ -93,5 +94,21 @@ func TestParseTemplateUnwrap(t *testing.T) {
 
 	if !val.RawEquals(cty.True) {
 		t.Errorf("wrong result %#v; want %#v", val, cty.True)
+	}
+}
+
+func TestParse_malformed(t *testing.T) {
+	src := `{
+  "http_proxy_url: "http://xxxxxx",
+}`
+	file, diags := Parse([]byte(src), "")
+	if got, want := len(diags), 2; got != want {
+		t.Errorf("got %d diagnostics; want %d", got, want)
+	}
+	if err, want := diags.Error(), `Missing property value colon`; !strings.Contains(err, want) {
+		t.Errorf("diags are %q, but should contain %q", err, want)
+	}
+	if file == nil {
+		t.Errorf("got nil File; want actual file")
 	}
 }

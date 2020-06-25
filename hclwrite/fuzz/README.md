@@ -1,7 +1,7 @@
-# hclsyntax fuzzing utilities
+# hclwrite fuzzing utilities
 
 This directory contains helper functions and corpuses that can be used to
-fuzz-test the `hclsyntax` parsers using [go-fuzz](https://github.com/dvyukov/go-fuzz).
+fuzz-test the `hclwrite` package using [go-fuzz](https://github.com/dvyukov/go-fuzz).
 
 ## Work directory
 
@@ -34,13 +34,10 @@ Next, install `go-fuzz` and its build tool in your `GOPATH`:
 $ make tools FUZZ_WORK_DIR=$RAMDISK
 ```
 
-Now you can fuzz one or all of the parsers:
+Now you can fuzz the parser:
 
 ```
-$ make fuzz-config FUZZ_WORK_DIR=$RAMDISK/hclsyntax-fuzz-config
-$ make fuzz-expr FUZZ_WORK_DIR=$RAMDISK/hclsyntax-fuzz-expr
-$ make fuzz-template FUZZ_WORK_DIR=$RAMDISK/hclsyntax-fuzz-template
-$ make fuzz-traversal FUZZ_WORK_DIR=$RAMDISK/hclsyntax-fuzz-traversal
+$ make fuzz-config FUZZ_WORK_DIR=$RAMDISK/hclwrite-fuzz-config
 ```
 
 ~> Note: `go-fuzz` does not interact well with `goenv`. If you encounter build
@@ -67,7 +64,7 @@ The base file above (with no extension) is the input that caused a crash. The
 figure out what caused the crash.
 
 A good first step to fixing a detected crasher is to copy the failing input
-into one of the unit tests in the `hclsyntax` package and see it crash there
+into one of the unit tests in the `hclwrite` package and see it crash there
 too. After that, it's easy to re-run the test as you try to fix it. The
 file with the `.quoted` extension contains a form of the input that is quoted
 in Go syntax for easy copy-paste into a test case, even if the input contains

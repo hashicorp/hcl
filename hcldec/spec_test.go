@@ -1,6 +1,7 @@
 package hcldec
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -26,6 +27,7 @@ var _ Spec = (*BlockLabelSpec)(nil)
 var _ Spec = (*DefaultSpec)(nil)
 var _ Spec = (*TransformExprSpec)(nil)
 var _ Spec = (*TransformFuncSpec)(nil)
+var _ Spec = (*ValidateSpec)(nil)
 
 var _ attrSpec = (*AttrSpec)(nil)
 var _ attrSpec = (*DefaultSpec)(nil)
@@ -138,4 +140,70 @@ bar = barval
 			t.Errorf("wrong Decode result\ngot:  %#v\nwant: %#v", got, want)
 		}
 	})
+}
+
+func TestValidateFuncSpec(t *testing.T) {
+	config := `
+foo = "invalid"
+`
+	f, diags := hclsyntax.ParseConfig([]byte(config), "", hcl.Pos{Line: 1, Column: 1})
+	if diags.HasErrors() {
+		t.Fatal(diags.Error())
+	}
+
+	expectRange := map[string]*hcl.Range{
+		"without_range": nil,
+		"with_range": &hcl.Range{
+			Filename: "foobar",
+			Start:    hcl.Pos{Line: 99, Column: 99},
+			End:      hcl.Pos{Line: 999, Column: 999},
+		},
+	}
+
+	for name := range expectRange {
+		t.Run(name, func(t *testing.T) {
+			spec := &ValidateSpec{
+				Wrapped: &AttrSpec{
+					Name: "foo",
+					Type: cty.String,
+				},
+				Func: func(value cty.Value) hcl.Diagnostics {
+					if value.AsString() != "invalid" {
+						return hcl.Diagnostics{
+							&hcl.Diagnostic{
+								Severity: hcl.DiagError,
+								Summary:  "incorrect value",
+								Detail:   fmt.Sprintf("invalid value passed in: %s", value.GoString()),
+							},
+						}
+					}
+
+					return hcl.Diagnostics{
+						&hcl.Diagnostic{
+							Severity: hcl.DiagWarning,
+							Summary:  "OK",
+							Detail:   "validation called correctly",
+							Subject:  expectRange[name],
+						},
+					}
+				},
+			}
+
+			_, diags = Decode(f.Body, spec, nil)
+			if len(diags) != 1 ||
+				diags[0].Severity != hcl.DiagWarning ||
+				diags[0].Summary != "OK" ||
+				diags[0].Detail != "validation called correctly" {
+				t.Fatalf("unexpected diagnostics: %s", diags.Error())
+			}
+
+			if expectRange[name] == nil && diags[0].Subject == nil {
+				t.Fatal("returned diagnostic subject missing")
+			}
+
+			if expectRange[name] != nil && !reflect.DeepEqual(expectRange[name], diags[0].Subject) {
+				t.Fatalf("expected range %s, got range %s", expectRange[name], diags[0].Subject)
+			}
+		})
+	}
 }

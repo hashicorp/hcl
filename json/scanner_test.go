@@ -829,6 +829,21 @@ func TestScan(t *testing.T) {
 						},
 					},
 				},
+				{
+					Type: tokenEOF,
+					Range: hcl.Range{
+						Start: hcl.Pos{
+							Byte:   1,
+							Line:   1,
+							Column: 2,
+						},
+						End: hcl.Pos{
+							Byte:   1,
+							Line:   1,
+							Column: 2,
+						},
+					},
+				},
 			},
 		},
 	}
