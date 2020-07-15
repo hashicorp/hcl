@@ -93,6 +93,13 @@ func TestParseBlockFromTokens_invalid(t *testing.T) {
 	}
 }
 
+func TestParseBlockFromTokens_invalidBlock(t *testing.T) {
+	_, diags := ParseBlockFromTokens(invalidBlockTokens)
+	if len(diags) != 1 {
+		t.Fatalf("Expected exactly 1 diagnostic, %d given", len(diags))
+	}
+}
+
 func TestParseBlockFromTokens_attr(t *testing.T) {
 	_, diags := ParseBlockFromTokens(testAttributeTokensValid)
 	if len(diags) != 1 {
@@ -177,6 +184,21 @@ var testBlockTokensWithoutNewline = Tokens{
 	{Type: TokenNumberLit, Bytes: []byte("42")},
 	{Type: TokenNewline, Bytes: []byte("\n")},
 	{Type: TokenCBrace, Bytes: []byte("}")},
+}
+
+var invalidBlockTokens = Tokens{
+	{Type: TokenIdent, Bytes: []byte("variable")},
+	{Type: TokenOQuote, Bytes: []byte(`"`)},
+	{Type: TokenQuotedLit, Bytes: []byte("name")},
+	{Type: TokenCQuote, Bytes: []byte(`"`)},
+	{Type: TokenOBrace, Bytes: []byte("{")},
+	{Type: TokenNewline, Bytes: []byte("\n")},
+	{Type: TokenIdent, Bytes: []byte("default")},
+	{Type: TokenEqual, Bytes: []byte("=")},
+	{Type: TokenOQuote, Bytes: []byte(`"`)},
+	{Type: TokenQuotedNewline, Bytes: []byte("\n")},
+	{Type: TokenQuotedLit, Bytes: []byte("}")}, // TODO: Fix the tokenizer so this comes back as TokenCBrace
+	{Type: TokenNewline, Bytes: []byte("\n")},
 }
 
 var invalidTokens = Tokens{

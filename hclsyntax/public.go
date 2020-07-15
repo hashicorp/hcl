@@ -53,33 +53,38 @@ func ParseBodyItemFromTokens(tokens Tokens) (Node, hcl.Diagnostics) {
 		return nil, nil
 	}
 
+	diags := checkInvalidTokens(tokens)
+	if diags.HasErrors() {
+		return nil, diags
+	}
+
 	peeker := newPeeker(tokens, false)
 
 	// Sanity checks to avoid surprises
 	firstToken := peeker.Peek()
 	if firstToken.Type != TokenIdent {
 		return nil, hcl.Diagnostics{
-				&hcl.Diagnostic{
-					Severity: hcl.DiagError,
-					Summary:  "Identifier not found",
-					Detail:   fmt.Sprintf("Expected definition to start with an identifier, %s found",
-						firstToken.Type),
-					Subject:  &firstToken.Range,
-				},
-			}
+			&hcl.Diagnostic{
+				Severity: hcl.DiagError,
+				Summary:  "Identifier not found",
+				Detail: fmt.Sprintf("Expected definition to start with an identifier, %s found",
+					firstToken.Type),
+				Subject: &firstToken.Range,
+			},
+		}
 	}
 	lastToken := peeker.lastToken()
 	if lastToken.Type != TokenEOF &&
 		lastToken.Type != TokenNewline {
-			return nil, hcl.Diagnostics{
-				&hcl.Diagnostic{
-					Severity: hcl.DiagError,
-					Summary:  "Unterminated definition",
-					Detail:   fmt.Sprintf("Expected definition terminated either by a newline or EOF, %s found",
-						lastToken.Type),
-					Subject:  &lastToken.Range,
-				},
-			}
+		return nil, hcl.Diagnostics{
+			&hcl.Diagnostic{
+				Severity: hcl.DiagError,
+				Summary:  "Unterminated definition",
+				Detail: fmt.Sprintf("Expected definition terminated either by a newline or EOF, %s found",
+					lastToken.Type),
+				Subject: &lastToken.Range,
+			},
+		}
 	}
 
 	parser := &parser{peeker: peeker}
