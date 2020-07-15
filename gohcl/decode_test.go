@@ -658,6 +658,8 @@ func TestDecodeBody(t *testing.T) {
 }
 
 func TestDecodeExpression(t *testing.T) {
+	sChan := make(chan string)
+
 	tests := []struct {
 		Value     cty.Value
 		Target    interface{}
@@ -705,6 +707,12 @@ func TestDecodeExpression(t *testing.T) {
 			false,
 			false,
 			1, // bool required
+		},
+		{
+			cty.CapsuleVal(cty.Capsule("string_channel", reflect.ChanOf(reflect.BothDir, reflect.TypeOf(""))), &sChan),
+			sChan,
+			sChan,
+			0, // null value is not allowed
 		},
 	}
 
