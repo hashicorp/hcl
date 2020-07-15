@@ -290,24 +290,26 @@ func decodeBlockToValue(block *hcl.Block, ctx *hcl.EvalContext, v reflect.Value)
 func DecodeExpression(expr hcl.Expression, ctx *hcl.EvalContext, val interface{}) hcl.Diagnostics {
 	srcVal, diags := expr.Value(ctx)
 
-	convTy, err := gocty.ImpliedType(val)
-	if err != nil {
-		panic(fmt.Sprintf("unsuitable DecodeExpression target: %s", err))
+	if !srcVal.Type().IsCapsuleType() {
+		convTy, err := gocty.ImpliedType(val)
+		if err != nil {
+			panic(fmt.Sprintf("unsuitable DecodeExpression target: %s", err))
+		}
+
+		srcVal, err = convert.Convert(srcVal, convTy)
+		if err != nil {
+			diags = append(diags, &hcl.Diagnostic{
+				Severity: hcl.DiagError,
+				Summary:  "Unsuitable value type",
+				Detail:   fmt.Sprintf("Unsuitable value: %s", err.Error()),
+				Subject:  expr.StartRange().Ptr(),
+				Context:  expr.Range().Ptr(),
+			})
+			return diags
+		}
 	}
 
-	srcVal, err = convert.Convert(srcVal, convTy)
-	if err != nil {
-		diags = append(diags, &hcl.Diagnostic{
-			Severity: hcl.DiagError,
-			Summary:  "Unsuitable value type",
-			Detail:   fmt.Sprintf("Unsuitable value: %s", err.Error()),
-			Subject:  expr.StartRange().Ptr(),
-			Context:  expr.Range().Ptr(),
-		})
-		return diags
-	}
-
-	err = gocty.FromCtyValue(srcVal, val)
+	err := gocty.FromCtyValue(srcVal, val)
 	if err != nil {
 		diags = append(diags, &hcl.Diagnostic{
 			Severity: hcl.DiagError,
