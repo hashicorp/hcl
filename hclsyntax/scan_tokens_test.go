@@ -2288,6 +2288,942 @@ EOF
 	}
 }
 
+func TestScanTokens_incomplete(t *testing.T) {
+	// incomplete configuration which is likely to be parsed by the language server
+	// as the user is typing in their editor
+	tests := []struct {
+		input string
+		want  []Token
+	}{
+		{
+			`btype "`,
+			[]Token{
+				{
+					Type:  TokenIdent,
+					Bytes: []byte("btype"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:   hcl.Pos{Line: 1, Column: 6, Byte: 5},
+					},
+				},
+				{
+					Type:  TokenOQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 7, Byte: 6},
+						End:   hcl.Pos{Line: 1, Column: 8, Byte: 7},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						End:   hcl.Pos{Line: 1, Column: 8, Byte: 7},
+					},
+				},
+			},
+		},
+		{
+			`btype "lab1`,
+			[]Token{
+				{
+					Type:  TokenIdent,
+					Bytes: []byte("btype"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:   hcl.Pos{Line: 1, Column: 6, Byte: 5},
+					},
+				},
+				{
+					Type:  TokenOQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 7, Byte: 6},
+						End:   hcl.Pos{Line: 1, Column: 8, Byte: 7},
+					},
+				},
+				{
+					Type:  TokenQuotedLit,
+					Bytes: []byte("lab1"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						End:   hcl.Pos{Line: 1, Column: 12, Byte: 11},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 12, Byte: 11},
+						End:   hcl.Pos{Line: 1, Column: 12, Byte: 11},
+					},
+				},
+			},
+		},
+		{
+			`btype "lab1"`,
+			[]Token{
+				{
+					Type:  TokenIdent,
+					Bytes: []byte("btype"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:   hcl.Pos{Line: 1, Column: 6, Byte: 5},
+					},
+				},
+				{
+					Type:  TokenOQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 7, Byte: 6},
+						End:   hcl.Pos{Line: 1, Column: 8, Byte: 7},
+					},
+				},
+				{
+					Type:  TokenQuotedLit,
+					Bytes: []byte("lab1"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						End:   hcl.Pos{Line: 1, Column: 12, Byte: 11},
+					},
+				},
+				{
+					Type:  TokenCQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 12, Byte: 11},
+						End:   hcl.Pos{Line: 1, Column: 13, Byte: 12},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 13, Byte: 12},
+						End:   hcl.Pos{Line: 1, Column: 13, Byte: 12},
+					},
+				},
+			},
+		},
+		{
+			`btype "lab1" "`,
+			[]Token{
+				{
+					Type:  TokenIdent,
+					Bytes: []byte("btype"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:   hcl.Pos{Line: 1, Column: 6, Byte: 5},
+					},
+				},
+				{
+					Type:  TokenOQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 7, Byte: 6},
+						End:   hcl.Pos{Line: 1, Column: 8, Byte: 7},
+					},
+				},
+				{
+					Type:  TokenQuotedLit,
+					Bytes: []byte("lab1"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						End:   hcl.Pos{Line: 1, Column: 12, Byte: 11},
+					},
+				},
+				{
+					Type:  TokenCQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 12, Byte: 11},
+						End:   hcl.Pos{Line: 1, Column: 13, Byte: 12},
+					},
+				},
+				{
+					Type:  TokenOQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 14, Byte: 13},
+						End:   hcl.Pos{Line: 1, Column: 15, Byte: 14},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 15, Byte: 14},
+						End:   hcl.Pos{Line: 1, Column: 15, Byte: 14},
+					},
+				},
+			},
+		},
+		{
+			`btype "lab1" "lab2`,
+			[]Token{
+				{
+					Type:  TokenIdent,
+					Bytes: []byte("btype"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:   hcl.Pos{Line: 1, Column: 6, Byte: 5},
+					},
+				},
+				{
+					Type:  TokenOQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 7, Byte: 6},
+						End:   hcl.Pos{Line: 1, Column: 8, Byte: 7},
+					},
+				},
+				{
+					Type:  TokenQuotedLit,
+					Bytes: []byte("lab1"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						End:   hcl.Pos{Line: 1, Column: 12, Byte: 11},
+					},
+				},
+				{
+					Type:  TokenCQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 12, Byte: 11},
+						End:   hcl.Pos{Line: 1, Column: 13, Byte: 12},
+					},
+				},
+				{
+					Type:  TokenOQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 14, Byte: 13},
+						End:   hcl.Pos{Line: 1, Column: 15, Byte: 14},
+					},
+				},
+				{
+					Type:  TokenQuotedLit,
+					Bytes: []byte("lab2"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 15, Byte: 14},
+						End:   hcl.Pos{Line: 1, Column: 19, Byte: 18},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 19, Byte: 18},
+						End:   hcl.Pos{Line: 1, Column: 19, Byte: 18},
+					},
+				},
+			},
+		},
+		{
+			`btype "lab1" "lab2"`,
+			[]Token{
+				{
+					Type:  TokenIdent,
+					Bytes: []byte("btype"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:   hcl.Pos{Line: 1, Column: 6, Byte: 5},
+					},
+				},
+				{
+					Type:  TokenOQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 7, Byte: 6},
+						End:   hcl.Pos{Line: 1, Column: 8, Byte: 7},
+					},
+				},
+				{
+					Type:  TokenQuotedLit,
+					Bytes: []byte("lab1"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						End:   hcl.Pos{Line: 1, Column: 12, Byte: 11},
+					},
+				},
+				{
+					Type:  TokenCQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 12, Byte: 11},
+						End:   hcl.Pos{Line: 1, Column: 13, Byte: 12},
+					},
+				},
+				{
+					Type:  TokenOQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 14, Byte: 13},
+						End:   hcl.Pos{Line: 1, Column: 15, Byte: 14},
+					},
+				},
+				{
+					Type:  TokenQuotedLit,
+					Bytes: []byte("lab2"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 15, Byte: 14},
+						End:   hcl.Pos{Line: 1, Column: 19, Byte: 18},
+					},
+				},
+				{
+					Type:  TokenCQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 19, Byte: 18},
+						End:   hcl.Pos{Line: 1, Column: 20, Byte: 19},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 20, Byte: 19},
+						End:   hcl.Pos{Line: 1, Column: 20, Byte: 19},
+					},
+				},
+			},
+		},
+		{
+			`btype "lab1" "lab2" {`,
+			[]Token{
+				{
+					Type:  TokenIdent,
+					Bytes: []byte("btype"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:   hcl.Pos{Line: 1, Column: 6, Byte: 5},
+					},
+				},
+				{
+					Type:  TokenOQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 7, Byte: 6},
+						End:   hcl.Pos{Line: 1, Column: 8, Byte: 7},
+					},
+				},
+				{
+					Type:  TokenQuotedLit,
+					Bytes: []byte("lab1"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						End:   hcl.Pos{Line: 1, Column: 12, Byte: 11},
+					},
+				},
+				{
+					Type:  TokenCQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 12, Byte: 11},
+						End:   hcl.Pos{Line: 1, Column: 13, Byte: 12},
+					},
+				},
+				{
+					Type:  TokenOQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 14, Byte: 13},
+						End:   hcl.Pos{Line: 1, Column: 15, Byte: 14},
+					},
+				},
+				{
+					Type:  TokenQuotedLit,
+					Bytes: []byte("lab2"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 15, Byte: 14},
+						End:   hcl.Pos{Line: 1, Column: 19, Byte: 18},
+					},
+				},
+				{
+					Type:  TokenCQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 19, Byte: 18},
+						End:   hcl.Pos{Line: 1, Column: 20, Byte: 19},
+					},
+				},
+				{
+					Type:  TokenOBrace,
+					Bytes: []byte{'{'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 21, Byte: 20},
+						End:   hcl.Pos{Line: 1, Column: 22, Byte: 21},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 22, Byte: 21},
+						End:   hcl.Pos{Line: 1, Column: 22, Byte: 21},
+					},
+				},
+			},
+		},
+		{
+			`btype "lab1" "lab2" {
+  arg1`,
+			[]Token{
+				{
+					Type:  TokenIdent,
+					Bytes: []byte("btype"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:   hcl.Pos{Line: 1, Column: 6, Byte: 5},
+					},
+				},
+				{
+					Type:  TokenOQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 7, Byte: 6},
+						End:   hcl.Pos{Line: 1, Column: 8, Byte: 7},
+					},
+				},
+				{
+					Type:  TokenQuotedLit,
+					Bytes: []byte("lab1"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						End:   hcl.Pos{Line: 1, Column: 12, Byte: 11},
+					},
+				},
+				{
+					Type:  TokenCQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 12, Byte: 11},
+						End:   hcl.Pos{Line: 1, Column: 13, Byte: 12},
+					},
+				},
+				{
+					Type:  TokenOQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 14, Byte: 13},
+						End:   hcl.Pos{Line: 1, Column: 15, Byte: 14},
+					},
+				},
+				{
+					Type:  TokenQuotedLit,
+					Bytes: []byte("lab2"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 15, Byte: 14},
+						End:   hcl.Pos{Line: 1, Column: 19, Byte: 18},
+					},
+				},
+				{
+					Type:  TokenCQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 19, Byte: 18},
+						End:   hcl.Pos{Line: 1, Column: 20, Byte: 19},
+					},
+				},
+				{
+					Type:  TokenOBrace,
+					Bytes: []byte{'{'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 21, Byte: 20},
+						End:   hcl.Pos{Line: 1, Column: 22, Byte: 21},
+					},
+				},
+				{
+					Type:  TokenNewline,
+					Bytes: []byte("\n"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 22, Byte: 21},
+						End:   hcl.Pos{Line: 2, Column: 1, Byte: 22},
+					},
+				},
+				{
+					Type:  TokenIdent,
+					Bytes: []byte("arg1"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 2, Column: 3, Byte: 24},
+						End:   hcl.Pos{Line: 2, Column: 7, Byte: 28},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 2, Column: 7, Byte: 28},
+						End:   hcl.Pos{Line: 2, Column: 7, Byte: 28},
+					},
+				},
+			},
+		},
+		{
+			`btype "lab1" "lab2" {
+  arg1
+}`,
+			[]Token{
+				{
+					Type:  TokenIdent,
+					Bytes: []byte("btype"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:   hcl.Pos{Line: 1, Column: 6, Byte: 5},
+					},
+				},
+				{
+					Type:  TokenOQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 7, Byte: 6},
+						End:   hcl.Pos{Line: 1, Column: 8, Byte: 7},
+					},
+				},
+				{
+					Type:  TokenQuotedLit,
+					Bytes: []byte("lab1"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						End:   hcl.Pos{Line: 1, Column: 12, Byte: 11},
+					},
+				},
+				{
+					Type:  TokenCQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 12, Byte: 11},
+						End:   hcl.Pos{Line: 1, Column: 13, Byte: 12},
+					},
+				},
+				{
+					Type:  TokenOQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 14, Byte: 13},
+						End:   hcl.Pos{Line: 1, Column: 15, Byte: 14},
+					},
+				},
+				{
+					Type:  TokenQuotedLit,
+					Bytes: []byte("lab2"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 15, Byte: 14},
+						End:   hcl.Pos{Line: 1, Column: 19, Byte: 18},
+					},
+				},
+				{
+					Type:  TokenCQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 19, Byte: 18},
+						End:   hcl.Pos{Line: 1, Column: 20, Byte: 19},
+					},
+				},
+				{
+					Type:  TokenOBrace,
+					Bytes: []byte{'{'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 21, Byte: 20},
+						End:   hcl.Pos{Line: 1, Column: 22, Byte: 21},
+					},
+				},
+				{
+					Type:  TokenNewline,
+					Bytes: []byte("\n"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 22, Byte: 21},
+						End:   hcl.Pos{Line: 2, Column: 1, Byte: 22},
+					},
+				},
+				{
+					Type:  TokenIdent,
+					Bytes: []byte("arg1"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 2, Column: 3, Byte: 24},
+						End:   hcl.Pos{Line: 2, Column: 7, Byte: 28},
+					},
+				},
+				{
+					Type: TokenNewline,
+					Bytes: []byte("\n"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 2, Column: 7, Byte: 28},
+						End:   hcl.Pos{Line: 3, Column: 1, Byte: 29},
+					},
+				},
+				{
+					Type: TokenCBrace,
+					Bytes: []byte{'}'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 3, Column: 1, Byte: 29},
+						End:   hcl.Pos{Line: 3, Column: 2, Byte: 30},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 3, Column: 2, Byte: 30},
+						End:   hcl.Pos{Line: 3, Column: 2, Byte: 30},
+					},
+				},
+			},
+		},
+		{
+			`btype "lab1" "lab2" {
+  arg1 =
+}`,
+			[]Token{
+				{
+					Type:  TokenIdent,
+					Bytes: []byte("btype"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:   hcl.Pos{Line: 1, Column: 6, Byte: 5},
+					},
+				},
+				{
+					Type:  TokenOQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 7, Byte: 6},
+						End:   hcl.Pos{Line: 1, Column: 8, Byte: 7},
+					},
+				},
+				{
+					Type:  TokenQuotedLit,
+					Bytes: []byte("lab1"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						End:   hcl.Pos{Line: 1, Column: 12, Byte: 11},
+					},
+				},
+				{
+					Type:  TokenCQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 12, Byte: 11},
+						End:   hcl.Pos{Line: 1, Column: 13, Byte: 12},
+					},
+				},
+				{
+					Type:  TokenOQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 14, Byte: 13},
+						End:   hcl.Pos{Line: 1, Column: 15, Byte: 14},
+					},
+				},
+				{
+					Type:  TokenQuotedLit,
+					Bytes: []byte("lab2"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 15, Byte: 14},
+						End:   hcl.Pos{Line: 1, Column: 19, Byte: 18},
+					},
+				},
+				{
+					Type:  TokenCQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 19, Byte: 18},
+						End:   hcl.Pos{Line: 1, Column: 20, Byte: 19},
+					},
+				},
+				{
+					Type:  TokenOBrace,
+					Bytes: []byte{'{'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 21, Byte: 20},
+						End:   hcl.Pos{Line: 1, Column: 22, Byte: 21},
+					},
+				},
+				{
+					Type:  TokenNewline,
+					Bytes: []byte("\n"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 22, Byte: 21},
+						End:   hcl.Pos{Line: 2, Column: 1, Byte: 22},
+					},
+				},
+				{
+					Type:  TokenIdent,
+					Bytes: []byte("arg1"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 2, Column: 3, Byte: 24},
+						End:   hcl.Pos{Line: 2, Column: 7, Byte: 28},
+					},
+				},
+				{
+					Type:  TokenEqual,
+					Bytes: []byte{'='},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 2, Column: 8, Byte: 29},
+						End:   hcl.Pos{Line: 2, Column: 9, Byte: 30},
+					},
+				},
+				{
+					Type:  TokenNewline,
+					Bytes: []byte("\n"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 2, Column: 9, Byte: 30},
+						End:   hcl.Pos{Line: 3, Column: 1, Byte: 31},
+					},
+				},
+				{
+					Type:  TokenCBrace,
+					Bytes: []byte{'}'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 3, Column: 1, Byte: 31},
+						End:   hcl.Pos{Line: 3, Column: 2, Byte: 32},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 3, Column: 2, Byte: 32},
+						End:   hcl.Pos{Line: 3, Column: 2, Byte: 32},
+					},
+				},
+			},
+		},
+		{
+			`btype "lab1" "lab2" {
+  arg1 = "`,
+			[]Token{
+				{
+					Type:  TokenIdent,
+					Bytes: []byte("btype"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:   hcl.Pos{Line: 1, Column: 6, Byte: 5},
+					},
+				},
+				{
+					Type:  TokenOQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 7, Byte: 6},
+						End:   hcl.Pos{Line: 1, Column: 8, Byte: 7},
+					},
+				},
+				{
+					Type:  TokenQuotedLit,
+					Bytes: []byte("lab1"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						End:   hcl.Pos{Line: 1, Column: 12, Byte: 11},
+					},
+				},
+				{
+					Type:  TokenCQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 12, Byte: 11},
+						End:   hcl.Pos{Line: 1, Column: 13, Byte: 12},
+					},
+				},
+				{
+					Type:  TokenOQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 14, Byte: 13},
+						End:   hcl.Pos{Line: 1, Column: 15, Byte: 14},
+					},
+				},
+				{
+					Type:  TokenQuotedLit,
+					Bytes: []byte("lab2"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 15, Byte: 14},
+						End:   hcl.Pos{Line: 1, Column: 19, Byte: 18},
+					},
+				},
+				{
+					Type:  TokenCQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 19, Byte: 18},
+						End:   hcl.Pos{Line: 1, Column: 20, Byte: 19},
+					},
+				},
+				{
+					Type:  TokenOBrace,
+					Bytes: []byte{'{'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 21, Byte: 20},
+						End:   hcl.Pos{Line: 1, Column: 22, Byte: 21},
+					},
+				},
+				{
+					Type:  TokenNewline,
+					Bytes: []byte("\n"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 22, Byte: 21},
+						End:   hcl.Pos{Line: 2, Column: 1, Byte: 22},
+					},
+				},
+				{
+					Type:  TokenIdent,
+					Bytes: []byte("arg1"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 2, Column: 3, Byte: 24},
+						End:   hcl.Pos{Line: 2, Column: 7, Byte: 28},
+					},
+				},
+				{
+					Type:  TokenEqual,
+					Bytes: []byte{'='},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 2, Column: 8, Byte: 29},
+						End:   hcl.Pos{Line: 2, Column: 9, Byte: 30},
+					},
+				},
+				{
+					Type:  TokenOQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 2, Column: 10, Byte: 31},
+						End:   hcl.Pos{Line: 2, Column: 11, Byte: 32},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 2, Column: 11, Byte: 32},
+						End:   hcl.Pos{Line: 2, Column: 11, Byte: 32},
+					},
+				},
+			},
+		},
+		{
+			`btype "lab1" "lab2" {
+  arg1 = "
+}`,
+			[]Token{
+				{
+					Type:  TokenIdent,
+					Bytes: []byte("btype"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:   hcl.Pos{Line: 1, Column: 6, Byte: 5},
+					},
+				},
+				{
+					Type:  TokenOQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 7, Byte: 6},
+						End:   hcl.Pos{Line: 1, Column: 8, Byte: 7},
+					},
+				},
+				{
+					Type:  TokenQuotedLit,
+					Bytes: []byte("lab1"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						End:   hcl.Pos{Line: 1, Column: 12, Byte: 11},
+					},
+				},
+				{
+					Type:  TokenCQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 12, Byte: 11},
+						End:   hcl.Pos{Line: 1, Column: 13, Byte: 12},
+					},
+				},
+				{
+					Type:  TokenOQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 14, Byte: 13},
+						End:   hcl.Pos{Line: 1, Column: 15, Byte: 14},
+					},
+				},
+				{
+					Type:  TokenQuotedLit,
+					Bytes: []byte("lab2"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 15, Byte: 14},
+						End:   hcl.Pos{Line: 1, Column: 19, Byte: 18},
+					},
+				},
+				{
+					Type:  TokenCQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 19, Byte: 18},
+						End:   hcl.Pos{Line: 1, Column: 20, Byte: 19},
+					},
+				},
+				{
+					Type:  TokenOBrace,
+					Bytes: []byte{'{'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 21, Byte: 20},
+						End:   hcl.Pos{Line: 1, Column: 22, Byte: 21},
+					},
+				},
+				{
+					Type:  TokenNewline,
+					Bytes: []byte("\n"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 22, Byte: 21},
+						End:   hcl.Pos{Line: 2, Column: 1, Byte: 22},
+					},
+				},
+				{
+					Type:  TokenIdent,
+					Bytes: []byte("arg1"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 2, Column: 3, Byte: 24},
+						End:   hcl.Pos{Line: 2, Column: 7, Byte: 28},
+					},
+				},
+				{
+					Type:  TokenEqual,
+					Bytes: []byte{'='},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 2, Column: 8, Byte: 29},
+						End:   hcl.Pos{Line: 2, Column: 9, Byte: 30},
+					},
+				},
+				{
+					Type:  TokenOQuote,
+					Bytes: []byte{'"'},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 2, Column: 10, Byte: 31},
+						End:   hcl.Pos{Line: 2, Column: 11, Byte: 32},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: hcl.Range{
+						Start: hcl.Pos{Line: 2, Column: 11, Byte: 32},
+						End:   hcl.Pos{Line: 2, Column: 11, Byte: 32},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.input, func(t *testing.T) {
+			got := scanTokens([]byte(test.input), "", hcl.Pos{Byte: 0, Line: 1, Column: 1}, scanNormal)
+
+			if diff := cmp.Diff(test.want, got); diff != "" {
+				t.Errorf("wrong result\n%s", diff)
+			}
+		})
+	}
+}
+
 func TestScanTokens_template(t *testing.T) {
 	tests := []struct {
 		input string
