@@ -74,10 +74,31 @@ quoted "label1" "label2" {
 		},
 		{
 			`
+quoted "label1" /* foo */ "label2" {
+}
+`,
+			[]string{"label1", "label2"},
+		},
+		{
+			`
 unquoted label1 {
 }
 `,
 			[]string{"label1"},
+		},
+		{
+			`
+unquoted label1 /* foo */ label2 {
+}
+`,
+			[]string{"label1", "label2"},
+		},
+		{
+			`
+mixed label1 "label2" {
+}
+`,
+			[]string{"label1", "label2"},
 		},
 		{
 			`
@@ -348,7 +369,50 @@ func TestBlockSetLabels(t *testing.T) {
 			},
 		},
 		{
-			`foo hoge {}`,
+			`foo "hoge" /* fuga */ "piyo" {}`,
+			"foo",
+			[]string{"hoge", "piyo"},
+			[]string{"fuga"}, // force quoted form even if the old one is unquoted.
+			Tokens{
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte(`foo`),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenOQuote,
+					Bytes:        []byte(`"`),
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenQuotedLit,
+					Bytes:        []byte(`fuga`),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenCQuote,
+					Bytes:        []byte(`"`),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenOBrace,
+					Bytes:        []byte{'{'},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenCBrace,
+					Bytes:        []byte{'}'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEOF,
+					Bytes:        []byte{},
+					SpacesBefore: 0,
+				},
+			},
+		},
+		{
+			`foo "hoge" /* foo */  "" {}`,
 			"foo",
 			[]string{"hoge"},
 			[]string{"fuga"}, // force quoted form even if the old one is unquoted.

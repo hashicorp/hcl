@@ -10,7 +10,7 @@ type Block struct {
 
 	leadComments *node
 	typeName     *node
-	labels       nodeSet
+	labels       *node
 	open         *node
 	body         *node
 	close        *node
@@ -19,7 +19,6 @@ type Block struct {
 func newBlock() *Block {
 	return &Block{
 		inTree: newInTree(),
-		labels: newNodeSet(),
 	}
 }
 
@@ -35,12 +34,8 @@ func (b *Block) init(typeName string, labels []string) {
 	nameObj := newIdentifier(nameTok)
 	b.leadComments = b.children.Append(newComments(nil))
 	b.typeName = b.children.Append(nameObj)
-	for _, label := range labels {
-		labelToks := TokensForValue(cty.StringVal(label))
-		labelObj := newQuoted(labelToks)
-		labelNode := b.children.Append(labelObj)
-		b.labels.Add(labelNode)
-	}
+	labelsObj := newBlockLabels(labels)
+	b.labels = b.children.Append(labelsObj)
 	b.open = b.children.AppendUnstructuredTokens(Tokens{
 		{
 			Type:  hclsyntax.TokenOBrace,
@@ -88,8 +83,59 @@ func (b *Block) SetType(typeName string) {
 
 // Labels returns the labels of the block.
 func (b *Block) Labels() []string {
-	labelNames := make([]string, 0, len(b.labels))
-	list := b.labels.List()
+	return b.labelsObj().Current()
+}
+
+// SetLabels updates the labels of the block to given labels.
+// Since we cannot assume that old and new labels are equal in length,
+// remove old labels and insert new ones before TokenOBrace.
+func (b *Block) SetLabels(labels []string) {
+	b.labelsObj().Replace(labels)
+}
+
+// labelsObj returns the internal node content representation of the block
+// labels. This is not part of the public API because we're intentionally
+// exposing only a limited API to get/set labels on the block itself in a
+// manner similar to the main hcl.Block type, but our block accessors all
+// use this to get the underlying node content to work with.
+func (b *Block) labelsObj() *blockLabels {
+	return b.labels.content.(*blockLabels)
+}
+
+type blockLabels struct {
+	inTree
+
+	items nodeSet
+}
+
+func newBlockLabels(labels []string) *blockLabels {
+	ret := &blockLabels{
+		inTree: newInTree(),
+		items:  newNodeSet(),
+	}
+
+	ret.Replace(labels)
+	return ret
+}
+
+func (bl *blockLabels) Replace(newLabels []string) {
+	bl.inTree.children.Clear()
+	bl.items.Clear()
+
+	for _, label := range newLabels {
+		labelToks := TokensForValue(cty.StringVal(label))
+		// Force a new label to use the quoted form, which is the idiomatic
+		// form. The unquoted form is supported in HCL 2 only for compatibility
+		// with historical use in HCL 1.
+		labelObj := newQuoted(labelToks)
+		labelNode := bl.children.Append(labelObj)
+		bl.items.Add(labelNode)
+	}
+}
+
+func (bl *blockLabels) Current() []string {
+	labelNames := make([]string, 0, len(bl.items))
+	list := bl.items.List()
 
 	for _, label := range list {
 		switch labelObj := label.content.(type) {
@@ -122,26 +168,4 @@ func (b *Block) Labels() []string {
 	}
 
 	return labelNames
-}
-
-// SetLabels updates the labels of the block to given labels.
-// Since we cannot assume that old and new labels are equal in length,
-// remove old labels and insert new ones before TokenOBrace.
-func (b *Block) SetLabels(labels []string) {
-	// Remove old labels
-	for oldLabel := range b.labels {
-		oldLabel.Detach()
-		b.labels.Remove(oldLabel)
-	}
-
-	// Insert new labels before TokenOBrace.
-	for _, label := range labels {
-		labelToks := TokensForValue(cty.StringVal(label))
-		// Force a new label to use the quoted form even if the old one is unquoted.
-		// The unquoted form is supported in HCL 2 only for compatibility with some
-		// historical use in HCL 1.
-		labelObj := newQuoted(labelToks)
-		labelNode := b.children.Insert(b.open, labelObj)
-		b.labels.Add(labelNode)
-	}
 }
