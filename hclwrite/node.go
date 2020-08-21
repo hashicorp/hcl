@@ -207,6 +207,12 @@ func (ns nodeSet) Remove(n *node) {
 	delete(ns, n)
 }
 
+func (ns nodeSet) Clear() {
+	for n := range ns {
+		delete(ns, n)
+	}
+}
+
 func (ns nodeSet) List() []*node {
 	if len(ns) == 0 {
 		return nil
