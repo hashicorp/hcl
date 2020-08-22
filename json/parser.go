@@ -8,15 +8,8 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
-func parseFileContent(buf []byte, filename string) (node, hcl.Diagnostics) {
-	tokens := scan(buf, pos{
-		Filename: filename,
-		Pos: hcl.Pos{
-			Byte:   0,
-			Line:   1,
-			Column: 1,
-		},
-	})
+func parseFileContent(buf []byte, filename string, start hcl.Pos) (node, hcl.Diagnostics) {
+	tokens := scan(buf, pos{Filename: filename, Pos: start})
 	p := newPeeker(tokens)
 	node, diags := parseValue(p)
 	if len(diags) == 0 && p.Peek().Type != tokenEOF {
