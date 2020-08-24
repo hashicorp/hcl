@@ -4,6 +4,7 @@
 
 ### Enhancements
 
+* json: There is a new function `ParseWithStartPos`, which allows overriding the starting position for parsing in case the given JSON bytes are a fragment of a larger document, such as might happen when decoding with `encoding/json` into a `json.RawMessage`. ([#389](https://github.com/hashicorp/hcl/pull/389))
 * hclwrite: `Block` type now supports `SetType` and `SetLabels`, allowing surgical changes to the type and labels of an existing block without having to reconstruct the entire block. ([#340](https://github.com/hashicorp/hcl/pull/340))
 
 ## v2.6.0 (June 4, 2020)
