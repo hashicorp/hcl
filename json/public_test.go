@@ -112,3 +112,73 @@ func TestParse_malformed(t *testing.T) {
 		t.Errorf("got nil File; want actual file")
 	}
 }
+
+func TestParseWithStartPos(t *testing.T) {
+	src := `{
+  "foo": {
+    "bar": "baz"
+  }
+}`
+	part := `{
+    "bar": "baz"
+  }`
+
+	file, diags := Parse([]byte(src), "")
+	partFile, partDiags := ParseWithStartPos([]byte(part), "", hcl.Pos{Byte: 0, Line: 2, Column: 10})
+	if len(diags) != 0 {
+		t.Errorf("got %d diagnostics on parse src; want 0", len(diags))
+		for _, diag := range diags {
+			t.Logf("- %s", diag.Error())
+		}
+	}
+	if len(partDiags) != 0 {
+		t.Errorf("got %d diagnostics on parse part src; want 0", len(partDiags))
+		for _, diag := range partDiags {
+			t.Logf("- %s", diag.Error())
+		}
+	}
+
+	if file == nil {
+		t.Errorf("got nil File; want actual file")
+	}
+	if file.Body == nil {
+		t.Fatalf("got nil Body; want actual body")
+	}
+	if partFile == nil {
+		t.Errorf("got nil part File; want actual file")
+	}
+	if partFile.Body == nil {
+		t.Fatalf("got nil part Body; want actual body")
+	}
+
+	content, diags := file.Body.Content(&hcl.BodySchema{
+		Blocks: []hcl.BlockHeaderSchema{{Type: "foo"}},
+	})
+	if len(diags) != 0 {
+		t.Errorf("got %d diagnostics on decode; want 0", len(diags))
+		for _, diag := range diags {
+			t.Logf("- %s", diag.Error())
+		}
+	}
+	attrs, diags := content.Blocks[0].Body.JustAttributes()
+	if len(diags) != 0 {
+		t.Errorf("got %d diagnostics on decode; want 0", len(diags))
+		for _, diag := range diags {
+			t.Logf("- %s", diag.Error())
+		}
+	}
+	srcRange := attrs["bar"].Expr.Range()
+
+	partAttrs, diags := partFile.Body.JustAttributes()
+	if len(diags) != 0 {
+		t.Errorf("got %d diagnostics on decode; want 0", len(diags))
+		for _, diag := range diags {
+			t.Logf("- %s", diag.Error())
+		}
+	}
+	partRange := partAttrs["bar"].Expr.Range()
+
+	if srcRange.String() != partRange.String() {
+		t.Errorf("The two ranges did not match: src=%s, part=%s", srcRange, partRange)
+	}
+}

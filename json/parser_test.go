@@ -598,7 +598,49 @@ func TestParse(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.Input, func(t *testing.T) {
-			got, diag := parseFileContent([]byte(test.Input), "")
+			got, diag := parseFileContent([]byte(test.Input), "", hcl.Pos{Byte: 0, Line: 1, Column: 1})
+
+			if len(diag) != test.DiagCount {
+				t.Errorf("got %d diagnostics; want %d", len(diag), test.DiagCount)
+				for _, d := range diag {
+					t.Logf("  - %s", d.Error())
+				}
+			}
+
+			if diff := deep.Equal(got, test.Want); diff != nil {
+				for _, problem := range diff {
+					t.Error(problem)
+				}
+			}
+		})
+	}
+}
+
+func TestParseWithPos(t *testing.T) {
+	tests := []struct {
+		Input     string
+		StartPos  hcl.Pos
+		Want      node
+		DiagCount int
+	}{
+		// Simple, single-token constructs
+		{
+			`true`,
+			hcl.Pos{Byte: 0, Line: 3, Column: 10},
+			&booleanVal{
+				Value: true,
+				SrcRange: hcl.Range{
+					Start: hcl.Pos{Line: 3, Column: 10, Byte: 0},
+					End:   hcl.Pos{Line: 3, Column: 14, Byte: 4},
+				},
+			},
+			0,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Input, func(t *testing.T) {
+			got, diag := parseFileContent([]byte(test.Input), "", test.StartPos)
 
 			if len(diag) != test.DiagCount {
 				t.Errorf("got %d diagnostics; want %d", len(diag), test.DiagCount)
