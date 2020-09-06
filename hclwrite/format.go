@@ -235,6 +235,10 @@ func spaceAfterToken(subject, before, after *Token) bool {
 		// Don't split a function name from open paren in a call
 		return false
 
+	case subject.Type == hclsyntax.TokenEqual && after.Type == hclsyntax.TokenDot:
+		// Do split the equal sign for the following number
+		return true
+
 	case subject.Type == hclsyntax.TokenDot || after.Type == hclsyntax.TokenDot:
 		// Don't use spaces around attribute access dots
 		return false
