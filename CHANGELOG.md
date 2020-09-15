@@ -8,6 +8,10 @@
 * json: There is a new function `ParseExpression`, which allows parsing a JSON string directly in expression mode, whereas previously it was only possible to parse a JSON string in body mode. ([#381](https://github.com/hashicorp/hcl/pull/381))
 * hclwrite: `Block` type now supports `SetType` and `SetLabels`, allowing surgical changes to the type and labels of an existing block without having to reconstruct the entire block. ([#340](https://github.com/hashicorp/hcl/pull/340))
 
+### Bugs Fixed
+
+* hclsyntax: Fix confusing error message for bitwise OR operator ([#380](https://github.com/hashicorp/hcl/pull/380))
+
 ## v2.6.0 (June 4, 2020)
 
 ### Enhancements
