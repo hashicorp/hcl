@@ -68,6 +68,10 @@ func TestFormat(t *testing.T) {
 			`foo(a, b...)`,
 		},
 		{
+			`! true`,
+			`!true`,
+		},
+		{
 			`a="hello ${ name }"`,
 			`a = "hello ${name}"`,
 		},
