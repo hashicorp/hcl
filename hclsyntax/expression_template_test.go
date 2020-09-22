@@ -283,6 +283,27 @@ trim`,
 			cty.UnknownVal(cty.String),
 			1, // Unexpected endfor directive
 		},
+		{ // marks from uninterpolated values are ignored
+			`hello%{ if false } ${target}%{ endif }`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"target": cty.StringVal("world").WithMarks(cty.NewValueMarks("sensitive")),
+				},
+			},
+			cty.StringVal("hello"),
+			0,
+		},
+		{ // marks from interpolated values are passed through
+			`${greeting} ${target}`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"greeting": cty.StringVal("hello").WithMarks(cty.NewValueMarks("english")),
+					"target":   cty.StringVal("world").WithMarks(cty.NewValueMarks("sensitive")),
+				},
+			},
+			cty.StringVal("hello world").WithMarks(cty.NewValueMarks("english", "sensitive")),
+			0,
+		},
 	}
 
 	for _, test := range tests {
