@@ -49,6 +49,15 @@ func TestApplyPath(t *testing.T) {
 			``,
 		},
 		{
+			cty.MapVal(map[string]cty.Value{
+				"a": cty.StringVal("foo").Mark("x"),
+				"b": cty.StringVal("bar").Mark("x"),
+			}).Mark("x"),
+			cty.GetAttrPath("a"),
+			cty.StringVal("foo").Mark("x"),
+			``,
+		},
+		{
 			cty.ListValEmpty(cty.String),
 			(cty.Path)(nil).Index(cty.NumberIntVal(0)),
 			cty.NilVal,

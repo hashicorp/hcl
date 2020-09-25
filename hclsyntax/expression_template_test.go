@@ -287,7 +287,7 @@ trim`,
 			`hello%{ if false } ${target}%{ endif }`,
 			&hcl.EvalContext{
 				Variables: map[string]cty.Value{
-					"target": cty.StringVal("world").WithMarks(cty.NewValueMarks("sensitive")),
+					"target": cty.StringVal("world").Mark("sensitive"),
 				},
 			},
 			cty.StringVal("hello"),
@@ -297,11 +297,23 @@ trim`,
 			`${greeting} ${target}`,
 			&hcl.EvalContext{
 				Variables: map[string]cty.Value{
-					"greeting": cty.StringVal("hello").WithMarks(cty.NewValueMarks("english")),
-					"target":   cty.StringVal("world").WithMarks(cty.NewValueMarks("sensitive")),
+					"greeting": cty.StringVal("hello").Mark("english"),
+					"target":   cty.StringVal("world").Mark("sensitive"),
 				},
 			},
 			cty.StringVal("hello world").WithMarks(cty.NewValueMarks("english", "sensitive")),
+			0,
+		},
+		{ // can use marks by traversing complex values
+			`Authenticate with "${secrets.passphrase}"`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"secrets": cty.MapVal(map[string]cty.Value{
+						"passphrase": cty.StringVal("my voice is my passport").Mark("sensitive"),
+					}).Mark("sensitive"),
+				},
+			},
+			cty.StringVal(`Authenticate with "my voice is my passport"`).WithMarks(cty.NewValueMarks("sensitive")),
 			0,
 		},
 	}
