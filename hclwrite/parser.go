@@ -278,10 +278,10 @@ func parseAttribute(nativeAttr *hclsyntax.Attribute, from, leadComments, lineCom
 		children.AppendNode(cn)
 	}
 
-	children.AppendUnstructuredTokens(newline.Tokens())
-
 	// Collect any stragglers, though there shouldn't be any
 	children.AppendUnstructuredTokens(from.Tokens())
+
+	children.AppendUnstructuredTokens(newline.Tokens())
 
 	return newNode(attr)
 }
