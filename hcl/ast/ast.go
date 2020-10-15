@@ -112,7 +112,7 @@ func (o *ObjectList) Elem() *ObjectList {
 func (o *ObjectList) Pos() token.Pos {
 	// If an Object has no members, it won't have a first item
 	// to use as position
-	if len(o.Items)==0 {
+	if len(o.Items) == 0 {
 		return unknownPos
 	}
 	// Return the uninitialized position
