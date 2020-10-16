@@ -39,9 +39,9 @@ func TestDecode_interface(t *testing.T) {
 			false,
 			map[string]interface{}{
 				"resource": []map[string]interface{}{
-					map[string]interface{}{
+					{
 						"foo": []map[string]interface{}{
-							map[string]interface{}{},
+							{},
 						},
 					},
 				},
@@ -126,7 +126,7 @@ func TestDecode_interface(t *testing.T) {
 			false,
 			map[string]interface{}{
 				"module": []map[string]interface{}{
-					map[string]interface{}{
+					{
 						"app": []map[string]interface{}{
 							map[string]interface{}{"foo": ""},
 						},
@@ -1325,5 +1325,40 @@ func TestDecode_flattenedJSON(t *testing.T) {
 		if !reflect.DeepEqual(tc.Out, tc.Expected) {
 			t.Fatalf("[%d]\ngot: %s\nexpected: %s\n", i, spew.Sdump(tc.Out), spew.Sdump(tc.Expected))
 		}
+	}
+}
+
+// TestDecode_Hcl1Tag asserts that hcl1 and hcl tags are both honored.
+// If both are set, hcl1 is prioratized
+func TestDecode_Hcl1Tag(t *testing.T) {
+	var value struct {
+		A string `hcl:"a"`
+		B string `hcl1:"b"`
+		C string `hcl:"z" hcl1:"c"`
+
+		ExtraKeys []string `hcl1:",unusedKeys"`
+	}
+
+	err := Decode(&value, `
+a = "a"
+b = "b"
+c = "c"
+z = "extra"
+`)
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	if got, want := value.A, "a"; got != want {
+		t.Fatalf("wrong result %#v; want %#v", got, want)
+	}
+	if got, want := value.B, "b"; got != want {
+		t.Fatalf("wrong result %#v; want %#v", got, want)
+	}
+	if got, want := value.C, "c"; got != want {
+		t.Fatalf("wrong result %#v; want %#v", got, want)
+	}
+	if got, want := value.ExtraKeys, []string{"z"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("wrong result %#v; want %#v", got, want)
 	}
 }
