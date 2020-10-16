@@ -11,6 +11,10 @@ type EvalContext struct {
 	Variables map[string]cty.Value
 	Functions map[string]function.Function
 	parent    *EvalContext
+
+	// UnknownVariable handles when an unknown variable is referenced.
+	// This handler is experimental and may change in the future.
+	UnknownVariable func(Traversal) (cty.Value, error)
 }
 
 // NewChild returns a new EvalContext that is a child of the receiver.
