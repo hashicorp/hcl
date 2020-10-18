@@ -136,6 +136,7 @@ func decodeBodyToStruct(body hcl.Body, ctx *hcl.EvalContext, val reflect.Value) 
 		ty := field.Type
 		isSlice := false
 		isPtr := false
+		isMap := false
 		if ty.Kind() == reflect.Slice {
 			isSlice = true
 			ty = ty.Elem()
@@ -144,8 +145,11 @@ func decodeBodyToStruct(body hcl.Body, ctx *hcl.EvalContext, val reflect.Value) 
 			isPtr = true
 			ty = ty.Elem()
 		}
+		if ty.Kind() == reflect.Map {
+			isMap = true
+		}
 
-		if len(blocks) > 1 && !isSlice {
+		if len(blocks) > 1 && !isSlice && !(isMap && len(blocks[0].Labels) == 1) {
 			diags = append(diags, &hcl.Diagnostic{
 				Severity: hcl.DiagError,
 				Summary:  fmt.Sprintf("Duplicate %s block", typeName),
@@ -159,7 +163,7 @@ func decodeBodyToStruct(body hcl.Body, ctx *hcl.EvalContext, val reflect.Value) 
 		}
 
 		if len(blocks) == 0 {
-			if isSlice || isPtr {
+			if isSlice || isPtr || isMap {
 				if val.Field(fieldIdx).IsNil() {
 					val.Field(fieldIdx).Set(reflect.Zero(field.Type))
 				}
@@ -207,6 +211,37 @@ func decodeBodyToStruct(body hcl.Body, ctx *hcl.EvalContext, val reflect.Value) 
 			}
 
 			val.Field(fieldIdx).Set(sli)
+		case isMap && len(blocks[0].Labels) == 1:
+			v := val.Field(fieldIdx)
+			if v.IsNil() {
+				v.Set(reflect.MakeMap(ty))
+			}
+
+			for _, block := range blocks {
+				tyv := ty.Elem()
+				isPtr := false
+				if tyv.Kind() == reflect.Ptr {
+					isPtr = true
+					tyv = tyv.Elem()
+				}
+				ev := reflect.New(tyv)
+				diags = append(diags, decodeBodyToValue(block.Body, ctx, ev.Elem())...)
+
+				blockTags := getFieldTags(tyv)
+				lv := block.Labels[0]
+				lfieldIdx := blockTags.Labels[0].FieldIndex
+				f := ev.Elem().Field(lfieldIdx)
+				if f.Kind() == reflect.Ptr {
+					f.Set(reflect.ValueOf(&lv))
+				} else {
+					f.SetString(lv)
+				}
+
+				if !isPtr {
+					ev = ev.Elem()
+				}
+				v.SetMapIndex(reflect.ValueOf(lv), ev)
+			}
 
 		default:
 			block := blocks[0]
