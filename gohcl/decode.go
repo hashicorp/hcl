@@ -11,6 +11,11 @@ import (
 	"github.com/zclconf/go-cty/cty/gocty"
 )
 
+type Decoder struct {
+}
+
+var global = &Decoder{}
+
 // DecodeBody extracts the configuration within the given body into the given
 // value. This value must be a non-nil pointer to either a struct or
 // a map, where in the former case the configuration will be decoded using
@@ -28,27 +33,31 @@ import (
 // may still be accessed by a careful caller for static analysis and editor
 // integration use-cases.
 func DecodeBody(body hcl.Body, ctx *hcl.EvalContext, val interface{}) hcl.Diagnostics {
+	return global.DecodeBody(body, ctx, val)
+}
+
+func (d *Decoder) DecodeBody(body hcl.Body, ctx *hcl.EvalContext, val interface{}) hcl.Diagnostics {
 	rv := reflect.ValueOf(val)
 	if rv.Kind() != reflect.Ptr {
 		panic(fmt.Sprintf("target value must be a pointer, not %s", rv.Type().String()))
 	}
 
-	return decodeBodyToValue(body, ctx, rv.Elem())
+	return d.decodeBodyToValue(body, ctx, rv.Elem())
 }
 
-func decodeBodyToValue(body hcl.Body, ctx *hcl.EvalContext, val reflect.Value) hcl.Diagnostics {
+func (d *Decoder) decodeBodyToValue(body hcl.Body, ctx *hcl.EvalContext, val reflect.Value) hcl.Diagnostics {
 	et := val.Type()
 	switch et.Kind() {
 	case reflect.Struct:
-		return decodeBodyToStruct(body, ctx, val)
+		return d.decodeBodyToStruct(body, ctx, val)
 	case reflect.Map:
-		return decodeBodyToMap(body, ctx, val)
+		return d.decodeBodyToMap(body, ctx, val)
 	default:
 		panic(fmt.Sprintf("target value must be pointer to struct or map, not %s", et.String()))
 	}
 }
 
-func decodeBodyToStruct(body hcl.Body, ctx *hcl.EvalContext, val reflect.Value) hcl.Diagnostics {
+func (d *Decoder) decodeBodyToStruct(body hcl.Body, ctx *hcl.EvalContext, val reflect.Value) hcl.Diagnostics {
 	schema, partial := ImpliedBodySchema(val.Interface())
 
 	var content *hcl.BodyContent
@@ -79,7 +88,7 @@ func decodeBodyToStruct(body hcl.Body, ctx *hcl.EvalContext, val reflect.Value) 
 			}
 			fieldV.Set(reflect.ValueOf(attrs))
 		default:
-			diags = append(diags, decodeBodyToValue(leftovers, ctx, fieldV)...)
+			diags = append(diags, d.decodeBodyToValue(leftovers, ctx, fieldV)...)
 		}
 	}
 
@@ -108,7 +117,7 @@ func decodeBodyToStruct(body hcl.Body, ctx *hcl.EvalContext, val reflect.Value) 
 		case exprType.AssignableTo(field.Type):
 			fieldV.Set(reflect.ValueOf(attr.Expr))
 		default:
-			diags = append(diags, DecodeExpression(
+			diags = append(diags, d.DecodeExpression(
 				attr.Expr, ctx, fieldV.Addr().Interface(),
 			)...)
 		}
@@ -182,10 +191,10 @@ func decodeBodyToStruct(body hcl.Body, ctx *hcl.EvalContext, val reflect.Value) 
 					if v.IsNil() {
 						v = reflect.New(ty)
 					}
-					diags = append(diags, decodeBlockToValue(block, ctx, v.Elem())...)
+					diags = append(diags, d.decodeBlockToValue(block, ctx, v.Elem())...)
 					sli.Index(i).Set(v)
 				} else {
-					diags = append(diags, decodeBlockToValue(block, ctx, sli.Index(i))...)
+					diags = append(diags, d.decodeBlockToValue(block, ctx, sli.Index(i))...)
 				}
 			}
 
@@ -215,7 +224,7 @@ func decodeBodyToStruct(body hcl.Body, ctx *hcl.EvalContext, val reflect.Value) 
 	return diags
 }
 
-func decodeBodyToMap(body hcl.Body, ctx *hcl.EvalContext, v reflect.Value) hcl.Diagnostics {
+func (d *Decoder) decodeBodyToMap(body hcl.Body, ctx *hcl.EvalContext, v reflect.Value) hcl.Diagnostics {
 	attrs, diags := body.JustAttributes()
 	if attrs == nil {
 		return diags
@@ -241,7 +250,7 @@ func decodeBodyToMap(body hcl.Body, ctx *hcl.EvalContext, v reflect.Value) hcl.D
 	return diags
 }
 
-func decodeBlockToValue(block *hcl.Block, ctx *hcl.EvalContext, v reflect.Value) hcl.Diagnostics {
+func (d *Decoder) decodeBlockToValue(block *hcl.Block, ctx *hcl.EvalContext, v reflect.Value) hcl.Diagnostics {
 	var diags hcl.Diagnostics
 
 	ty := v.Type()
@@ -258,7 +267,7 @@ func decodeBlockToValue(block *hcl.Block, ctx *hcl.EvalContext, v reflect.Value)
 		}
 		v.Elem().Set(reflect.ValueOf(attrs))
 	default:
-		diags = append(diags, decodeBodyToValue(block.Body, ctx, v)...)
+		diags = append(diags, d.decodeBodyToValue(block.Body, ctx, v)...)
 
 		if len(block.Labels) > 0 {
 			blockTags := getFieldTags(ty)
@@ -293,6 +302,10 @@ func decodeBlockToValue(block *hcl.Block, ctx *hcl.EvalContext, v reflect.Value)
 // may still be accessed by a careful caller for static analysis and editor
 // integration use-cases.
 func DecodeExpression(expr hcl.Expression, ctx *hcl.EvalContext, val interface{}) hcl.Diagnostics {
+	return global.DecodeExpression(expr, ctx, val)
+}
+
+func (d *Decoder) DecodeExpression(expr hcl.Expression, ctx *hcl.EvalContext, val interface{}) hcl.Diagnostics {
 	srcVal, diags := expr.Value(ctx)
 
 	convTy, err := gocty.ImpliedType(val)
