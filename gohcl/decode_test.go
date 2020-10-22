@@ -219,6 +219,30 @@ func TestDecodeBody(t *testing.T) {
 		},
 		{
 			map[string]interface{}{
+				"name": "Ermintrude",
+				"age":  50,
+			},
+			makeInstantiateType(struct {
+				Name   string   `hcl:"name"`
+				Body   hcl.Body `hcl:",body"`
+				Remain hcl.Body `hcl:",remain"`
+			}{}),
+			func(gotI interface{}) bool {
+				got := gotI.(struct {
+					Name   string   `hcl:"name"`
+					Body   hcl.Body `hcl:",body"`
+					Remain hcl.Body `hcl:",remain"`
+				})
+
+				attrs, _ := got.Body.JustAttributes()
+
+				return got.Name == "Ermintrude" && len(attrs) == 2 &&
+					attrs["name"] != nil && attrs["age"] != nil
+			},
+			0,
+		},
+		{
+			map[string]interface{}{
 				"noodle": map[string]interface{}{},
 			},
 			makeInstantiateType(struct {
