@@ -217,7 +217,22 @@ func decodeBodyToStruct(body hcl.Body, ctx *hcl.EvalContext, val reflect.Value) 
 				v.Set(reflect.MakeMap(ty))
 			}
 
+			seen := map[string]*hcl.Block{}
 			for _, block := range blocks {
+				lv := block.Labels[0]
+				if pv, ok := seen[lv]; ok {
+					diags = append(diags, &hcl.Diagnostic{
+						Severity: hcl.DiagError,
+						Summary:  fmt.Sprintf("Duplicate %s %v block", block.Type, lv),
+						Detail: fmt.Sprintf(
+							"Only one %s %v block is allowed. Another was defined at %s.",
+							block.Type, lv, pv.DefRange.String(),
+						),
+						Subject: &pv.DefRange,
+					})
+				}
+				seen[lv] = block
+
 				tyv := ty.Elem()
 				isPtr := false
 				if tyv.Kind() == reflect.Ptr {
@@ -228,7 +243,6 @@ func decodeBodyToStruct(body hcl.Body, ctx *hcl.EvalContext, val reflect.Value) 
 				diags = append(diags, decodeBodyToValue(block.Body, ctx, ev.Elem())...)
 
 				blockTags := getFieldTags(tyv)
-				lv := block.Labels[0]
 				lfieldIdx := blockTags.Labels[0].FieldIndex
 				f := ev.Elem().Field(lfieldIdx)
 				if f.Kind() == reflect.Ptr {
