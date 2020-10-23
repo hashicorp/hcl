@@ -65,6 +65,19 @@ func decodeBodyToStruct(body hcl.Body, ctx *hcl.EvalContext, val reflect.Value) 
 
 	tags := getFieldTags(val.Type())
 
+	if tags.Body != nil {
+		fieldIdx := *tags.Body
+		field := val.Type().Field(fieldIdx)
+		fieldV := val.Field(fieldIdx)
+		switch {
+		case bodyType.AssignableTo(field.Type):
+			fieldV.Set(reflect.ValueOf(body))
+
+		default:
+			diags = append(diags, decodeBodyToValue(body, ctx, fieldV)...)
+		}
+	}
+
 	if tags.Remain != nil {
 		fieldIdx := *tags.Remain
 		field := val.Type().Field(fieldIdx)
