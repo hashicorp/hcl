@@ -854,6 +854,41 @@ upper(
 			}),
 			0,
 		},
+		{ // Marked sequence results in a marked tuple
+			`[for x in things: x if x != ""]`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"things": cty.ListVal([]cty.Value{
+						cty.StringVal("a"),
+						cty.StringVal("b"),
+						cty.StringVal(""),
+						cty.StringVal("c"),
+					}).Mark("sensitive"),
+				},
+			},
+			cty.TupleVal([]cty.Value{
+				cty.StringVal("a"),
+				cty.StringVal("b"),
+				cty.StringVal("c"),
+			}).Mark("sensitive"),
+			0,
+		},
+		{ // Marked map results in a marked object
+			`{for k, v in things: k => !v}`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"things": cty.MapVal(map[string]cty.Value{
+						"a": cty.True,
+						"b": cty.False,
+					}).Mark("sensitive"),
+				},
+			},
+			cty.ObjectVal(map[string]cty.Value{
+				"a": cty.False,
+				"b": cty.True,
+			}).Mark("sensitive"),
+			0,
+		},
 
 		{
 			`[{name: "Steve"}, {name: "Ermintrude"}].*.name`,

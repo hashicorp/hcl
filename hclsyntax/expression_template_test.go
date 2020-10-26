@@ -283,6 +283,39 @@ trim`,
 			cty.UnknownVal(cty.String),
 			1, // Unexpected endfor directive
 		},
+		{ // marks from uninterpolated values are ignored
+			`hello%{ if false } ${target}%{ endif }`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"target": cty.StringVal("world").Mark("sensitive"),
+				},
+			},
+			cty.StringVal("hello"),
+			0,
+		},
+		{ // marks from interpolated values are passed through
+			`${greeting} ${target}`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"greeting": cty.StringVal("hello").Mark("english"),
+					"target":   cty.StringVal("world").Mark("sensitive"),
+				},
+			},
+			cty.StringVal("hello world").WithMarks(cty.NewValueMarks("english", "sensitive")),
+			0,
+		},
+		{ // can use marks by traversing complex values
+			`Authenticate with "${secrets.passphrase}"`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"secrets": cty.MapVal(map[string]cty.Value{
+						"passphrase": cty.StringVal("my voice is my passport").Mark("sensitive"),
+					}).Mark("sensitive"),
+				},
+			},
+			cty.StringVal(`Authenticate with "my voice is my passport"`).WithMarks(cty.NewValueMarks("sensitive")),
+			0,
+		},
 	}
 
 	for _, test := range tests {

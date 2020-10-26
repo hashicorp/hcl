@@ -205,6 +205,9 @@ func TestParse(t *testing.T) {
 								Val:  "b",
 							},
 							{
+								Type: "blockLabels",
+							},
+							{
 								Type: "Tokens",
 								Val:  " {",
 							},
@@ -240,8 +243,13 @@ func TestParse(t *testing.T) {
 								Val:  "b",
 							},
 							{
-								Type: "identifier",
-								Val:  ` label`,
+								Type: "blockLabels",
+								Children: []TestTreeNode{
+									{
+										Type: "identifier",
+										Val:  " label",
+									},
+								},
 							},
 							{
 								Type: "Tokens",
@@ -279,8 +287,71 @@ func TestParse(t *testing.T) {
 								Val:  "b",
 							},
 							{
-								Type: "quoted",
-								Val:  ` "label"`,
+								Type: "blockLabels",
+								Children: []TestTreeNode{
+									{
+										Type: "quoted",
+										Val:  ` "label"`,
+									},
+								},
+							},
+							{
+								Type: "Tokens",
+								Val:  " {",
+							},
+							{
+								Type: "Body",
+							},
+							{
+								Type: "Tokens",
+								Val:  "}",
+							},
+							{
+								Type: "Tokens",
+								Val:  "\n",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			"b \"label1\" /* foo */ \"label2\" {}\n",
+			TestTreeNode{
+				Type: "Body",
+				Children: []TestTreeNode{
+					{
+						Type: "Block",
+						Children: []TestTreeNode{
+							{
+								Type: "comments",
+							},
+							{
+								Type: "identifier",
+								Val:  "b",
+							},
+							{
+								Type: "blockLabels",
+								Children: []TestTreeNode{
+									{
+										Type: "quoted",
+										Val:  ` "label1"`,
+									},
+									{
+										// The comment between the labels just
+										// becomes an "unstructured tokens"
+										// node, because this isn't a place
+										// where we expect comments to attach
+										// to a particular object as
+										// documentation.
+										Type: "Tokens",
+										Val:  ` /* foo */`,
+									},
+									{
+										Type: "quoted",
+										Val:  ` "label2"`,
+									},
+								},
 							},
 							{
 								Type: "Tokens",
@@ -316,6 +387,9 @@ func TestParse(t *testing.T) {
 							{
 								Type: "identifier",
 								Val:  "b",
+							},
+							{
+								Type: "blockLabels",
 							},
 							{
 								Type: "Tokens",
