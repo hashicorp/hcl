@@ -14,7 +14,7 @@ references:
 commands:
   git-verify:
     steps:
-      - run: 
+      - run:
           name: "Verify no code was generated"
           command: |
             if [[ -z $(git status --porcelain) ]]; then
@@ -39,12 +39,12 @@ commands:
             echo "Running $(echo $PACKAGE_NAMES | wc -w) packages"
             echo $PACKAGE_NAMES
             << parameters.cmd >> --format=short-verbose --junitfile $TEST_RESULTS_DIR/hcl/gotestsum-report.xml -- -p 2 -cover -coverprofile=<< parameters.platform >>_cov_$CIRCLE_NODE_INDEX.part $PACKAGE_NAMES
-        
+
 jobs:
   go-checks:
     docker:
-      - image: circleci/golang:<< parameters.go-version >>
-    environment: 
+      - image: docker.mirror.hashicorp.services/circleci/golang:<< parameters.go-version >>
+    environment:
       <<: *ENVIRONMENT
     parameters:
       go-version:
@@ -57,8 +57,8 @@ jobs:
 
   linux-tests:
     docker:
-      - image: circleci/golang:<< parameters.go-version >>
-    environment: 
+      - image: docker.mirror.hashicorp.services/circleci/golang:<< parameters.go-version >>
+    environment:
       <<: *ENVIRONMENT
     parameters:
       go-version:
@@ -85,7 +85,7 @@ jobs:
           path: *TEST_RESULTS_DIR
 
   win-tests:
-    executor: 
+    executor:
       name: win/default
       shell: bash --login -eo pipefail
     environment:
@@ -96,13 +96,13 @@ jobs:
         type: string
       gotestsum-version:
         type: string
-    steps: 
+    steps:
       - run: git config --global core.autocrlf false
       - checkout
       - attach_workspace:
           at: .
       - git-verify
-      - run: 
+      - run:
           name: Setup (remove pre-installed go v1.12)
           command: |
             rm -rf "c:\Go"
@@ -113,21 +113,21 @@ jobs:
             - win-golang-<< parameters.go-version >>-cache-v1
             - win-gomod-cache-{{ checksum "go.mod" }}-v1
 
-      - run: 
+      - run:
           name: Install go version << parameters.go-version >>
-          command: | 
+          command: |
             if [ ! -d "c:\go" ]; then
               echo "Cache not found, installing new version of go"
               curl --fail --location https://dl.google.com/go/go<< parameters.go-version >>.windows-amd64.zip --output go.zip
               unzip go.zip -d "/c"
             fi
 
-      - run: 
+      - run:
           name: Go mod download
           command: |
             go mod verify
             go mod download
-  
+
       - save_cache:
           key: win-golang-<< parameters.go-version >>-cache-v1
           paths:
@@ -158,7 +158,7 @@ jobs:
           path: *WIN_TEST_RESULTS
       - store_artifacts:
           path: *WIN_TEST_RESULTS
-          
+
 workflows:
   hcl:
     jobs:
