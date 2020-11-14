@@ -2,6 +2,7 @@ package hclwrite
 
 import (
 	"fmt"
+	"github.com/kr/pretty"
 	"reflect"
 	"strings"
 	"testing"
@@ -1586,4 +1587,62 @@ bar {}
 		t.Errorf("wrong result\ngot:  %s\nwant: %s\ndiff:\n%s", spew.Sdump(got), spew.Sdump(want), diff)
 	}
 
+}
+
+func TestBodyRenameVariablePrefix(t *testing.T) {
+	tests := []struct {
+		Name   string
+		Config string
+		OldVar []string
+		NewVar []string
+		Want   string
+	}{
+		{
+			Name: "root traverse",
+			Config: `foo = a.x + a.y * b.c
+bar = max(a.z, b.c)`,
+			OldVar: []string{"a"},
+			NewVar: []string{"z"},
+			Want: `foo = z.x + z.y * b.c
+bar = max(z.z, b.c)`,
+		},
+		{
+			Name: "attr traverse of root traverse",
+			Config: `foo = a.x + a.y * b.c
+bar = max(a.z, b.c)`,
+			OldVar: []string{"b", "c"},
+			NewVar: []string{"b", "d"},
+			Want: `foo = a.x + a.y * b.d
+bar = max(a.z, b.d)`,
+		},
+		{
+			Name: "attr traverse in the Source of a relative traversal expr",
+			Config: `resource "foo" "b" {
+  count = 3
+  name  = foo.a[count.index].name
+}`,
+			OldVar: []string{"foo", "a"},
+			NewVar: []string{"foo", "c"},
+			Want: `resource "foo" "b" {
+  count = 3
+  name  = foo.c[count.index].name
+}`,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			f, diags := ParseConfig([]byte(test.Config), "", hcl.Pos{Line: 1, Column: 1})
+			if diags.HasErrors() {
+				t.Errorf("failed to parse config: %v", diags.Error())
+			}
+
+			f.Body().RenameVariablePrefix(test.OldVar, test.NewVar)
+
+			got := string(f.Bytes())
+			if !reflect.DeepEqual(got, test.Want) {
+				t.Errorf("wrong result\ngot:  %s\nwant: %s", pretty.Sprint(got), pretty.Sprint(test.Want))
+			}
+		})
+	}
 }

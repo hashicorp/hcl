@@ -237,3 +237,16 @@ func (b *Body) AppendNewline() {
 		},
 	})
 }
+
+// RenameVariablePrefix recursively examines each of the absolute traversals in the
+// containing expressions of the receiving Body to see if they have the given sequence
+// of names as a prefix prefix. If so, they are updated in place to have the given
+// replacement names instead of that prefix.
+func (b *Body) RenameVariablePrefix(search, replacements []string) {
+	for _, attr := range b.Attributes() {
+		attr.Expr().RenameVariablePrefix(search, replacements)
+	}
+	for _, blk := range b.Blocks() {
+		blk.Body().RenameVariablePrefix(search, replacements)
+	}
+}
