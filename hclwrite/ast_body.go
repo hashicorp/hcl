@@ -242,6 +242,14 @@ func (b *Body) AppendNewline() {
 // containing expressions of the receiving Body to see if they have the given sequence
 // of names as a prefix prefix. If so, they are updated in place to have the given
 // replacement names instead of that prefix.
+//
+// This can be used to implement symbol renaming. The calling application can
+// visit all relevant expressions in its input and apply the same renaming
+// to implement a global symbol rename.
+//
+// The search and replacement traversals must be the same length, or this
+// method will panic. Only attribute access operations can be matched and
+// replaced. Index steps never match the prefix.
 func (b *Body) RenameVariablePrefix(search, replacements []string) {
 	for _, attr := range b.Attributes() {
 		attr.Expr().RenameVariablePrefix(search, replacements)
