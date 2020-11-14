@@ -1628,6 +1628,21 @@ bar = max(a.z, b.d)`,
   name  = foo.c[count.index].name
 }`,
 		},
+		{
+			Name:   "attr traverse following index traverse of a scoped traversal expr",
+			Config: `foo1 = res.name.0.bar
+foo2 = res.name.1.bar
+foo3 = res.name[0].bar
+foo4 = res.name[1].bar
+`,
+			OldVar: []string{"res", "name", "bar"},
+			NewVar: []string{"res", "name", "baz"},
+			Want: `foo1 = res.name.0.baz
+foo2 = res.name.1.baz
+foo3 = res.name[0].baz
+foo4 = res.name[1].baz
+`,
+		},
 	}
 
 	for _, test := range tests {

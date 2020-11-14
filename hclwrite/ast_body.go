@@ -249,7 +249,7 @@ func (b *Body) AppendNewline() {
 //
 // The search and replacement traversals must be the same length, or this
 // method will panic. Only attribute access operations can be matched and
-// replaced. Index steps never match the prefix.
+// replaced. Index steps in the existing expression will be skipped and kept.
 func (b *Body) RenameVariablePrefix(search, replacements []string) {
 	for _, attr := range b.Attributes() {
 		attr.Expr().RenameVariablePrefix(search, replacements)
