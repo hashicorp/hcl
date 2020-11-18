@@ -908,6 +908,12 @@ upper(
 			0,
 		},
 		{
+			`null[*]`,
+			nil,
+			cty.EmptyTupleVal,
+			0,
+		},
+		{
 			`{name: "Steve"}[*].name`,
 			nil,
 			cty.TupleVal([]cty.Value{
