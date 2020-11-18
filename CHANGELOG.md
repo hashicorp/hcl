@@ -1,6 +1,10 @@
 # HCL Changelog
 
-## v2.8.0 (Unreleased)
+## v2.7.2 (Unreleased)
+
+### Bugs Fixed
+
+* hclsyntax: The unusual expression `null[*]` was previously always returning an unknown value, even though the rules for `[*]` normally call for it to return an empty tuple when applied to a null. As well as being a surprising result, it was particularly problematic because it violated the rule that a calling application may assume that an expression result will always be known unless the application itself introduces unknown values via the evaluation context. `null[*]` will now produce an empty tuple. ([#416](https://github.com/hashicorp/hcl/pull/416))
 
 ## v2.7.1 (November 18, 2020)
 
