@@ -1,5 +1,11 @@
 # HCL Changelog
 
+## v2.7.1 (November 18, 2020)
+
+### Bugs Fixed
+
+* hclwrite: Correctly handle blank quoted string block labels, instead of dropping them ([#422](https://github.com/hashicorp/hcl/pull/422))
+
 ## v2.7.0 (October 14, 2020)
 
 ### Enhancements
