@@ -198,6 +198,9 @@ func decodeBodyToStruct(body hcl.Body, ctx *hcl.EvalContext, val reflect.Value) 
 					diags = append(diags, decodeBlockToValue(block, ctx, v.Elem())...)
 					sli.Index(i).Set(v)
 				} else {
+					if i >= sli.Len() {
+						sli = reflect.Append(sli, reflect.Indirect(reflect.New(ty)))
+					}
 					diags = append(diags, decodeBlockToValue(block, ctx, sli.Index(i))...)
 				}
 			}
