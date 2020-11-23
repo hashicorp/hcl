@@ -40,7 +40,7 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
         BrokenUTF8 = any - AnyUTF8;
 
         NumberLitContinue = (digit|'.'|('e'|'E') ('+'|'-')? digit);
-        NumberLit = digit ("" | (NumberLitContinue - '.') | (NumberLitContinue* (NumberLitContinue - '.')));
+        NumberLit = (digit |'.')  ("" | (NumberLitContinue - '.') | (NumberLitContinue* (NumberLitContinue - '.')));
         Ident = (ID_Start | '_') (ID_Continue | '-')*;
 
         # Symbols that just represent themselves are handled as a single rule.
