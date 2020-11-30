@@ -41,6 +41,14 @@ func TestApplyPath(t *testing.T) {
 			``,
 		},
 		{
+			cty.ListVal([]cty.Value{
+				cty.StringVal("hello"),
+			}).Mark("x"),
+			(cty.Path)(nil).Index(cty.NumberIntVal(0)),
+			cty.StringVal("hello").Mark("x"),
+			``,
+		},
+		{
 			cty.TupleVal([]cty.Value{
 				cty.StringVal("hello"),
 			}),
