@@ -1,6 +1,14 @@
 # HCL Changelog
 
-## v2.7.3 (Unreleased)
+## v2.8.0 (Unreleased)
+
+### Enhancements
+
+* hclsyntax: Expression grouping parentheses will now be reflected by an explicit node in the AST, whereas before they were only considered during parsing. ([#426](https://github.com/hashicorp/hcl/pull/426))
+
+### Bugs Fixed
+
+* hclwrite: The parser will now correctly include the `(` and `)` tokens when an expression is surrounded by parentheses. Previously it would incorrectly recognize those tokens as being extraneous tokens outside of the expression. ([#426](https://github.com/hashicorp/hcl/pull/426))
 
 ## v2.7.2 (November 30, 2020)
 
