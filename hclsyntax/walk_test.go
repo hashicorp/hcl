@@ -45,12 +45,14 @@ func TestWalk(t *testing.T) {
 		{
 			`(1 + 1)`,
 			[]testWalkCall{
+				{testWalkEnter, "*hclsyntax.ParenthesesExpr"},
 				{testWalkEnter, "*hclsyntax.BinaryOpExpr"},
 				{testWalkEnter, "*hclsyntax.LiteralValueExpr"},
 				{testWalkExit, "*hclsyntax.LiteralValueExpr"},
 				{testWalkEnter, "*hclsyntax.LiteralValueExpr"},
 				{testWalkExit, "*hclsyntax.LiteralValueExpr"},
 				{testWalkExit, "*hclsyntax.BinaryOpExpr"},
+				{testWalkExit, "*hclsyntax.ParenthesesExpr"},
 			},
 		},
 		{

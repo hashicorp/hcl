@@ -27,6 +27,32 @@ type Expression interface {
 // Assert that Expression implements hcl.Expression
 var assertExprImplExpr hcl.Expression = Expression(nil)
 
+// ParenthesesExpr represents an expression written in grouping
+// parentheses.
+//
+// The parser takes care of the precedence effect of the parentheses, so the
+// only purpose of this separate expression node is to capture the source range
+// of the parentheses themselves, rather than the source range of the
+// expression within. All of the other expression operations just pass through
+// to the underlying expression.
+type ParenthesesExpr struct {
+	Expression
+	SrcRange hcl.Range
+}
+
+var _ hcl.Expression = (*ParenthesesExpr)(nil)
+
+func (e *ParenthesesExpr) Range() hcl.Range {
+	return e.SrcRange
+}
+
+func (e *ParenthesesExpr) walkChildNodes(w internalWalkFunc) {
+	// We override the walkChildNodes from the embedded Expression to
+	// ensure that both the parentheses _and_ the content are visible
+	// in a walk.
+	w(e.Expression)
+}
+
 // LiteralValueExpr is an expression that just always returns a given value.
 type LiteralValueExpr struct {
 	Val      cty.Value

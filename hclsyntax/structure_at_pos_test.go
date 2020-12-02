@@ -282,7 +282,7 @@ func TestOutermostExprAtPos(t *testing.T) {
 		"parens": {
 			`a = (1 + 1)`,
 			hcl.Pos{Byte: 6},
-			`1 + 1`, // The parser trims the parens off, so they aren't considered as part of the expression :(
+			`(1 + 1)`,
 		},
 		"tuple cons": {
 			`a = [1, 2, 3]`,
