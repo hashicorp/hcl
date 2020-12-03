@@ -624,6 +624,8 @@ func (e *ConditionalExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostic
 		return cty.UnknownVal(resultType), diags
 	}
 
+	// Unmark result before testing for truthiness
+	condResult, _ = condResult.UnmarkDeep()
 	if condResult.True() {
 		diags = append(diags, trueDiags...)
 		if convs[0] != nil {
