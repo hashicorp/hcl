@@ -1582,6 +1582,18 @@ EOT
 			cty.DynamicVal,
 			0,
 		},
+		{ // marked conditional
+			`var.foo ? 1 : 0`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"var": cty.ObjectVal(map[string]cty.Value{
+						"foo": cty.BoolVal(true),
+					}).Mark("sensitive"),
+				},
+			},
+			cty.NumberIntVal(1),
+			0,
+		},
 	}
 
 	for _, test := range tests {
