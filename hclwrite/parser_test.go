@@ -190,6 +190,70 @@ func TestParse(t *testing.T) {
 			},
 		},
 		{
+			"a = (\n  1 + 2\n)\nb = 3\n",
+			TestTreeNode{
+				Type: "Body",
+				Children: []TestTreeNode{
+					{
+						Type: "Attribute",
+						Children: []TestTreeNode{
+							{Type: "comments"},
+							{
+								Type: "identifier",
+								Val:  "a",
+							},
+							{
+								Type: "Tokens",
+								Val:  " =",
+							},
+							{
+								Type: "Expression",
+								Children: []TestTreeNode{
+									{
+										Type: "Tokens",
+										Val:  " (\n  1 + 2\n)",
+									},
+								},
+							},
+							{Type: "comments"},
+							{
+								Type: "Tokens",
+								Val:  "\n",
+							},
+						},
+					},
+					{
+						Type: "Attribute",
+						Children: []TestTreeNode{
+							{Type: "comments"},
+							{
+								Type: "identifier",
+								Val:  "b",
+							},
+							{
+								Type: "Tokens",
+								Val:  " =",
+							},
+							{
+								Type: "Expression",
+								Children: []TestTreeNode{
+									{
+										Type: "Tokens",
+										Val:  " 3",
+									},
+								},
+							},
+							{Type: "comments"},
+							{
+								Type: "Tokens",
+								Val:  "\n",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			"b {}\n",
 			TestTreeNode{
 				Type: "Body",

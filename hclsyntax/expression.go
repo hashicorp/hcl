@@ -27,6 +27,32 @@ type Expression interface {
 // Assert that Expression implements hcl.Expression
 var assertExprImplExpr hcl.Expression = Expression(nil)
 
+// ParenthesesExpr represents an expression written in grouping
+// parentheses.
+//
+// The parser takes care of the precedence effect of the parentheses, so the
+// only purpose of this separate expression node is to capture the source range
+// of the parentheses themselves, rather than the source range of the
+// expression within. All of the other expression operations just pass through
+// to the underlying expression.
+type ParenthesesExpr struct {
+	Expression
+	SrcRange hcl.Range
+}
+
+var _ hcl.Expression = (*ParenthesesExpr)(nil)
+
+func (e *ParenthesesExpr) Range() hcl.Range {
+	return e.SrcRange
+}
+
+func (e *ParenthesesExpr) walkChildNodes(w internalWalkFunc) {
+	// We override the walkChildNodes from the embedded Expression to
+	// ensure that both the parentheses _and_ the content are visible
+	// in a walk.
+	w(e.Expression)
+}
+
 // LiteralValueExpr is an expression that just always returns a given value.
 type LiteralValueExpr struct {
 	Val      cty.Value
@@ -598,6 +624,8 @@ func (e *ConditionalExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostic
 		return cty.UnknownVal(resultType), diags
 	}
 
+	// Unmark result before testing for truthiness
+	condResult, _ = condResult.UnmarkDeep()
 	if condResult.True() {
 		diags = append(diags, trueDiags...)
 		if convs[0] != nil {
@@ -1320,12 +1348,6 @@ func (e *SplatExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	}
 
 	sourceTy := sourceVal.Type()
-	if sourceTy == cty.DynamicPseudoType {
-		// If we don't even know the _type_ of our source value yet then
-		// we'll need to defer all processing, since we can't decide our
-		// result type either.
-		return cty.DynamicVal, diags
-	}
 
 	// A "special power" of splat expressions is that they can be applied
 	// both to tuples/lists and to other values, and in the latter case
@@ -1346,6 +1368,13 @@ func (e *SplatExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 			Expression:  e.Source,
 			EvalContext: ctx,
 		})
+		return cty.DynamicVal, diags
+	}
+
+	if sourceTy == cty.DynamicPseudoType {
+		// If we don't even know the _type_ of our source value yet then
+		// we'll need to defer all processing, since we can't decide our
+		// result type either.
 		return cty.DynamicVal, diags
 	}
 

@@ -37,6 +37,10 @@ func TestDecodeBody(t *testing.T) {
 		Nested []*withTwoAttributes `hcl:"nested,block"`
 	}
 
+	type withListofNestedBlocksNoPointers struct {
+		Nested []withTwoAttributes `hcl:"nested,block"`
+	}
+
 	type WithTwoAttributesAndLabel struct {
 		Name string `hcl:"name,label"`
 		A    string `hcl:"a,optional"`
@@ -231,6 +235,30 @@ func TestDecodeBody(t *testing.T) {
 					"living": cty.True,
 				},
 			}),
+			0,
+		},
+		{
+			map[string]interface{}{
+				"name": "Ermintrude",
+				"age":  50,
+			},
+			makeInstantiateType(struct {
+				Name   string   `hcl:"name"`
+				Body   hcl.Body `hcl:",body"`
+				Remain hcl.Body `hcl:",remain"`
+			}{}),
+			func(gotI interface{}) bool {
+				got := gotI.(struct {
+					Name   string   `hcl:"name"`
+					Body   hcl.Body `hcl:",body"`
+					Remain hcl.Body `hcl:",remain"`
+				})
+
+				attrs, _ := got.Body.JustAttributes()
+
+				return got.Name == "Ermintrude" && len(attrs) == 2 &&
+					attrs["name"] != nil && attrs["age"] != nil
+			},
 			0,
 		},
 		{
@@ -636,6 +664,33 @@ func TestDecodeBody(t *testing.T) {
 			func(gotI interface{}) bool {
 				n := gotI.(withListofNestedBlocks)
 				return len(n.Nested) == 1
+			},
+			0,
+		},
+		{
+			// Make sure decoding value slices works the same as pointer slices.
+			map[string]interface{}{
+				"nested": []map[string]interface{}{
+					{
+						"b": "bar",
+					},
+					{
+						"b": "baz",
+					},
+				},
+			},
+			func() interface{} {
+				return &withListofNestedBlocksNoPointers{
+					Nested: []withTwoAttributes{
+						{
+							B: "foo",
+						},
+					},
+				}
+			},
+			func(gotI interface{}) bool {
+				n := gotI.(withListofNestedBlocksNoPointers)
+				return n.Nested[0].B == "bar" && len(n.Nested) == 2
 			},
 			0,
 		},

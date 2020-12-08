@@ -107,6 +107,13 @@ escape "\u0041" {
 `,
 			[]string{"\u0041"},
 		},
+		{
+			`
+blank "" {
+}
+`,
+			[]string{""},
+		},
 	}
 
 	for _, test := range tests {
@@ -414,7 +421,7 @@ func TestBlockSetLabels(t *testing.T) {
 		{
 			`foo "hoge" /* foo */  "" {}`,
 			"foo",
-			[]string{"hoge"},
+			[]string{"hoge", ""},
 			[]string{"fuga"}, // force quoted form even if the old one is unquoted.
 			Tokens{
 				{
