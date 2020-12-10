@@ -1594,6 +1594,23 @@ EOT
 			cty.NumberIntVal(1),
 			0,
 		},
+		{ // marked argument expansion
+			`min(xs...)`,
+			&hcl.EvalContext{
+				Functions: map[string]function.Function{
+					"min": stdlib.MinFunc,
+				},
+				Variables: map[string]cty.Value{
+					"xs": cty.ListVal([]cty.Value{
+						cty.NumberIntVal(3),
+						cty.NumberIntVal(1),
+						cty.NumberIntVal(4),
+					}).Mark("sensitive"),
+				},
+			},
+			cty.NumberIntVal(1).Mark("sensitive"),
+			0,
+		},
 	}
 
 	for _, test := range tests {

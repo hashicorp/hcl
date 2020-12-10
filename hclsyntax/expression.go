@@ -317,13 +317,17 @@ func (e *FunctionCallExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnosti
 				return cty.DynamicVal, diags
 			}
 
+			// When expanding arguments from a collection, we must first unmark
+			// the collection itself, and apply any marks directly to the
+			// elements. This ensures that marks propagate correctly.
+			expandVal, marks := expandVal.Unmark()
 			newArgs := make([]Expression, 0, (len(args)-1)+expandVal.LengthInt())
 			newArgs = append(newArgs, args[:len(args)-1]...)
 			it := expandVal.ElementIterator()
 			for it.Next() {
 				_, val := it.Element()
 				newArgs = append(newArgs, &LiteralValueExpr{
-					Val:      val,
+					Val:      val.WithMarks(marks),
 					SrcRange: expandExpr.Range(),
 				})
 			}
