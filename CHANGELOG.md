@@ -2,6 +2,10 @@
 
 ## v2.8.1 (Unreleased)
  
+### Bugs Fixed
+
+* hclsyntax: Fix panic when expanding marked function arguments. ([#429](https://github.com/hashicorp/hcl/pull/429))
+
 ## v2.8.0 (December 7, 2020)
 
 ### Enhancements
