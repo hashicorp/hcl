@@ -825,6 +825,19 @@ func (e *ObjectConsExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics
 			continue
 		}
 
+		if key.IsMarked() {
+			diags = append(diags, &hcl.Diagnostic{
+				Severity:    hcl.DiagError,
+				Summary:     "Marked value as key",
+				Detail:      "Can't use a marked value as a key.",
+				Subject:     item.ValueExpr.Range().Ptr(),
+				Expression:  item.KeyExpr,
+				EvalContext: ctx,
+			})
+			known = false
+			continue
+		}
+
 		var err error
 		key, err = convert.Convert(key, cty.String)
 		if err != nil {
