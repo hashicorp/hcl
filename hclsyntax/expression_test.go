@@ -889,7 +889,37 @@ upper(
 			}).Mark("sensitive"),
 			0,
 		},
-
+		{ // Marked map member carries marks through
+			`{for k, v in things: k => !v}`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"things": cty.MapVal(map[string]cty.Value{
+						"a": cty.True.Mark("sensitive"),
+						"b": cty.False,
+					}),
+				},
+			},
+			cty.ObjectVal(map[string]cty.Value{
+				"a": cty.False.Mark("sensitive"),
+				"b": cty.True,
+			}),
+			0,
+		},
+		{ // Error when using marked value as object key
+			`{for v in things: v => "${v}-friend"}`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"things": cty.MapVal(map[string]cty.Value{
+						"a": cty.StringVal("rosie").Mark("sensitive"),
+						"b": cty.StringVal("robin"),
+					}),
+				},
+			},
+			cty.ObjectVal(map[string]cty.Value{
+				"robin": cty.StringVal("robin-friend"),
+			}),
+			1,
+		},
 		{
 			`[{name: "Steve"}, {name: "Ermintrude"}].*.name`,
 			nil,

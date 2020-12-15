@@ -1175,6 +1175,19 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 				continue
 			}
 
+			if key.IsMarked() {
+				diags = append(diags, &hcl.Diagnostic{
+					Severity:    hcl.DiagError,
+					Summary:     "Invalid object key",
+					Detail:      "Marked values cannot be used as object keys.",
+					Subject:     e.KeyExpr.Range().Ptr(),
+					Context:     &e.SrcRange,
+					Expression:  e.KeyExpr,
+					EvalContext: childCtx,
+				})
+				continue
+			}
+
 			val, valDiags := e.ValExpr.Value(childCtx)
 			diags = append(diags, valDiags...)
 
