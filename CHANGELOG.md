@@ -1,6 +1,8 @@
 # HCL Changelog
 
-## v2.8.1 (Unreleased)
+## v2.8.2 (Unreleased)
+
+## v2.8.1 (December 17, 2020)
  
 ### Bugs Fixed
 
