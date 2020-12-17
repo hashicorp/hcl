@@ -5,6 +5,8 @@
 ### Bugs Fixed
 
 * hclsyntax: Fix panic when expanding marked function arguments. ([#429](https://github.com/hashicorp/hcl/pull/429))
+* hclsyntax: Error when attempting to use a marked value as an object key. ([#434](https://github.com/hashicorp/hcl/pull/434))
+* hclsyntax: Error when attempting to use a marked value as an object key in expressions. ([#433](https://github.com/hashicorp/hcl/pull/433))
 
 ## v2.8.0 (December 7, 2020)
 
