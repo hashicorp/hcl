@@ -507,6 +507,19 @@ upper(
 			0,
 		},
 		{
+			// Marked values as object keys
+			`{(var.greeting) = "world", "goodbye" = "earth"}`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"var": cty.ObjectVal(map[string]cty.Value{
+						"greeting": cty.StringVal("hello").Mark("marked"),
+					}),
+				},
+			},
+			cty.DynamicVal,
+			1,
+		},
+		{
 			`{"${var.greeting}" = "world"}`,
 			&hcl.EvalContext{
 				Variables: map[string]cty.Value{
