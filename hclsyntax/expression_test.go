@@ -1156,7 +1156,22 @@ upper(
 			}),
 			1,
 		},
-
+		{ // splat with sensitive collection
+			`maps.*.enabled`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"maps": cty.ListVal([]cty.Value{
+						cty.MapVal(map[string]cty.Value{"enabled": cty.True}),
+						cty.MapVal(map[string]cty.Value{"enabled": cty.False}),
+					}).Mark("sensitive"),
+				},
+			},
+			cty.ListVal([]cty.Value{
+				cty.True,
+				cty.False,
+			}).Mark("sensitive"),
+			0,
+		},
 		{
 			`["hello"][0]`,
 			nil,
