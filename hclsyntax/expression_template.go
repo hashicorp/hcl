@@ -153,6 +153,7 @@ func (e *TemplateJoinExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnosti
 	}
 
 	tuple, marks := tuple.Unmark()
+	allMarks := []cty.ValueMarks{marks}
 	buf := &bytes.Buffer{}
 	it := tuple.ElementIterator()
 	for it.Next() {
@@ -193,10 +194,14 @@ func (e *TemplateJoinExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnosti
 			return cty.UnknownVal(cty.String).WithMarks(marks), diags
 		}
 
+		strVal, strValMarks := strVal.Unmark()
+		if len(strValMarks) > 0 {
+			allMarks = append(allMarks, strValMarks)
+		}
 		buf.WriteString(strVal.AsString())
 	}
 
-	return cty.StringVal(buf.String()).WithMarks(marks), diags
+	return cty.StringVal(buf.String()).WithMarks(allMarks...), diags
 }
 
 func (e *TemplateJoinExpr) Range() hcl.Range {

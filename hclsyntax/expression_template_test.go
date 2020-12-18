@@ -330,6 +330,34 @@ trim`,
 			cty.StringVal("foobarbaz").Mark("sensitive"),
 			0,
 		},
+		{ // marks on individual elements propagate to the result
+			`%{ for s in secrets }${s}%{ endfor }`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"secrets": cty.ListVal([]cty.Value{
+						cty.StringVal("foo"),
+						cty.StringVal("bar").Mark("sensitive"),
+						cty.StringVal("baz"),
+					}),
+				},
+			},
+			cty.StringVal("foobarbaz").Mark("sensitive"),
+			0,
+		},
+		{ // lots of marks!
+			`%{ for s in secrets }${s}%{ endfor }`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"secrets": cty.ListVal([]cty.Value{
+						cty.StringVal("foo").Mark("x"),
+						cty.StringVal("bar").Mark("y"),
+						cty.StringVal("baz").Mark("z"),
+					}).Mark("x"), // second instance of x
+				},
+			},
+			cty.StringVal("foobarbaz").WithMarks(cty.NewValueMarks("x", "y", "z")),
+			0,
+		},
 	}
 
 	for _, test := range tests {
