@@ -1172,6 +1172,26 @@ upper(
 			}).Mark("sensitive"),
 			0,
 		},
+		{ // splat with collection with sensitive elements
+			`maps.*.x`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"maps": cty.ListVal([]cty.Value{
+						cty.MapVal(map[string]cty.Value{
+							"x": cty.StringVal("foo").Mark("sensitive"),
+						}),
+						cty.MapVal(map[string]cty.Value{
+							"x": cty.StringVal("bar"),
+						}),
+					}),
+				},
+			},
+			cty.ListVal([]cty.Value{
+				cty.StringVal("foo").Mark("sensitive"),
+				cty.StringVal("bar"),
+			}),
+			0,
+		},
 		{
 			`["hello"][0]`,
 			nil,
