@@ -933,6 +933,42 @@ upper(
 			}),
 			1,
 		},
+		{ // Sequence for loop with marked conditional expression
+			`[for x in things: x if x != secret]`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"things": cty.ListVal([]cty.Value{
+						cty.StringVal("a"),
+						cty.StringVal("b"),
+						cty.StringVal("c"),
+					}),
+					"secret": cty.StringVal("b").Mark("sensitive"),
+				},
+			},
+			cty.TupleVal([]cty.Value{
+				cty.StringVal("a"),
+				cty.StringVal("c"),
+			}).Mark("sensitive"),
+			0,
+		},
+		{ // Map for loop with marked conditional expression
+			`{ for k, v in things: k => v if k != secret }`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"things": cty.MapVal(map[string]cty.Value{
+						"a": cty.True,
+						"b": cty.False,
+						"c": cty.False,
+					}),
+					"secret": cty.StringVal("b").Mark("sensitive"),
+				},
+			},
+			cty.ObjectVal(map[string]cty.Value{
+				"a": cty.True,
+				"c": cty.False,
+			}).Mark("sensitive"),
+			0,
+		},
 		{
 			`[{name: "Steve"}, {name: "Ermintrude"}].*.name`,
 			nil,
