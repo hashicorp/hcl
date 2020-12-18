@@ -316,6 +316,20 @@ trim`,
 			cty.StringVal(`Authenticate with "my voice is my passport"`).WithMarks(cty.NewValueMarks("sensitive")),
 			0,
 		},
+		{ // can loop over marked collections
+			`%{ for s in secrets }${s}%{ endfor }`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"secrets": cty.ListVal([]cty.Value{
+						cty.StringVal("foo"),
+						cty.StringVal("bar"),
+						cty.StringVal("baz"),
+					}).Mark("sensitive"),
+				},
+			},
+			cty.StringVal("foobarbaz").Mark("sensitive"),
+			0,
+		},
 	}
 
 	for _, test := range tests {

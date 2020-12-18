@@ -152,6 +152,7 @@ func (e *TemplateJoinExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnosti
 		return cty.UnknownVal(cty.String), diags
 	}
 
+	tuple, marks := tuple.Unmark()
 	buf := &bytes.Buffer{}
 	it := tuple.ElementIterator()
 	for it.Next() {
@@ -171,7 +172,7 @@ func (e *TemplateJoinExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnosti
 			continue
 		}
 		if val.Type() == cty.DynamicPseudoType {
-			return cty.UnknownVal(cty.String), diags
+			return cty.UnknownVal(cty.String).WithMarks(marks), diags
 		}
 		strVal, err := convert.Convert(val, cty.String)
 		if err != nil {
@@ -189,13 +190,13 @@ func (e *TemplateJoinExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnosti
 			continue
 		}
 		if !val.IsKnown() {
-			return cty.UnknownVal(cty.String), diags
+			return cty.UnknownVal(cty.String).WithMarks(marks), diags
 		}
 
 		buf.WriteString(strVal.AsString())
 	}
 
-	return cty.StringVal(buf.String()), diags
+	return cty.StringVal(buf.String()).WithMarks(marks), diags
 }
 
 func (e *TemplateJoinExpr) Range() hcl.Range {
