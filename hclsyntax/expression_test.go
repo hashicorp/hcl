@@ -516,8 +516,11 @@ upper(
 					}),
 				},
 			},
-			cty.DynamicVal,
-			1,
+			cty.ObjectVal(map[string]cty.Value{
+				"hello":   cty.StringVal("world"),
+				"goodbye": cty.StringVal("earth"),
+			}).Mark("marked"),
+			0,
 		},
 		{
 			`{"${var.greeting}" = "world"}`,
@@ -918,20 +921,44 @@ upper(
 			}),
 			0,
 		},
-		{ // Error when using marked value as object key
+		{
+			// Mark object if keys include marked values, members retain
+			// their original marks in their values
 			`{for v in things: v => "${v}-friend"}`,
 			&hcl.EvalContext{
 				Variables: map[string]cty.Value{
 					"things": cty.MapVal(map[string]cty.Value{
-						"a": cty.StringVal("rosie").Mark("sensitive"),
+						"a": cty.StringVal("rosie").Mark("marked"),
 						"b": cty.StringVal("robin"),
+						// Check for double-marking when a key val has a duplicate mark
+						"c": cty.StringVal("rowan").Mark("marked"),
+						"d": cty.StringVal("ruben").Mark("also-marked"),
 					}),
 				},
 			},
 			cty.ObjectVal(map[string]cty.Value{
+				"rosie": cty.StringVal("rosie-friend").Mark("marked"),
 				"robin": cty.StringVal("robin-friend"),
-			}),
-			1,
+				"rowan": cty.StringVal("rowan-friend").Mark("marked"),
+				"ruben": cty.StringVal("ruben-friend").Mark("also-marked"),
+			}).WithMarks(cty.NewValueMarks("marked", "also-marked")),
+			0,
+		},
+		{ // object itself is marked, contains marked value
+			`{for v in things: v => "${v}-friend"}`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"things": cty.MapVal(map[string]cty.Value{
+						"a": cty.StringVal("rosie").Mark("marked"),
+						"b": cty.StringVal("robin"),
+					}).Mark("marks"),
+				},
+			},
+			cty.ObjectVal(map[string]cty.Value{
+				"rosie": cty.StringVal("rosie-friend").Mark("marked"),
+				"robin": cty.StringVal("robin-friend"),
+			}).WithMarks(cty.NewValueMarks("marked", "marks")),
+			0,
 		},
 		{
 			`[{name: "Steve"}, {name: "Ermintrude"}].*.name`,
