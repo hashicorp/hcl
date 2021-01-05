@@ -7,6 +7,7 @@
 * hclsyntax: Fix panic for marked collection splat. ([#436](https://github.com/hashicorp/hcl/pull/436))
 * hclsyntax: Fix panic for marked template loops. ([#437](https://github.com/hashicorp/hcl/pull/437))
 * hclsyntax: Fix `for` expression marked conditional.([#438](https://github.com/hashicorp/hcl/pull/438))
+* hclsyntax: Mark objects with keys that are sensitive ([#440](https://github.com/hashicorp/hcl/pull/440))
 
 ## v2.8.1 (December 17, 2020)
  
