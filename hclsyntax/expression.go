@@ -1143,7 +1143,17 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 					continue
 				}
 
-				if include.False() {
+				// Extract and merge marks from the include expression into the
+				// main set of marks
+				includeUnmarked, includeMarks := include.Unmark()
+				if marks == nil {
+					marks = includeMarks
+				} else {
+					for k := range includeMarks {
+						marks[k] = struct{}{}
+					}
+				}
+				if includeUnmarked.False() {
 					// Skip this element
 					continue
 				}
@@ -1300,7 +1310,17 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 					continue
 				}
 
-				if include.False() {
+				// Extract and merge marks from the include expression into the
+				// main set of marks
+				includeUnmarked, includeMarks := include.Unmark()
+				if marks == nil {
+					marks = includeMarks
+				} else {
+					for k := range includeMarks {
+						marks[k] = struct{}{}
+					}
+				}
+				if includeUnmarked.False() {
 					// Skip this element
 					continue
 				}
