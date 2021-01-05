@@ -1452,6 +1452,9 @@ func (e *SplatExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 		return cty.UnknownVal(ty), diags
 	}
 
+	// Unmark the collection, and save the marks to apply to the returned
+	// collection result
+	sourceVal, marks := sourceVal.Unmark()
 	vals := make([]cty.Value, 0, sourceVal.LengthInt())
 	it := sourceVal.ElementIterator()
 	if ctx == nil {
@@ -1486,9 +1489,9 @@ func (e *SplatExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 			diags = append(diags, tyDiags...)
 			return cty.ListValEmpty(ty.ElementType()), diags
 		}
-		return cty.ListVal(vals), diags
+		return cty.ListVal(vals).WithMarks(marks), diags
 	default:
-		return cty.TupleVal(vals), diags
+		return cty.TupleVal(vals).WithMarks(marks), diags
 	}
 }
 
