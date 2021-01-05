@@ -2,6 +2,12 @@
 
 ## v2.8.2 (Unreleased)
 
+### Bugs Fixed
+
+* hclsyntax: Fix panic for marked collection splat. ([#436](https://github.com/hashicorp/hcl/pull/436))
+* hclsyntax: Fix panic for marked template loops. ([#437](https://github.com/hashicorp/hcl/pull/437))
+* hclsyntax: Fix `for` expression marked conditional.([#438](https://github.com/hashicorp/hcl/pull/438))
+
 ## v2.8.1 (December 17, 2020)
  
 ### Bugs Fixed
