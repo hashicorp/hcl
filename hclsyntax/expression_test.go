@@ -507,6 +507,22 @@ upper(
 			0,
 		},
 		{
+			// Marked values as object keys
+			`{(var.greeting) = "world", "goodbye" = "earth"}`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"var": cty.ObjectVal(map[string]cty.Value{
+						"greeting": cty.StringVal("hello").Mark("marked"),
+					}),
+				},
+			},
+			cty.ObjectVal(map[string]cty.Value{
+				"hello":   cty.StringVal("world"),
+				"goodbye": cty.StringVal("earth"),
+			}).Mark("marked"),
+			0,
+		},
+		{
 			`{"${var.greeting}" = "world"}`,
 			&hcl.EvalContext{
 				Variables: map[string]cty.Value{
@@ -889,7 +905,97 @@ upper(
 			}).Mark("sensitive"),
 			0,
 		},
-
+		{ // Marked map member carries marks through
+			`{for k, v in things: k => !v}`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"things": cty.MapVal(map[string]cty.Value{
+						"a": cty.True.Mark("sensitive"),
+						"b": cty.False,
+					}),
+				},
+			},
+			cty.ObjectVal(map[string]cty.Value{
+				"a": cty.False.Mark("sensitive"),
+				"b": cty.True,
+			}),
+			0,
+		},
+		{
+			// Mark object if keys include marked values, members retain
+			// their original marks in their values
+			`{for v in things: v => "${v}-friend"}`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"things": cty.MapVal(map[string]cty.Value{
+						"a": cty.StringVal("rosie").Mark("marked"),
+						"b": cty.StringVal("robin"),
+						// Check for double-marking when a key val has a duplicate mark
+						"c": cty.StringVal("rowan").Mark("marked"),
+						"d": cty.StringVal("ruben").Mark("also-marked"),
+					}),
+				},
+			},
+			cty.ObjectVal(map[string]cty.Value{
+				"rosie": cty.StringVal("rosie-friend").Mark("marked"),
+				"robin": cty.StringVal("robin-friend"),
+				"rowan": cty.StringVal("rowan-friend").Mark("marked"),
+				"ruben": cty.StringVal("ruben-friend").Mark("also-marked"),
+			}).WithMarks(cty.NewValueMarks("marked", "also-marked")),
+			0,
+		},
+		{ // object itself is marked, contains marked value
+			`{for v in things: v => "${v}-friend"}`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"things": cty.MapVal(map[string]cty.Value{
+						"a": cty.StringVal("rosie").Mark("marked"),
+						"b": cty.StringVal("robin"),
+					}).Mark("marks"),
+				},
+			},
+			cty.ObjectVal(map[string]cty.Value{
+				"rosie": cty.StringVal("rosie-friend").Mark("marked"),
+				"robin": cty.StringVal("robin-friend"),
+			}).WithMarks(cty.NewValueMarks("marked", "marks")),
+			0,
+		},
+		{ // Sequence for loop with marked conditional expression
+			`[for x in things: x if x != secret]`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"things": cty.ListVal([]cty.Value{
+						cty.StringVal("a"),
+						cty.StringVal("b"),
+						cty.StringVal("c"),
+					}),
+					"secret": cty.StringVal("b").Mark("sensitive"),
+				},
+			},
+			cty.TupleVal([]cty.Value{
+				cty.StringVal("a"),
+				cty.StringVal("c"),
+			}).Mark("sensitive"),
+			0,
+		},
+		{ // Map for loop with marked conditional expression
+			`{ for k, v in things: k => v if k != secret }`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"things": cty.MapVal(map[string]cty.Value{
+						"a": cty.True,
+						"b": cty.False,
+						"c": cty.False,
+					}),
+					"secret": cty.StringVal("b").Mark("sensitive"),
+				},
+			},
+			cty.ObjectVal(map[string]cty.Value{
+				"a": cty.True,
+				"c": cty.False,
+			}).Mark("sensitive"),
+			0,
+		},
 		{
 			`[{name: "Steve"}, {name: "Ermintrude"}].*.name`,
 			nil,
@@ -1113,7 +1219,42 @@ upper(
 			}),
 			1,
 		},
-
+		{ // splat with sensitive collection
+			`maps.*.enabled`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"maps": cty.ListVal([]cty.Value{
+						cty.MapVal(map[string]cty.Value{"enabled": cty.True}),
+						cty.MapVal(map[string]cty.Value{"enabled": cty.False}),
+					}).Mark("sensitive"),
+				},
+			},
+			cty.ListVal([]cty.Value{
+				cty.True,
+				cty.False,
+			}).Mark("sensitive"),
+			0,
+		},
+		{ // splat with collection with sensitive elements
+			`maps.*.x`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"maps": cty.ListVal([]cty.Value{
+						cty.MapVal(map[string]cty.Value{
+							"x": cty.StringVal("foo").Mark("sensitive"),
+						}),
+						cty.MapVal(map[string]cty.Value{
+							"x": cty.StringVal("bar"),
+						}),
+					}),
+				},
+			},
+			cty.ListVal([]cty.Value{
+				cty.StringVal("foo").Mark("sensitive"),
+				cty.StringVal("bar"),
+			}),
+			0,
+		},
 		{
 			`["hello"][0]`,
 			nil,
@@ -1592,6 +1733,23 @@ EOT
 				},
 			},
 			cty.NumberIntVal(1),
+			0,
+		},
+		{ // marked argument expansion
+			`min(xs...)`,
+			&hcl.EvalContext{
+				Functions: map[string]function.Function{
+					"min": stdlib.MinFunc,
+				},
+				Variables: map[string]cty.Value{
+					"xs": cty.ListVal([]cty.Value{
+						cty.NumberIntVal(3),
+						cty.NumberIntVal(1),
+						cty.NumberIntVal(4),
+					}).Mark("sensitive"),
+				},
+			},
+			cty.NumberIntVal(1).Mark("sensitive"),
 			0,
 		},
 	}
