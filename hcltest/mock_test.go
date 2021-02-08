@@ -1,6 +1,7 @@
 package hcltest
 
 import (
+	"strings"
 	"testing"
 
 	"reflect"
@@ -262,6 +263,132 @@ func TestMockBodyPartialContent(t *testing.T) {
 			gotRemain := remainBody.(mockBody).C
 			if !reflect.DeepEqual(gotRemain, test.Remain) {
 				t.Errorf("wrong remain\ngot:  %#v\nwant: %#v", gotRemain, test.Remain)
+			}
+		})
+	}
+}
+
+func TestExprList(t *testing.T) {
+	tests := map[string]struct {
+		In    hcl.Expression
+		Want  []hcl.Expression
+		Diags string
+	}{
+		"as list": {
+			In: MockExprLiteral(cty.ListVal([]cty.Value{
+				cty.StringVal("foo"),
+				cty.StringVal("bar"),
+			})),
+			Want: []hcl.Expression{
+				MockExprLiteral(cty.StringVal("foo")),
+				MockExprLiteral(cty.StringVal("bar")),
+			},
+		},
+		"as tuple": {
+			In: MockExprLiteral(cty.TupleVal([]cty.Value{
+				cty.StringVal("foo"),
+				cty.StringVal("bar"),
+			})),
+			Want: []hcl.Expression{
+				MockExprLiteral(cty.StringVal("foo")),
+				MockExprLiteral(cty.StringVal("bar")),
+			},
+		},
+		"not list": {
+			In: MockExprLiteral(cty.ObjectVal(map[string]cty.Value{
+				"a": cty.StringVal("foo"),
+				"b": cty.StringVal("bar"),
+			})),
+			Want:  nil,
+			Diags: "list expression is required",
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			got, diags := hcl.ExprList(tc.In)
+			if tc.Diags != "" {
+				if diags.HasErrors() && !strings.Contains(diags.Error(), tc.Diags) {
+					t.Errorf("expected error %q, got %q", tc.Diags, diags)
+				}
+				if !diags.HasErrors() {
+					t.Errorf("expected diagnostic message %q", tc.Diags)
+				}
+			} else if diags.HasErrors() {
+				t.Error(diags)
+			}
+
+			if !reflect.DeepEqual(got, tc.Want) {
+				t.Errorf("incorrect expression,\ngot:  %#v\nwant: %#v", got, tc.Want)
+			}
+		})
+	}
+}
+
+func TestExprMap(t *testing.T) {
+	tests := map[string]struct {
+		In    hcl.Expression
+		Want  []hcl.KeyValuePair
+		Diags string
+	}{
+		"as object": {
+			In: MockExprLiteral(cty.ObjectVal(map[string]cty.Value{
+				"name":  cty.StringVal("test"),
+				"count": cty.NumberIntVal(2),
+			})),
+			Want: []hcl.KeyValuePair{
+				{
+					Key:   MockExprLiteral(cty.StringVal("count")),
+					Value: MockExprLiteral(cty.NumberIntVal(2)),
+				},
+				{
+					Key:   MockExprLiteral(cty.StringVal("name")),
+					Value: MockExprLiteral(cty.StringVal("test")),
+				},
+			},
+		},
+		"as map": {
+			In: MockExprLiteral(cty.MapVal(map[string]cty.Value{
+				"name":    cty.StringVal("test"),
+				"version": cty.StringVal("2.0.0"),
+			})),
+			Want: []hcl.KeyValuePair{
+				{
+					Key:   MockExprLiteral(cty.StringVal("name")),
+					Value: MockExprLiteral(cty.StringVal("test")),
+				},
+				{
+					Key:   MockExprLiteral(cty.StringVal("version")),
+					Value: MockExprLiteral(cty.StringVal("2.0.0")),
+				},
+			},
+		},
+		"not map": {
+			In: MockExprLiteral(cty.ListVal([]cty.Value{
+				cty.StringVal("foo"),
+				cty.StringVal("bar"),
+			})),
+			Want:  nil,
+			Diags: "map expression is required",
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			got, diags := hcl.ExprMap(tc.In)
+			if tc.Diags != "" {
+				if diags.HasErrors() && !strings.Contains(diags.Error(), tc.Diags) {
+					t.Errorf("expected error %q, got %q", tc.Diags, diags)
+				}
+				if !diags.HasErrors() {
+					t.Errorf("expected diagnostic message %q", tc.Diags)
+				}
+			} else if diags.HasErrors() {
+				t.Error(diags)
+			}
+
+			if !reflect.DeepEqual(got, tc.Want) {
+				t.Errorf("incorrect expression,\ngot:  %#v\nwant: %#v", got, tc.Want)
 			}
 		})
 	}
