@@ -166,6 +166,24 @@ func (e mockExprLiteral) ExprList() []hcl.Expression {
 	return nil
 }
 
+// Implementation for hcl.ExprMap
+func (e mockExprLiteral) ExprMap() []hcl.KeyValuePair {
+	v := e.V
+	ty := v.Type()
+	if v.IsKnown() && !v.IsNull() && (ty.IsObjectType() || ty.IsMapType()) {
+		ret := make([]hcl.KeyValuePair, 0, v.LengthInt())
+		for it := v.ElementIterator(); it.Next(); {
+			k, v := it.Element()
+			ret = append(ret, hcl.KeyValuePair{
+				Key:   MockExprLiteral(k),
+				Value: MockExprLiteral(v),
+			})
+		}
+		return ret
+	}
+	return nil
+}
+
 // MockExprVariable returns a hcl.Expression that evaluates to the value of
 // the variable with the given name.
 func MockExprVariable(name string) hcl.Expression {
