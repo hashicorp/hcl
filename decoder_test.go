@@ -417,6 +417,22 @@ func TestDecode_interface(t *testing.T) {
 				},
 			},
 		},
+		{
+			"object_with_bool.json",
+			false,
+			map[string]interface{}{
+				"path": []map[string]interface{}{
+					map[string]interface{}{
+						"capabilities": []interface{}{"update"},
+						"params": []map[string]interface{}{
+							map[string]interface{}{
+								"bool": []interface{}{false},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tc := range cases {
