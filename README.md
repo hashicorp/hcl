@@ -117,6 +117,15 @@ This would be equivalent to the following json:
 }
 ```
 
+## Escape Sequences
+
+The backslash (`\`) character is used to [escape characters][escape] that
+otherwise have a special meaning, such as newline (`\n`), backslash itself
+(`\`), or the quote character (`"`).
+
+[escape]: https://en.cppreference.com/w/cpp/language/escape
+
+
 ## Thanks
 
 Thanks to:
