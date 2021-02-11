@@ -187,6 +187,9 @@ func TestRunStdinAndWrite(t *testing.T) {
 }
 
 func TestRunFileError(t *testing.T) {
+	if os.Getuid() == 0 {
+		t.Skip("root will not get -EACCES even for mode 0")
+	}
 	path, err := ioutil.TempDir("", "")
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
