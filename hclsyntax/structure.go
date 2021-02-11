@@ -148,7 +148,7 @@ func (b *Body) PartialContent(schema *hcl.BodySchema) (*hcl.BodyContent, hcl.Bod
 		attr, exists := b.Attributes[name]
 		_, hidden := hiddenAttrs[name]
 		if hidden || !exists {
-			if attrS.Required {
+			if attrS.Required && !exists {
 				diags = append(diags, &hcl.Diagnostic{
 					Severity: hcl.DiagError,
 					Summary:  "Missing required argument",

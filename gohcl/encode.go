@@ -71,10 +71,9 @@ func EncodeAsBlock(val interface{}, blockType string) *hclwrite.Block {
 	tags := getFieldTags(ty)
 	labels := make([]string, len(tags.Labels))
 	for i, lf := range tags.Labels {
-		lv := rv.Field(lf.FieldIndex)
 		// We just stringify whatever we find. It should always be a string
 		// but if not then we'll still do something reasonable.
-		labels[i] = fmt.Sprintf("%s", lv.Interface())
+		labels[i] = fmt.Sprintf("%s", lf.FieldIndex.getValueField(rv).Interface())
 	}
 
 	block := hclwrite.NewBlock(blockType, labels)
@@ -83,37 +82,39 @@ func EncodeAsBlock(val interface{}, blockType string) *hclwrite.Block {
 }
 
 func populateBody(rv reflect.Value, ty reflect.Type, tags *fieldTags, dst *hclwrite.Body) {
-	nameIdxs := make(map[string]int, len(tags.Attributes)+len(tags.Blocks))
+	nameIdxs := make(map[string]fieldPath, len(tags.Attributes)+len(tags.Blocks))
 	namesOrder := make([]string, 0, len(tags.Attributes)+len(tags.Blocks))
 	for n, i := range tags.Attributes {
-		nameIdxs[n] = i
+		nameIdxs[n] = i[0].path // If the same name is used more than once, we use the first one
 		namesOrder = append(namesOrder, n)
 	}
 	for n, i := range tags.Blocks {
-		nameIdxs[n] = i
+		nameIdxs[n] = i[0] // If the same name is used more than once, we use the first one
 		namesOrder = append(namesOrder, n)
 	}
 	sort.SliceStable(namesOrder, func(i, j int) bool {
 		ni, nj := namesOrder[i], namesOrder[j]
-		return nameIdxs[ni] < nameIdxs[nj]
+		for i := range nameIdxs[ni] {
+			if nameIdxs[ni][i] != nameIdxs[nj][i] {
+				return nameIdxs[ni][i] < nameIdxs[nj][i]
+			}
+		}
+		return false
 	})
 
 	dst.Clear()
 
 	prevWasBlock := false
 	for _, name := range namesOrder {
-		fieldIdx := nameIdxs[name]
-		field := ty.Field(fieldIdx)
-		fieldTy := field.Type
-		fieldVal := rv.Field(fieldIdx)
+		fieldTy := nameIdxs[name].getTypeField(rv.Type()).Type
+		fieldVal := nameIdxs[name].getValueField(rv)
 
 		if fieldTy.Kind() == reflect.Ptr {
 			fieldTy = fieldTy.Elem()
 			fieldVal = fieldVal.Elem()
 		}
 
-		if _, isAttr := tags.Attributes[name]; isAttr {
-
+		if attr, isAttr := tags.Attributes[name]; isAttr {
 			if exprType.AssignableTo(fieldTy) || attrType.AssignableTo(fieldTy) {
 				continue // ignore undecoded fields
 			}
@@ -122,6 +123,9 @@ func populateBody(rv reflect.Value, ty reflect.Type, tags *fieldTags, dst *hclwr
 			}
 			if fieldTy.Kind() == reflect.Ptr && fieldVal.IsNil() {
 				continue // ignore
+			}
+			if attr.IsOptional() && fieldVal.IsZero() {
+				continue // ignore (field is optional and has zero value)
 			}
 			if prevWasBlock {
 				dst.AppendNewline()
@@ -141,7 +145,6 @@ func populateBody(rv reflect.Value, ty reflect.Type, tags *fieldTags, dst *hclwr
 			}
 
 			dst.SetAttributeValue(name, val)
-
 		} else { // must be a block, then
 			elemTy := fieldTy
 			isSeq := false
