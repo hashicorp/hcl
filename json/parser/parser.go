@@ -81,9 +81,9 @@ func (p *Parser) objectList() (*ast.ObjectList, error) {
 
 		node.Add(n)
 
-		// Check for a followup comma. If it isn't a comma, then we're done
+		// Check for a followup comma. If it isn't a comma, then returns an error
 		if tok := p.scan(); tok.Type != token.COMMA {
-			break
+			return node, fmt.Errorf("expected: COMMA got: %s", p.tok.Type)
 		}
 	}
 
