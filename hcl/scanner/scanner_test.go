@@ -255,7 +255,7 @@ func TestPosition(t *testing.T) {
 
 	s := New(buf.Bytes())
 
-	pos := token.Pos{"", 4, 1, 5}
+	pos := token.Pos{Filename: "", Offset: 4, Line: 1, Column: 5}
 	s.Scan()
 	for _, listName := range orderedTokenLists {
 
