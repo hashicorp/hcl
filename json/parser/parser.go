@@ -201,8 +201,11 @@ func (p *Parser) objectType() (*ast.ObjectType, error) {
 
 	// if we hit RBRACE, we are good to go (means we parsed all Items), if it's
 	// not a RBRACE, it's an syntax error and we just return it.
-	if err != nil && p.tok.Type != token.RBRACE {
-		return nil, err
+	if p.tok.Type != token.RBRACE {
+		if err != nil {
+			return nil, err
+		}
+		return nil, fmt.Errorf("unexpected token while parsing object: %s", p.tok.Type)
 	}
 
 	o.List = l
