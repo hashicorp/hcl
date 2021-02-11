@@ -107,6 +107,26 @@ func TestDecode_interface(t *testing.T) {
 			map[string]interface{}{"foo": "  bar\n  baz\n"},
 		},
 		{
+			"multiline_indented_aligned_with_newlines.hcl",
+			false,
+			map[string]interface{}{"foo": "        bar\n\n        baz\n        "},
+		},
+		{
+			"multiline_indented_aligned_with_newlines_and_tick.hcl",
+			false,
+			map[string]interface{}{"foo": "bar\n\nbaz\n"},
+		},
+		{
+			"multiline_indented_with_newlines.hcl",
+			false,
+			map[string]interface{}{"foo": "        bar\n\n        baz\n      "},
+		},
+		{
+			"multiline_indented_with_newlines_and_tick.hcl",
+			false,
+			map[string]interface{}{"foo": "  bar\n\n  baz\n"},
+		},
+		{
 			"multiline_no_hanging_indent.hcl",
 			false,
 			map[string]interface{}{"foo": "  baz\n    bar\n      foo\n"},
