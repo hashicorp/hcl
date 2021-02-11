@@ -1,3 +1,5 @@
+// Package fmtcmd implements a formatter for HCL (HashiCorp Configuration
+// Language)
 // Derivative work from:
 //	- https://golang.org/src/cmd/gofmt/gofmt.go
 //	- https://github.com/fatih/hclfmt
@@ -100,6 +102,9 @@ func walkDir(path string, extensions []string, stdout io.Writer, opts Options) e
 	return filepath.Walk(path, visitFile)
 }
 
+// Run writes on the stdout the formatted files, those files can be provided
+// via paths + extensions or stdin, if both are used path + extensions
+// will be used an stdin ignored.
 func Run(
 	paths, extensions []string,
 	stdin io.Reader,
