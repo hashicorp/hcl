@@ -93,7 +93,7 @@ func goBuild(pkg, outFile string) error {
 		outFile += ".exe"
 	}
 
-	cmd := exec.Command("go", "build", "-i", "-o", outFile, pkg)
+	cmd := exec.Command("go", "build", "-o", outFile, pkg)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	return cmd.Run()
