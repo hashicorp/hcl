@@ -1,6 +1,8 @@
 # HCL Changelog
 
-## v2.8.3 (Unreleased)
+## v2.9.0 (Unreleased)
+
+* HCL's native syntax and JSON scanners -- and thus all of the other parsing components that build on top of them -- are now using Unicode 13 rules for text segmentation when counting text characters for the purpose of reporting source location columns. Previously HCL was using Unicode 12. Unicode 13 still uses the same algorithm but includes some additions to the character tables the algorithm is defined in terms of, to properly categorize new characters defined in Unicode 13.
 
 ## v2.8.2 (January 6, 2021)
 
