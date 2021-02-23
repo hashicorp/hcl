@@ -3,19 +3,19 @@ object {
     labels = ["operator"]
 
     object {
-      attr "exactly" { type = any }
-      attr "not" { type = any }
-      attr "type_mismatch_number" { type = any }
-      attr "type_mismatch_bool" { type = any }
+      attr "exactly" { type = bool }
+      attr "not" { type = bool }
+      attr "type_mismatch_number" { type = bool }
+      attr "type_mismatch_bool" { type = bool }
     }
   }
   block_map "inequality" {
     labels = ["operator"]
 
     object {
-      attr "lt" { type = any }
-      attr "gt" { type = any }
-      attr "eq" { type = any }
+      attr "lt" { type = bool }
+      attr "gt" { type = bool }
+      attr "eq" { type = bool }
     }
   }
   block "arithmetic" {
@@ -34,18 +34,18 @@ object {
     labels = ["operator"]
 
     object {
-      attr "tt" { type = any }
-      attr "ft" { type = any }
-      attr "tf" { type = any }
-      attr "ff" { type = any }
+      attr "tt" { type = bool }
+      attr "ft" { type = bool }
+      attr "tf" { type = bool }
+      attr "ff" { type = bool }
     }
   }
   block_map "logical_unary" {
     labels = ["operator"]
 
     object {
-      attr "t"   { type = any }
-      attr "f"   { type = any }
+      attr "t"   { type = bool }
+      attr "f"   { type = bool }
     }
   }
   block "conditional" {
