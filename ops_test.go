@@ -155,3 +155,124 @@ func TestApplyPath(t *testing.T) {
 		})
 	}
 }
+
+func TestIndex(t *testing.T) {
+	tests := map[string]struct {
+		coll cty.Value
+		key  cty.Value
+		want cty.Value
+		err  string
+	}{
+		"marked key to maked value": {
+			coll: cty.ListVal([]cty.Value{
+				cty.StringVal("a"),
+			}),
+			key:  cty.NumberIntVal(0).Mark("marked"),
+			want: cty.StringVal("a").Mark("marked"),
+		},
+		"missing list key": {
+			coll: cty.ListVal([]cty.Value{
+				cty.StringVal("a"),
+			}),
+			key:  cty.NumberIntVal(1).Mark("marked"),
+			want: cty.DynamicVal,
+			err:  "Invalid index",
+		},
+		"null marked key": {
+			coll: cty.ListVal([]cty.Value{
+				cty.StringVal("a"),
+			}),
+			key:  cty.NullVal(cty.Number).Mark("marked"),
+			want: cty.DynamicVal,
+			err:  "Invalid index",
+		},
+		"dynamic key": {
+			coll: cty.ListVal([]cty.Value{
+				cty.StringVal("a"),
+			}),
+			key:  cty.DynamicVal,
+			want: cty.DynamicVal,
+		},
+		"invalid marked key type": {
+			coll: cty.ListVal([]cty.Value{
+				cty.StringVal("a"),
+			}),
+			key:  cty.StringVal("foo").Mark("marked"),
+			want: cty.DynamicVal,
+			err:  "Invalid index",
+		},
+		"marked map key": {
+			coll: cty.MapVal(map[string]cty.Value{
+				"foo": cty.StringVal("a"),
+			}),
+			key:  cty.StringVal("foo").Mark("marked"),
+			want: cty.StringVal("a").Mark("marked"),
+		},
+		"missing marked map key": {
+			coll: cty.MapVal(map[string]cty.Value{
+				"foo": cty.StringVal("a"),
+			}),
+			key:  cty.StringVal("bar").Mark("mark"),
+			want: cty.DynamicVal,
+			err:  "Invalid index",
+		},
+		"marked object key": {
+			coll: cty.ObjectVal(map[string]cty.Value{
+				"foo": cty.StringVal("a"),
+			}),
+			key: cty.StringVal("foo").Mark("marked"),
+			// an object attribute is fetched by string index, and the marks
+			// are not maintained
+			want: cty.StringVal("a"),
+		},
+		"invalid marked object key type": {
+			coll: cty.ObjectVal(map[string]cty.Value{
+				"foo": cty.StringVal("a"),
+			}),
+			key:  cty.ListVal([]cty.Value{cty.NullVal(cty.String)}).Mark("marked"),
+			want: cty.DynamicVal,
+			err:  "Invalid index",
+		},
+		"invalid marked object key": {
+			coll: cty.ObjectVal(map[string]cty.Value{
+				"foo": cty.StringVal("a"),
+			}),
+			key:  cty.NumberIntVal(0).Mark("marked"),
+			want: cty.DynamicVal,
+			err:  "Invalid index",
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Logf("testing Index\ncollection: %#v\nkey:  %#v", tc.coll, tc.key)
+
+			got, diags := Index(tc.coll, tc.key, nil)
+
+			for _, diag := range diags {
+				t.Logf(diag.Error())
+			}
+
+			if tc.err != "" {
+				if !diags.HasErrors() {
+					t.Fatalf("succeeded, but want error\nwant error: %s", tc.err)
+				}
+				if len(diags) != 1 {
+					t.Fatalf("wrong number of diagnostics %d; want 1", len(diags))
+				}
+
+				if gotErrStr := diags[0].Summary; gotErrStr != tc.err {
+					t.Fatalf("wrong error\ngot error:  %s\nwant error: %s", gotErrStr, tc.err)
+				}
+				return
+			}
+
+			if diags.HasErrors() {
+				t.Fatalf("failed, but want success\ngot diagnostics:\n%s", diags.Error())
+			}
+			if !tc.want.RawEquals(got) {
+				t.Fatalf("wrong result\ngot:  %#v\nwant: %#v", got, tc.want)
+			}
+		})
+	}
+}
