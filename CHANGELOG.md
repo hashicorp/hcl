@@ -1,5 +1,11 @@
 # HCL Changelog
 
+## v2.9.1 (March 10, 2021)
+
+### Bugs Fixed
+
+* hclsyntax: Fix panic for marked index value. ([#451](https://github.com/hashicorp/hcl/pull/451))
+
 ## v2.9.0 (February 23, 2021)
 
 ### Enhancements
