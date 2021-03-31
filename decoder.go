@@ -397,11 +397,6 @@ func (d *decoder) decodeMap(name string, node ast.Node, result reflect.Value) er
 }
 
 func (d *decoder) decodePtr(name string, node ast.Node, result reflect.Value) error {
-	// if pointer is not nil, decode into existing value
-	if !result.IsNil() {
-		return d.decode(name, node, result.Elem())
-	}
-
 	// Create an element of the concrete (non pointer) type and decode
 	// into that. Then set the value of the pointer to this type.
 	resultType := result.Type()
@@ -629,6 +624,7 @@ func (d *decoder) decodeStruct(name string, node ast.Node, result reflect.Value)
 		}
 	}
 
+	usedKeys := make(map[string]struct{})
 	decodedFields := make([]string, 0, len(fields))
 	decodedFieldsVal := make([]reflect.Value, 0)
 	unusedKeysVal := make([]reflect.Value, 0)
@@ -697,6 +693,7 @@ func (d *decoder) decodeStruct(name string, node ast.Node, result reflect.Value)
 		}
 
 		// Track the used keys
+		usedKeys[fieldName] = struct{}{}
 		unusedNodeKeys = removeCaseFold(unusedNodeKeys, fieldName)
 
 		// Create the field name and decode. We range over the elements
