@@ -1,6 +1,7 @@
 package hcl
 
 import (
+	"github.com/hashicorp/hcl/hcl/token"
 	"io/ioutil"
 	"path/filepath"
 	"reflect"
@@ -616,35 +617,6 @@ func TestDecode_structurePtr(t *testing.T) {
 	}
 }
 
-func TestDecode_nonNilStructurePtr(t *testing.T) {
-	type V struct {
-		Key        int
-		Foo        string
-		DontChange string
-	}
-
-	actual := &V{
-		Key:        42,
-		Foo:        "foo",
-		DontChange: "don't change me",
-	}
-
-	err := Decode(&actual, testReadFile(t, "flat.hcl"))
-	if err != nil {
-		t.Fatalf("err: %s", err)
-	}
-
-	expected := &V{
-		Key:        7,
-		Foo:        "bar",
-		DontChange: "don't change me",
-	}
-
-	if !reflect.DeepEqual(actual, expected) {
-		t.Fatalf("Actual: %#v\n\nExpected: %#v", actual, expected)
-	}
-}
-
 func TestDecode_structureArray(t *testing.T) {
 	// This test is extracted from a failure in Consul (consul.io),
 	// hence the interesting structure naming.
@@ -820,14 +792,25 @@ func TestDecode_structureMapExtraKeys(t *testing.T) {
 		A     int
 		B     int
 		Found []string `hcl:",decodedFields"`
-		Extra []string `hcl:",unusedKeys"`
+		Extra map[string][]token.Pos `hcl:",unusedKeyPositions"`
 	}
 
 	q := hclVariable{
 		A:     1,
 		B:     2,
 		Found: []string{"A", "B"},
-		Extra: []string{"extra1", "extra2"},
+		Extra: map[string][]token.Pos {
+			"extra1": {{
+				Line: 3,
+				Column: 1,
+				Offset: 12,
+			}},
+			"extra2": {{
+				Line: 4,
+				Column: 1,
+				Offset: 23,
+			}},
+		},
 	}
 
 	var p hclVariable
@@ -835,6 +818,11 @@ func TestDecode_structureMapExtraKeys(t *testing.T) {
 	DecodeObject(&p, ast)
 	if !reflect.DeepEqual(p, q) {
 		t.Fatal("not equal")
+	}
+
+	p.Extra = map[string][]token.Pos{
+		"extra1": {{}},
+		"extra2": {{}},
 	}
 
 	var j hclVariable
