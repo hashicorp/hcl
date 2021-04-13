@@ -191,47 +191,6 @@ func TestExpand(t *testing.T) {
 				}),
 			},
 			{
-				Type:        "dynamic",
-				Labels:      []string{"b"},
-				LabelRanges: []hcl.Range{hcl.Range{}},
-				Body: hcltest.MockBody(&hcl.BodyContent{
-					Attributes: hcltest.MockAttrs(map[string]hcl.Expression{
-						"for_each": hcltest.MockExprLiteral(cty.UnknownVal(cty.Map(cty.String))),
-						"iterator": hcltest.MockExprVariable("dyn_b"),
-					}),
-					Blocks: hcl.Blocks{
-						{
-							Type: "content",
-							Body: hcltest.MockBody(&hcl.BodyContent{
-								Blocks: hcl.Blocks{
-									{
-										Type:        "dynamic",
-										Labels:      []string{"c"},
-										LabelRanges: []hcl.Range{hcl.Range{}},
-										Body: hcltest.MockBody(&hcl.BodyContent{
-											Attributes: hcltest.MockAttrs(map[string]hcl.Expression{
-												"for_each": hcltest.MockExprTraversalSrc("dyn_b.value"),
-											}),
-											Blocks: hcl.Blocks{
-												{
-													Type: "content",
-													Body: hcltest.MockBody(&hcl.BodyContent{
-														Attributes: hcltest.MockAttrs(map[string]hcl.Expression{
-															"val0": hcltest.MockExprTraversalSrc("c.value"),
-															"val1": hcltest.MockExprTraversalSrc("dyn_b.key"),
-														}),
-													}),
-												},
-											},
-										}),
-									},
-								},
-							}),
-						},
-					},
-				}),
-			},
-			{
 				Type:        "a",
 				Labels:      []string{"static1"},
 				LabelRanges: []hcl.Range{hcl.Range{}},
@@ -364,16 +323,251 @@ func TestExpand(t *testing.T) {
 					"val1": cty.StringVal("foo"),
 				}),
 			}),
-			cty.ListVal([]cty.Value{
-				// This one comes from a dynamic block with an unknown for_each
-				// value, so we produce a single block object with all of the
-				// leaf attribute values set to unknown values.
-				cty.ObjectVal(map[string]cty.Value{
-					"val0": cty.UnknownVal(cty.String),
-					"val1": cty.UnknownVal(cty.String),
-				}),
-			}),
 		})
+
+		if !got.RawEquals(want) {
+			t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, want)
+		}
+	})
+
+}
+
+func TestExpandUnknownBodies(t *testing.T) {
+	srcContent := &hcl.BodyContent{
+		Blocks: hcl.Blocks{
+			{
+				Type:        "dynamic",
+				Labels:      []string{"list"},
+				LabelRanges: []hcl.Range{hcl.Range{}},
+				Body: hcltest.MockBody(&hcl.BodyContent{
+					Attributes: hcltest.MockAttrs(map[string]hcl.Expression{
+						"for_each": hcltest.MockExprLiteral(cty.UnknownVal(cty.Map(cty.String))),
+					}),
+					Blocks: hcl.Blocks{
+						{
+							Type: "content",
+							Body: hcltest.MockBody(&hcl.BodyContent{
+								Attributes: hcltest.MockAttrs(map[string]hcl.Expression{
+									"val": hcltest.MockExprTraversalSrc("each.value"),
+								}),
+							}),
+						},
+					},
+				}),
+			},
+			{
+				Type:        "dynamic",
+				Labels:      []string{"tuple"},
+				LabelRanges: []hcl.Range{hcl.Range{}},
+				Body: hcltest.MockBody(&hcl.BodyContent{
+					Attributes: hcltest.MockAttrs(map[string]hcl.Expression{
+						"for_each": hcltest.MockExprLiteral(cty.UnknownVal(cty.Map(cty.String))),
+					}),
+					Blocks: hcl.Blocks{
+						{
+							Type: "content",
+							Body: hcltest.MockBody(&hcl.BodyContent{
+								Attributes: hcltest.MockAttrs(map[string]hcl.Expression{
+									"val": hcltest.MockExprTraversalSrc("each.value"),
+								}),
+							}),
+						},
+					},
+				}),
+			},
+			{
+				Type:        "dynamic",
+				Labels:      []string{"set"},
+				LabelRanges: []hcl.Range{hcl.Range{}},
+				Body: hcltest.MockBody(&hcl.BodyContent{
+					Attributes: hcltest.MockAttrs(map[string]hcl.Expression{
+						"for_each": hcltest.MockExprLiteral(cty.UnknownVal(cty.Map(cty.String))),
+					}),
+					Blocks: hcl.Blocks{
+						{
+							Type: "content",
+							Body: hcltest.MockBody(&hcl.BodyContent{
+								Attributes: hcltest.MockAttrs(map[string]hcl.Expression{
+									"val": hcltest.MockExprTraversalSrc("each.value"),
+								}),
+							}),
+						},
+					},
+				}),
+			},
+			{
+				Type:        "dynamic",
+				Labels:      []string{"map"},
+				LabelRanges: []hcl.Range{hcl.Range{}},
+				Body: hcltest.MockBody(&hcl.BodyContent{
+					Attributes: hcltest.MockAttrs(map[string]hcl.Expression{
+						"for_each": hcltest.MockExprLiteral(cty.UnknownVal(cty.Map(cty.String))),
+						"labels": hcltest.MockExprList([]hcl.Expression{
+							hcltest.MockExprLiteral(cty.StringVal("static")),
+						}),
+					}),
+					Blocks: hcl.Blocks{
+						{
+							Type: "content",
+							Body: hcltest.MockBody(&hcl.BodyContent{
+								Attributes: hcltest.MockAttrs(map[string]hcl.Expression{
+									"val": hcltest.MockExprTraversalSrc("each.value"),
+								}),
+							}),
+						},
+					},
+				}),
+			},
+			{
+				Type:        "dynamic",
+				Labels:      []string{"object"},
+				LabelRanges: []hcl.Range{hcl.Range{}},
+				Body: hcltest.MockBody(&hcl.BodyContent{
+					Attributes: hcltest.MockAttrs(map[string]hcl.Expression{
+						"for_each": hcltest.MockExprLiteral(cty.UnknownVal(cty.Map(cty.String))),
+						"labels": hcltest.MockExprList([]hcl.Expression{
+							hcltest.MockExprLiteral(cty.StringVal("static")),
+						}),
+					}),
+					Blocks: hcl.Blocks{
+						{
+							Type: "content",
+							Body: hcltest.MockBody(&hcl.BodyContent{
+								Attributes: hcltest.MockAttrs(map[string]hcl.Expression{
+									"val": hcltest.MockExprTraversalSrc("each.value"),
+								}),
+							}),
+						},
+					},
+				}),
+			},
+		},
+	}
+
+	srcBody := hcltest.MockBody(srcContent)
+	dynBody := Expand(srcBody, nil)
+
+	t.Run("DecodeList", func(t *testing.T) {
+		decSpec := &hcldec.BlockListSpec{
+			TypeName: "list",
+			Nested: &hcldec.ObjectSpec{
+				"val": &hcldec.AttrSpec{
+					Name: "val",
+					Type: cty.String,
+				},
+			},
+		}
+
+		var got cty.Value
+		var diags hcl.Diagnostics
+
+		got, _, diags = hcldec.PartialDecode(dynBody, decSpec, nil)
+		if len(diags) != 0 {
+			t.Errorf("unexpected diagnostics")
+			for _, diag := range diags {
+				t.Logf("- %s", diag)
+			}
+			return
+		}
+
+		want := cty.UnknownVal(cty.List(cty.Object(map[string]cty.Type{
+			"val": cty.String,
+		})))
+
+		if !got.RawEquals(want) {
+			t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, want)
+		}
+	})
+
+	t.Run("DecodeTuple", func(t *testing.T) {
+		decSpec := &hcldec.BlockTupleSpec{
+			TypeName: "tuple",
+			Nested: &hcldec.ObjectSpec{
+				"val": &hcldec.AttrSpec{
+					Name: "val",
+					Type: cty.String,
+				},
+			},
+		}
+
+		var got cty.Value
+		var diags hcl.Diagnostics
+
+		got, _, diags = hcldec.PartialDecode(dynBody, decSpec, nil)
+		if len(diags) != 0 {
+			t.Errorf("unexpected diagnostics")
+			for _, diag := range diags {
+				t.Logf("- %s", diag)
+			}
+			return
+		}
+
+		want := cty.DynamicVal
+
+		if !got.RawEquals(want) {
+			t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, want)
+		}
+	})
+
+	t.Run("DecodeSet", func(t *testing.T) {
+		decSpec := &hcldec.BlockSetSpec{
+			TypeName: "tuple",
+			Nested: &hcldec.ObjectSpec{
+				"val": &hcldec.AttrSpec{
+					Name: "val",
+					Type: cty.String,
+				},
+			},
+		}
+
+		var got cty.Value
+		var diags hcl.Diagnostics
+
+		got, _, diags = hcldec.PartialDecode(dynBody, decSpec, nil)
+		if len(diags) != 0 {
+			t.Errorf("unexpected diagnostics")
+			for _, diag := range diags {
+				t.Logf("- %s", diag)
+			}
+			return
+		}
+
+		want := cty.UnknownVal(cty.Set(cty.Object(map[string]cty.Type{
+			"val": cty.String,
+		})))
+
+		if !got.RawEquals(want) {
+			t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, want)
+		}
+	})
+
+	t.Run("DecodeMap", func(t *testing.T) {
+		decSpec := &hcldec.BlockMapSpec{
+			TypeName:   "map",
+			LabelNames: []string{"key"},
+			Nested: &hcldec.ObjectSpec{
+				"val": &hcldec.AttrSpec{
+					Name: "val",
+					Type: cty.String,
+				},
+			},
+		}
+
+		var got cty.Value
+		var diags hcl.Diagnostics
+
+		got, _, diags = hcldec.PartialDecode(dynBody, decSpec, nil)
+		if len(diags) != 0 {
+			t.Errorf("unexpected diagnostics")
+			for _, diag := range diags {
+				t.Logf("- %s", diag)
+			}
+			return
+		}
+
+		want := cty.UnknownVal(cty.Map(cty.Object(map[string]cty.Type{
+			"val": cty.String,
+		})))
 
 		if !got.RawEquals(want) {
 			t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, want)
