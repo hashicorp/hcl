@@ -1,5 +1,11 @@
 # HCL Changelog
 
+## v2.9.2 (Unreleased)
+
+### Enhancements
+
+* dynblock,hcldec: Using dynblock in conjunction with hcldec can now decode blocks with unknown dynamic for_each arguments as entirely unknown values ([#461](https://github.com/hashicorp/hcl/pull/461))
+
 ## v2.9.1 (March 10, 2021)
 
 ### Bugs Fixed
