@@ -97,6 +97,9 @@ jobs:
       gotestsum-version:
         type: string
     steps: 
+      - add_ssh_keys:
+            fingerprints:
+              - "3f:fc:7c:7b:7f:45:55:70:d0:7a:6b:26:7f:0d:50:e9"
       - run: git config --global core.autocrlf false
       - checkout
       - attach_workspace:
