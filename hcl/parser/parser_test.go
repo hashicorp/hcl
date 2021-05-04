@@ -240,7 +240,7 @@ func TestListType_lineComment(t *testing.T) {
 			comment := l.comment[i]
 
 			if (lt.LineComment == nil) != (comment == "") {
-				t.Fatalf("bad: %s", lt)
+				t.Fatalf("bad: %s", lt.Token.Value())
 			}
 
 			if comment == "" {
