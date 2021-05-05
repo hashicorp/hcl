@@ -2484,6 +2484,64 @@ block "valid" {}
 				},
 			},
 		},
+		{
+			`block "unterminated_string "name" {}`,
+			2, // "Invalid string literal" and "Invalid block definition"
+			&Body{
+				Attributes: Attributes{},
+				Blocks: Blocks{
+					&Block{
+						Type:   "block",
+						Labels: []string{"unterminated_string ", "name", " {}"},
+						Body: &Body{
+							SrcRange: hcl.Range{
+								Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+								End:   hcl.Pos{Line: 1, Column: 6, Byte: 5},
+							},
+							EndRange: hcl.Range{
+								Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+								End:   hcl.Pos{Line: 1, Column: 6, Byte: 5},
+							},
+						},
+
+						TypeRange: hcl.Range{
+							Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   hcl.Pos{Line: 1, Column: 6, Byte: 5},
+						},
+						LabelRanges: []hcl.Range{
+							{
+								Start: hcl.Pos{Line: 1, Column: 7, Byte: 6},
+								End:   hcl.Pos{Line: 1, Column: 29, Byte: 28},
+							},
+							{
+								Start: hcl.Pos{Line: 1, Column: 29, Byte: 28},
+								End:   hcl.Pos{Line: 1, Column: 33, Byte: 32},
+							},
+							{
+								Start: hcl.Pos{Line: 1, Column: 33, Byte: 32},
+								End:   hcl.Pos{Line: 1, Column: 37, Byte: 36},
+							},
+						},
+						OpenBraceRange: hcl.Range{
+							Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   hcl.Pos{Line: 1, Column: 6, Byte: 5},
+						},
+						CloseBraceRange: hcl.Range{
+							Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   hcl.Pos{Line: 1, Column: 6, Byte: 5},
+						},
+					},
+				},
+				SrcRange: hcl.Range{
+					Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   hcl.Pos{Line: 1, Column: 37, Byte: 36},
+				},
+				EndRange: hcl.Range{
+					Start: hcl.Pos{Line: 1, Column: 37, Byte: 36},
+					End:   hcl.Pos{Line: 1, Column: 37, Byte: 36},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
