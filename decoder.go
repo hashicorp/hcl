@@ -638,7 +638,11 @@ func (d *decoder) decodeStruct(name string, node ast.Node, result reflect.Value)
 	unusedNodeKeys := make([]string, 0)
 	for _, item := range list.Items {
 		for _, k := range item.Keys {
-			unusedNodeKeys = append(unusedNodeKeys, k.Token.Value().(string))
+			if k.Token.Type == token.IDENT {
+				fn := k.Token.Value().(string)
+				sl := unusedNodeKeys[fn]
+				unusedNodeKeys[fn] = append(sl, k.Token.Pos)
+			}
 		}
 	}
 
