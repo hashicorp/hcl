@@ -633,8 +633,8 @@ func (d *decoder) decodeStruct(name string, node ast.Node, result reflect.Value)
 	// a slice because we have to do equals case fold to match Filter
 	unusedNodeKeys := make(map[string][]token.Pos, 0)
 	for _, item := range list.Items {
-		for _, k := range item.Keys {
-                        if k.Token.Type == token.IDENT {
+		for _, k := range item.Keys{
+			if k.Token.JSON || k.Token.Type == token.IDENT {
 				fn := k.Token.Value().(string)
 				sl := unusedNodeKeys[fn]
 				unusedNodeKeys[fn]  = append(sl, k.Token.Pos)
