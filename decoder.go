@@ -397,6 +397,11 @@ func (d *decoder) decodeMap(name string, node ast.Node, result reflect.Value) er
 }
 
 func (d *decoder) decodePtr(name string, node ast.Node, result reflect.Value) error {
+        // if pointer is not nil, decode into existing value
+        if !result.IsNil() {
+                return d.decode(name, node, result.Elem())
+        }
+
 	// Create an element of the concrete (non pointer) type and decode
 	// into that. Then set the value of the pointer to this type.
 	resultType := result.Type()
