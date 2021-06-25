@@ -152,6 +152,9 @@ func getFieldTags(ty reflect.Type) *fieldTags {
 			ret.Attributes[name] = i
 		case "block":
 			ret.Blocks[name] = i
+		case "optional-block":
+			ret.Blocks[name] = i
+			ret.Optional[name] = true
 		case "label":
 			ret.Labels = append(ret.Labels, labelField{
 				FieldIndex: i,
