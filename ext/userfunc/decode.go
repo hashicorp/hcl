@@ -2,7 +2,6 @@ package userfunc
 
 import (
 	"github.com/hashicorp/hcl/v2"
-	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-cty/cty/function"
 )
 
@@ -53,7 +52,7 @@ func decodeUserFunctions(body hcl.Body, blockType string, contextFunc ContextFun
 	}
 
 	funcs = make(map[string]function.Function)
-Blocks:
+
 	for _, block := range content.Blocks {
 		name := block.Labels[0]
 		funcContent, funcDiags := block.Body.Content(funcBodySchema)
@@ -68,88 +67,12 @@ Blocks:
 		if funcContent.Attributes["variadic_param"] != nil {
 			varParamExpr = funcContent.Attributes["variadic_param"].Expr
 		}
-
-		var params []string
-		var varParam string
-
-		paramExprs, paramsDiags := hcl.ExprList(paramsExpr)
-		diags = append(diags, paramsDiags...)
-		if paramsDiags.HasErrors() {
+		f, funcDiags := NewFunction(paramsExpr, varParamExpr, resultExpr, getBaseCtx)
+		if funcDiags.HasErrors() {
+			diags = append(diags, funcDiags...)
 			continue
 		}
-		for _, paramExpr := range paramExprs {
-			param := hcl.ExprAsKeyword(paramExpr)
-			if param == "" {
-				diags = append(diags, &hcl.Diagnostic{
-					Severity: hcl.DiagError,
-					Summary:  "Invalid param element",
-					Detail:   "Each parameter name must be an identifier.",
-					Subject:  paramExpr.Range().Ptr(),
-				})
-				continue Blocks
-			}
-			params = append(params, param)
-		}
-
-		if varParamExpr != nil {
-			varParam = hcl.ExprAsKeyword(varParamExpr)
-			if varParam == "" {
-				diags = append(diags, &hcl.Diagnostic{
-					Severity: hcl.DiagError,
-					Summary:  "Invalid variadic_param",
-					Detail:   "The variadic parameter name must be an identifier.",
-					Subject:  varParamExpr.Range().Ptr(),
-				})
-				continue
-			}
-		}
-
-		spec := &function.Spec{}
-		for _, paramName := range params {
-			spec.Params = append(spec.Params, function.Parameter{
-				Name: paramName,
-				Type: cty.DynamicPseudoType,
-			})
-		}
-		if varParamExpr != nil {
-			spec.VarParam = &function.Parameter{
-				Name: varParam,
-				Type: cty.DynamicPseudoType,
-			}
-		}
-		impl := func(args []cty.Value) (cty.Value, error) {
-			ctx := getBaseCtx()
-			ctx = ctx.NewChild()
-			ctx.Variables = make(map[string]cty.Value)
-
-			// The cty function machinery guarantees that we have at least
-			// enough args to fill all of our params.
-			for i, paramName := range params {
-				ctx.Variables[paramName] = args[i]
-			}
-			if spec.VarParam != nil {
-				varArgs := args[len(params):]
-				ctx.Variables[varParam] = cty.TupleVal(varArgs)
-			}
-
-			result, diags := resultExpr.Value(ctx)
-			if diags.HasErrors() {
-				// Smuggle the diagnostics out via the error channel, since
-				// a diagnostics sequence implements error. Caller can
-				// type-assert this to recover the individual diagnostics
-				// if desired.
-				return cty.DynamicVal, diags
-			}
-			return result, nil
-		}
-		spec.Type = func(args []cty.Value) (cty.Type, error) {
-			val, err := impl(args)
-			return val.Type(), err
-		}
-		spec.Impl = func(args []cty.Value, retType cty.Type) (cty.Value, error) {
-			return impl(args)
-		}
-		funcs[name] = function.New(spec)
+		funcs[name] = f
 	}
 
 	return funcs, remain, diags
