@@ -47,8 +47,8 @@ definitions of values that are available for use in expressions elsewhere:
      value = cloud_subnet.example[*].id
    }
 
-In this example, the `variable "network_numbers"` block makes
-``var.base_network_addr`` available to expressions, the
+In this example, the ``variable "network_numbers"`` block makes
+``var.network_numbers`` available to expressions, the
 ``resource "cloud_subnet" "example"`` block makes ``cloud_subnet.example``
 available, etc.
 
