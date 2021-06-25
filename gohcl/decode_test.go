@@ -429,6 +429,27 @@ func TestDecodeBody(t *testing.T) {
 		{
 			map[string]interface{}{
 				"noodle": map[string]interface{}{
+					"sample_label": map[string]interface{}{},
+				},
+			},
+			makeInstantiateType(struct {
+				Noodle struct {
+					Name *string `hcl:"name,label"`
+				} `hcl:"noodle,block"`
+			}{}),
+			func(gotI interface{}) bool {
+				noodle := gotI.(struct {
+					Noodle struct {
+						Name *string `hcl:"name,label"`
+					} `hcl:"noodle,block"`
+				}).Noodle
+				return noodle.Name != nil && *noodle.Name == "sample_label"
+			},
+			0,
+		},
+		{
+			map[string]interface{}{
+				"noodle": map[string]interface{}{
 					"foo_foo": map[string]interface{}{},
 				},
 			},
