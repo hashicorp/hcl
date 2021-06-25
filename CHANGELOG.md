@@ -3,6 +3,7 @@
 ## v2.10.1 (Unreleased)
 
 * hclsyntax: Calling functions is now more robust in the face of an incorrectly-implemented function which returns a `function.ArgError` whose argument index is out of range for the length of the arguments. Previously this would often lead to a panic, but now it'll return a less-precice error message instead. Functions that return out-of-bounds argument indices still ought to be fixed so that the resulting error diagnostics can be as precise as possible. ([#472](https://github.com/hashicorp/hcl/pull/472))
+* hcl: Improved error messages for various common error situtions in `hcl.Index` and `hcl.GetAttr`. These are part of the implementation of indexing and attribute lookup in the native syntax expression language too, so the new error messages will apply to problems using those operators. ([#474](https://github.com/hashicorp/hcl/pull/474))
 
 ## v2.10.0 (April 20, 2021)
 
