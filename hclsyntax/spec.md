@@ -491,7 +491,7 @@ that were produced against each distinct key.
 - `[for v in ["a", "b"]: v]` returns `["a", "b"]`.
 - `[for i, v in ["a", "b"]: i]` returns `[0, 1]`.
 - `{for i, v in ["a", "b"]: v => i}` returns `{a = 0, b = 1}`.
-- `{for i, v in ["a", "a", "b"]: k => v}` produces an error, because attribute
+- `{for i, v in ["a", "a", "b"]: v => i}` produces an error, because attribute
   `a` is defined twice.
 - `{for i, v in ["a", "a", "b"]: v => i...}` returns `{a = [0, 1], b = [2]}`.
 
