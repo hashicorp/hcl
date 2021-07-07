@@ -1,6 +1,7 @@
 package dynblock
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/hcl/v2"
@@ -441,6 +442,28 @@ func TestExpandUnknownBodies(t *testing.T) {
 					},
 				}),
 			},
+			{
+				Type:        "dynamic",
+				Labels:      []string{"invalid_list"},
+				LabelRanges: []hcl.Range{hcl.Range{}},
+				Body: hcltest.MockBody(&hcl.BodyContent{
+					Attributes: hcltest.MockAttrs(map[string]hcl.Expression{
+						"for_each": hcltest.MockExprLiteral(cty.UnknownVal(cty.Map(cty.String))),
+					}),
+					Blocks: hcl.Blocks{
+						{
+							Type: "content",
+							Body: hcltest.MockBody(&hcl.BodyContent{
+								Attributes: hcltest.MockAttrs(map[string]hcl.Expression{
+									"val": hcltest.MockExprTraversalSrc("each.value"),
+									// unexpected attributes should still produce an error
+									"invalid": hcltest.MockExprLiteral(cty.StringVal("static")),
+								}),
+							}),
+						},
+					},
+				}),
+			},
 		},
 	}
 
@@ -571,6 +594,29 @@ func TestExpandUnknownBodies(t *testing.T) {
 
 		if !got.RawEquals(want) {
 			t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, want)
+		}
+	})
+
+	t.Run("DecodeInvalidList", func(t *testing.T) {
+		decSpec := &hcldec.BlockListSpec{
+			TypeName: "invalid_list",
+			Nested: &hcldec.ObjectSpec{
+				"val": &hcldec.AttrSpec{
+					Name: "val",
+					Type: cty.String,
+				},
+			},
+		}
+
+		_, _, diags := hcldec.PartialDecode(dynBody, decSpec, nil)
+		if len(diags) != 1 {
+			t.Error("expected 1 extraneous argument")
+		}
+
+		want := `Mock body has extraneous argument "invalid"`
+
+		if !strings.Contains(diags.Error(), want) {
+			t.Errorf("unexpected diagnostics: %v", diags)
 		}
 	})
 

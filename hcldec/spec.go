@@ -468,6 +468,9 @@ func (s *BlockListSpec) decode(content *hcl.BodyContent, blockLabels []blockLabe
 			continue
 		}
 
+		val, _, childDiags := decode(childBlock.Body, labelsForBlock(childBlock), ctx, s.Nested, false)
+		diags = append(diags, childDiags...)
+
 		if u, ok := childBlock.Body.(UnknownBody); ok {
 			if u.Unknown() {
 				// If any block Body is unknown, then the entire block value
@@ -476,8 +479,6 @@ func (s *BlockListSpec) decode(content *hcl.BodyContent, blockLabels []blockLabe
 			}
 		}
 
-		val, _, childDiags := decode(childBlock.Body, labelsForBlock(childBlock), ctx, s.Nested, false)
-		diags = append(diags, childDiags...)
 		elems = append(elems, val)
 		sourceRanges = append(sourceRanges, sourceRange(childBlock.Body, labelsForBlock(childBlock), s.Nested))
 	}
@@ -629,6 +630,9 @@ func (s *BlockTupleSpec) decode(content *hcl.BodyContent, blockLabels []blockLab
 			continue
 		}
 
+		val, _, childDiags := decode(childBlock.Body, labelsForBlock(childBlock), ctx, s.Nested, false)
+		diags = append(diags, childDiags...)
+
 		if u, ok := childBlock.Body.(UnknownBody); ok {
 			if u.Unknown() {
 				// If any block Body is unknown, then the entire block value
@@ -637,8 +641,6 @@ func (s *BlockTupleSpec) decode(content *hcl.BodyContent, blockLabels []blockLab
 			}
 		}
 
-		val, _, childDiags := decode(childBlock.Body, labelsForBlock(childBlock), ctx, s.Nested, false)
-		diags = append(diags, childDiags...)
 		elems = append(elems, val)
 		sourceRanges = append(sourceRanges, sourceRange(childBlock.Body, labelsForBlock(childBlock), s.Nested))
 	}
@@ -751,6 +753,9 @@ func (s *BlockSetSpec) decode(content *hcl.BodyContent, blockLabels []blockLabel
 			continue
 		}
 
+		val, _, childDiags := decode(childBlock.Body, labelsForBlock(childBlock), ctx, s.Nested, false)
+		diags = append(diags, childDiags...)
+
 		if u, ok := childBlock.Body.(UnknownBody); ok {
 			if u.Unknown() {
 				// If any block Body is unknown, then the entire block value
@@ -759,8 +764,6 @@ func (s *BlockSetSpec) decode(content *hcl.BodyContent, blockLabels []blockLabel
 			}
 		}
 
-		val, _, childDiags := decode(childBlock.Body, labelsForBlock(childBlock), ctx, s.Nested, false)
-		diags = append(diags, childDiags...)
 		elems = append(elems, val)
 		sourceRanges = append(sourceRanges, sourceRange(childBlock.Body, labelsForBlock(childBlock), s.Nested))
 	}
