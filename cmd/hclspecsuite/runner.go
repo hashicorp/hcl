@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/zclconf/go-cty-debug/ctydebug"
 	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-cty/cty/convert"
 	ctyjson "github.com/zclconf/go-cty/cty/json"
@@ -226,8 +227,9 @@ func (r *Runner) runTestInput(specFilename, inputFilename string, tf *TestFile) 
 						Severity: hcl.DiagError,
 						Summary:  "Incorrect result value",
 						Detail: fmt.Sprintf(
-							"Input file %s produced %#v, but was expecting %#v.",
+							"Input file %s produced %#v, but was expecting %#v.\n\n%s",
 							inputFilename, val, tf.Result,
+							ctydebug.DiffValues(tf.Result, val),
 						),
 					})
 				}
