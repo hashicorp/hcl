@@ -4,3 +4,7 @@ updates:
   directory: /
   schedule:
     interval: daily
+- package-ecosystem: pip
+  directory: /guide
+  schedule:
+    interval: daily
