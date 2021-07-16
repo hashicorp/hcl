@@ -1,6 +1,6 @@
 module github.com/hashicorp/hcl/v2
 
-go 1.12
+go 1.13
 
 require (
 	github.com/agext/levenshtein v1.2.1
