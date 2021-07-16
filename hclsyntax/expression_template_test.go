@@ -358,6 +358,16 @@ trim`,
 			cty.StringVal("foobarbaz").WithMarks(cty.NewValueMarks("x", "y", "z")),
 			0,
 		},
+		{ // marks from unknown values are maintained
+			`test_${target}`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"target": cty.UnknownVal(cty.String).Mark("sensitive"),
+				},
+			},
+			cty.UnknownVal(cty.String).Mark("sensitive"),
+			0,
+		},
 	}
 
 	for _, test := range tests {
