@@ -22,6 +22,14 @@ func TestTryFunc(t *testing.T) {
 			cty.NumberIntVal(1),
 			``,
 		},
+		"one marked argument succeeds": {
+			`try(sensitive)`,
+			map[string]cty.Value{
+				"sensitive": cty.StringVal("secret").Mark("porpoise"),
+			},
+			cty.StringVal("secret").Mark("porpoise"),
+			``,
+		},
 		"two arguments, first succeeds": {
 			`try(1, 2)`,
 			nil,
@@ -64,6 +72,36 @@ func TestTryFunc(t *testing.T) {
 				"unknown": cty.UnknownVal(cty.Map(cty.String)),
 			},
 			cty.DynamicVal, // can't proceed until first argument is wholly known
+			``,
+		},
+		"two arguments, both marked, first succeeds": {
+			`try(sensitive, other)`,
+			map[string]cty.Value{
+				"sensitive": cty.StringVal("secret").Mark("porpoise"),
+				"other":     cty.StringVal("that").Mark("a"),
+			},
+			cty.StringVal("secret").Mark("porpoise"),
+			``,
+		},
+		"two arguments, both marked, second succeeds": {
+			`try(sensitive, other)`,
+			map[string]cty.Value{
+				"other": cty.StringVal("that").Mark("a"),
+			},
+			cty.StringVal("that").Mark("a"),
+			``,
+		},
+		"two arguments, result is element of marked list ": {
+			`try(sensitive[0], other)`,
+			map[string]cty.Value{
+				"sensitive": cty.ListVal([]cty.Value{
+					cty.StringVal("list"),
+					cty.StringVal("of "),
+					cty.StringVal("secrets"),
+				}).Mark("secret"),
+				"other": cty.StringVal("not"),
+			},
+			cty.StringVal("list").Mark("secret"),
 			``,
 		},
 		"three arguments, all fail": {

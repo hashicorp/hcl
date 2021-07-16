@@ -24,13 +24,13 @@ func TestApplyPath(t *testing.T) {
 			cty.StringVal("hello"),
 			(cty.Path)(nil).Index(cty.StringVal("boop")),
 			cty.NilVal,
-			`Invalid index`,
+			`Invalid index: This value does not have any indices.`,
 		},
 		{
 			cty.StringVal("hello"),
 			(cty.Path)(nil).Index(cty.NumberIntVal(0)),
 			cty.NilVal,
-			`Invalid index`,
+			`Invalid index: This value does not have any indices.`,
 		},
 		{
 			cty.ListVal([]cty.Value{
@@ -65,11 +65,12 @@ func TestApplyPath(t *testing.T) {
 			cty.StringVal("foo").Mark("x"),
 			``,
 		},
+
 		{
 			cty.ListValEmpty(cty.String),
 			(cty.Path)(nil).Index(cty.NumberIntVal(0)),
 			cty.NilVal,
-			`Invalid index`,
+			`Invalid index: The given key does not identify an element in this collection value: the collection has no elements.`,
 		},
 		{
 			cty.ListVal([]cty.Value{
@@ -77,7 +78,23 @@ func TestApplyPath(t *testing.T) {
 			}),
 			(cty.Path)(nil).Index(cty.NumberIntVal(1)),
 			cty.NilVal,
-			`Invalid index`,
+			`Invalid index: The given key does not identify an element in this collection value: the given index is greater than or equal to the length of the collection.`,
+		},
+		{
+			cty.ListVal([]cty.Value{
+				cty.StringVal("hello"),
+			}).Mark("boop"), // prevents us from making statements about the length of the list
+			(cty.Path)(nil).Index(cty.NumberIntVal(1)),
+			cty.NilVal,
+			`Invalid index: The given key does not identify an element in this collection value.`,
+		},
+		{
+			cty.ListVal([]cty.Value{
+				cty.StringVal("hello"),
+			}),
+			(cty.Path)(nil).Index(cty.NumberIntVal(-1)),
+			cty.NilVal,
+			`Invalid index: The given key does not identify an element in this collection value: a negative number is not a valid index for a sequence.`,
 		},
 		{
 			cty.ListVal([]cty.Value{
@@ -85,7 +102,7 @@ func TestApplyPath(t *testing.T) {
 			}),
 			(cty.Path)(nil).Index(cty.NumberFloatVal(0.5)),
 			cty.NilVal,
-			`Invalid index`,
+			`Invalid index: The given key does not identify an element in this collection value: indexing a sequence requires a whole number, but the given index has a fractional part.`,
 		},
 		{
 			cty.ListVal([]cty.Value{
@@ -93,7 +110,7 @@ func TestApplyPath(t *testing.T) {
 			}),
 			(cty.Path)(nil).Index(cty.NumberIntVal(0)).GetAttr("foo"),
 			cty.NilVal,
-			`Unsupported attribute`,
+			`Unsupported attribute: Can't access attributes on a primitive-typed value (string).`,
 		},
 		{
 			cty.ListVal([]cty.Value{
@@ -101,25 +118,133 @@ func TestApplyPath(t *testing.T) {
 			}),
 			(cty.Path)(nil).Index(cty.NumberIntVal(0)).GetAttr("foo"),
 			cty.NilVal,
-			`Unsupported attribute`,
+			`Unsupported attribute: This object does not have an attribute named "foo".`,
+		},
+		{
+			cty.ListVal([]cty.Value{
+				cty.EmptyObjectVal,
+			}),
+			(cty.Path)(nil).GetAttr("foo"),
+			cty.NilVal,
+			`Unsupported attribute: Can't access attributes on a list of objects. Did you mean to access an attribute for a specific element of the list, or across all elements of the list?`,
+		},
+		{
+			cty.ListVal([]cty.Value{
+				cty.ObjectVal(map[string]cty.Value{
+					"foo": cty.True,
+				}),
+			}),
+			(cty.Path)(nil).GetAttr("foo"),
+			cty.NilVal,
+			`Unsupported attribute: Can't access attributes on a list of objects. Did you mean to access attribute "foo" for a specific element of the list, or across all elements of the list?`,
+		},
+
+		{
+			cty.EmptyTupleVal,
+			(cty.Path)(nil).Index(cty.NumberIntVal(0)),
+			cty.NilVal,
+			`Invalid index: The given key does not identify an element in this collection value: the collection has no elements.`,
+		},
+		{
+			cty.TupleVal([]cty.Value{
+				cty.StringVal("hello"),
+			}),
+			(cty.Path)(nil).Index(cty.NumberIntVal(1)),
+			cty.NilVal,
+			`Invalid index: The given key does not identify an element in this collection value: the given index is greater than or equal to the length of the collection.`,
+		},
+		{
+			cty.TupleVal([]cty.Value{
+				cty.StringVal("hello"),
+			}).Mark("boop"),
+			(cty.Path)(nil).Index(cty.NumberIntVal(1)),
+			cty.NilVal,
+			`Invalid index: The given key does not identify an element in this collection value.`,
+		},
+		{
+			cty.TupleVal([]cty.Value{
+				cty.StringVal("hello"),
+			}),
+			(cty.Path)(nil).Index(cty.NumberIntVal(-1)),
+			cty.NilVal,
+			`Invalid index: The given key does not identify an element in this collection value: a negative number is not a valid index for a sequence.`,
+		},
+		{
+			cty.TupleVal([]cty.Value{
+				cty.StringVal("hello"),
+			}),
+			(cty.Path)(nil).Index(cty.NumberFloatVal(0.5)),
+			cty.NilVal,
+			`Invalid index: The given key does not identify an element in this collection value: indexing a sequence requires a whole number, but the given index has a fractional part.`,
+		},
+		{
+			cty.TupleVal([]cty.Value{
+				cty.StringVal("hello"),
+			}),
+			(cty.Path)(nil).Index(cty.NumberIntVal(0)).GetAttr("foo"),
+			cty.NilVal,
+			`Unsupported attribute: Can't access attributes on a primitive-typed value (string).`,
+		},
+		{
+			cty.TupleVal([]cty.Value{
+				cty.EmptyObjectVal,
+			}),
+			(cty.Path)(nil).Index(cty.NumberIntVal(0)).GetAttr("foo"),
+			cty.NilVal,
+			`Unsupported attribute: This object does not have an attribute named "foo".`,
+		},
+		{
+			cty.TupleVal([]cty.Value{
+				cty.EmptyObjectVal,
+			}),
+			(cty.Path)(nil).GetAttr("foo"),
+			cty.NilVal,
+			`Unsupported attribute: This value does not have any attributes.`,
+		},
+		{
+			cty.TupleVal([]cty.Value{
+				cty.ObjectVal(map[string]cty.Value{
+					"foo": cty.True,
+				}),
+			}),
+			(cty.Path)(nil).GetAttr("foo"),
+			cty.NilVal,
+			`Unsupported attribute: This value does not have any attributes.`,
+		},
+
+		{
+			cty.SetVal([]cty.Value{
+				cty.StringVal("hello"),
+			}),
+			(cty.Path)(nil).Index(cty.NumberIntVal(1)),
+			cty.NilVal,
+			`Invalid index: Elements of a set are identified only by their value and don't have any separate index or key to select with, so it's only possible to perform operations across all elements of the set.`,
+		},
+		{
+			cty.SetVal([]cty.Value{
+				cty.EmptyObjectVal,
+			}),
+			(cty.Path)(nil).GetAttr("foo"),
+			cty.NilVal,
+			`Unsupported attribute: Can't access attributes on a set of objects. Did you mean to access an attribute across all elements of the set?`,
 		},
 		{
 			cty.NullVal(cty.List(cty.String)),
 			(cty.Path)(nil).Index(cty.NumberIntVal(0)),
 			cty.NilVal,
-			`Attempt to index null value`,
+			`Attempt to index null value: This value is null, so it does not have any indices.`,
 		},
 		{
 			cty.NullVal(cty.Map(cty.String)),
 			(cty.Path)(nil).Index(cty.NumberIntVal(0)),
 			cty.NilVal,
-			`Attempt to index null value`,
+			`Attempt to index null value: This value is null, so it does not have any indices.`,
 		},
 		{
 			cty.NullVal(cty.EmptyObject),
 			(cty.Path)(nil).GetAttr("foo"),
 			cty.NilVal,
-			`Attempt to get attribute from null value`,
+			`Attempt to get attribute from null value: This value is null, so it does not have any attributes.`,
 		},
 	}
 
@@ -140,7 +265,7 @@ func TestApplyPath(t *testing.T) {
 					t.Fatalf("wrong number of diagnostics %d; want 1", len(diags))
 				}
 
-				if gotErrStr := diags[0].Summary; gotErrStr != test.WantErr {
+				if gotErrStr := diags[0].Summary + ": " + diags[0].Detail; gotErrStr != test.WantErr {
 					t.Fatalf("wrong error\ngot error:  %s\nwant error: %s", gotErrStr, test.WantErr)
 				}
 				return

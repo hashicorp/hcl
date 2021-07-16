@@ -338,6 +338,98 @@ upper(
 			0,
 		},
 		{
+			`misbehave()`,
+			&hcl.EvalContext{
+				Functions: map[string]function.Function{
+					"misbehave": function.New(&function.Spec{
+						Type: func(args []cty.Value) (cty.Type, error) {
+							// This function misbehaves by indicating an error
+							// on an argument index that is out of range for
+							// its declared parameters. That would always be
+							// a bug in the function, but we want to avoid
+							// panicking in this case and just behave like it
+							// was a normal (non-arg) error.
+							return cty.NilType, function.NewArgErrorf(1, "out of range")
+						},
+					}),
+				},
+			},
+			cty.DynamicVal,
+			1, // Call to function "misbehave" failed: out of range
+		},
+		{
+			`misbehave() /* variadic */`,
+			&hcl.EvalContext{
+				Functions: map[string]function.Function{
+					"misbehave": function.New(&function.Spec{
+						VarParam: &function.Parameter{
+							Name: "foo",
+							Type: cty.String,
+						},
+						Type: func(args []cty.Value) (cty.Type, error) {
+							// This function misbehaves by indicating an error
+							// on an argument index that is out of range for
+							// the given arguments. That would always be a
+							// bug in the function, but to avoid panicking we
+							// just treat it like a problem related to the
+							// declared variadic argument.
+							return cty.NilType, function.NewArgErrorf(1, "out of range")
+						},
+					}),
+				},
+			},
+			cty.DynamicVal,
+			1, // Invalid value for "foo" parameter: out of range
+		},
+		{
+			`misbehave([]...)`,
+			&hcl.EvalContext{
+				Functions: map[string]function.Function{
+					"misbehave": function.New(&function.Spec{
+						VarParam: &function.Parameter{
+							Name: "foo",
+							Type: cty.String,
+						},
+						Type: func(args []cty.Value) (cty.Type, error) {
+							// This function misbehaves by indicating an error
+							// on an argument index that is out of range for
+							// the given arguments. That would always be a
+							// bug in the function, but to avoid panicking we
+							// just treat it like a problem related to the
+							// declared variadic argument.
+							return cty.NilType, function.NewArgErrorf(1, "out of range")
+						},
+					}),
+				},
+			},
+			cty.DynamicVal,
+			1, // Invalid value for "foo" parameter: out of range
+		},
+		{
+			`argerrorexpand(["a", "b"]...)`,
+			&hcl.EvalContext{
+				Functions: map[string]function.Function{
+					"argerrorexpand": function.New(&function.Spec{
+						VarParam: &function.Parameter{
+							Name: "foo",
+							Type: cty.String,
+						},
+						Type: func(args []cty.Value) (cty.Type, error) {
+							// We should be able to indicate an error in
+							// argument 1 because the indices are into the
+							// arguments _after_ "..." expansion. An earlier
+							// HCL version had a bug where it used the
+							// pre-expansion arguments and would thus panic
+							// in this case.
+							return cty.NilType, function.NewArgErrorf(1, "blah blah")
+						},
+					}),
+				},
+			},
+			cty.DynamicVal,
+			1, // Invalid value for "foo" parameter: blah blah
+		},
+		{
 			`[]`,
 			nil,
 			cty.EmptyTupleVal,
