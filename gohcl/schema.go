@@ -189,31 +189,34 @@ func getFieldTagsInternal(ret *fieldTags, ty reflect.Type, parents ...int) *fiel
 			kind = "attr"
 		}
 
+		// Ensure that path to the attribute is a new array to avoid buffer overriding
+		path := append([]int{}, append(parents, i)...)
+
 		switch kind {
 		case "optional", "attr":
 			ret.Attributes[name] = append(ret.Attributes[name], fieldInfo{
 				optional: kind == "optional",
-				path:     append(parents, i),
+				path:     path,
 			})
 		case "squash":
-			getFieldTagsInternal(ret, ty.Field(i).Type, append(parents, i)...)
+			getFieldTagsInternal(ret, ty.Field(i).Type, path...)
 		case "block":
-			ret.Blocks[name] = append(ret.Blocks[name], append(parents, i))
+			ret.Blocks[name] = append(ret.Blocks[name], path)
 		case "label":
 			ret.Labels = append(ret.Labels, labelField{
-				FieldIndex: append(parents, i),
+				FieldIndex: path,
 				Name:       name,
 			})
 		case "remain":
 			if ret.Remain != nil {
 				panic("only one 'remain' tag is permitted")
 			}
-			ret.Remain = append(parents, i)
+			ret.Remain = path
 		case "body":
 			if ret.Body != nil {
 				panic("only one 'body' tag is permitted")
 			}
-			ret.Body = append(parents, i)
+			ret.Body = path
 		default:
 			panic(fmt.Sprintf("invalid hcl field tag kind %q on %s %q", kind, field.Type.String(), field.Name))
 		}
