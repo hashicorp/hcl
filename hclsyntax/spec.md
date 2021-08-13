@@ -890,7 +890,7 @@ as templates.
 - `hello ${true}` produces the string `"hello true"`
 - `${""}${true}` produces the string `"true"` because there are two
   interpolation sequences, even though one produces an empty result.
-- `%{ for v in [true] }${v}%{ endif }` produces the string `true` because
+- `%{ for v in [true] }${v}%{ endfor }` produces the string `true` because
   the presence of the `for` directive circumvents the unwrapping even though
   the final result is a single value.
 
