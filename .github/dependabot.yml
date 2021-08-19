@@ -1,12 +1,10 @@
 version: 2
 updates:
 - package-ecosystem: gomod
-  target-branch: chore/dependabot
   directory: /
   schedule:
     interval: weekly
 - package-ecosystem: pip
-  target-branch: chore/dependabot
   directory: /guide
   schedule:
     interval: weekly
