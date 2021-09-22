@@ -40,7 +40,7 @@ type Body struct {
 	hiddenBlocks map[string]struct{}
 
 	SrcRange hcl.Range
-	EndRange hcl.Range // Final token of the body, for reporting missing items
+	EndRange hcl.Range // Final token of the body (zero-length range)
 }
 
 // Assert that *Body implements hcl.Body
