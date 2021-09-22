@@ -112,12 +112,12 @@ data "another" "baz" {
 	}{
 		{0, hcl.Range{}},
 		{2, hcl.Range{}},
-		{4, hcl.Range{Filename: "", Start: hcl.Pos{Line: 4, Column: 1, Byte: 3}, End: hcl.Pos{Line: 4, Column: 11, Byte: 13}}},
-		{17, hcl.Range{Filename: "", Start: hcl.Pos{Line: 7, Column: 1, Byte: 17}, End: hcl.Pos{Line: 7, Column: 25, Byte: 41}}},
-		{25, hcl.Range{Filename: "", Start: hcl.Pos{Line: 7, Column: 1, Byte: 17}, End: hcl.Pos{Line: 7, Column: 25, Byte: 41}}},
-		{45, hcl.Range{Filename: "", Start: hcl.Pos{Line: 10, Column: 1, Byte: 45}, End: hcl.Pos{Line: 10, Column: 33, Byte: 77}}},
-		{142, hcl.Range{Filename: "", Start: hcl.Pos{Line: 18, Column: 1, Byte: 142}, End: hcl.Pos{Line: 18, Column: 23, Byte: 164}}},
-		{180, hcl.Range{Filename: "", Start: hcl.Pos{Line: 18, Column: 1, Byte: 142}, End: hcl.Pos{Line: 18, Column: 23, Byte: 164}}},
+		{4, hcl.Range{Filename: "", Start: hcl.Pos{Line: 4, Column: 1, Byte: 3}, End: hcl.Pos{Line: 4, Column: 9, Byte: 11}}},
+		{17, hcl.Range{Filename: "", Start: hcl.Pos{Line: 7, Column: 1, Byte: 17}, End: hcl.Pos{Line: 7, Column: 23, Byte: 39}}},
+		{25, hcl.Range{Filename: "", Start: hcl.Pos{Line: 7, Column: 1, Byte: 17}, End: hcl.Pos{Line: 7, Column: 23, Byte: 39}}},
+		{45, hcl.Range{Filename: "", Start: hcl.Pos{Line: 10, Column: 1, Byte: 45}, End: hcl.Pos{Line: 10, Column: 31, Byte: 75}}},
+		{142, hcl.Range{Filename: "", Start: hcl.Pos{Line: 18, Column: 1, Byte: 142}, End: hcl.Pos{Line: 18, Column: 21, Byte: 162}}},
+		{180, hcl.Range{Filename: "", Start: hcl.Pos{Line: 18, Column: 1, Byte: 142}, End: hcl.Pos{Line: 18, Column: 21, Byte: 162}}},
 		{99999, hcl.Range{}},
 	}
 
