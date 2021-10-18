@@ -21,6 +21,8 @@ func ExampleEncodeIntoBody() {
 		Desc        string       `hcl:"description"`
 		Constraints *Constraints `hcl:"constraints,block"`
 		Services    []Service    `hcl:"service,block"`
+		Config		map[string]interface{} `hcl:"config,block"`
+		Test		map[string]interface{} `hcl:"test,block"`
 	}
 
 	app := App{
@@ -40,6 +42,8 @@ func ExampleEncodeIntoBody() {
 				Exe:  []string{"./worker"},
 			},
 		},
+		Config: map[string]interface{}{"image": "dockerimage"},
+		Test: 	map[string]interface{}{"strings": []string{"test","2134"}},
 	}
 
 	f := hclwrite.NewEmptyFile()
@@ -61,4 +65,12 @@ func ExampleEncodeIntoBody() {
 	// service "worker" {
 	//   executable = ["./worker"]
 	// }
+	//
+	//config {
+	//   image = "dockerimage"
+	//}
+	//
+	//test {
+	//   strings = ["test", "2134"]
+	//}
 }
