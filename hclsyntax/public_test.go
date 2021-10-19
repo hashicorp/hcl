@@ -2,6 +2,8 @@ package hclsyntax
 
 import (
 	"testing"
+
+	"github.com/hashicorp/hcl/v2"
 )
 
 func TestValidIdentifier(t *testing.T) {
@@ -43,4 +45,20 @@ func TestValidIdentifier(t *testing.T) {
 			}
 		})
 	}
+}
+
+var T Tokens
+
+func BenchmarkLexConfig(b *testing.B) {
+	src := []byte("module \"once\" {\n  source = \"../modules/foo\"\n}\n\nmodule \"twice\" {\n  source = \"../modules/foo\"\n}\n")
+	filename := "testdata/dave/main.tf"
+	start := hcl.Pos{Line: 1, Column: 1, Byte: 0}
+
+	var tokens Tokens
+
+	for i := 0; i < b.N; i++ {
+		tokens, _ = LexConfig(src, filename, start)
+	}
+
+	T = tokens
 }
