@@ -1,14 +1,14 @@
 diagnostics {
   error {
     from {
-      line   = 2
-      column = 1
-      byte   = 4
+      line   = 1
+      column = 3
+      byte   = 2
     }
     to {
-      line   = 2
-      column = 1
-      byte   = 4
+      line   = 1
+      column = 4
+      byte   = 3
     }
   }
 }

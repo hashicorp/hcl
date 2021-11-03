@@ -2565,3 +2565,272 @@ block "valid" {}
 		})
 	}
 }
+
+func TestParseConfigDiagnostics(t *testing.T) {
+	// This test function is a variant of TestParseConfig which tests for
+	// specific error messages for certain kinds of invalid input where we
+	// intend to produce a particular helpful error message.
+
+	tests := map[string]struct {
+		input string
+		want  hcl.Diagnostics
+	}{
+		"unclosed multi-line block (no contents)": {
+			"blah {\n",
+			hcl.Diagnostics{
+				{
+					Severity: hcl.DiagError,
+					Summary:  "Unclosed configuration block",
+					Detail:   "There is no closing brace for this block before the end of the file. This may be caused by incorrect brace nesting elsewhere in this file.",
+					Subject: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 6, Byte: 5},
+						End:      hcl.Pos{Line: 1, Column: 7, Byte: 6},
+					},
+				},
+			},
+		},
+		"unclosed multi-line block (after one argument)": {
+			"blah {\n  a = 1\n",
+			hcl.Diagnostics{
+				{
+					Severity: hcl.DiagError,
+					Summary:  "Unclosed configuration block",
+					Detail:   "There is no closing brace for this block before the end of the file. This may be caused by incorrect brace nesting elsewhere in this file.",
+					Subject: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 6, Byte: 5},
+						End:      hcl.Pos{Line: 1, Column: 7, Byte: 6},
+					},
+				},
+			},
+		},
+		"unclosed single-line block (no contents)": {
+			"blah {",
+			hcl.Diagnostics{
+				{
+					Severity: hcl.DiagError,
+					Summary:  "Unclosed configuration block",
+					Detail:   "There is no closing brace for this block before the end of the file. This may be caused by incorrect brace nesting elsewhere in this file.",
+					Subject: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 6, Byte: 5},
+						End:      hcl.Pos{Line: 1, Column: 7, Byte: 6},
+					},
+				},
+			},
+		},
+		"unclosed single-line block (after its argument)": {
+			"blah { a = 1",
+			hcl.Diagnostics{
+				{
+					Severity: hcl.DiagError,
+					Summary:  "Unclosed configuration block",
+					Detail:   "There is no closing brace for this block before the end of the file. This may be caused by incorrect brace nesting elsewhere in this file.",
+					Subject: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 6, Byte: 5},
+						End:      hcl.Pos{Line: 1, Column: 7, Byte: 6},
+					},
+					Context: &hcl.Range{ // In this case we can also report a context because we detect this error in a more convenient place in the parser
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 7, Byte: 6},
+					},
+				},
+			},
+		},
+		"unclosed object constructor (before element separator)": {
+			`foo = { a = 1`,
+			hcl.Diagnostics{
+				{
+					Severity: hcl.DiagError,
+					Summary:  "Unterminated object constructor expression",
+					Detail:   "There is no corresponding closing brace before the end of the file. This may be caused by incorrect brace nesting elsewhere in this file.",
+					Subject: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 7, Byte: 6},
+						End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+					},
+				},
+			},
+		},
+		"unclosed object constructor (before equals)": {
+			`foo = { a `,
+			hcl.Diagnostics{
+				{
+					Severity: hcl.DiagError,
+					Summary:  "Unterminated object constructor expression",
+					Detail:   "There is no corresponding closing brace before the end of the file. This may be caused by incorrect brace nesting elsewhere in this file.",
+					Subject: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 7, Byte: 6},
+						End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+					},
+				},
+			},
+		},
+		"unclosed tuple constructor (before element separator)": {
+			`foo = [ a`,
+			hcl.Diagnostics{
+				{
+					Severity: hcl.DiagError,
+					Summary:  "Unterminated tuple constructor expression",
+					Detail:   "There is no corresponding closing bracket before the end of the file. This may be caused by incorrect bracket nesting elsewhere in this file.",
+					Subject: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 7, Byte: 6},
+						End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+					},
+				},
+			},
+		},
+		"unclosed function call": {
+			`foo = boop("a"`,
+			hcl.Diagnostics{
+				{
+					Severity: hcl.DiagError,
+					Summary:  "Unterminated function call",
+					Detail:   "There is no closing parenthesis for this function call before the end of the file. This may be caused by incorrect parethesis nesting elsewhere in this file.",
+					Subject: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 7, Byte: 6},
+						End:      hcl.Pos{Line: 1, Column: 12, Byte: 11},
+					},
+				},
+			},
+		},
+		"unclosed grouping parentheses": {
+			`foo = (1`,
+			hcl.Diagnostics{
+				{
+					Severity: hcl.DiagError,
+					Summary:  "Unbalanced parentheses",
+					Detail:   "Expected a closing parenthesis to terminate the expression.",
+					Subject: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+						End:      hcl.Pos{Line: 1, Column: 9, Byte: 8},
+					},
+					Context: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 7, Byte: 6},
+						End:      hcl.Pos{Line: 1, Column: 9, Byte: 8},
+					},
+				},
+			},
+		},
+		"unclosed template interpolation at EOF": {
+			`foo = "${a`,
+			hcl.Diagnostics{
+				{
+					Severity: hcl.DiagError,
+					Summary:  "Unclosed template interpolation sequence",
+					Detail:   "There is no closing brace for this interpolation sequence before the end of the file. This might be caused by incorrect nesting inside the given expression.",
+					Subject: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
+					},
+				},
+			},
+		},
+		"unclosed quoted template interpolation at closing quote": {
+			`foo = "${a"`,
+			hcl.Diagnostics{
+				{
+					Severity: hcl.DiagError,
+					Summary:  "Unclosed template interpolation sequence",
+					Detail:   "There is no closing brace for this interpolation sequence before the end of the quoted template. This might be caused by incorrect nesting inside the given expression.",
+					Subject: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
+					},
+				},
+			},
+		},
+		"unclosed quoted template at literal part": {
+			`foo = "${a}`,
+			hcl.Diagnostics{
+				{
+					Severity: hcl.DiagError,
+					Summary:  "Unterminated template string",
+					Detail:   "No closing marker was found for the string.",
+					Subject: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 12, Byte: 11},
+						End:      hcl.Pos{Line: 1, Column: 12, Byte: 11},
+					},
+					Context: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						End:      hcl.Pos{Line: 1, Column: 12, Byte: 11},
+					},
+				},
+			},
+		},
+
+		// Some of our "unclosed" situations happen at a less convenient time
+		// when we only know we're waiting for an expression, so those get
+		// an error message with much less context.
+		"unclosed object constructor (before any expression)": {
+			`foo = {`,
+			hcl.Diagnostics{
+				{
+					Severity: hcl.DiagError,
+					Summary:  "Missing expression",
+					Detail:   "Expected the start of an expression, but found the end of the file.",
+					Subject: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+					},
+				},
+			},
+		},
+		"unclosed tuple constructor (before any expression)": {
+			`foo = [`,
+			hcl.Diagnostics{
+				{
+					Severity: hcl.DiagError,
+					Summary:  "Missing expression",
+					Detail:   "Expected the start of an expression, but found the end of the file.",
+					Subject: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+					},
+				},
+			},
+		},
+		"unclosed function call (before any argument)": {
+			`foo = foo(`,
+			hcl.Diagnostics{
+				{
+					Severity: hcl.DiagError,
+					Summary:  "Missing expression",
+					Detail:   "Expected the start of an expression, but found the end of the file.",
+					Subject: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 11, Byte: 10},
+						End:      hcl.Pos{Line: 1, Column: 11, Byte: 10},
+					},
+				},
+			},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Logf("\n%s", test.input)
+			_, diags := ParseConfig([]byte(test.input), "test.hcl", hcl.InitialPos)
+
+			if diff := deep.Equal(diags, test.want); diff != nil {
+				for _, problem := range diff {
+					t.Errorf(problem)
+				}
+			}
+		})
+	}
+}
