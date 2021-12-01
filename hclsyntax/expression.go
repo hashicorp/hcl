@@ -1439,10 +1439,10 @@ func (e *SplatExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 		// upgrade to a different number of elements depending on whether
 		// sourceVal becomes null or not.
 		// We record this condition here so we can process any remaining
-		// expression after the * to derive the correct type. For example, it
-		// is valid to use a splat on a single object to retrieve a list of a
-		// single attribute, which means the final expression type still needs
-		// to be determined.
+		// expression after the * to verify the result of the traversal. For
+		// example, it is valid to use a splat on a single object to retrieve a
+		// list of a single attribute, but we still need to check if that
+		// attribute actually exists.
 		upgradedUnknown = !sourceVal.IsKnown()
 
 		sourceVal = cty.TupleVal([]cty.Value{sourceVal})
@@ -1512,7 +1512,11 @@ func (e *SplatExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	}
 	e.Item.clearValue(ctx) // clean up our temporary value
 
-	if !isKnown || upgradedUnknown {
+	if upgradedUnknown {
+		return cty.DynamicVal, diags
+	}
+
+	if !isKnown {
 		// We'll ingore the resultTy diagnostics in this case since they
 		// will just be the same errors we saw while iterating above.
 		ty, _ := resultTy()
