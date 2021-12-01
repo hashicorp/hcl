@@ -1,5 +1,12 @@
 # HCL Changelog
 
+## v2.11.1 (Dec 1, 2021)
+
+### Bugs Fixed
+
+* hclsyntax: The type for an upgraded unknown value with a splat expression cannot be known ([#495](https://github.com/hashicorp/hcl/pull/495))
+
+
 ## v2.11.0 (Dec 1, 2021)
 
 ### Enhancements
