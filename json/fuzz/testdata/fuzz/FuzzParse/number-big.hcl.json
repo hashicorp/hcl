@@ -1,0 +1,2 @@
+go test fuzz v1
+[]byte("{\n    \"foo\": 1.234234e30\n}\n")

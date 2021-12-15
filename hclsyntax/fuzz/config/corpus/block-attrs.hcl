@@ -1,3 +1,0 @@
-block {
-  foo = true
-}
