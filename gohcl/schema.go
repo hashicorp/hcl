@@ -41,28 +41,29 @@ func ImpliedBodySchema(val interface{}) (schema *hcl.BodySchema, partial bool) {
 	}
 	sort.Strings(attrNames)
 	for _, n := range attrNames {
-		idx := tags.Attributes[n]
-		optional := tags.Optional[n]
-		field := ty.Field(idx)
+		for _, fieldInfo := range tags.Attributes[n] {
+			optional := fieldInfo.optional
+			field := fieldInfo.path.getTypeField(ty).Type
 
-		var required bool
+			var required bool
 
-		switch {
-		case field.Type.AssignableTo(exprType):
-			// If we're decoding to hcl.Expression then absense can be
-			// indicated via a null value, so we don't specify that
-			// the field is required during decoding.
-			required = false
-		case field.Type.Kind() != reflect.Ptr && !optional:
-			required = true
-		default:
-			required = false
+			switch {
+			case field.AssignableTo(exprType):
+				// If we're decoding to hcl.Expression then absence can be
+				// indicated via a null value, so we don't specify that
+				// the field is required during decoding.
+				required = false
+			case field.Kind() != reflect.Ptr && !optional:
+				required = true
+			default:
+				required = false
+			}
+
+			attrSchemas = append(attrSchemas, hcl.AttributeSchema{
+				Name:     n,
+				Required: required,
+			})
 		}
-
-		attrSchemas = append(attrSchemas, hcl.AttributeSchema{
-			Name:     n,
-			Required: required,
-		})
 	}
 
 	blockNames := make([]string, 0, len(tags.Blocks))
@@ -71,33 +72,31 @@ func ImpliedBodySchema(val interface{}) (schema *hcl.BodySchema, partial bool) {
 	}
 	sort.Strings(blockNames)
 	for _, n := range blockNames {
-		idx := tags.Blocks[n]
-		field := ty.Field(idx)
-		fty := field.Type
-		if fty.Kind() == reflect.Slice {
-			fty = fty.Elem()
-		}
-		if fty.Kind() == reflect.Ptr {
-			fty = fty.Elem()
-		}
-		if fty.Kind() != reflect.Struct {
-			panic(fmt.Sprintf(
-				"hcl 'block' tag kind cannot be applied to %s field %s: struct required", field.Type.String(), field.Name,
-			))
-		}
-		ftags := getFieldTags(fty)
-		var labelNames []string
-		if len(ftags.Labels) > 0 {
-			labelNames = make([]string, len(ftags.Labels))
-			for i, l := range ftags.Labels {
-				labelNames[i] = l.Name
+		for _, block := range tags.Blocks[n] {
+			field := block.getTypeField(ty)
+			fty := field.Type
+			if fty.Kind() == reflect.Slice {
+				fty = fty.Elem()
 			}
-		}
+			if fty.Kind() == reflect.Ptr {
+				fty = fty.Elem()
+			}
+			if fty.Kind() != reflect.Struct {
+				panic(fmt.Sprintf(
+					"hcl 'block' tag kind cannot be applied to %s field %s: struct required", fty.String(), field.Name,
+				))
+			}
+			ftags := getFieldTags(fty)
+			var labelNames []string
+			for _, l := range ftags.Labels {
+				labelNames = append(labelNames, l.Name)
+			}
 
-		blockSchemas = append(blockSchemas, hcl.BlockHeaderSchema{
-			Type:       n,
-			LabelNames: labelNames,
-		})
+			blockSchemas = append(blockSchemas, hcl.BlockHeaderSchema{
+				Type:       n,
+				LabelNames: labelNames,
+			})
+		}
 	}
 
 	partial = tags.Remain != nil
@@ -109,25 +108,68 @@ func ImpliedBodySchema(val interface{}) (schema *hcl.BodySchema, partial bool) {
 }
 
 type fieldTags struct {
-	Attributes map[string]int
-	Blocks     map[string]int
+	Attributes map[string]fieldInfoList
+	Blocks     map[string][]fieldPath
 	Labels     []labelField
-	Remain     *int
-	Body       *int
-	Optional   map[string]bool
+	Remain     fieldPath
+	Body       fieldPath
 }
 
 type labelField struct {
-	FieldIndex int
+	FieldIndex fieldPath
 	Name       string
 }
 
-func getFieldTags(ty reflect.Type) *fieldTags {
-	ret := &fieldTags{
-		Attributes: map[string]int{},
-		Blocks:     map[string]int{},
-		Optional:   map[string]bool{},
+type fieldInfoList []fieldInfo
+
+func (fields fieldInfoList) IsOptional() bool {
+	// If the same attribute is associated to many fields, we consider
+	// it as non optional as soon as one of them is not optional.
+	for _, info := range fields {
+		if !info.optional {
+			return false
+		}
 	}
+	return true
+}
+
+type fieldInfo struct {
+	optional bool
+	path     fieldPath
+}
+
+// If the actual field comes from a squashed structure, the path is defined as the
+// indexes of the field in all structures that are squashed into the main struct
+type fieldPath []int
+
+// This method retrive the actual field type by following the path from the original type
+// up to the final field.
+func (path fieldPath) getTypeField(ty reflect.Type) (result reflect.StructField) {
+	for _, idx := range path {
+		result = ty.Field(idx)
+		ty = result.Type
+	}
+	return
+}
+
+// This method retrive the actual field value by following the path from the original type
+// up to the final field.
+func (path fieldPath) getValueField(val reflect.Value) reflect.Value {
+	for _, idx := range path {
+		val = val.Field(idx)
+	}
+	return val
+}
+
+func getFieldTags(ty reflect.Type) *fieldTags {
+	return getFieldTagsInternal(&fieldTags{
+		Attributes: map[string]fieldInfoList{},
+		Blocks:     map[string][]fieldPath{},
+	}, ty)
+}
+
+func getFieldTagsInternal(ret *fieldTags, ty reflect.Type, parents ...int) *fieldTags {
+	// parents indicates that the supplied type is squashed within another types
 
 	ct := ty.NumField()
 	for i := 0; i < ct; i++ {
@@ -147,31 +189,34 @@ func getFieldTags(ty reflect.Type) *fieldTags {
 			kind = "attr"
 		}
 
+		// Ensure that path to the attribute is a new array to avoid buffer overriding
+		path := append([]int{}, append(parents, i)...)
+
 		switch kind {
-		case "attr":
-			ret.Attributes[name] = i
+		case "optional", "attr":
+			ret.Attributes[name] = append(ret.Attributes[name], fieldInfo{
+				optional: kind == "optional",
+				path:     path,
+			})
+		case "squash":
+			getFieldTagsInternal(ret, ty.Field(i).Type, path...)
 		case "block":
-			ret.Blocks[name] = i
+			ret.Blocks[name] = append(ret.Blocks[name], path)
 		case "label":
 			ret.Labels = append(ret.Labels, labelField{
-				FieldIndex: i,
+				FieldIndex: path,
 				Name:       name,
 			})
 		case "remain":
 			if ret.Remain != nil {
 				panic("only one 'remain' tag is permitted")
 			}
-			idx := i // copy, because this loop will continue assigning to i
-			ret.Remain = &idx
+			ret.Remain = path
 		case "body":
 			if ret.Body != nil {
 				panic("only one 'body' tag is permitted")
 			}
-			idx := i // copy, because this loop will continue assigning to i
-			ret.Body = &idx
-		case "optional":
-			ret.Attributes[name] = i
-			ret.Optional[name] = true
+			ret.Body = path
 		default:
 			panic(fmt.Sprintf("invalid hcl field tag kind %q on %s %q", kind, field.Type.String(), field.Name))
 		}

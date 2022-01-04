@@ -66,9 +66,8 @@ func decodeBodyToStruct(body hcl.Body, ctx *hcl.EvalContext, val reflect.Value) 
 	tags := getFieldTags(val.Type())
 
 	if tags.Body != nil {
-		fieldIdx := *tags.Body
-		field := val.Type().Field(fieldIdx)
-		fieldV := val.Field(fieldIdx)
+		field := tags.Body.getTypeField(val.Type())
+		fieldV := tags.Body.getValueField(val)
 		switch {
 		case bodyType.AssignableTo(field.Type):
 			fieldV.Set(reflect.ValueOf(body))
@@ -79,9 +78,8 @@ func decodeBodyToStruct(body hcl.Body, ctx *hcl.EvalContext, val reflect.Value) 
 	}
 
 	if tags.Remain != nil {
-		fieldIdx := *tags.Remain
-		field := val.Type().Field(fieldIdx)
-		fieldV := val.Field(fieldIdx)
+		field := tags.Remain.getTypeField(val.Type())
+		fieldV := tags.Remain.getValueField(val)
 		switch {
 		case bodyType.AssignableTo(field.Type):
 			fieldV.Set(reflect.ValueOf(leftovers))
@@ -96,136 +94,139 @@ func decodeBodyToStruct(body hcl.Body, ctx *hcl.EvalContext, val reflect.Value) 
 		}
 	}
 
-	for name, fieldIdx := range tags.Attributes {
-		attr := content.Attributes[name]
-		field := val.Type().Field(fieldIdx)
-		fieldV := val.Field(fieldIdx)
+	for name, fields := range tags.Attributes {
+		for _, fieldInfo := range fields {
+			attr := content.Attributes[name]
+			field := fieldInfo.path.getTypeField(val.Type())
+			fieldV := fieldInfo.path.getValueField(val)
 
-		if attr == nil {
-			if !exprType.AssignableTo(field.Type) {
+			if attr == nil {
+				if !exprType.AssignableTo(field.Type) {
+					continue
+				}
+
+				// As a special case, if the target is of type hcl.Expression then
+				// we'll assign an actual expression that evalues to a cty null,
+				// so the caller can deal with it within the cty realm rather
+				// than within the Go realm.
+				synthExpr := hcl.StaticExpr(cty.NullVal(cty.DynamicPseudoType), body.MissingItemRange())
+				fieldV.Set(reflect.ValueOf(synthExpr))
 				continue
 			}
 
-			// As a special case, if the target is of type hcl.Expression then
-			// we'll assign an actual expression that evalues to a cty null,
-			// so the caller can deal with it within the cty realm rather
-			// than within the Go realm.
-			synthExpr := hcl.StaticExpr(cty.NullVal(cty.DynamicPseudoType), body.MissingItemRange())
-			fieldV.Set(reflect.ValueOf(synthExpr))
-			continue
-		}
-
-		switch {
-		case attrType.AssignableTo(field.Type):
-			fieldV.Set(reflect.ValueOf(attr))
-		case exprType.AssignableTo(field.Type):
-			fieldV.Set(reflect.ValueOf(attr.Expr))
-		default:
-			diags = append(diags, DecodeExpression(
-				attr.Expr, ctx, fieldV.Addr().Interface(),
-			)...)
+			switch {
+			case attrType.AssignableTo(field.Type):
+				fieldV.Set(reflect.ValueOf(attr))
+			case exprType.AssignableTo(field.Type):
+				fieldV.Set(reflect.ValueOf(attr.Expr))
+			default:
+				diags = append(diags, DecodeExpression(
+					attr.Expr, ctx, fieldV.Addr().Interface(),
+				)...)
+			}
 		}
 	}
 
 	blocksByType := content.Blocks.ByType()
 
-	for typeName, fieldIdx := range tags.Blocks {
+	for typeName, indexes := range tags.Blocks {
 		blocks := blocksByType[typeName]
-		field := val.Type().Field(fieldIdx)
+		for _, index := range indexes {
+			field := index.getTypeField(val.Type())
+			ty := field.Type
 
-		ty := field.Type
-		isSlice := false
-		isPtr := false
-		if ty.Kind() == reflect.Slice {
-			isSlice = true
-			ty = ty.Elem()
-		}
-		if ty.Kind() == reflect.Ptr {
-			isPtr = true
-			ty = ty.Elem()
-		}
+			isSlice := false
+			isPtr := false
+			if ty.Kind() == reflect.Slice {
+				isSlice = true
+				ty = ty.Elem()
+			}
+			if ty.Kind() == reflect.Ptr {
+				isPtr = true
+				ty = ty.Elem()
+			}
 
-		if len(blocks) > 1 && !isSlice {
-			diags = append(diags, &hcl.Diagnostic{
-				Severity: hcl.DiagError,
-				Summary:  fmt.Sprintf("Duplicate %s block", typeName),
-				Detail: fmt.Sprintf(
-					"Only one %s block is allowed. Another was defined at %s.",
-					typeName, blocks[0].DefRange.String(),
-				),
-				Subject: &blocks[1].DefRange,
-			})
-			continue
-		}
-
-		if len(blocks) == 0 {
-			if isSlice || isPtr {
-				if val.Field(fieldIdx).IsNil() {
-					val.Field(fieldIdx).Set(reflect.Zero(field.Type))
-				}
-			} else {
+			if len(blocks) > 1 && !isSlice {
 				diags = append(diags, &hcl.Diagnostic{
 					Severity: hcl.DiagError,
-					Summary:  fmt.Sprintf("Missing %s block", typeName),
-					Detail:   fmt.Sprintf("A %s block is required.", typeName),
-					Subject:  body.MissingItemRange().Ptr(),
+					Summary:  fmt.Sprintf("Duplicate %s block", typeName),
+					Detail: fmt.Sprintf(
+						"Only one %s block is allowed. Another was defined at %s.",
+						typeName, blocks[0].DefRange.String(),
+					),
+					Subject: &blocks[1].DefRange,
 				})
-			}
-			continue
-		}
-
-		switch {
-
-		case isSlice:
-			elemType := ty
-			if isPtr {
-				elemType = reflect.PtrTo(ty)
-			}
-			sli := val.Field(fieldIdx)
-			if sli.IsNil() {
-				sli = reflect.MakeSlice(reflect.SliceOf(elemType), len(blocks), len(blocks))
+				continue
 			}
 
-			for i, block := range blocks {
-				if isPtr {
-					if i >= sli.Len() {
-						sli = reflect.Append(sli, reflect.New(ty))
+			if len(blocks) == 0 {
+				if isSlice || isPtr {
+					fieldV := index.getValueField(val)
+					if fieldV.IsNil() {
+						fieldV.Set(reflect.Zero(field.Type))
 					}
-					v := sli.Index(i)
+				} else {
+					diags = append(diags, &hcl.Diagnostic{
+						Severity: hcl.DiagError,
+						Summary:  fmt.Sprintf("Missing %s block", typeName),
+						Detail:   fmt.Sprintf("A %s block is required.", typeName),
+						Subject:  body.MissingItemRange().Ptr(),
+					})
+				}
+				continue
+			}
+
+			switch {
+
+			case isSlice:
+				elemType := ty
+				if isPtr {
+					elemType = reflect.PtrTo(ty)
+				}
+				sli := index.getValueField(val)
+				if sli.IsNil() {
+					sli = reflect.MakeSlice(reflect.SliceOf(elemType), len(blocks), len(blocks))
+				}
+
+				for i, block := range blocks {
+					if isPtr {
+						if i >= sli.Len() {
+							sli = reflect.Append(sli, reflect.New(ty))
+						}
+						v := sli.Index(i)
+						if v.IsNil() {
+							v = reflect.New(ty)
+						}
+						diags = append(diags, decodeBlockToValue(block, ctx, v.Elem())...)
+						sli.Index(i).Set(v)
+					} else {
+						if i >= sli.Len() {
+							sli = reflect.Append(sli, reflect.Indirect(reflect.New(ty)))
+						}
+						diags = append(diags, decodeBlockToValue(block, ctx, sli.Index(i))...)
+					}
+				}
+
+				if sli.Len() > len(blocks) {
+					sli.SetLen(len(blocks))
+				}
+
+				index.getValueField(val).Set(sli)
+
+			default:
+				block := blocks[0]
+				if isPtr {
+					v := index.getValueField(val)
 					if v.IsNil() {
 						v = reflect.New(ty)
 					}
 					diags = append(diags, decodeBlockToValue(block, ctx, v.Elem())...)
-					sli.Index(i).Set(v)
+					index.getValueField(val).Set(v)
 				} else {
-					if i >= sli.Len() {
-						sli = reflect.Append(sli, reflect.Indirect(reflect.New(ty)))
-					}
-					diags = append(diags, decodeBlockToValue(block, ctx, sli.Index(i))...)
+					diags = append(diags, decodeBlockToValue(block, ctx, index.getValueField(val))...)
 				}
 			}
-
-			if sli.Len() > len(blocks) {
-				sli.SetLen(len(blocks))
-			}
-
-			val.Field(fieldIdx).Set(sli)
-
-		default:
-			block := blocks[0]
-			if isPtr {
-				v := val.Field(fieldIdx)
-				if v.IsNil() {
-					v = reflect.New(ty)
-				}
-				diags = append(diags, decodeBlockToValue(block, ctx, v.Elem())...)
-				val.Field(fieldIdx).Set(v)
-			} else {
-				diags = append(diags, decodeBlockToValue(block, ctx, val.Field(fieldIdx))...)
-			}
-
 		}
-
 	}
 
 	return diags
@@ -279,11 +280,9 @@ func decodeBlockToValue(block *hcl.Block, ctx *hcl.EvalContext, v reflect.Value)
 		if len(block.Labels) > 0 {
 			blockTags := getFieldTags(ty)
 			for li, lv := range block.Labels {
-				lfieldIdx := blockTags.Labels[li].FieldIndex
-				v.Field(lfieldIdx).Set(reflect.ValueOf(lv))
+				blockTags.Labels[li].FieldIndex.getValueField(v).Set(reflect.ValueOf(lv))
 			}
 		}
-
 	}
 
 	return diags
