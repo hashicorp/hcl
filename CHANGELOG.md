@@ -1,11 +1,16 @@
 # HCL Changelog
 
+## v2.12.0 (Unreleased)
+
+### Enhancements
+
+* hclwrite: New functions `TokensForTuple`, TokensForObject`, and `TokensForFunctionCall` allow for more easily constructing the three constructs which are supported for static analysis and which HCL-based languages typically use in contexts where an expression is used only for its syntax, and not evaluated to produce a real value. For example, these new functions together are sufficient to construct all valid type constraint expressions from [the Type Expressions Extension](./ext/typeexpr/), which is the basis of variable type constraints in the Terraform language at the time of writing. ([#502](https://github.com/hashicorp/hcl/pull/502))
+
 ## v2.11.1 (Dec 1, 2021)
 
 ### Bugs Fixed
 
 * hclsyntax: The type for an upgraded unknown value with a splat expression cannot be known ([#495](https://github.com/hashicorp/hcl/pull/495))
-
 
 ## v2.11.0 (Dec 1, 2021)
 
