@@ -50,6 +50,7 @@ func (a *Attribute) Expr() *Expression {
 	return a.expr.content.(*Expression)
 }
 
+// SetName updates the name of the attribute.
 func (a *Attribute) SetName(name string) {
 	nameObj := newIdentifier(newIdentToken(name))
 	a.name = a.name.ReplaceWith(nameObj)
