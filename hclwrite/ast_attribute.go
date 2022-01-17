@@ -49,3 +49,8 @@ func (a *Attribute) init(name string, expr *Expression) {
 func (a *Attribute) Expr() *Expression {
 	return a.expr.content.(*Expression)
 }
+
+func (a *Attribute) SetName(name string) {
+	nameObj := newIdentifier(newIdentToken(name))
+	a.name = a.name.ReplaceWith(nameObj)
+}
