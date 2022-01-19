@@ -103,6 +103,21 @@ func (b *Body) getAttributeNode(name string) *node {
 	return nil
 }
 
+// RenameAttribute changes the attribute named fromName to toName.
+// Takes no action if fromName is missing or there is already a
+// conflicting attribute called toName.
+//
+// Returns true if the rename succeeded.
+func (b *Body) RenameAttribute(fromName, toName string) bool {
+	attr := b.GetAttribute(fromName)
+	conflictingAttr := b.GetAttribute(toName)
+	if attr == nil || conflictingAttr != nil {
+		return false
+	}
+	attr.setName(toName)
+	return true
+}
+
 // FirstMatchingBlock returns a first matching block from the body that has the
 // given name and labels or returns nil if there is currently no matching
 // block.

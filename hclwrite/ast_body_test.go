@@ -1200,6 +1200,90 @@ func TestBodySetAttributeName(t *testing.T) {
 				},
 			},
 		},
+		{
+			"a = false\n",
+			"b",
+			"c",
+			Tokens{
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte{'a'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte{'='},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte("false"),
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenNewline,
+					Bytes:        []byte{'\n'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEOF,
+					Bytes:        []byte{},
+					SpacesBefore: 0,
+				},
+			},
+		},
+		{
+			"a = false\nb = false\n",
+			"a",
+			"b",
+			Tokens{
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte{'a'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte{'='},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte("false"),
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenNewline,
+					Bytes:        []byte{'\n'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte{'b'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte{'='},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte("false"),
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenNewline,
+					Bytes:        []byte{'\n'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEOF,
+					Bytes:        []byte{},
+					SpacesBefore: 0,
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -1211,15 +1295,19 @@ func TestBodySetAttributeName(t *testing.T) {
 				}
 				t.Fatalf("unexpected diagnostics")
 			}
+			oldExists := nil != f.Body().GetAttribute(test.oldName)
+			newExists := nil != f.Body().GetAttribute(test.newName)
+			shouldSucceed := (oldExists && !newExists)
+			success := f.Body().RenameAttribute(test.oldName, test.newName)
 
-			if attr := f.Body().GetAttribute(test.oldName); attr != nil {
-				attr.SetName(test.newName)
-			}
 			got := f.BuildTokens(nil)
 			format(got)
 			if !reflect.DeepEqual(got, test.want) {
 				diff := cmp.Diff(test.want, got)
 				t.Errorf("wrong result\ngot:  %s\nwant: %s\ndiff:\n%s", spew.Sdump(got), spew.Sdump(test.want), diff)
+			}
+			if success != shouldSucceed {
+				t.Errorf("RenameAttribute returned %v when it should have returned %v ", success, shouldSucceed)
 			}
 		})
 	}
