@@ -1149,7 +1149,7 @@ func TestBodyRemoveAttribute(t *testing.T) {
 	}
 }
 
-func TestBodySetAttributeName(t *testing.T) {
+func TestBodyRenameAttribute(t *testing.T) {
 	tests := []struct {
 		src     string
 		oldName string
