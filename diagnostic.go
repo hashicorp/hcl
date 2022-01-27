@@ -101,8 +101,14 @@ func (d Diagnostics) Error() string {
 // Note that this modifies the array underlying the diagnostics slice, so
 // must be used carefully within a single codepath. It is incorrect (and rude)
 // to extend a diagnostics created by a different subsystem.
-func (d Diagnostics) Append(diag *Diagnostic) Diagnostics {
-	return append(d, diag)
+func (d Diagnostics) Append(diags ...*Diagnostic) Diagnostics {
+	for _, diag := range diags {
+		if diag == nil {
+			continue
+		}
+		d = append(d, diag)
+	}
+	return d
 }
 
 // Extend concatenates the given Diagnostics with the receiver and returns
