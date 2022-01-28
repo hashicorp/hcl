@@ -91,14 +91,14 @@ func (d Diagnostics) Error() string {
 	}
 }
 
-// Append appends a new error to a Diagnostics and return the whole Diagnostics.
+// Append appends new errors to a Diagnostics and returns the whole Diagnostics.
 //
-// This is provided as a convenience for returning from a function that
-// collects and then returns a set of diagnostics:
+// This is provided as a convenience for returning from a function that collects
+// and then returns a set of diagnostics:
 //
 //     return nil, diags.Append(&hcl.Diagnostic{ ... })
 //
-// Note that this modifies the array underlying the diagnostics slice, so
+// Note that this returns a new slice which might reference the original one, so
 // must be used carefully within a single codepath. It is incorrect (and rude)
 // to extend a diagnostics created by a different subsystem.
 func (d Diagnostics) Append(diags ...*Diagnostic) Diagnostics {
