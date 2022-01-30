@@ -303,8 +303,18 @@ func decodeBlockToValue(block *hcl.Block, ctx *hcl.EvalContext, v reflect.Value)
 // are returned then the given value may have been partially-populated but
 // may still be accessed by a careful caller for static analysis and editor
 // integration use-cases.
+//
+// DecodeExpression can also decode into non-nil *WithRange[T] values, as long
+// as T is a type that DecodeExpression would normally accept directly. In that
+// case, the resulting object has Value set to the decode result and
+// Range set to the source range of the given expression.
 func DecodeExpression(expr hcl.Expression, ctx *hcl.EvalContext, val interface{}) hcl.Diagnostics {
 	srcVal, diags := expr.Value(ctx)
+
+	if wrr := analyzeWithRange(val); wrr != nil {
+		val = wrr.value.Addr().Interface()
+		wrr.rng.Set(reflect.ValueOf(expr.Range()))
+	}
 
 	convTy, err := gocty.ImpliedType(val)
 	if err != nil {
