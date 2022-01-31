@@ -72,7 +72,7 @@ block {
 			if !bytes.Equal(result, src) {
 				dmp := diffmatchpatch.New()
 				diffs := dmp.DiffMain(string(src), string(result), false)
-				//t.Errorf("wrong result\nresult:\n%s\ninput:\n%s", result, src)
+				// t.Errorf("wrong result\nresult:\n%s\ninput:\n%s", result, src)
 				t.Errorf("wrong result\ndiff: (red indicates missing lines, and green indicates unexpected lines)\n%s", dmp.DiffPrettyText(diffs))
 			}
 		})
@@ -124,7 +124,6 @@ func TestRoundTripFormat(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test, func(t *testing.T) {
-
 			attrsAsObj := func(src []byte, phase string) cty.Value {
 				t.Logf("source %s:\n%s", phase, src)
 				f, diags := hclsyntax.ParseConfig(src, "", hcl.Pos{Line: 1, Column: 1})
@@ -168,5 +167,16 @@ func TestRoundTripFormat(t *testing.T) {
 			}
 		})
 	}
+}
 
+// TestRoundTripSafeConcurrent concurrently generates a new file. When run with
+// the race detector it will fail if a data race is detected.
+func TestRoundTripSafeConcurrent(t *testing.T) {
+	for i := 0; i < 2; i++ {
+		go func() {
+			f := NewEmptyFile()
+			b := f.Body()
+			b.SetAttributeValue("foo", cty.StringVal("bar"))
+		}()
+	}
 }

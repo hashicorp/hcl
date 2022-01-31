@@ -31,7 +31,7 @@ jobs:
         uses: actions/checkout@v2
       - name: Go test
         run: |
-          go test ./...
+          go test ./... -race
 
   fmt_and_vet:
     name: "fmt and lint"
