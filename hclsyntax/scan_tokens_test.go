@@ -1508,6 +1508,150 @@ EOT
 			},
 		},
 		{
+			`<<EOT
+  hello world
+EOT
+`,
+			[]Token{
+				{
+					Type:  TokenOHeredoc,
+					Bytes: []byte("<<EOT\n"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   hcl.Pos{Byte: 6, Line: 2, Column: 1},
+					},
+				},
+				{
+					Type:  TokenStringLit,
+					Bytes: []byte("  hello world\n"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 6, Line: 2, Column: 1},
+						End:   hcl.Pos{Byte: 20, Line: 3, Column: 1},
+					},
+				},
+				{
+					Type:  TokenCHeredoc,
+					Bytes: []byte("EOT"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 20, Line: 3, Column: 1},
+						End:   hcl.Pos{Byte: 23, Line: 3, Column: 4},
+					},
+				},
+				{
+					Type:  TokenNewline,
+					Bytes: []byte("\n"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 23, Line: 3, Column: 4},
+						End:   hcl.Pos{Byte: 24, Line: 4, Column: 1},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 24, Line: 4, Column: 1},
+						End:   hcl.Pos{Byte: 24, Line: 4, Column: 1},
+					},
+				},
+			},
+		},
+		{
+			`<<-EOT
+  hello world
+EOT
+`,
+			[]Token{
+				{
+					Type:  TokenOHeredoc,
+					Bytes: []byte("<<-EOT\n"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   hcl.Pos{Byte: 7, Line: 2, Column: 1},
+					},
+				},
+				{
+					Type:  TokenStringLit,
+					Bytes: []byte("  hello world\n"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 7, Line: 2, Column: 1},
+						End:   hcl.Pos{Byte: 21, Line: 3, Column: 1},
+					},
+				},
+				{
+					Type:  TokenCHeredoc,
+					Bytes: []byte("EOT"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 21, Line: 3, Column: 1},
+						End:   hcl.Pos{Byte: 24, Line: 3, Column: 4},
+					},
+				},
+				{
+					Type:  TokenNewline,
+					Bytes: []byte("\n"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 24, Line: 3, Column: 4},
+						End:   hcl.Pos{Byte: 25, Line: 4, Column: 1},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 25, Line: 4, Column: 1},
+						End:   hcl.Pos{Byte: 25, Line: 4, Column: 1},
+					},
+				},
+			},
+		},
+		{
+			`<<-EOT
+  hello world
+ EOT
+`,
+			[]Token{
+				{
+					Type:  TokenOHeredoc,
+					Bytes: []byte("<<-EOT\n"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   hcl.Pos{Byte: 7, Line: 2, Column: 1},
+					},
+				},
+				{
+					Type:  TokenStringLit,
+					Bytes: []byte("  hello world\n"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 7, Line: 2, Column: 1},
+						End:   hcl.Pos{Byte: 21, Line: 3, Column: 1},
+					},
+				},
+				{
+					Type:  TokenCHeredoc,
+					Bytes: []byte(" EOT"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 21, Line: 3, Column: 1},
+						End:   hcl.Pos{Byte: 25, Line: 3, Column: 5},
+					},
+				},
+				{
+					Type:  TokenNewline,
+					Bytes: []byte("\n"),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 25, Line: 3, Column: 5},
+						End:   hcl.Pos{Byte: 26, Line: 4, Column: 1},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 26, Line: 4, Column: 1},
+						End:   hcl.Pos{Byte: 26, Line: 4, Column: 1},
+					},
+				},
+			},
+		},
+		{
 			`<<EOF
 ${<<-EOF
 hello
