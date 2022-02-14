@@ -1,0 +1,53 @@
+name: Per-commit Checks
+
+on:
+  push:
+
+jobs:
+  unit_tests:
+    strategy:
+      matrix:
+        include:
+          - runs-on: ubuntu-latest
+            target: linux_amd64
+          - runs-on: windows-latest
+            target: windows_amd64
+      fail-fast: false
+
+    name: "Unit Tests on ${{ matrix.target }}"
+    runs-on: "${{ matrix.runs-on }}"
+    steps:
+      - name: "Disable git crlf conversions"
+        if: ${{ runner.os == 'Windows' }}
+        # HCL preserves the input line endings when processing a heredoc,
+        # and our tests for heredocs are written to expect the result for
+        # the source code as checked in to the repository, so git's normal
+        # tampering with the line endings would invalidate those tests.
+        run: |
+          git config --global core.autocrlf false
+      - name: "Fetch source code"
+        uses: actions/checkout@v2
+      - name: Go test
+        run: |
+          go test ./...
+
+  fmt_and_vet:
+    name: "fmt and lint"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "Fetch source code"
+        uses: actions/checkout@v2
+      - name: "Check vet"
+        run: |
+          go vet ./...
+      - name: "Check fmt"
+        run: |
+          go fmt ./...
+          if [[ -z "$(git status --porcelain)" ]]; then
+            echo "Formatting is consistent with 'go fmt'."
+          else
+            echo "Run 'go fmt ./...' to automatically apply standard Go style to all packages."
+            git status --porcelain
+            exit 1
+          fi
