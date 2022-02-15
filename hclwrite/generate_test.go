@@ -3,6 +3,7 @@ package hclwrite
 import (
 	"bytes"
 	"math/big"
+	"sort"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -848,7 +849,20 @@ func TestTokenGenerateConsistency(t *testing.T) {
 				fromMapValue := TokensForValue(mapVal)
 				fromObjectValue := TokensForValue(cty.ObjectVal(test.attrs))
 				attrTokens := make([]ObjectAttrTokens, 0, len(test.attrs))
-				for k, v := range test.attrs {
+
+				// TokensForValue always writes the keys/attributes in cty's
+				// standard iteration order, but TokensForObject gives the
+				// caller direct control of the ordering. The result is
+				// therefore consistent only if the given attributes are
+				// pre-sorted into the same iteration order, which is a lexical
+				// sort by attribute name.
+				keys := make([]string, 0, len(test.attrs))
+				for k := range test.attrs {
+					keys = append(keys, k)
+				}
+				sort.Strings(keys)
+				for _, k := range keys {
+					v := test.attrs[k]
 					attrTokens = append(attrTokens, ObjectAttrTokens{
 						Name:  TokensForIdentifier(k),
 						Value: TokensForValue(v),
