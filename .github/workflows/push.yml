@@ -2,6 +2,7 @@ name: Per-commit Checks
 
 on:
   push:
+  workflow_dispatch:
 
 jobs:
   unit_tests:
