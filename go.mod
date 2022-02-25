@@ -8,7 +8,7 @@ require (
 	github.com/apparentlymart/go-textseg/v13 v13.0.0
 	github.com/davecgh/go-spew v1.1.1
 	github.com/go-test/deep v1.0.3
-	github.com/google/go-cmp v0.3.1
+	github.com/google/go-cmp v0.5.9
 	github.com/kr/pretty v0.1.0
 	github.com/kylelemons/godebug v0.0.0-20170820004349-d65d576e9348
 	github.com/mitchellh/go-wordwrap v0.0.0-20150314170334-ad45545899c7
