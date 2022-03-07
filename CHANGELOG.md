@@ -9,7 +9,7 @@
 
 ### Bugs Fixed
 
-* gohcl: Fix docs about supported types for blocks ([#507](https://github.com/hashicorp/hcl/pull/507))
+* gohcl: Fix docs about supported types for blocks. ([#507](https://github.com/hashicorp/hcl/pull/507))
 
 ## v2.11.1 (Dec 1, 2021)
 
