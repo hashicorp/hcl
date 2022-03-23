@@ -421,7 +421,7 @@ func TestDecodeBody(t *testing.T) {
 				// Generating two diagnostics is good enough for this one.
 				// (one for the missing noodle block and the other for
 				// the JSON serialization detecting the missing level of
-				// heirarchy for the label.)
+				// hierarchy for the label.)
 				return true
 			},
 			2,
