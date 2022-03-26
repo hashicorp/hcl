@@ -264,7 +264,17 @@ func decodeBlockToValue(block *hcl.Block, ctx *hcl.EvalContext, v reflect.Value)
 		blockTags := getFieldTags(v.Type())
 		for li, lv := range block.Labels {
 			lfieldIdx := blockTags.Labels[li].FieldIndex
-			v.Field(lfieldIdx).Set(reflect.ValueOf(lv))
+			field := v.Field(lfieldIdx)
+			fieldType := field.Type()
+			val := reflect.ValueOf(lv)
+			valType := val.Type()
+			if !valType.AssignableTo(fieldType) {
+				// allows assigning labels to custom types having string as underlying type
+				if valType.ConvertibleTo(fieldType) {
+					val = val.Convert(fieldType)
+				}
+			}
+			field.Set(val)
 		}
 	}
 
