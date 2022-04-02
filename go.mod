@@ -18,6 +18,5 @@ require (
 	github.com/stretchr/testify v1.2.2 // indirect
 	github.com/zclconf/go-cty v1.8.0
 	github.com/zclconf/go-cty-debug v0.0.0-20191215020915-b22d67c1ba0b
-	golang.org/x/crypto v0.0.0-20190426145343-a29dc8fdc734
-	golang.org/x/sys v0.0.0-20190502175342-a43fa875dd82 // indirect
+	golang.org/x/crypto v0.0.0-20220517005047-85d78b3ac167
 )
