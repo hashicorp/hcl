@@ -101,6 +101,7 @@ func populateBody(rv reflect.Value, ty reflect.Type, tags *fieldTags, dst *hclwr
 	dst.Clear()
 
 	prevWasBlock := false
+fields:
 	for _, name := range namesOrder {
 		fieldIdx := nameIdxs[name]
 		field := ty.Field(fieldIdx)
@@ -120,9 +121,16 @@ func populateBody(rv reflect.Value, ty reflect.Type, tags *fieldTags, dst *hclwr
 			if !fieldVal.IsValid() {
 				continue // ignore (field value is nil pointer)
 			}
-			if fieldTy.Kind() == reflect.Ptr && fieldVal.IsNil() {
-				continue // ignore
+			ignoreEmpties := []reflect.Kind{reflect.Ptr, reflect.Slice, reflect.Map, reflect.Interface}
+			for _, ignoreEmpty := range ignoreEmpties {
+				if fieldTy.Kind() == ignoreEmpty {
+					if fieldVal.IsNil() {
+						continue fields // ignore
+					}
+					break
+				}
 			}
+
 			if prevWasBlock {
 				dst.AppendNewline()
 				prevWasBlock = false
