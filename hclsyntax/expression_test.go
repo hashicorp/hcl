@@ -1892,6 +1892,127 @@ EOT
 
 }
 
+func TestExpressionErrorMessages(t *testing.T) {
+	tests := []struct {
+		input       string
+		ctx         *hcl.EvalContext
+		wantSummary string
+		wantDetail  string
+	}{
+		// Error messages describing inconsistent result types for conditional expressions.
+		{
+			"true ? 1 : true",
+			nil,
+			"Inconsistent conditional result types",
+			"The true and false result expressions must have consistent types. The 'true' value is number, but the 'false' value is bool.",
+		},
+		{
+			"true ? [1] : [true]",
+			nil,
+			"Inconsistent conditional result types",
+			"The true and false result expressions must have consistent types. Type mismatch for tuple element 0: The 'true' value is number, but the 'false' value is bool.",
+		},
+		{
+			"true ? [1] : [1, true]",
+			nil,
+			"Inconsistent conditional result types",
+			"The true and false result expressions must have consistent types. The 'true' tuple has length 1, but the 'false' tuple has length 2.",
+		},
+		{
+			"true ? { a = 1 } : { a = true }",
+			nil,
+			"Inconsistent conditional result types",
+			"The true and false result expressions must have consistent types. Type mismatch for object attribute \"a\": The 'true' value is number, but the 'false' value is bool.",
+		},
+		{
+			"true ? { a = true, b = 1 } : { a = true }",
+			nil,
+			"Inconsistent conditional result types",
+			"The true and false result expressions must have consistent types. The 'true' value includes object attribute \"b\", which is absent in the 'false' value.",
+		},
+		{
+			"true ? { a = true } : { a = true, b = 1 }",
+			nil,
+			"Inconsistent conditional result types",
+			"The true and false result expressions must have consistent types. The 'false' value includes object attribute \"b\", which is absent in the 'true' value.",
+		},
+		{
+			"true ? listOf1Tuple : listOf0Tuple",
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"listOf1Tuple": cty.ListVal([]cty.Value{cty.TupleVal([]cty.Value{cty.True})}),
+					"listOf0Tuple": cty.ListVal([]cty.Value{cty.EmptyTupleVal}),
+				},
+			},
+			"Inconsistent conditional result types",
+			"The true and false result expressions must have consistent types. Mismatched list element types: The 'true' tuple has length 1, but the 'false' tuple has length 0.",
+		},
+		{
+			"true ? setOf1Tuple : setOf0Tuple",
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"setOf1Tuple": cty.SetVal([]cty.Value{cty.TupleVal([]cty.Value{cty.True})}),
+					"setOf0Tuple": cty.SetVal([]cty.Value{cty.EmptyTupleVal}),
+				},
+			},
+			"Inconsistent conditional result types",
+			"The true and false result expressions must have consistent types. Mismatched set element types: The 'true' tuple has length 1, but the 'false' tuple has length 0.",
+		},
+		{
+			"true ? mapOf1Tuple : mapOf2Tuple",
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"mapOf1Tuple": cty.MapVal(map[string]cty.Value{"a": cty.TupleVal([]cty.Value{cty.True})}),
+					"mapOf2Tuple": cty.MapVal(map[string]cty.Value{"a": cty.TupleVal([]cty.Value{cty.True, cty.Zero})}),
+				},
+			},
+			"Inconsistent conditional result types",
+			"The true and false result expressions must have consistent types. Mismatched map element types: The 'true' tuple has length 1, but the 'false' tuple has length 2.",
+		},
+		{
+			"true ? listOfListOf1Tuple : listOfListOf0Tuple",
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"listOfListOf1Tuple": cty.ListVal([]cty.Value{cty.ListVal([]cty.Value{cty.TupleVal([]cty.Value{cty.True})})}),
+					"listOfListOf0Tuple": cty.ListVal([]cty.Value{cty.ListVal([]cty.Value{cty.EmptyTupleVal})}),
+				},
+			},
+			"Inconsistent conditional result types",
+			// This is our totally non-specific last-resort of an error message,
+			// for situations that are too complex for any of our rules to
+			// describe coherently.
+			"The true and false result expressions must have consistent types. At least one deeply-nested attribute or element is not compatible across both the 'true' and the 'false' value.",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.input, func(t *testing.T) {
+			var diags hcl.Diagnostics
+			expr, parseDiags := ParseExpression([]byte(test.input), "", hcl.Pos{Line: 1, Column: 1, Byte: 0})
+			diags = append(diags, parseDiags...)
+			_, valDiags := expr.Value(test.ctx)
+			diags = append(diags, valDiags...)
+
+			if !diags.HasErrors() {
+				t.Fatalf("unexpected success\nwant error:\n%s; %s", test.wantSummary, test.wantDetail)
+			}
+
+			for _, diag := range diags {
+				if diag.Severity != hcl.DiagError {
+					continue
+				}
+				if diag.Summary == test.wantSummary && diag.Detail == test.wantDetail {
+					// Success! We'll return early to conclude this test case.
+					return
+				}
+			}
+			// If we fall out here then we didn't find the diagnostic
+			// we were looking for.
+			t.Fatalf("missing expected error\ngot:\n%s\n\nwant error:\n%s; %s", diags.Error(), test.wantSummary, test.wantDetail)
+		})
+	}
+}
+
 func TestFunctionCallExprValue(t *testing.T) {
 	funcs := map[string]function.Function{
 		"length":     stdlib.StrlenFunc,
