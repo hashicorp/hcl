@@ -4,6 +4,7 @@
 // just wraps the package-level function "Variables" and uses an AST walk
 // to do its work.
 
+//go:build ignore
 // +build ignore
 
 package main
