@@ -4,8 +4,9 @@
 
 ### Enhancements
 
-* hclwrite: New functions `TokensForTuple`, `TokensForObject`, and `TokensForFunctionCall` allow for more easily constructing the three constructs which are supported for static analysis and which HCL-based languages typically use in contexts where an expression is used only for its syntax, and not evaluated to produce a real value. For example, these new functions together are sufficient to construct all valid type constraint expressions from [the Type Expressions Extension](./ext/typeexpr/), which is the basis of variable type constraints in the Terraform language at the time of writing. ([#502](https://github.com/hashicorp/hcl/pull/502))
+* hclsyntax: Evaluation of conditional expressions will now produce more precise error messages about inconsistencies between the types of the true and false result expressions, particularly in cases where both are of the same structural type kind but differ in their nested elements. ([#530](https://github.com/hashicorp/hcl/pull/530))
 * hclsyntax: The lexer will no longer allocate a small object on the heap for each token. Instead, in that situation it will allocate only when needed to return a diagnostic message with source location information. ([#490](https://github.com/hashicorp/hcl/pull/490))
+* hclwrite: New functions `TokensForTuple`, `TokensForObject`, and `TokensForFunctionCall` allow for more easily constructing the three constructs which are supported for static analysis and which HCL-based languages typically use in contexts where an expression is used only for its syntax, and not evaluated to produce a real value. For example, these new functions together are sufficient to construct all valid type constraint expressions from [the Type Expressions Extension](./ext/typeexpr/), which is the basis of variable type constraints in the Terraform language at the time of writing. ([#502](https://github.com/hashicorp/hcl/pull/502))
 
 ### Bugs Fixed
 
