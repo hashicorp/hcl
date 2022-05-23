@@ -3,8 +3,9 @@ package hcl
 // BlockHeaderSchema represents the shape of a block header, and is
 // used for matching blocks within bodies.
 type BlockHeaderSchema struct {
-	Type       string
-	LabelNames []string
+	Type          string
+	LabelNames    []string
+	LabelOptional bool
 }
 
 // AttributeSchema represents the requirements for an attribute, and is used

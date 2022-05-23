@@ -199,7 +199,7 @@ func (b *Body) PartialContent(schema *hcl.BodySchema) (*hcl.BodyContent, hcl.Bod
 			continue
 		}
 
-		if len(block.Labels) < len(blockS.LabelNames) {
+		if len(block.Labels) < len(blockS.LabelNames) && !blockS.LabelOptional {
 			name := block.Type
 			diags = append(diags, &hcl.Diagnostic{
 				Severity: hcl.DiagError,
