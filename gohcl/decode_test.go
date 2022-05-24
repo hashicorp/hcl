@@ -137,6 +137,35 @@ func TestDecodeBody(t *testing.T) {
 			},
 			0,
 		},
+		// Duplicate key
+		{
+			map[string]interface{}{
+				"name": "Ermintrude",
+			},
+			makeInstantiateType(withNameExpression{}),
+			func(v interface{}) bool {
+				if v == nil {
+					return false
+				}
+
+				wne, valid := v.(withNameExpression)
+				if !valid {
+					return false
+				}
+
+				if wne.Name == nil {
+					return false
+				}
+
+				nameVal, _ := wne.Name.Value(nil)
+				if !nameVal.Equals(cty.StringVal("Ermintrude")).True() {
+					return false
+				}
+
+				return true
+			},
+			0,
+		},
 		{
 			map[string]interface{}{
 				"name": "Ermintrude",
