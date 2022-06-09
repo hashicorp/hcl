@@ -343,6 +343,26 @@ upper(
 			0,
 		},
 		{
+			`foo::upper("foo")`,
+			&hcl.EvalContext{
+				Functions: map[string]function.Function{
+					"foo::upper": stdlib.UpperFunc,
+				},
+			},
+			cty.StringVal("FOO"),
+			0,
+		},
+		{
+			`foo :: upper("foo")`, // spaces are non-idomatic, but valid
+			&hcl.EvalContext{
+				Functions: map[string]function.Function{
+					"foo::upper": stdlib.UpperFunc,
+				},
+			},
+			cty.StringVal("FOO"),
+			0,
+		},
+		{
 			`misbehave()`,
 			&hcl.EvalContext{
 				Functions: map[string]function.Function{
