@@ -2,6 +2,9 @@
 
 ## v2.12.1 (Unreleased)
 
+### Bugs Fixed
+
+* hclwrite: Fixed a potential data race for any situation where `hclwrite.Format` runs concurrently with itself. ([#534](https://github.com/hashicorp/hcl/pull/534))
 
 ## v2.12.0 (April 22, 2022)
 
