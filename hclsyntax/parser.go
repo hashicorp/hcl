@@ -563,13 +563,17 @@ func (p *parser) parseBinaryOps(ops []map[TokenType]*Operation) (Expression, hcl
 		return lhs, diags
 	}
 
-	// We'll keep eating up operators until we run out, so that operators
-	// with the same precedence will combine in a left-associative manner:
-	// a+b+c => (a+b)+c, not a+(b+c)
+	// Most of our operators are left-associative:
+	//   a+b+c => (a+b)+c, not a+(b+c)
+	// For those, we recursively hunt for operators only of lower precedence,
+	// so that any subsequent operators of the same precedence will be eaten
+	// up by this loop and gather on the left side.
 	//
-	// Should we later want to have right-associative operators, a way
-	// to achieve that would be to call back up to ParseExpression here
-	// instead of iteratively parsing only the remaining operators.
+	// A few operators are instead right-associative:
+	//   a && b && c => a && (b && c), not (a && b) && c.
+	// For those, we recursively hunt for operators of the same or lower
+	// precedence, so that the recursive call handling the right hand side will
+	// eat up all of the operators of the same precedence instead.
 	for {
 		next := p.Peek()
 		var newOp *Operation
@@ -577,6 +581,7 @@ func (p *parser) parseBinaryOps(ops []map[TokenType]*Operation) (Expression, hcl
 		if newOp, ok = thisLevel[next.Type]; !ok {
 			break
 		}
+		_, rightAssoc := rightAssociativeBinaryOps[next.Type]
 
 		// Are we extending an expression started on the previous iteration?
 		if operation != nil {
@@ -592,7 +597,19 @@ func (p *parser) parseBinaryOps(ops []map[TokenType]*Operation) (Expression, hcl
 		operation = newOp
 		p.Read() // eat operator token
 		var rhsDiags hcl.Diagnostics
-		rhs, rhsDiags = p.parseBinaryOps(remaining)
+		if rightAssoc {
+			// For right-associative, we use the same ops we were
+			// given so that the right-hand side can eat up all
+			// of the operations of the same precedence.
+			rhs, rhsDiags = p.parseBinaryOps(ops)
+		} else {
+			// For left-associative, we use only operators of
+			// lower precedence so that this will terminate when
+			// encountering an operator of the same precedence as
+			// this loop is handling, allowing this loop to eat
+			// up those operations instead.
+			rhs, rhsDiags = p.parseBinaryOps(remaining)
+		}
 		diags = append(diags, rhsDiags...)
 		if p.recovery && rhsDiags.HasErrors() {
 			return lhs, diags

@@ -82,6 +82,10 @@ var (
 )
 
 var binaryOps []map[TokenType]*Operation
+var rightAssociativeBinaryOps = map[TokenType]struct{}{
+	TokenOr:  {},
+	TokenAnd: {},
+}
 
 func init() {
 	// This operation table maps from the operator's token type
