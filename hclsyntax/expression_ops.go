@@ -13,16 +13,39 @@ import (
 type Operation struct {
 	Impl function.Function
 	Type cty.Type
+
+	// ShortCircuit is an optional callback for binary operations which, if
+	// set, will be called with the result of evaluating the LHS expression.
+	//
+	// ShortCircuit may return cty.NilVal to allow evaluation to proceed
+	// as normal, or it may return a non-nil value to force the operation
+	// to return that value and perform only type checking on the RHS
+	// expression, as opposed to full evaluation.
+	ShortCircuit func(lhs cty.Value) cty.Value
 }
 
 var (
 	OpLogicalOr = &Operation{
 		Impl: stdlib.OrFunc,
 		Type: cty.Bool,
+
+		ShortCircuit: func(lhs cty.Value) cty.Value {
+			if lhs.RawEquals(cty.True) {
+				return cty.True
+			}
+			return cty.NilVal
+		},
 	}
 	OpLogicalAnd = &Operation{
 		Impl: stdlib.AndFunc,
 		Type: cty.Bool,
+
+		ShortCircuit: func(lhs cty.Value) cty.Value {
+			if lhs.RawEquals(cty.False) {
+				return cty.False
+			}
+			return cty.NilVal
+		},
 	}
 	OpLogicalNot = &Operation{
 		Impl: stdlib.NotFunc,
@@ -146,10 +169,7 @@ func (e *BinaryOpExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) 
 	var diags hcl.Diagnostics
 
 	givenLHSVal, lhsDiags := e.LHS.Value(ctx)
-	givenRHSVal, rhsDiags := e.RHS.Value(ctx)
 	diags = append(diags, lhsDiags...)
-	diags = append(diags, rhsDiags...)
-
 	lhsVal, err := convert.Convert(givenLHSVal, lhsParam.Type)
 	if err != nil {
 		diags = append(diags, &hcl.Diagnostic{
@@ -162,6 +182,35 @@ func (e *BinaryOpExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) 
 			EvalContext: ctx,
 		})
 	}
+
+	// If this is a short-circuiting operator and the LHS produces a
+	// short-circuiting result then we'll evaluate the RHS only for type
+	// checking purposes, ignoring any specific values, as a compromise
+	// between the convenience of a total short-circuit behavior and the
+	// benefit of not masking type errors on the RHS that we could still
+	// give earlier feedback about.
+	var forceResult cty.Value
+	rhsCtx := ctx
+	if e.Op.ShortCircuit != nil {
+		if !givenLHSVal.IsKnown() {
+			// If this is a short-circuit operator and our LHS value is
+			// unknown then we can't predict whether we would short-circuit
+			// yet, and so we must proceed under the assumption that we _will_
+			// short-circuit to avoid raising any errors on the RHS that would
+			// eventually be hidden by the short-circuit behavior once LHS
+			// becomes known.
+			forceResult = cty.UnknownVal(e.Op.Type)
+			rhsCtx = ctx.NewChildAllVariablesUnknown()
+		} else if forceResult = e.Op.ShortCircuit(givenLHSVal); forceResult != cty.NilVal {
+			// This ensures that we'll only be type-checking against any
+			// variables used on the RHS, while not raising any errors about
+			// their values.
+			rhsCtx = ctx.NewChildAllVariablesUnknown()
+		}
+	}
+
+	givenRHSVal, rhsDiags := e.RHS.Value(rhsCtx)
+	diags = append(diags, rhsDiags...)
 	rhsVal, err := convert.Convert(givenRHSVal, rhsParam.Type)
 	if err != nil {
 		diags = append(diags, &hcl.Diagnostic{
@@ -179,6 +228,13 @@ func (e *BinaryOpExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) 
 		// Don't actually try the call if we have errors already, since the
 		// this will probably just produce a confusing duplicative diagnostic.
 		return cty.UnknownVal(e.Op.Type), diags
+	}
+
+	// If we short-circuited above and still passed the type-check of RHS then
+	// we'll halt here and return the short-circuit result rather than actually
+	// executing the opertion.
+	if forceResult != cty.NilVal {
+		return forceResult, diags
 	}
 
 	args := []cty.Value{lhsVal, rhsVal}

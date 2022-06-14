@@ -1741,6 +1741,64 @@ EOT
 			0,
 		},
 		{
+			// Logical AND operator short-circuit behavior
+			`nullobj != null && nullobj.is_thingy`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"nullobj": cty.NullVal(cty.Object(map[string]cty.Type{
+						"is_thingy": cty.Bool,
+					})),
+				},
+			},
+			cty.False,
+			0, // nullobj != null prevents evaluating nullobj.is_thingy
+		},
+		{
+			// Logical AND short-circuit handling of unknown values
+			// If the first operand is an unknown bool then we can't know if
+			// we will short-circuit or not, and so we must assume we will
+			// and wait until the value becomes known before fully evaluating RHS.
+			`unknown < 4 && list[zero]`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unknown": cty.UnknownVal(cty.Number),
+					"zero":    cty.Zero,
+					"list":    cty.ListValEmpty(cty.Bool),
+				},
+			},
+			cty.UnknownVal(cty.Bool),
+			0,
+		},
+		{
+			// Logical OR operator short-circuit behavior
+			`nullobj == null || nullobj.is_thingy`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"nullobj": cty.NullVal(cty.Object(map[string]cty.Type{
+						"is_thingy": cty.Bool,
+					})),
+				},
+			},
+			cty.True,
+			0, // nullobj == null prevents evaluating nullobj.is_thingy
+		},
+		{
+			// Logical OR short-circuit handling of unknown values
+			// If the first operand is an unknown bool then we can't know if
+			// we will short-circuit or not, and so we must assume we will
+			// and wait until the value becomes known before fully evaluating RHS.
+			`unknown > 4 || list[zero]`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unknown": cty.UnknownVal(cty.Number),
+					"zero":    cty.Zero,
+					"list":    cty.ListValEmpty(cty.Bool),
+				},
+			},
+			cty.UnknownVal(cty.Bool),
+			0,
+		},
+		{
 			`true ? var : null`,
 			&hcl.EvalContext{
 				Variables: map[string]cty.Value{
@@ -1982,6 +2040,59 @@ func TestExpressionErrorMessages(t *testing.T) {
 			// for situations that are too complex for any of our rules to
 			// describe coherently.
 			"The true and false result expressions must have consistent types. At least one deeply-nested attribute or element is not compatible across both the 'true' and the 'false' value.",
+		},
+
+		// Error messages describing situations where the logical operator
+		// short-circuit behavior still found a type error on the RHS that
+		// we therefore still report, because the LHS only guards against
+		// value-related problems in the RHS.
+		{
+			// It's not valid to access an attribute on a non-object-typed
+			// value even if we've proven it isn't null.
+			"notobj != null && notobj.foo",
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"notobj": cty.True,
+				},
+			},
+			"Unsupported attribute",
+			"Can't access attributes on a primitive-typed value (bool).",
+		},
+		{
+			// It's not valid to access an attribute on a non-object-typed
+			// value even if we've proven it isn't null.
+			"notobj == null || notobj.foo",
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"notobj": cty.True,
+				},
+			},
+			"Unsupported attribute",
+			"Can't access attributes on a primitive-typed value (bool).",
+		},
+		{
+			// It's not valid to access an index on an unindexable type
+			// even if we've proven it isn't null.
+			"notlist != null && notlist[0]",
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"notlist": cty.True,
+				},
+			},
+			"Invalid index",
+			"This value does not have any indices.",
+		},
+		{
+			// Short-circuit can't avoid an error accessing a variable that
+			// doesn't exist at all, so we can still report typos.
+			"value != null && valeu",
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"value": cty.True,
+				},
+			},
+			"Unknown variable",
+			`There is no variable named "valeu". Did you mean "value"?`,
 		},
 	}
 
