@@ -29,6 +29,10 @@ jobs:
           git config --global core.autocrlf false
       - name: "Fetch source code"
         uses: actions/checkout@v2
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.18
       - name: Go test
         run: |
           go test ./...
@@ -40,6 +44,10 @@ jobs:
     steps:
       - name: "Fetch source code"
         uses: actions/checkout@v2
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.18
       - name: "Check vet"
         run: |
           go vet ./...
