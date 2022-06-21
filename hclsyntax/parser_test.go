@@ -2195,6 +2195,198 @@ block "valid" {}
 				},
 			},
 		},
+		{
+			// This test is for the associativity of the && operator during
+			// parsing. Specifically, our evaluator relies on the following
+			// being parsed as if it were `b && (c && d)` rather than
+			// `(b && c) && d` in order to correctly implement the short-circuit
+			// behavior.
+			`a = b && c && d`,
+			0,
+			&Body{
+				Attributes: Attributes{
+					"a": {
+						Name: "a",
+						Expr: &BinaryOpExpr{
+							LHS: &ScopeTraversalExpr{
+								Traversal: hcl.Traversal{
+									hcl.TraverseRoot{
+										Name: "b",
+										SrcRange: hcl.Range{
+											Start: hcl.Pos{Line: 1, Column: 5, Byte: 4},
+											End:   hcl.Pos{Line: 1, Column: 6, Byte: 5},
+										},
+									},
+								},
+								SrcRange: hcl.Range{
+									Start: hcl.Pos{Line: 1, Column: 5, Byte: 4},
+									End:   hcl.Pos{Line: 1, Column: 6, Byte: 5},
+								},
+							},
+							Op: OpLogicalAnd,
+							RHS: &BinaryOpExpr{
+								LHS: &ScopeTraversalExpr{
+									Traversal: hcl.Traversal{
+										hcl.TraverseRoot{
+											Name: "c",
+											SrcRange: hcl.Range{
+												Start: hcl.Pos{Line: 1, Column: 10, Byte: 9},
+												End:   hcl.Pos{Line: 1, Column: 11, Byte: 10},
+											},
+										},
+									},
+									SrcRange: hcl.Range{
+										Start: hcl.Pos{Line: 1, Column: 10, Byte: 9},
+										End:   hcl.Pos{Line: 1, Column: 11, Byte: 10},
+									},
+								},
+								Op: OpLogicalAnd,
+								RHS: &ScopeTraversalExpr{
+									Traversal: hcl.Traversal{
+										hcl.TraverseRoot{
+											Name: "d",
+											SrcRange: hcl.Range{
+												Start: hcl.Pos{Line: 1, Column: 15, Byte: 14},
+												End:   hcl.Pos{Line: 1, Column: 16, Byte: 15},
+											},
+										},
+									},
+									SrcRange: hcl.Range{
+										Start: hcl.Pos{Line: 1, Column: 15, Byte: 14},
+										End:   hcl.Pos{Line: 1, Column: 16, Byte: 15},
+									},
+								},
+								SrcRange: hcl.Range{
+									Start: hcl.Pos{Line: 1, Column: 10, Byte: 9},
+									End:   hcl.Pos{Line: 1, Column: 16, Byte: 15},
+								},
+							},
+							SrcRange: hcl.Range{
+								Start: hcl.Pos{Line: 1, Column: 5, Byte: 4},
+								End:   hcl.Pos{Line: 1, Column: 16, Byte: 15},
+							},
+						},
+						NameRange: hcl.Range{
+							Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   hcl.Pos{Line: 1, Column: 2, Byte: 1},
+						},
+						EqualsRange: hcl.Range{
+							Start: hcl.Pos{Line: 1, Column: 3, Byte: 2},
+							End:   hcl.Pos{Line: 1, Column: 4, Byte: 3},
+						},
+						SrcRange: hcl.Range{
+							Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   hcl.Pos{Line: 1, Column: 16, Byte: 15},
+						},
+					},
+				},
+				Blocks: Blocks{},
+				SrcRange: hcl.Range{
+					Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   hcl.Pos{Line: 1, Column: 16, Byte: 15},
+				},
+				EndRange: hcl.Range{
+					Start: hcl.Pos{Line: 1, Column: 16, Byte: 15},
+					End:   hcl.Pos{Line: 1, Column: 16, Byte: 15},
+				},
+			},
+		},
+		{
+			// This test is for the associativity of the || operator during
+			// parsing. Specifically, our evaluator relies on the following
+			// being parsed as if it were `b || (c || d)` rather than
+			// `(b || c) || d` in order to correctly implement the short-circuit
+			// behavior.
+			`a = b || c || d`,
+			0,
+			&Body{
+				Attributes: Attributes{
+					"a": {
+						Name: "a",
+						Expr: &BinaryOpExpr{
+							LHS: &ScopeTraversalExpr{
+								Traversal: hcl.Traversal{
+									hcl.TraverseRoot{
+										Name: "b",
+										SrcRange: hcl.Range{
+											Start: hcl.Pos{Line: 1, Column: 5, Byte: 4},
+											End:   hcl.Pos{Line: 1, Column: 6, Byte: 5},
+										},
+									},
+								},
+								SrcRange: hcl.Range{
+									Start: hcl.Pos{Line: 1, Column: 5, Byte: 4},
+									End:   hcl.Pos{Line: 1, Column: 6, Byte: 5},
+								},
+							},
+							Op: OpLogicalOr,
+							RHS: &BinaryOpExpr{
+								LHS: &ScopeTraversalExpr{
+									Traversal: hcl.Traversal{
+										hcl.TraverseRoot{
+											Name: "c",
+											SrcRange: hcl.Range{
+												Start: hcl.Pos{Line: 1, Column: 10, Byte: 9},
+												End:   hcl.Pos{Line: 1, Column: 11, Byte: 10},
+											},
+										},
+									},
+									SrcRange: hcl.Range{
+										Start: hcl.Pos{Line: 1, Column: 10, Byte: 9},
+										End:   hcl.Pos{Line: 1, Column: 11, Byte: 10},
+									},
+								},
+								Op: OpLogicalOr,
+								RHS: &ScopeTraversalExpr{
+									Traversal: hcl.Traversal{
+										hcl.TraverseRoot{
+											Name: "d",
+											SrcRange: hcl.Range{
+												Start: hcl.Pos{Line: 1, Column: 15, Byte: 14},
+												End:   hcl.Pos{Line: 1, Column: 16, Byte: 15},
+											},
+										},
+									},
+									SrcRange: hcl.Range{
+										Start: hcl.Pos{Line: 1, Column: 15, Byte: 14},
+										End:   hcl.Pos{Line: 1, Column: 16, Byte: 15},
+									},
+								},
+								SrcRange: hcl.Range{
+									Start: hcl.Pos{Line: 1, Column: 10, Byte: 9},
+									End:   hcl.Pos{Line: 1, Column: 16, Byte: 15},
+								},
+							},
+							SrcRange: hcl.Range{
+								Start: hcl.Pos{Line: 1, Column: 5, Byte: 4},
+								End:   hcl.Pos{Line: 1, Column: 16, Byte: 15},
+							},
+						},
+						NameRange: hcl.Range{
+							Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   hcl.Pos{Line: 1, Column: 2, Byte: 1},
+						},
+						EqualsRange: hcl.Range{
+							Start: hcl.Pos{Line: 1, Column: 3, Byte: 2},
+							End:   hcl.Pos{Line: 1, Column: 4, Byte: 3},
+						},
+						SrcRange: hcl.Range{
+							Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:   hcl.Pos{Line: 1, Column: 16, Byte: 15},
+						},
+					},
+				},
+				Blocks: Blocks{},
+				SrcRange: hcl.Range{
+					Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   hcl.Pos{Line: 1, Column: 16, Byte: 15},
+				},
+				EndRange: hcl.Range{
+					Start: hcl.Pos{Line: 1, Column: 16, Byte: 15},
+					End:   hcl.Pos{Line: 1, Column: 16, Byte: 15},
+				},
+			},
+		},
 
 		{
 			`	`,
