@@ -1,6 +1,11 @@
 # HCL Changelog
 
-## v2.12.1 (Unreleased)
+## v2.13.0 (Unreleased)
+
+### Enhancements
+
+* hcl: `hcl.Diagnostic` how has an additional field `Extra` which is intended for carrying arbitrary supporting data ("extra information") related to the diagnostic message, intended to allow diagnostic renderers to optionally tailor the presentation of messages for particular situations. ([#539](https://github.com/hashicorp/hcl/pull/539))
+* hclsyntax: When an error occurs during a function call, the returned diagnostics will include _extra information_ (as described in the previous point) about which function was being called and, if the message is about an error returned by the function itself, that raw `error` value without any post-processing. ([#539](https://github.com/hashicorp/hcl/pull/539))
 
 ### Bugs Fixed
 
