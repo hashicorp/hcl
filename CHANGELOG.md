@@ -1,6 +1,6 @@
 # HCL Changelog
 
-## v2.14.0 (Unreleased)
+## v2.14.0 (September 1, 2022)
 
 ### Enhancements
 
