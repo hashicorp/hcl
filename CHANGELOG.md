@@ -4,8 +4,8 @@
 
 ### Enhancements
 
-* ext/typeexpr: Added support for optional object attributes to `TypeConstraint`. Attributes can be wrapped in the special `optional(…)` modifier, allowing the attribute to be omitted while still meeting the type constraint. For more information, [cty's documentation on conversion between object types](https://github.com/zclconf/go-cty/blob/main/docs/convert.md#conversion-between-object-types). ([#549](https://github.com/hashicorp/pull/549))
-* ext/typeexpr: New function: `TypeConstraintWithDefaults`. In this mode, the `optional(…)` modifier accepts a second argument which can be used as the default value for omitted object attributes. The function returns both a `cty.Type` and associated `Defaults`, the latter of which has an `Apply` method to apply defaults to a given value. ([#549](https://github.com/hashicorp/pull/549))
+* ext/typeexpr: Added support for optional object attributes to `TypeConstraint`. Attributes can be wrapped in the special `optional(…)` modifier, allowing the attribute to be omitted while still meeting the type constraint. For more information, [cty's documentation on conversion between object types](https://github.com/zclconf/go-cty/blob/main/docs/convert.md#conversion-between-object-types). ([#549](https://github.com/hashicorp/hcl/pull/549))
+* ext/typeexpr: New function: `TypeConstraintWithDefaults`. In this mode, the `optional(…)` modifier accepts a second argument which can be used as the default value for omitted object attributes. The function returns both a `cty.Type` and associated `Defaults`, the latter of which has an `Apply` method to apply defaults to a given value. ([#549](https://github.com/hashicorp/hcl/pull/549))
 
 ## v2.13.0 (June 22, 2022)
 
