@@ -249,7 +249,7 @@ func getType(expr hcl.Expression, constraint, withDefaults bool) (cty.Type, *Def
 			// If a default is set for an optional attribute, verify that it is
 			// convertible to the attribute type.
 			if defaultVal, ok := defaultValues[attrName]; ok {
-				_, err := convert.Convert(defaultVal, aty)
+				convertedDefaultVal, err := convert.Convert(defaultVal, aty)
 				if err != nil {
 					diags = append(diags, &hcl.Diagnostic{
 						Severity: hcl.DiagError,
@@ -258,6 +258,8 @@ func getType(expr hcl.Expression, constraint, withDefaults bool) (cty.Type, *Def
 						Subject:  defaultExpr.Range().Ptr(),
 					})
 					delete(defaultValues, attrName)
+				} else {
+					defaultValues[attrName] = convertedDefaultVal
 				}
 			}
 

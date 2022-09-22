@@ -504,7 +504,9 @@ func TestGetTypeDefaults(t *testing.T) {
 					}, []string{"b"}),
 				}, []string{"a"}),
 				DefaultValues: map[string]cty.Value{
-					"a": cty.EmptyObjectVal,
+					"a": cty.ObjectVal(map[string]cty.Value{
+						"b": cty.NullVal(cty.Number),
+					}),
 				},
 				Children: map[string]*Defaults{
 					"a": {
