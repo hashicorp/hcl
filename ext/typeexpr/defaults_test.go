@@ -68,7 +68,10 @@ func TestDefaults_Apply(t *testing.T) {
 				},
 			},
 			value: cty.UnknownVal(cty.Map(cty.String)),
-			want:  cty.UnknownVal(cty.Map(cty.String)),
+			want: cty.UnknownVal(cty.Object(map[string]cty.Type{
+				"a": cty.String,
+				"b": cty.Bool,
+			})),
 		},
 		// Defaults do not override attributes which are present in the given
 		// value.
@@ -85,7 +88,7 @@ func TestDefaults_Apply(t *testing.T) {
 			}),
 			want: cty.ObjectVal(map[string]cty.Value{
 				"a": cty.StringVal("foo"),
-				"b": cty.StringVal("false"),
+				"b": cty.False,
 			}),
 		},
 		// Defaults will replace explicit nulls.
@@ -188,7 +191,7 @@ func TestDefaults_Apply(t *testing.T) {
 					"a": cty.StringVal("bar"),
 				}),
 			}),
-			want: cty.ObjectVal(map[string]cty.Value{
+			want: cty.MapVal(map[string]cty.Value{
 				"f": cty.ObjectVal(map[string]cty.Value{
 					"a": cty.StringVal("foo"),
 					"b": cty.True,
@@ -221,7 +224,7 @@ func TestDefaults_Apply(t *testing.T) {
 					"a": cty.StringVal("bar"),
 				}),
 			}),
-			want: cty.TupleVal([]cty.Value{
+			want: cty.ListVal([]cty.Value{
 				cty.ObjectVal(map[string]cty.Value{
 					"a": cty.StringVal("foo"),
 					"b": cty.True,
@@ -307,7 +310,7 @@ func TestDefaults_Apply(t *testing.T) {
 					"d": cty.NumberIntVal(7),
 				}),
 			}),
-			want: cty.TupleVal([]cty.Value{
+			want: cty.SetVal([]cty.Value{
 				cty.ObjectVal(map[string]cty.Value{
 					"c": cty.ObjectVal(map[string]cty.Value{
 						"a": cty.StringVal("foo"),
@@ -317,7 +320,11 @@ func TestDefaults_Apply(t *testing.T) {
 				}),
 				cty.ObjectVal(map[string]cty.Value{
 					// No default value for "c" specified, so none applied. The
-					// convert stage will fill in a null.
+					// convert stage will have filled in a null.
+					"c": cty.NullVal(cty.Object(map[string]cty.Type{
+						"a": cty.String,
+						"b": cty.Bool,
+					})),
 					"d": cty.NumberIntVal(7),
 				}),
 			}),
@@ -339,6 +346,7 @@ func TestDefaults_Apply(t *testing.T) {
 							"c": {
 								Type: simpleObject,
 								DefaultValues: map[string]cty.Value{
+									"a": cty.StringVal("bar"),
 									"b": cty.True,
 								},
 							},
@@ -357,7 +365,7 @@ func TestDefaults_Apply(t *testing.T) {
 					"d": cty.NumberIntVal(7),
 				}),
 			}),
-			want: cty.TupleVal([]cty.Value{
+			want: cty.SetVal([]cty.Value{
 				cty.ObjectVal(map[string]cty.Value{
 					"c": cty.ObjectVal(map[string]cty.Value{
 						"a": cty.StringVal("foo"),
@@ -369,6 +377,7 @@ func TestDefaults_Apply(t *testing.T) {
 					"c": cty.ObjectVal(map[string]cty.Value{
 						// Default value for "b" is applied to the empty object
 						// specified as the default for "c"
+						"a": cty.StringVal("bar"),
 						"b": cty.True,
 					}),
 					"d": cty.NumberIntVal(7),
@@ -413,7 +422,7 @@ func TestDefaults_Apply(t *testing.T) {
 					"d": cty.NumberIntVal(7),
 				}),
 			}),
-			want: cty.TupleVal([]cty.Value{
+			want: cty.SetVal([]cty.Value{
 				cty.ObjectVal(map[string]cty.Value{
 					"c": cty.ObjectVal(map[string]cty.Value{
 						"a": cty.StringVal("foo"),
@@ -430,6 +439,98 @@ func TestDefaults_Apply(t *testing.T) {
 						"b": cty.False,
 					}),
 					"d": cty.NumberIntVal(7),
+				}),
+			}),
+		},
+		"my_test_case": {
+			defaults: &Defaults{
+				Type: cty.Set(cty.Object(map[string]cty.Type{
+					"name": cty.String,
+					"schedules": cty.Set(cty.ObjectWithOptionalAttrs(
+						map[string]cty.Type{
+							"name":               cty.String,
+							"cold_storage_after": cty.Number,
+						}, []string{"cold_storage_after"})),
+				})),
+				DefaultValues: nil,
+				Children: map[string]*Defaults{
+					"": {
+						Type: cty.Object(map[string]cty.Type{
+							"name": cty.String,
+							"schedules": cty.Set(cty.ObjectWithOptionalAttrs(
+								map[string]cty.Type{
+									"name":               cty.String,
+									"cold_storage_after": cty.Number,
+								}, []string{"cold_storage_after"})),
+						}),
+						Children: map[string]*Defaults{
+							"schedules": {
+								Type: cty.Set(cty.ObjectWithOptionalAttrs(
+									map[string]cty.Type{
+										"name":               cty.String,
+										"cold_storage_after": cty.Number,
+									}, []string{"cold_storage_after"})),
+								Children: map[string]*Defaults{
+									"": {
+										Type: cty.ObjectWithOptionalAttrs(
+											map[string]cty.Type{
+												"name":               cty.String,
+												"cold_storage_after": cty.Number,
+											}, []string{"cold_storage_after"}),
+										DefaultValues: map[string]cty.Value{
+											"cold_storage_after": cty.NumberIntVal(10),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			value: cty.SetVal([]cty.Value{
+				cty.ObjectVal(map[string]cty.Value{
+					"name": cty.StringVal("test1"),
+					"schedules": cty.SetVal([]cty.Value{
+						cty.MapVal(map[string]cty.Value{
+							"name": cty.StringVal("daily"),
+						}),
+					}),
+				}),
+				cty.ObjectVal(map[string]cty.Value{
+					"name": cty.StringVal("test2"),
+					"schedules": cty.SetVal([]cty.Value{
+						cty.MapVal(map[string]cty.Value{
+							"name": cty.StringVal("daily"),
+						}),
+						cty.MapVal(map[string]cty.Value{
+							"name":               cty.StringVal("weekly"),
+							"cold_storage_after": cty.StringVal("0"),
+						}),
+					}),
+				}),
+			}),
+			want: cty.SetVal([]cty.Value{
+				cty.ObjectVal(map[string]cty.Value{
+					"name": cty.StringVal("test1"),
+					"schedules": cty.SetVal([]cty.Value{
+						cty.ObjectVal(map[string]cty.Value{
+							"name":               cty.StringVal("daily"),
+							"cold_storage_after": cty.NumberIntVal(10),
+						}),
+					}),
+				}),
+				cty.ObjectVal(map[string]cty.Value{
+					"name": cty.StringVal("test2"),
+					"schedules": cty.SetVal([]cty.Value{
+						cty.ObjectVal(map[string]cty.Value{
+							"name":               cty.StringVal("daily"),
+							"cold_storage_after": cty.NumberIntVal(10),
+						}),
+						cty.ObjectVal(map[string]cty.Value{
+							"name":               cty.StringVal("weekly"),
+							"cold_storage_after": cty.NumberIntVal(0),
+						}),
+					}),
 				}),
 			}),
 		},
@@ -472,7 +573,7 @@ func TestDefaults_Apply(t *testing.T) {
 					"d": cty.NumberIntVal(7),
 				}),
 			}),
-			want: cty.TupleVal([]cty.Value{
+			want: cty.SetVal([]cty.Value{
 				cty.ObjectVal(map[string]cty.Value{
 					"c": cty.ObjectVal(map[string]cty.Value{
 						"a": cty.StringVal("foo"),

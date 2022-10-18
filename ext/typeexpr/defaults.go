@@ -2,6 +2,7 @@ package typeexpr
 
 import (
 	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-cty/cty/convert"
 )
 
 // Defaults represents a type tree which may contain default values for
@@ -103,7 +104,55 @@ func (t *defaultsTransformer) Enter(p cty.Path, v cty.Value) (cty.Value, error) 
 }
 
 func (t *defaultsTransformer) Exit(p cty.Path, v cty.Value) (cty.Value, error) {
+	v, err := convert.Convert(v, t.defaults.traverseType(p))
+	if err != nil {
+		return cty.DynamicVal, err
+	}
 	return v, nil
+}
+
+func (d *Defaults) traverseType(path cty.Path) cty.Type {
+	if len(path) == 0 {
+		return d.Type
+	}
+
+	switch s := path[0].(type) {
+	case cty.GetAttrStep:
+		if d.Type.IsObjectType() {
+			// Attribute path steps are normally applied to objects, where each
+			// attribute may have different defaults.
+			return d.traverseChildType(s.Name, path)
+		} else if d.Type.IsMapType() {
+			// Literal values for maps can result in attribute path steps, in which
+			// case we need to disregard the attribute name, as maps can have only
+			// one child.
+			return d.traverseChildType("", path)
+		}
+
+		return cty.DynamicPseudoType
+	case cty.IndexStep:
+		if d.Type.IsTupleType() {
+			// Tuples can have different types for each element, so we look
+			// up the defaults based on the index key.
+			return d.traverseChildType(s.Key.AsBigFloat().String(), path)
+		} else if d.Type.IsCollectionType() {
+			// Defaults for collection element types are stored with a blank
+			// key, so we disregard the index key.
+			return d.traverseChildType("", path)
+		}
+		return cty.DynamicPseudoType
+	default:
+		// At time of writing there are no other path step types.
+		return cty.DynamicPseudoType
+	}
+
+}
+
+func (d *Defaults) traverseChildType(name string, path cty.Path) cty.Type {
+	if child, ok := d.Children[name]; ok {
+		return child.traverseType(path[1:])
+	}
+	return cty.DynamicPseudoType
 }
 
 // traverse walks the abstract defaults structure for a given path, returning
