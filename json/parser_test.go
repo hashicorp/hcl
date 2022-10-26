@@ -1,16 +1,14 @@
 package json
 
 import (
+	"fmt"
 	"math/big"
 	"testing"
 
-	"github.com/go-test/deep"
+	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/hcl/v2"
+	"github.com/zclconf/go-cty-debug/ctydebug"
 )
-
-func init() {
-	deep.MaxDepth = 999
-}
 
 func TestParse(t *testing.T) {
 	tests := []struct {
@@ -607,10 +605,8 @@ func TestParse(t *testing.T) {
 				}
 			}
 
-			if diff := deep.Equal(got, test.Want); diff != nil {
-				for _, problem := range diff {
-					t.Error(problem)
-				}
+			if diff := cmp.Diff(test.Want, got, ctydebug.CmpOptions); diff != "" {
+				t.Errorf("unexpected diff: %s", diff)
 			}
 		})
 	}
@@ -649,17 +645,20 @@ func TestParseWithPos(t *testing.T) {
 				}
 			}
 
-			if diff := deep.Equal(got, test.Want); diff != nil {
-				for _, problem := range diff {
-					t.Error(problem)
-				}
+			if diff := cmp.Diff(test.Want, got, ctydebug.CmpOptions); diff != "" {
+				t.Errorf("unexpected diff: %s", diff)
 			}
 		})
 	}
 }
 
 func mustBigFloat(s string) *big.Float {
-	f, _, err := (&big.Float{}).Parse(s, 10)
+	// TODO KEM
+	// why is mantissa still wrong?? big.RoundingMode?
+	// f, _, err := (&big.Float{}).Parse(s, 10)
+	f, _, err := big.ParseFloat(s, 10, 512, big.ToNearestEven)
+	fmt.Printf("s: %s f: %+v", s, f)
+
 	if err != nil {
 		panic(err)
 	}

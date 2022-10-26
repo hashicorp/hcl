@@ -2,13 +2,12 @@ package json
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
-	"github.com/go-test/deep"
+	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/hcl/v2"
+	"github.com/zclconf/go-cty-debug/ctydebug"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -865,40 +864,40 @@ func TestBodyPartialContent(t *testing.T) {
 								SrcRange: hcl.Range{
 									Filename: "test.json",
 									Start: hcl.Pos{
-										Byte:   36,
+										Byte:   48,
 										Line:   1,
-										Column: 37,
+										Column: 49,
 									},
 									End: hcl.Pos{
-										Byte:   38,
+										Byte:   50,
 										Line:   1,
-										Column: 39,
+										Column: 51,
 									},
 								},
 								OpenRange: hcl.Range{
 									Filename: "test.json",
 									Start: hcl.Pos{
-										Byte:   36,
+										Byte:   48,
 										Line:   1,
-										Column: 37,
+										Column: 49,
 									},
 									End: hcl.Pos{
-										Byte:   37,
+										Byte:   49,
 										Line:   1,
-										Column: 38,
+										Column: 50,
 									},
 								},
 								CloseRange: hcl.Range{
 									Filename: "test.json",
 									Start: hcl.Pos{
-										Byte:   37,
+										Byte:   49,
 										Line:   1,
-										Column: 38,
+										Column: 50,
 									},
 									End: hcl.Pos{
-										Byte:   38,
+										Byte:   50,
 										Line:   1,
-										Column: 39,
+										Column: 51,
 									},
 								},
 							},
@@ -1006,14 +1005,14 @@ func TestBodyPartialContent(t *testing.T) {
 								SrcRange: hcl.Range{
 									Filename: "test.json",
 									Start: hcl.Pos{
-										Byte:   8,
+										Byte:   9,
 										Line:   1,
-										Column: 9,
+										Column: 10,
 									},
 									End: hcl.Pos{
-										Byte:   20,
+										Byte:   21,
 										Line:   1,
-										Column: 21,
+										Column: 22,
 									},
 								},
 							},
@@ -1070,8 +1069,8 @@ func TestBodyPartialContent(t *testing.T) {
 				}
 			}
 
-			for _, problem := range deep.Equal(got, test.want) {
-				t.Error(problem)
+			if diff := cmp.Diff(test.want, got, ctydebug.CmpOptions); diff != "" {
+				t.Errorf("unexpected diff: %s", diff)
 			}
 		})
 	}
@@ -1227,8 +1226,8 @@ func TestJustAttributes(t *testing.T) {
 					t.Logf(" - %s", diag)
 				}
 			}
-			if !reflect.DeepEqual(got, test.want) {
-				t.Errorf("wrong result\ngot:  %s\nwant: %s", spew.Sdump(got), spew.Sdump(test.want))
+			if diff := cmp.Diff(test.want, got, ctydebug.CmpOptions); diff != "" {
+				t.Errorf("unexpected diff: %s", diff)
 			}
 		})
 	}
@@ -1316,8 +1315,8 @@ func TestExpressionVariables(t *testing.T) {
 				t.Fatalf("JustAttributes produced diagnostics: %s", diags)
 			}
 			got := attrs["a"].Expr.Variables()
-			if !reflect.DeepEqual(got, test.Want) {
-				t.Errorf("wrong result\ngot:  %s\nwant: %s", spew.Sdump(got), spew.Sdump(test.Want))
+			if diff := cmp.Diff(test.Want, got, ctydebug.CmpOptions); diff != "" {
+				t.Errorf("unexpected diff: %s", diff)
 			}
 		})
 	}

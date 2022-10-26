@@ -65,6 +65,7 @@ type Body interface {
 	// declarations of the same attribute.
 	JustAttributes() (Attributes, Diagnostics)
 
+	// TODO KEM
 	// MissingItemRange returns a range that represents where a missing item
 	// might hypothetically be inserted. This is used when producing
 	// diagnostics about missing required attributes or blocks. Not all bodies
