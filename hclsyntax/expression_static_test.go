@@ -3,8 +3,9 @@ package hclsyntax
 import (
 	"testing"
 
-	"github.com/go-test/deep"
+	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/hcl/v2"
+	"github.com/zclconf/go-cty-debug/ctydebug"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -45,8 +46,8 @@ func TestTraversalStatic(t *testing.T) {
 		},
 	}
 
-	for _, problem := range deep.Equal(got, want) {
-		t.Errorf(problem)
+	if diff := cmp.Diff(want, got, ctydebug.CmpOptions); diff != "" {
+		t.Errorf("unexpected diff: %s", diff)
 	}
 }
 
@@ -83,8 +84,8 @@ func TestTupleStatic(t *testing.T) {
 		got[i] = val
 	}
 
-	for _, problem := range deep.Equal(got, want) {
-		t.Errorf(problem)
+	if diff := cmp.Diff(want, got, ctydebug.CmpOptions); diff != "" {
+		t.Errorf("unexpected diff: %s", diff)
 	}
 }
 
@@ -125,7 +126,7 @@ func TestMapStatic(t *testing.T) {
 		got[key] = val
 	}
 
-	for _, problem := range deep.Equal(got, want) {
-		t.Errorf(problem)
+	if diff := cmp.Diff(want, got, ctydebug.CmpOptions); diff != "" {
+		t.Errorf("unexpected diff: %s", diff)
 	}
 }
