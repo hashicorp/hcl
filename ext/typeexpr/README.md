@@ -66,6 +66,27 @@ types with weird attributes generally show up only from arbitrary object
 constructors in configuration files, which are usually treated either as maps
 or as the dynamic pseudo-type.
 
+### Optional Object Attributes
+
+As part of object expressions attributes can be marked as optional. Missing 
+object attributes would typically result in an error when type constraints are
+validated or used. Optional missing attributes, however, would not result in an 
+error. The `cty` ["convert" function](#the-convert-cty-function) will populate 
+missing optional attributes with null values.
+
+For example:
+
+* `object({name=string,age=optional(number)})`
+
+Optional attributes can also be specified with default values. The 
+`TypeConstraintWithDefaults` function will return a `Defaults` object that can
+be used to populate missing optional attributes with defaults in a given 
+`cty.Value`.
+
+For example:
+
+* `object({name=string,age=optional(number, 0)})`
+
 ## Type Constraints as Values
 
 Along with defining a convention for writing down types using HCL expression

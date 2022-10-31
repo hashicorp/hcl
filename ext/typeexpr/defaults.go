@@ -6,7 +6,7 @@ import (
 
 // Defaults represents a type tree which may contain default values for
 // optional object attributes at any level. This is used to apply nested
-// defaults to an input value before converting it to the concrete type.
+// defaults to a given cty.Value.
 type Defaults struct {
 	// Type of the node for which these defaults apply. This is necessary in
 	// order to determine how to inspect the Defaults and Children collections.
@@ -28,8 +28,8 @@ type Defaults struct {
 
 // Apply walks the given value, applying specified defaults wherever optional
 // attributes are missing. The input and output values may have different
-// types, and the result may still require type conversion to the final desired
-// type.
+// types, to avoid this the input value should be converted into the desired
+// type first.
 //
 // This function is permissive and does not report errors, assuming that the
 // caller will have better context to report useful type conversion failure

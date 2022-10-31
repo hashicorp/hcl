@@ -1847,6 +1847,28 @@ EOT
 			cty.NumberIntVal(1),
 			0,
 		},
+		{ // auto-converts collection types
+			`true ? listOf1Tuple : listOf0Tuple`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"listOf1Tuple": cty.ListVal([]cty.Value{cty.TupleVal([]cty.Value{cty.True})}),
+					"listOf0Tuple": cty.ListVal([]cty.Value{cty.EmptyTupleVal}),
+				},
+			},
+			cty.ListVal([]cty.Value{cty.ListVal([]cty.Value{cty.True})}),
+			0,
+		},
+		{
+			`true ? setOf1Tuple : setOf0Tuple`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"setOf1Tuple": cty.SetVal([]cty.Value{cty.TupleVal([]cty.Value{cty.True})}),
+					"setOf0Tuple": cty.SetVal([]cty.Value{cty.EmptyTupleVal}),
+				},
+			},
+			cty.SetVal([]cty.Value{cty.ListVal([]cty.Value{cty.True})}),
+			0,
+		},
 		{ // marked argument expansion
 			`min(xs...)`,
 			&hcl.EvalContext{
@@ -1937,26 +1959,26 @@ func TestExpressionErrorMessages(t *testing.T) {
 			"The true and false result expressions must have consistent types. The 'false' value includes object attribute \"b\", which is absent in the 'true' value.",
 		},
 		{
-			"true ? listOf1Tuple : listOf0Tuple",
+			"true ? listOf2Tuple : listOf1Tuple",
 			&hcl.EvalContext{
 				Variables: map[string]cty.Value{
+					"listOf2Tuple": cty.ListVal([]cty.Value{cty.TupleVal([]cty.Value{cty.True, cty.Zero})}),
 					"listOf1Tuple": cty.ListVal([]cty.Value{cty.TupleVal([]cty.Value{cty.True})}),
-					"listOf0Tuple": cty.ListVal([]cty.Value{cty.EmptyTupleVal}),
 				},
 			},
 			"Inconsistent conditional result types",
-			"The true and false result expressions must have consistent types. Mismatched list element types: The 'true' tuple has length 1, but the 'false' tuple has length 0.",
+			"The true and false result expressions must have consistent types. Mismatched list element types: The 'true' tuple has length 2, but the 'false' tuple has length 1.",
 		},
 		{
-			"true ? setOf1Tuple : setOf0Tuple",
+			"true ? setOf2Tuple : setOf1Tuple",
 			&hcl.EvalContext{
 				Variables: map[string]cty.Value{
+					"setOf2Tuple": cty.SetVal([]cty.Value{cty.TupleVal([]cty.Value{cty.True, cty.Zero})}),
 					"setOf1Tuple": cty.SetVal([]cty.Value{cty.TupleVal([]cty.Value{cty.True})}),
-					"setOf0Tuple": cty.SetVal([]cty.Value{cty.EmptyTupleVal}),
 				},
 			},
 			"Inconsistent conditional result types",
-			"The true and false result expressions must have consistent types. Mismatched set element types: The 'true' tuple has length 1, but the 'false' tuple has length 0.",
+			"The true and false result expressions must have consistent types. Mismatched set element types: The 'true' tuple has length 2, but the 'false' tuple has length 1.",
 		},
 		{
 			"true ? mapOf1Tuple : mapOf2Tuple",
@@ -1970,11 +1992,11 @@ func TestExpressionErrorMessages(t *testing.T) {
 			"The true and false result expressions must have consistent types. Mismatched map element types: The 'true' tuple has length 1, but the 'false' tuple has length 2.",
 		},
 		{
-			"true ? listOfListOf1Tuple : listOfListOf0Tuple",
+			"true ? listOfListOf2Tuple : listOfListOf1Tuple",
 			&hcl.EvalContext{
 				Variables: map[string]cty.Value{
+					"listOfListOf2Tuple": cty.ListVal([]cty.Value{cty.ListVal([]cty.Value{cty.TupleVal([]cty.Value{cty.True, cty.Zero})})}),
 					"listOfListOf1Tuple": cty.ListVal([]cty.Value{cty.ListVal([]cty.Value{cty.TupleVal([]cty.Value{cty.True})})}),
-					"listOfListOf0Tuple": cty.ListVal([]cty.Value{cty.ListVal([]cty.Value{cty.EmptyTupleVal})}),
 				},
 			},
 			"Inconsistent conditional result types",
