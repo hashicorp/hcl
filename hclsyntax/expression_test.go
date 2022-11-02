@@ -1959,6 +1959,10 @@ func TestExpressionErrorMessages(t *testing.T) {
 			"The true and false result expressions must have consistent types. The 'false' value includes object attribute \"b\", which is absent in the 'true' value.",
 		},
 		{
+			// Failing cases for automatic collection conversions. HCL and cty
+			// will attempt to unify tuples into lists. We have to make sure
+			// the tuple inner types have no common base type, so we mix and
+			// match booleans and numbers and validate the error messages.
 			"true ? listOf2Tuple : listOf1Tuple",
 			&hcl.EvalContext{
 				Variables: map[string]cty.Value{
