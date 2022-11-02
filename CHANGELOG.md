@@ -2,6 +2,11 @@
 
 ## v2.15.0 (Unreleased)
 
+### Enhancements
+
+* ext/typeexpr: With the [go-cty](https://github.com/zclconf/go-cty) upstream depenendency updated to v1.12.0, the `Defaults` struct and associated functions can apply additional and more flexible 'unsafe' conversions (examples include tuples into collections such as lists and sets, and additional safety around null and dynamic values). ([#564](https://github.com/hashicorp/hcl/pull/564))
+* ext/typeexpr: With the [go-cty](https://github.com/zclconf/go-cty) upstream depenendency updated to v1.12.0, users should now apply the go-cty convert functionality *before* setting defaults on a given `cty.Value`, rather than after, if they require a specific `cty.Type`.  ([#564](https://github.com/hashicorp/hcl/pull/564))
+
 ## v2.14.1 (September 23, 2022)
 
 ### Bugs Fixed
