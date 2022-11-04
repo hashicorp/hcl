@@ -539,6 +539,7 @@ func TestDefaults_Apply(t *testing.T) {
 			},
 			value: cty.ObjectVal(map[string]cty.Value{
 				"required": cty.StringVal("required"),
+				// optional_object is explicitly set to null for this test case.
 				"optional_object": cty.NullVal(cty.Object(map[string]cty.Type{
 					"nested_required": cty.String,
 					"nested_optional": cty.String,
@@ -581,6 +582,7 @@ func TestDefaults_Apply(t *testing.T) {
 			},
 			value: cty.ObjectVal(map[string]cty.Value{
 				"required": cty.StringVal("required"),
+				// optional_object is missing but not null for this test case.
 			}),
 			want: cty.ObjectVal(map[string]cty.Value{
 				"required": cty.StringVal("required"),
@@ -589,6 +591,63 @@ func TestDefaults_Apply(t *testing.T) {
 					"nested_optional": cty.StringVal("optional"),
 				}),
 			}),
+		},
+		// https://discuss.hashicorp.com/t/request-for-feedback-optional-object-type-attributes-with-defaults-in-v1-3-alpha/40550/6?u=alisdair
+		"all child and nested values are optional with defaults": {
+			defaults: &Defaults{
+				Type: cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+					"settings": cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+						"setting_one": cty.String,
+						"setting_two": cty.Number,
+					}, []string{"setting_one", "setting_two"}),
+				}, []string{"settings"}),
+				DefaultValues: map[string]cty.Value{
+					"settings": cty.EmptyObjectVal,
+				},
+				Children: map[string]*Defaults{
+					"settings": {
+						Type: cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+							"setting_one": cty.String,
+							"setting_two": cty.String,
+						}, []string{"setting_one", "setting_two"}),
+						DefaultValues: map[string]cty.Value{
+							"setting_one": cty.StringVal(""),
+							"setting_two": cty.NumberIntVal(0),
+						},
+					},
+				},
+			},
+			value: cty.EmptyObjectVal,
+			want: cty.ObjectVal(map[string]cty.Value{
+				"settings": cty.ObjectVal(map[string]cty.Value{
+					"setting_one": cty.StringVal(""),
+					"setting_two": cty.NumberIntVal(0),
+				}),
+			}),
+		},
+		"all nested values are optional with defaults, but direct child has no default": {
+			defaults: &Defaults{
+				Type: cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+					"settings": cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+						"setting_one": cty.String,
+						"setting_two": cty.Number,
+					}, []string{"setting_one", "setting_two"}),
+				}, []string{"settings"}),
+				Children: map[string]*Defaults{
+					"settings": {
+						Type: cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+							"setting_one": cty.String,
+							"setting_two": cty.String,
+						}, []string{"setting_one", "setting_two"}),
+						DefaultValues: map[string]cty.Value{
+							"setting_one": cty.StringVal(""),
+							"setting_two": cty.NumberIntVal(0),
+						},
+					},
+				},
+			},
+			value: cty.EmptyObjectVal,
+			want:  cty.EmptyObjectVal,
 		},
 	}
 
