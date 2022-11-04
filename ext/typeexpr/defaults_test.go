@@ -491,6 +491,344 @@ func TestDefaults_Apply(t *testing.T) {
 				}),
 			}),
 		},
+		"null objects do not get default values inserted": {
+			defaults: &Defaults{
+				Type: cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+					"required": cty.String,
+					"optional": cty.String,
+				}, []string{"optional"}),
+				DefaultValues: map[string]cty.Value{
+					"optional": cty.StringVal("optional"),
+				},
+			},
+			value: cty.NullVal(cty.Object(map[string]cty.Type{
+				"required": cty.String,
+				"optional": cty.String,
+			})),
+			want: cty.NullVal(cty.Object(map[string]cty.Type{
+				"required": cty.String,
+				"optional": cty.String,
+			})),
+		},
+		"defaults with unset defaults are still applied (null)": {
+			defaults: &Defaults{
+				Type: cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+					"required": cty.String,
+					"optional_object": cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+						"nested_required": cty.String,
+						"nested_optional": cty.String,
+					}, []string{"nested_optional"}),
+				}, []string{"optional_object"}),
+				DefaultValues: map[string]cty.Value{
+					"optional_object": cty.ObjectVal(map[string]cty.Value{
+						"nested_required": cty.StringVal("required"),
+						"nested_optional": cty.NullVal(cty.String),
+					}),
+				},
+				Children: map[string]*Defaults{
+					"optional_object": {
+						Type: cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+							"nested_required": cty.String,
+							"nested_optional": cty.String,
+						}, []string{"nested_optional"}),
+						DefaultValues: map[string]cty.Value{
+							"nested_optional": cty.StringVal("optional"),
+						},
+					},
+				},
+			},
+			value: cty.ObjectVal(map[string]cty.Value{
+				"required": cty.StringVal("required"),
+				"optional_object": cty.NullVal(cty.Object(map[string]cty.Type{
+					"nested_required": cty.String,
+					"nested_optional": cty.String,
+				})),
+			}),
+			want: cty.ObjectVal(map[string]cty.Value{
+				"required": cty.StringVal("required"),
+				"optional_object": cty.ObjectVal(map[string]cty.Value{
+					"nested_required": cty.StringVal("required"),
+					"nested_optional": cty.StringVal("optional"),
+				}),
+			}),
+		},
+		"defaults with unset defaults are still applied (missing)": {
+			defaults: &Defaults{
+				Type: cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+					"required": cty.String,
+					"optional_object": cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+						"nested_required": cty.String,
+						"nested_optional": cty.String,
+					}, []string{"nested_optional"}),
+				}, []string{"optional_object"}),
+				DefaultValues: map[string]cty.Value{
+					"optional_object": cty.ObjectVal(map[string]cty.Value{
+						"nested_required": cty.StringVal("required"),
+						"nested_optional": cty.NullVal(cty.String),
+					}),
+				},
+				Children: map[string]*Defaults{
+					"optional_object": {
+						Type: cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+							"nested_required": cty.String,
+							"nested_optional": cty.String,
+						}, []string{"nested_optional"}),
+						DefaultValues: map[string]cty.Value{
+							"nested_optional": cty.StringVal("optional"),
+						},
+					},
+				},
+			},
+			value: cty.ObjectVal(map[string]cty.Value{
+				"required": cty.StringVal("required"),
+			}),
+			want: cty.ObjectVal(map[string]cty.Value{
+				"required": cty.StringVal("required"),
+				"optional_object": cty.ObjectVal(map[string]cty.Value{
+					"nested_required": cty.StringVal("required"),
+					"nested_optional": cty.StringVal("optional"),
+				}),
+			}),
+		},
+		//"list of objects with nested optional list with empty default": {
+		//	defaults: &Defaults{
+		//		Type: cty.List(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+		//			"name": cty.String,
+		//			"optional_list": cty.List(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+		//				"string":          cty.String,
+		//				"optional_string": cty.String,
+		//			}, []string{"optional_string"})),
+		//		}, []string{"optional_list"})),
+		//		Children: map[string]*Defaults{
+		//			"": {
+		//				Type: cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+		//					"name": cty.String,
+		//					"optional_list": cty.List(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+		//						"string":          cty.String,
+		//						"optional_string": cty.String,
+		//					}, []string{"optional_string"})),
+		//				}, []string{"optional_list"}),
+		//				DefaultValues: map[string]cty.Value{
+		//					"optional_list": cty.ListValEmpty(cty.Object(map[string]cty.Type{
+		//						"string":          cty.String,
+		//						"optional_string": cty.String,
+		//					})),
+		//				},
+		//			},
+		//		},
+		//	},
+		//	value: cty.ListVal([]cty.Value{
+		//		cty.ObjectVal(map[string]cty.Value{
+		//			"name": cty.StringVal("abc"),
+		//			"optional_list": cty.ListVal([]cty.Value{
+		//				cty.ObjectVal(map[string]cty.Value{
+		//					"optional_string": cty.NullVal(cty.String),
+		//					"string":          cty.StringVal("child"),
+		//				}),
+		//			}),
+		//		}),
+		//		cty.ObjectVal(map[string]cty.Value{
+		//			"name": cty.StringVal("def"),
+		//			"optional_list": cty.NullVal(cty.List(cty.Object(map[string]cty.Type{
+		//				"optional_string": cty.String,
+		//				"string":          cty.String,
+		//			}))),
+		//		}),
+		//	}),
+		//	want: cty.ListVal([]cty.Value{
+		//		cty.ObjectVal(map[string]cty.Value{
+		//			"name": cty.StringVal("abc"),
+		//			"optional_list": cty.ListVal([]cty.Value{
+		//				cty.ObjectVal(map[string]cty.Value{
+		//					"optional_string": cty.NullVal(cty.String),
+		//					"string":          cty.StringVal("child"),
+		//				}),
+		//			}),
+		//		}),
+		//		cty.ObjectVal(map[string]cty.Value{
+		//			"name": cty.StringVal("def"),
+		//			"optional_list": cty.ListValEmpty(cty.Object(map[string]cty.Type{
+		//				"optional_string": cty.String,
+		//				"string":          cty.String,
+		//			})),
+		//		}),
+		//	}),
+		//},
+		//"list of objects with nested optional list with default": {
+		//	defaults: &Defaults{
+		//		Type: cty.List(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+		//			"name": cty.String,
+		//			"optional_list": cty.List(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+		//				"string":          cty.String,
+		//				"optional_string": cty.String,
+		//			}, []string{"optional_string"})),
+		//		}, []string{"optional_list"})),
+		//		Children: map[string]*Defaults{
+		//			"": {
+		//				Type: cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+		//					"name": cty.String,
+		//					"optional_list": cty.List(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+		//						"string":          cty.String,
+		//						"optional_string": cty.String,
+		//					}, []string{"optional_string"})),
+		//				}, []string{"optional_list"}),
+		//				DefaultValues: map[string]cty.Value{
+		//					"optional_list": cty.ListVal([]cty.Value{
+		//						cty.ObjectVal(map[string]cty.Value{
+		//							"string":          cty.StringVal("default"),
+		//							"optional_string": cty.NullVal(cty.String),
+		//						}),
+		//					}),
+		//				},
+		//			},
+		//		},
+		//	},
+		//	value: cty.ListVal([]cty.Value{
+		//		cty.ObjectVal(map[string]cty.Value{
+		//			"name": cty.StringVal("abc"),
+		//			"optional_list": cty.ListVal([]cty.Value{
+		//				cty.ObjectVal(map[string]cty.Value{
+		//					"optional_string": cty.NullVal(cty.String),
+		//					"string":          cty.StringVal("child"),
+		//				}),
+		//			}),
+		//		}),
+		//		cty.ObjectVal(map[string]cty.Value{
+		//			"name": cty.StringVal("def"),
+		//			"optional_list": cty.NullVal(cty.List(cty.Object(map[string]cty.Type{
+		//				"optional_string": cty.String,
+		//				"string":          cty.String,
+		//			}))),
+		//		}),
+		//	}),
+		//	want: cty.ListVal([]cty.Value{
+		//		cty.ObjectVal(map[string]cty.Value{
+		//			"name": cty.StringVal("abc"),
+		//			"optional_list": cty.ListVal([]cty.Value{
+		//				cty.ObjectVal(map[string]cty.Value{
+		//					"optional_string": cty.NullVal(cty.String),
+		//					"string":          cty.StringVal("child"),
+		//				}),
+		//			}),
+		//		}),
+		//		cty.ObjectVal(map[string]cty.Value{
+		//			"name": cty.StringVal("def"),
+		//			"optional_list": cty.ListVal([]cty.Value{
+		//				cty.ObjectVal(map[string]cty.Value{
+		//					"optional_string": cty.NullVal(cty.String),
+		//					"string":          cty.StringVal("default"),
+		//				}),
+		//			}),
+		//		}),
+		//	}),
+		//},
+		//"map with nested empty objects with inner defaults": {
+		//	defaults: &Defaults{
+		//		Type: cty.Map(cty.Object(map[string]cty.Type{
+		//			"rules": cty.Map(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+		//				"backend": cty.String,
+		//				"url_redirect": cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+		//					"destination":   cty.String,
+		//					"preserve_path": cty.Bool,
+		//				}, []string{"preserve_path"}),
+		//			}, []string{"backend", "url_redirect"})),
+		//		})),
+		//		Children: map[string]*Defaults{
+		//			"": {
+		//				Type: cty.Object(map[string]cty.Type{
+		//					"rules": cty.Map(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+		//						"backend": cty.String,
+		//						"url_redirect": cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+		//							"destination":   cty.String,
+		//							"preserve_path": cty.Bool,
+		//						}, []string{"preserve_path"}),
+		//					}, []string{"backend", "url_redirect"})),
+		//				}),
+		//				Children: map[string]*Defaults{
+		//					"rules": {
+		//						Type: cty.Map(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+		//							"backend": cty.String,
+		//							"url_redirect": cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+		//								"destination":   cty.String,
+		//								"preserve_path": cty.Bool,
+		//							}, []string{"preserve_path"}),
+		//						}, []string{"backend", "url_redirect"})),
+		//						Children: map[string]*Defaults{
+		//							"": {
+		//								Type: cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+		//									"backend": cty.String,
+		//									"url_redirect": cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+		//										"destination":   cty.String,
+		//										"preserve_path": cty.Bool,
+		//									}, []string{"preserve_path"}),
+		//								}, []string{"backend", "url_redirect"}),
+		//								Children: map[string]*Defaults{
+		//									"url_redirect": {
+		//										Type: cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+		//											"destination":   cty.String,
+		//											"preserve_path": cty.Bool,
+		//										}, []string{"preserve_path"}),
+		//										DefaultValues: map[string]cty.Value{
+		//											"preserve_path": cty.True,
+		//										},
+		//									},
+		//								},
+		//							},
+		//						},
+		//					},
+		//				},
+		//			},
+		//		},
+		//	},
+		//	value: cty.MapVal(map[string]cty.Value{
+		//		"one": cty.ObjectVal(map[string]cty.Value{
+		//			"rules": cty.MapVal(map[string]cty.Value{
+		//				"/": cty.ObjectVal(map[string]cty.Value{
+		//					"backend": cty.StringVal("testing"),
+		//					"url_redirect": cty.NullVal(cty.Object(map[string]cty.Type{
+		//						"destination":   cty.String,
+		//						"preserve_path": cty.Bool,
+		//					})),
+		//				}),
+		//			}),
+		//		}),
+		//		"two": cty.ObjectVal(map[string]cty.Value{
+		//			"rules": cty.MapVal(map[string]cty.Value{
+		//				"/": cty.ObjectVal(map[string]cty.Value{
+		//					"backend": cty.NullVal(cty.String),
+		//					"url_redirect": cty.ObjectVal(map[string]cty.Value{
+		//						"destination":   cty.NullVal(cty.String),
+		//						"preserve_path": cty.False,
+		//					}),
+		//				}),
+		//			}),
+		//		}),
+		//	}),
+		//	want: cty.MapVal(map[string]cty.Value{
+		//		"one": cty.ObjectVal(map[string]cty.Value{
+		//			"rules": cty.MapVal(map[string]cty.Value{
+		//				"/": cty.ObjectVal(map[string]cty.Value{
+		//					"backend": cty.StringVal("testing"),
+		//					"url_redirect": cty.NullVal(cty.Object(map[string]cty.Type{
+		//						"destination":   cty.String,
+		//						"preserve_path": cty.Bool,
+		//					})),
+		//				}),
+		//			}),
+		//		}),
+		//		"two": cty.ObjectVal(map[string]cty.Value{
+		//			"rules": cty.MapVal(map[string]cty.Value{
+		//				"/": cty.ObjectVal(map[string]cty.Value{
+		//					"backend": cty.NullVal(cty.String),
+		//					"url_redirect": cty.ObjectVal(map[string]cty.Value{
+		//						"destination":   cty.NullVal(cty.String),
+		//						"preserve_path": cty.False,
+		//					}),
+		//				}),
+		//			}),
+		//		}),
+		//	}),
+		//},
 	}
 
 	for name, tc := range testCases {

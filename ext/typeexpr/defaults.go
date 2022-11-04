@@ -56,8 +56,13 @@ type defaultsTransformer struct {
 var _ cty.Transformer = (*defaultsTransformer)(nil)
 
 func (t *defaultsTransformer) Enter(p cty.Path, v cty.Value) (cty.Value, error) {
-	// Cannot apply defaults to an unknown value
-	if !v.IsKnown() {
+	// Cannot apply defaults to an unknown value, and should not apply defaults
+	// to a null value.
+	//
+	// A quick clarification, we should still override null values *inside* the
+	// object or map with defaults. But if the actual object or map itself is
+	// null then we skip it.
+	if !v.IsKnown() || v.IsNull() {
 		return v, nil
 	}
 
