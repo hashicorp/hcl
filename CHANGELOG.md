@@ -2,6 +2,10 @@
 
 ## v2.15.0 (Unreleased)
 
+### Bugs Fixed
+
+* ext/typeexpr: Skip null objects when applying defaults. This prevents crashes when null objects are creating inside collections, and stops incomplete objects being created with only optional attributes set. ([#567](https://github.com/hashicorp/hcl/pull/567))
+
 ### Enhancements
 
 * ext/typeexpr: With the [go-cty](https://github.com/zclconf/go-cty) upstream depenendency updated to v1.12.0, the `Defaults` struct and associated functions can apply additional and more flexible 'unsafe' conversions (examples include tuples into collections such as lists and sets, and additional safety around null and dynamic values). ([#564](https://github.com/hashicorp/hcl/pull/564))
