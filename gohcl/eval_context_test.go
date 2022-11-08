@@ -67,6 +67,52 @@ func TestEvalContext(t *testing.T) {
 				},
 			},
 		},
+		{
+			Input: struct {
+				HashMap map[string]string
+			}{
+				HashMap: map[string]string{
+					"a": "b",
+					"c": "d",
+				},
+			},
+			Output: hcl.EvalContext{Variables: map[string]cty.Value{
+				"hash_map": cty.MapVal(map[string]cty.Value{
+					"a": cty.StringVal("b"),
+					"c": cty.StringVal("d"),
+				}),
+			}},
+		},
+		{
+			Input: struct {
+				HashMap map[string]string
+			}{
+				HashMap: map[string]string{},
+			},
+			Output: hcl.EvalContext{Variables: map[string]cty.Value{}},
+		},
+		{
+			Input: struct {
+				Array []string
+			}{
+				Array: []string{"elem-1", "elem-2"},
+			},
+			Output: hcl.EvalContext{Variables: map[string]cty.Value{
+				"array": cty.ListVal(
+					[]cty.Value{
+						cty.StringVal("elem-1"),
+						cty.StringVal("elem-2"),
+					}),
+			}},
+		},
+		{
+			Input: struct {
+				Array []string
+			}{
+				Array: []string{},
+			},
+			Output: hcl.EvalContext{Variables: map[string]cty.Value{}},
+		},
 	}
 
 	for index, test := range tests {
