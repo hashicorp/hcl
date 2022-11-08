@@ -268,7 +268,7 @@ collection value.
 ```ebnf
 CollectionValue = tuple | object;
 tuple = "[" (
-    (Expression ("," Expression)* ","?)?
+    (Expression (("," | Newline) Expression)* ","?)?
 ) "]";
 object = "{" (
     (objectelem (( "," | Newline) objectelem)* ","?)?
