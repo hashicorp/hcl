@@ -57,7 +57,7 @@ func TestEvalContext(t *testing.T) {
 			Output: hcl.EvalContext{
 				Variables: map[string]cty.Value{
 					"i_o_mode": cty.StringVal("fake-mode"),
-					"services": cty.TupleVal([]cty.Value{
+					"services": cty.ListVal([]cty.Value{
 						cty.MapVal(map[string]cty.Value{
 							"type":        cty.StringVal("t"),
 							"name":        cty.StringVal("n"),
