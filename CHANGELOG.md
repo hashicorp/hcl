@@ -5,6 +5,7 @@
 ### Bugs Fixed
 
 * ext/typeexpr: Skip null objects when applying defaults. This prevents crashes when null objects are creating inside collections, and stops incomplete objects being created with only optional attributes set. ([#567](https://github.com/hashicorp/hcl/pull/567))
+* ext/typeexpr: Ensure default values do not have optional metadata attached. This prevents crashes when default values are inserted into concrete go-cty values that have also been stripped of their optional metadata. ([#568](https://github.com/hashicorp/hcl/pull/568))
 
 ### Enhancements
 
