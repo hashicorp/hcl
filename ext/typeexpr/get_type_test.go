@@ -615,6 +615,67 @@ func TestGetTypeDefaults(t *testing.T) {
 			"",
 		},
 
+		// Lists should remove optional metadata from the concrete default
+		// values.
+		{
+			`object({ list = optional(list(object({ required = string, optional = optional(string) })), [])})`,
+			&Defaults{
+				Type: cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+					"list": cty.List(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+						"required": cty.String,
+						"optional": cty.String,
+					}, []string{"optional"})),
+				}, []string{"list"}),
+				DefaultValues: map[string]cty.Value{
+					"list": cty.ListValEmpty(cty.Object(map[string]cty.Type{
+						"required": cty.String,
+						"optional": cty.String,
+					})),
+				},
+			},
+			``,
+		},
+
+		// Lists should remove optional metadata from the concrete default
+		// values but should still apply recursive defaults.
+		{
+			`object({ list = optional(list(object({ required = string, optional = optional(string, "optional") })), [{ required = "required" }])})`,
+			&Defaults{
+				Type: cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+					"list": cty.List(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+						"required": cty.String,
+						"optional": cty.String,
+					}, []string{"optional"})),
+				}, []string{"list"}),
+				DefaultValues: map[string]cty.Value{
+					"list": cty.ListVal([]cty.Value{cty.ObjectVal(map[string]cty.Value{
+						"required": cty.StringVal("required"),
+						"optional": cty.NullVal(cty.String),
+					})}),
+				},
+				Children: map[string]*Defaults{
+					"list": {
+						Type: cty.List(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+							"required": cty.String,
+							"optional": cty.String,
+						}, []string{"optional"})),
+						Children: map[string]*Defaults{
+							"": {
+								Type: cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+									"required": cty.String,
+									"optional": cty.String,
+								}, []string{"optional"}),
+								DefaultValues: map[string]cty.Value{
+									"optional": cty.StringVal("optional"),
+								},
+							},
+						},
+					},
+				},
+			},
+			``,
+		},
+
 		// incompatible default value causes an error
 		{
 			`object({ a = optional(string, "hello"), b = optional(number, true) })`,
