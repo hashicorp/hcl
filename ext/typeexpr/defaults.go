@@ -1,10 +1,11 @@
 package typeexpr
 
 import (
-	"github.com/zclconf/go-cty/cty"
-	"github.com/zclconf/go-cty/cty/convert"
 	"sort"
 	"strconv"
+
+	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-cty/cty/convert"
 )
 
 // Defaults represents a type tree which may contain default values for
