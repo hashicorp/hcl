@@ -55,26 +55,28 @@ func (d *Defaults) apply(v cty.Value) cty.Value {
 		return v
 	}
 
+	v, marks := v.Unmark()
+
 	switch {
 	case v.Type().IsSetType(), v.Type().IsListType(), v.Type().IsTupleType():
 		values := d.applyAsSlice(v)
 		switch {
 		case v.Type().IsSetType():
 			if len(values) == 0 {
-				return cty.SetValEmpty(v.Type().ElementType())
+				return cty.SetValEmpty(v.Type().ElementType()).WithMarks(marks)
 			}
 			if converts := d.unifyAsSlice(values); len(converts) > 0 {
-				return cty.SetVal(converts)
+				return cty.SetVal(converts).WithMarks(marks)
 			}
 		case v.Type().IsListType():
 			if len(values) == 0 {
-				return cty.ListValEmpty(v.Type().ElementType())
+				return cty.ListValEmpty(v.Type().ElementType()).WithMarks(marks)
 			}
 			if converts := d.unifyAsSlice(values); len(converts) > 0 {
-				return cty.ListVal(converts)
+				return cty.ListVal(converts).WithMarks(marks)
 			}
 		}
-		return cty.TupleVal(values)
+		return cty.TupleVal(values).WithMarks(marks)
 	case v.Type().IsObjectType(), v.Type().IsMapType():
 		values := d.applyAsMap(v)
 
@@ -90,23 +92,24 @@ func (d *Defaults) apply(v cty.Value) cty.Value {
 
 		if v.Type().IsMapType() {
 			if len(values) == 0 {
-				return cty.MapValEmpty(v.Type().ElementType())
+				return cty.MapValEmpty(v.Type().ElementType()).WithMarks(marks)
 			}
 			if converts := d.unifyAsMap(values); len(converts) > 0 {
-				return cty.MapVal(converts)
+				return cty.MapVal(converts).WithMarks(marks)
 			}
 		}
-		return cty.ObjectVal(values)
+		return cty.ObjectVal(values).WithMarks(marks)
 	default:
-		return v
+		return v.WithMarks(marks)
 	}
 }
 
 func (d *Defaults) applyAsSlice(value cty.Value) []cty.Value {
 	var elements []cty.Value
 	for ix, element := range value.AsValueSlice() {
-		if defaults := d.getChild(ix); defaults != nil {
-			elements = append(elements, defaults.apply(element))
+		if childDefaults := d.getChild(ix); childDefaults != nil {
+			element = childDefaults.apply(element)
+			elements = append(elements, element)
 			continue
 		}
 		elements = append(elements, element)
@@ -117,8 +120,8 @@ func (d *Defaults) applyAsSlice(value cty.Value) []cty.Value {
 func (d *Defaults) applyAsMap(value cty.Value) map[string]cty.Value {
 	elements := make(map[string]cty.Value)
 	for key, element := range value.AsValueMap() {
-		if defaults := d.getChild(key); defaults != nil {
-			elements[key] = defaults.apply(element)
+		if childDefaults := d.getChild(key); childDefaults != nil {
+			elements[key] = childDefaults.apply(element)
 			continue
 		}
 		elements[key] = element
