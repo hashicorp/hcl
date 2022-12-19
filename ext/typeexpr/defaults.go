@@ -2,6 +2,9 @@ package typeexpr
 
 import (
 	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-cty/cty/convert"
+	"sort"
+	"strconv"
 )
 
 // Defaults represents a type tree which may contain default values for
@@ -35,128 +38,159 @@ type Defaults struct {
 // caller will have better context to report useful type conversion failure
 // diagnostics.
 func (d *Defaults) Apply(val cty.Value) cty.Value {
-	val, err := cty.TransformWithTransformer(val, &defaultsTransformer{defaults: d})
-
-	// The transformer should never return an error.
-	if err != nil {
-		panic(err)
-	}
-
-	return val
+	return d.apply(val)
 }
 
-// defaultsTransformer implements cty.Transformer, as a pre-order traversal,
-// applying defaults as it goes. The pre-order traversal allows us to specify
-// defaults more loosely for structural types, as the defaults for the types
-// will be applied to the default value later in the walk.
-type defaultsTransformer struct {
-	defaults *Defaults
-}
-
-var _ cty.Transformer = (*defaultsTransformer)(nil)
-
-func (t *defaultsTransformer) Enter(p cty.Path, v cty.Value) (cty.Value, error) {
-	// Cannot apply defaults to an unknown value, and should not apply defaults
-	// to a null value.
-	//
-	// A quick clarification, we should still override null values *inside* the
-	// object or map with defaults. But if the actual object or map itself is
-	// null then we skip it.
+func (d *Defaults) apply(v cty.Value) cty.Value {
+	// We don't apply defaults to null values or unknown values. To be clear,
+	// we will overwrite children values with defaults if they are null but not
+	// if the actual value is null.
 	if !v.IsKnown() || v.IsNull() {
-		return v, nil
+		return v
 	}
 
-	// Look up the defaults for this path.
-	defaults := t.defaults.traverse(p)
-
-	// If we have no defaults, nothing to do.
-	if len(defaults) == 0 {
-		return v, nil
+	// Also, do nothing if we have no defaults to apply.
+	if len(d.DefaultValues) == 0 && len(d.Children) == 0 {
+		return v
 	}
 
-	// Ensure we are working with an object or map.
-	vt := v.Type()
-	if !vt.IsObjectType() && !vt.IsMapType() {
-		// Cannot apply defaults because the value type is incompatible.
-		// We'll ignore this and let the later conversion stage display a
-		// more useful diagnostic.
-		return v, nil
-	}
-
-	// Unmark the value and reapply the marks later.
-	v, valMarks := v.Unmark()
-
-	// Convert the given value into an attribute map (if it's non-null and
-	// non-empty).
-	attrs := make(map[string]cty.Value)
-	if !v.IsNull() && v.LengthInt() > 0 {
-		attrs = v.AsValueMap()
-	}
-
-	// Apply defaults where attributes are missing, constructing a new
-	// value with the same marks.
-	for attr, defaultValue := range defaults {
-		if attrValue, ok := attrs[attr]; !ok || attrValue.IsNull() {
-			attrs[attr] = defaultValue
+	switch {
+	case v.Type().IsSetType(), v.Type().IsListType(), v.Type().IsTupleType():
+		values := d.applyAsSlice(v)
+		switch {
+		case v.Type().IsSetType():
+			if len(values) == 0 {
+				return cty.SetValEmpty(v.Type().ElementType())
+			}
+			if converts := d.unifyAsSlice(values); len(converts) > 0 {
+				return cty.SetVal(converts)
+			}
+		case v.Type().IsListType():
+			if len(values) == 0 {
+				return cty.ListValEmpty(v.Type().ElementType())
+			}
+			if converts := d.unifyAsSlice(values); len(converts) > 0 {
+				return cty.ListVal(converts)
+			}
 		}
-	}
+		return cty.TupleVal(values)
+	case v.Type().IsObjectType(), v.Type().IsMapType():
+		values := d.applyAsMap(v)
 
-	// We construct an object even if the input value was a map, as the
-	// type of an attribute's default value may be incompatible with the
-	// map element type.
-	return cty.ObjectVal(attrs).WithMarks(valMarks), nil
-}
-
-func (t *defaultsTransformer) Exit(p cty.Path, v cty.Value) (cty.Value, error) {
-	return v, nil
-}
-
-// traverse walks the abstract defaults structure for a given path, returning
-// a set of default values (if any are present) or nil (if not). This operation
-// differs from applying a path to a value because we need to customize the
-// traversal steps for collection types, where a single set of defaults can be
-// applied to an arbitrary number of elements.
-func (d *Defaults) traverse(path cty.Path) map[string]cty.Value {
-	if len(path) == 0 {
-		return d.DefaultValues
-	}
-
-	switch s := path[0].(type) {
-	case cty.GetAttrStep:
-		if d.Type.IsObjectType() {
-			// Attribute path steps are normally applied to objects, where each
-			// attribute may have different defaults.
-			return d.traverseChild(s.Name, path)
-		} else if d.Type.IsMapType() {
-			// Literal values for maps can result in attribute path steps, in which
-			// case we need to disregard the attribute name, as maps can have only
-			// one child.
-			return d.traverseChild("", path)
+		for key, defaultValue := range d.DefaultValues {
+			if value, ok := values[key]; !ok || value.IsNull() {
+				if defaults, ok := d.Children[key]; ok {
+					values[key] = defaults.apply(defaultValue)
+					continue
+				}
+				values[key] = defaultValue
+			}
 		}
 
-		return nil
-	case cty.IndexStep:
-		if d.Type.IsTupleType() {
-			// Tuples can have different types for each element, so we look
-			// up the defaults based on the index key.
-			return d.traverseChild(s.Key.AsBigFloat().String(), path)
-		} else if d.Type.IsCollectionType() {
-			// Defaults for collection element types are stored with a blank
-			// key, so we disregard the index key.
-			return d.traverseChild("", path)
+		if v.Type().IsMapType() {
+			if len(values) == 0 {
+				return cty.MapValEmpty(v.Type().ElementType())
+			}
+			if converts := d.unifyAsMap(values); len(converts) > 0 {
+				return cty.MapVal(converts)
+			}
 		}
-		return nil
+		return cty.ObjectVal(values)
 	default:
-		// At time of writing there are no other path step types.
+		return v
+	}
+}
+
+func (d *Defaults) applyAsSlice(value cty.Value) []cty.Value {
+	var elements []cty.Value
+	for ix, element := range value.AsValueSlice() {
+		if defaults := d.getChild(ix); defaults != nil {
+			elements = append(elements, defaults.apply(element))
+			continue
+		}
+		elements = append(elements, element)
+	}
+	return elements
+}
+
+func (d *Defaults) applyAsMap(value cty.Value) map[string]cty.Value {
+	elements := make(map[string]cty.Value)
+	for key, element := range value.AsValueMap() {
+		if defaults := d.getChild(key); defaults != nil {
+			elements[key] = defaults.apply(element)
+			continue
+		}
+		elements[key] = element
+	}
+	return elements
+}
+
+func (d *Defaults) getChild(key interface{}) *Defaults {
+	switch {
+	case d.Type.IsMapType(), d.Type.IsSetType(), d.Type.IsListType():
+		return d.Children[""]
+	case d.Type.IsTupleType():
+		return d.Children[strconv.Itoa(key.(int))]
+	case d.Type.IsObjectType():
+		return d.Children[key.(string)]
+	default:
 		return nil
 	}
 }
 
-// traverseChild continues the traversal for a given child key, and mutually
-// recurses with traverse.
-func (d *Defaults) traverseChild(name string, path cty.Path) map[string]cty.Value {
-	if child, ok := d.Children[name]; ok {
-		return child.traverse(path[1:])
+func (d *Defaults) unifyAsSlice(values []cty.Value) []cty.Value {
+	var types []cty.Type
+	for _, value := range values {
+		types = append(types, value.Type())
 	}
-	return nil
+	unify, conversions := convert.UnifyUnsafe(types)
+	if unify == cty.NilType {
+		return nil
+	}
+
+	var converts []cty.Value
+	for ix := 0; ix < len(conversions); ix++ {
+		if conversions[ix] == nil {
+			converts = append(converts, values[ix])
+			continue
+		}
+
+		converted, err := conversions[ix](values[ix])
+		if err != nil {
+			return nil
+		}
+		converts = append(converts, converted)
+	}
+	return converts
+}
+
+func (d *Defaults) unifyAsMap(values map[string]cty.Value) map[string]cty.Value {
+	var keys []string
+	for key := range values {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	var types []cty.Type
+	for _, key := range keys {
+		types = append(types, values[key].Type())
+	}
+	unify, conversions := convert.UnifyUnsafe(types)
+	if unify == cty.NilType {
+		return nil
+	}
+
+	converts := make(map[string]cty.Value)
+	for ix, key := range keys {
+		if conversions[ix] == nil {
+			converts[key] = values[key]
+			continue
+		}
+
+		var err error
+		if converts[key], err = conversions[ix](values[key]); err != nil {
+			return nil
+		}
+	}
+	return converts
 }
