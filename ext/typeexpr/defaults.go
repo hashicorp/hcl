@@ -10,7 +10,7 @@ import (
 
 // Defaults represents a type tree which may contain default values for
 // optional object attributes at any level. This is used to apply nested
-// defaults to a given cty.Value.
+// defaults to a given cty.Value before converting it to a concrete type.
 type Defaults struct {
 	// Type of the node for which these defaults apply. This is necessary in
 	// order to determine how to inspect the Defaults and Children collections.
@@ -32,8 +32,8 @@ type Defaults struct {
 
 // Apply walks the given value, applying specified defaults wherever optional
 // attributes are missing. The input and output values may have different
-// types, to avoid this the input value should be converted into the desired
-// type first.
+// types, and the result may still require type conversion to the final desired
+// type.
 //
 // This function is permissive and does not report errors, assuming that the
 // caller will have better context to report useful type conversion failure
@@ -60,23 +60,27 @@ func (d *Defaults) apply(v cty.Value) cty.Value {
 	switch {
 	case v.Type().IsSetType(), v.Type().IsListType(), v.Type().IsTupleType():
 		values := d.applyAsSlice(v)
-		switch {
-		case v.Type().IsSetType():
+
+		if v.Type().IsSetType() {
 			if len(values) == 0 {
-				return cty.SetValEmpty(v.Type().ElementType()).WithMarks(marks)
+				v = cty.SetValEmpty(v.Type().ElementType())
+				break
 			}
 			if converts := d.unifyAsSlice(values); len(converts) > 0 {
-				return cty.SetVal(converts).WithMarks(marks)
+				v = cty.SetVal(converts).WithMarks(marks)
+				break
 			}
-		case v.Type().IsListType():
+		} else if v.Type().IsListType() {
 			if len(values) == 0 {
-				return cty.ListValEmpty(v.Type().ElementType()).WithMarks(marks)
+				v = cty.ListValEmpty(v.Type().ElementType())
+				break
 			}
 			if converts := d.unifyAsSlice(values); len(converts) > 0 {
-				return cty.ListVal(converts).WithMarks(marks)
+				v = cty.ListVal(converts)
+				break
 			}
 		}
-		return cty.TupleVal(values).WithMarks(marks)
+		v = cty.TupleVal(values)
 	case v.Type().IsObjectType(), v.Type().IsMapType():
 		values := d.applyAsMap(v)
 
@@ -92,16 +96,18 @@ func (d *Defaults) apply(v cty.Value) cty.Value {
 
 		if v.Type().IsMapType() {
 			if len(values) == 0 {
-				return cty.MapValEmpty(v.Type().ElementType()).WithMarks(marks)
+				v = cty.MapValEmpty(v.Type().ElementType())
+				break
 			}
 			if converts := d.unifyAsMap(values); len(converts) > 0 {
-				return cty.MapVal(converts).WithMarks(marks)
+				v = cty.MapVal(converts)
+				break
 			}
 		}
-		return cty.ObjectVal(values).WithMarks(marks)
-	default:
-		return v.WithMarks(marks)
+		v = cty.ObjectVal(values)
 	}
+
+	return v.WithMarks(marks)
 }
 
 func (d *Defaults) applyAsSlice(value cty.Value) []cty.Value {
