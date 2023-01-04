@@ -25,9 +25,18 @@ func getType(expr hcl.Expression, constraint, withDefaults bool) (cty.Type, *Def
 		return cty.String, nil, nil
 	case "number":
 		return cty.Number, nil, nil
-	case "any":
+	case "inferred", "any":
 		if constraint {
-			return cty.DynamicPseudoType, nil, nil
+			var diags hcl.Diagnostics
+			if kw == "any" {
+				diags = diags.Append(&hcl.Diagnostic{
+					Severity: hcl.DiagWarning,
+					Summary:  "The \"any\" placeholder is deprecated",
+					Detail:   "The type placeholder \"any\" was renamed to \"inferred\" to better represent its meaning. Use \"inferred\" instead to get equivalent behavior without this warning.",
+					Subject:  expr.Range().Ptr(),
+				})
+			}
+			return cty.DynamicPseudoType, nil, diags
 		}
 		return cty.DynamicPseudoType, nil, hcl.Diagnostics{{
 			Severity: hcl.DiagError,

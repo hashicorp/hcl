@@ -44,6 +44,18 @@ func TestGetType(t *testing.T) {
 			"",
 		},
 		{
+			`inferred`,
+			false,
+			cty.DynamicPseudoType,
+			`The keyword "inferred" cannot be used in this type specification: an exact type is required.`,
+		},
+		{
+			`inferred`,
+			true,
+			cty.DynamicPseudoType,
+			"",
+		},
+		{
 			`any`,
 			false,
 			cty.DynamicPseudoType,
@@ -330,6 +342,9 @@ func TestGetType(t *testing.T) {
 			got, _, diags := getType(expr, test.Constraint, false)
 			if test.WantError == "" {
 				for _, diag := range diags {
+					if diag.Severity == hcl.DiagWarning {
+						continue
+					}
 					t.Error(diag)
 				}
 			} else {
@@ -443,6 +458,11 @@ func TestGetTypeDefaults(t *testing.T) {
 		},
 		{
 			`string`,
+			nil,
+			"",
+		},
+		{
+			`inferred`,
 			nil,
 			"",
 		},
@@ -709,6 +729,9 @@ func TestGetTypeDefaults(t *testing.T) {
 			_, got, diags := getType(expr, true, true)
 			if test.WantError == "" {
 				for _, diag := range diags {
+					if diag.Severity == hcl.DiagWarning {
+						continue
+					}
 					t.Error(diag)
 				}
 			} else {

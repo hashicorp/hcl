@@ -8,7 +8,7 @@ result_type = object({
   string_unicode_nonnorm      = string
   true                        = bool
   false                       = bool
-  null                        = any
+  null                        = inferred
 })
 result = {
   # Numbers
