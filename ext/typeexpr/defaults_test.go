@@ -53,9 +53,9 @@ func TestDefaults_Apply(t *testing.T) {
 			value: cty.MapVal(map[string]cty.Value{
 				"a": cty.StringVal("foo"),
 			}),
-			want: cty.ObjectVal(map[string]cty.Value{
+			want: cty.MapVal(map[string]cty.Value{
 				"a": cty.StringVal("foo"),
-				"b": cty.True,
+				"b": cty.StringVal("true"),
 			}),
 		},
 		// Unknown values may be assigned to root modules during validation,
@@ -83,7 +83,7 @@ func TestDefaults_Apply(t *testing.T) {
 				"a": cty.StringVal("foo"),
 				"b": cty.StringVal("false"),
 			}),
-			want: cty.ObjectVal(map[string]cty.Value{
+			want: cty.MapVal(map[string]cty.Value{
 				"a": cty.StringVal("foo"),
 				"b": cty.StringVal("false"),
 			}),
@@ -100,9 +100,9 @@ func TestDefaults_Apply(t *testing.T) {
 				"a": cty.StringVal("foo"),
 				"b": cty.NullVal(cty.String),
 			}),
-			want: cty.ObjectVal(map[string]cty.Value{
+			want: cty.MapVal(map[string]cty.Value{
 				"a": cty.StringVal("foo"),
-				"b": cty.True,
+				"b": cty.StringVal("true"),
 			}),
 		},
 		// Defaults can be specified at any level of depth and will be applied
@@ -648,6 +648,105 @@ func TestDefaults_Apply(t *testing.T) {
 			},
 			value: cty.EmptyObjectVal,
 			want:  cty.EmptyObjectVal,
+		},
+		"tuples retain custom values and dynamic types": {
+			defaults: &Defaults{
+				Type: cty.List(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+					"name":   cty.String,
+					"taints": cty.List(cty.Map(cty.DynamicPseudoType)),
+				}, []string{"name", "taints"})),
+				Children: map[string]*Defaults{
+					"": {
+						Type: cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+							"name":   cty.String,
+							"taints": cty.List(cty.Map(cty.DynamicPseudoType)),
+						}, []string{"name", "taints"}),
+						DefaultValues: map[string]cty.Value{
+							"name":   cty.StringVal("default"),
+							"taints": cty.ListValEmpty(cty.Map(cty.DynamicPseudoType)),
+						},
+					},
+				},
+			},
+			value: cty.TupleVal([]cty.Value{
+				cty.ObjectVal(map[string]cty.Value{
+					"name": cty.StringVal("node-pool-32"),
+				}),
+				cty.ObjectVal(map[string]cty.Value{
+					"name": cty.StringVal("node-envoy-32"),
+					"taints": cty.ListVal([]cty.Value{
+						cty.MapVal(map[string]cty.Value{
+							"key":   cty.StringVal("etsy.com/nodepool"),
+							"value": cty.StringVal("envoy"),
+						}),
+					}),
+				}),
+			}),
+			want: cty.TupleVal([]cty.Value{
+				cty.ObjectVal(map[string]cty.Value{
+					"name":   cty.StringVal("node-pool-32"),
+					"taints": cty.ListValEmpty(cty.Map(cty.DynamicPseudoType)),
+				}),
+				cty.ObjectVal(map[string]cty.Value{
+					"name": cty.StringVal("node-envoy-32"),
+					"taints": cty.ListVal([]cty.Value{
+						cty.MapVal(map[string]cty.Value{
+							"key":   cty.StringVal("etsy.com/nodepool"),
+							"value": cty.StringVal("envoy"),
+						}),
+					}),
+				}),
+			}),
+		},
+		"lists merge dynamic types with concrete types": {
+			defaults: &Defaults{
+				Type: cty.List(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+					"name":   cty.String,
+					"taints": cty.List(cty.Map(cty.DynamicPseudoType)),
+				}, []string{"name", "taints"})),
+				Children: map[string]*Defaults{
+					"": {
+						Type: cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+							"name":   cty.String,
+							"taints": cty.List(cty.Map(cty.DynamicPseudoType)),
+						}, []string{"name", "taints"}),
+						DefaultValues: map[string]cty.Value{
+							"name":   cty.StringVal("default"),
+							"taints": cty.ListValEmpty(cty.Map(cty.DynamicPseudoType)),
+						},
+					},
+				},
+			},
+			value: cty.ListVal([]cty.Value{
+				cty.ObjectVal(map[string]cty.Value{
+					"name":   cty.StringVal("node-pool-32"),
+					"taints": cty.NullVal(cty.List(cty.Map(cty.String))),
+				}),
+				cty.ObjectVal(map[string]cty.Value{
+					"name": cty.StringVal("node-envoy-32"),
+					"taints": cty.ListVal([]cty.Value{
+						cty.MapVal(map[string]cty.Value{
+							"key":   cty.StringVal("etsy.com/nodepool"),
+							"value": cty.StringVal("envoy"),
+						}),
+					}),
+				}),
+			}),
+			want: cty.ListVal([]cty.Value{
+				cty.ObjectVal(map[string]cty.Value{
+					"name":   cty.StringVal("node-pool-32"),
+					"taints": cty.ListValEmpty(cty.Map(cty.String)),
+				}),
+				cty.ObjectVal(map[string]cty.Value{
+					"name": cty.StringVal("node-envoy-32"),
+					"taints": cty.ListVal([]cty.Value{
+						cty.MapVal(map[string]cty.Value{
+							"key":   cty.StringVal("etsy.com/nodepool"),
+							"value": cty.StringVal("envoy"),
+						}),
+					}),
+				}),
+			}),
 		},
 	}
 
