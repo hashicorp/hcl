@@ -271,7 +271,7 @@ tuple = "[" (
     (Expression ("," Expression)* ","?)?
 ) "]";
 object = "{" (
-    (objectelem ("," objectelem)* ","?)?
+    (objectelem ((","|NEWLINE) objectelem)* ","?)?
 ) "}";
 objectelem = (Identifier | Expression) ("=" | ":") Expression;
 ```
