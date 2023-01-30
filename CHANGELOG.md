@@ -1,14 +1,18 @@
 # HCL Changelog
 
-## v2.16.0 (Unreleased)
-
-### Bugs Fixed
-
-* ext/typeexpr: Modify the `Defaults` functionality to implement additional flexibility. HCL will now upcast lists and sets into tuples, and maps into objects, when applying default values if the applied defaults cause the elements within a target collection to have differing types. Previously, this would have resulted in a panic, now HCL will return a modified overall type. ([#574](https://github.com/hashicorp/hcl/pull/574))
+## v2.16.0 (January 30, 2023)
 
 ### Enhancements
 
-* ext/typeexpr: Users should return to the advice provided by v2.14.0, and apply the go-cty convert functionality *after* setting defaults on a given `cty.Value`, rather than before.  ([#574](https://github.com/hashicorp/hcl/pull/574))
+* ext/typeexpr: Modify the `Defaults` functionality to implement additional flexibility. HCL will now upcast lists and sets into tuples, and maps into objects, when applying default values if the applied defaults cause the elements within a target collection to have differing types. Previously, this would have resulted in a panic, now HCL will return a modified overall type. ([#574](https://github.com/hashicorp/hcl/pull/574))
+
+    Users should return to the advice provided by v2.14.0, and apply the go-cty convert functionality *after* setting defaults on a given `cty.Value`, rather than before.
+* hclfmt: Avoid rewriting unchanged files. ([#576](https://github.com/hashicorp/hcl/pull/576))
+* hclsyntax: Simplify the AST for certain string expressions. ([#584](https://github.com/hashicorp/hcl/pull/584))
+
+### Bugs Fixed
+
+* hclwrite: Fix data race in `formatSpaces`. ([#511](https://github.com/hashicorp/hcl/pull/511))
 
 ## v2.15.0 (November 10, 2022)
 
