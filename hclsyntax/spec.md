@@ -84,8 +84,8 @@ Comments serve as program documentation and come in two forms:
   sequence, and may have any characters within except the ending sequence.
   An inline comment is considered equivalent to a whitespace sequence.
 
-Comments and whitespace cannot begin within other comments, or within template
-literals except inside an interpolation sequence or template directive.
+Comments and whitespace cannot begin within other comments, or within
+template literals except inside an interpolation sequence or template directive.
 
 ### Identifiers
 
@@ -635,7 +635,7 @@ binaryOp = ExprTerm binaryOperator ExprTerm;
 binaryOperator = compareOperator | arithmeticOperator | logicOperator;
 compareOperator = "==" | "!=" | "<" | ">" | "<=" | ">=";
 arithmeticOperator = "+" | "-" | "*" | "/" | "%";
-logicOperator = "&&" | "||" | "!";
+logicOperator = "&&" | "||";
 ```
 
 The unary operators have the highest precedence.

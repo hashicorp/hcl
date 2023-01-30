@@ -35,10 +35,6 @@ func TypeConstraint(expr hcl.Expression) (cty.Type, hcl.Diagnostics) {
 // constraint which may include default values for object attributes. If
 // successful both the resulting type and corresponding defaults are returned.
 // If unsuccessful, error diagnostics are returned.
-//
-// When using this function, defaults should be applied to the input value
-// before type conversion, to ensure that objects with missing attributes have
-// default values populated.
 func TypeConstraintWithDefaults(expr hcl.Expression) (cty.Type, *Defaults, hcl.Diagnostics) {
 	return getType(expr, true, true)
 }
