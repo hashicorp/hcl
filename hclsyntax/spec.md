@@ -635,7 +635,7 @@ binaryOp = ExprTerm binaryOperator ExprTerm;
 binaryOperator = compareOperator | arithmeticOperator | logicOperator;
 compareOperator = "==" | "!=" | "<" | ">" | "<=" | ">=";
 arithmeticOperator = "+" | "-" | "*" | "/" | "%";
-logicOperator = "&&" | "||" | "!";
+logicOperator = "&&" | "||";
 ```
 
 The unary operators have the highest precedence.
