@@ -395,3 +395,44 @@ trim`,
 	}
 
 }
+
+func TestTemplateExprIsStringLiteral(t *testing.T) {
+	tests := map[string]bool{
+		// A simple string value is a string literal
+		"a": true,
+
+		// Strings containing escape characters or escape sequences are
+		// tokenized into multiple string literals, but this should be
+		// corrected by the parser
+		"a$b":        true,
+		"a%%b":       true,
+		"a\nb":       true,
+		"a$${\"b\"}": true,
+
+		// Wrapped values (HIL-like) are not treated as string literals for
+		// legacy reasons
+		"${1}":     false,
+		"${\"b\"}": false,
+
+		// Even template expressions containing only literal values do not
+		// count as string literals
+		"a${1}":     false,
+		"a${\"b\"}": false,
+	}
+	for input, want := range tests {
+		t.Run(input, func(t *testing.T) {
+			expr, diags := ParseTemplate([]byte(input), "", hcl.InitialPos)
+			if len(diags) != 0 {
+				t.Fatalf("unexpected diags: %s", diags.Error())
+			}
+
+			if tmplExpr, ok := expr.(*TemplateExpr); ok {
+				got := tmplExpr.IsStringLiteral()
+
+				if got != want {
+					t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, want)
+				}
+			}
+		})
+	}
+}
