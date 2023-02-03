@@ -95,6 +95,9 @@ func (d *Defaults) apply(v cty.Value) cty.Value {
 				}
 				values[key] = defaultValue
 			}
+			if defaultRng := defaultValue.Range(); defaultRng.DefinitelyNotNull() {
+				values[key] = values[key].RefineNotNull()
+			}
 		}
 
 		if v.Type().IsMapType() {

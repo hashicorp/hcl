@@ -830,6 +830,74 @@ func TestDefaults_Apply(t *testing.T) {
 				}),
 			}),
 		},
+		"optional attribute with a default can never be null": {
+			defaults: &Defaults{
+				Type: cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+					"foo": cty.String,
+				}, []string{"foo"}),
+				DefaultValues: map[string]cty.Value{
+					"foo": cty.StringVal("bar"), // Important: default is non-null
+				},
+			},
+			value: cty.ObjectVal(map[string]cty.Value{
+				"foo": cty.UnknownVal(cty.String), // could potentially be null once known
+			}),
+			want: cty.ObjectVal(map[string]cty.Value{
+				// Because the default isn't null we can guarantee that the
+				// result cannot be null even if the given value turns out to be.
+				"foo": cty.UnknownVal(cty.String).RefineNotNull(),
+			}),
+		},
+		"optional attribute with a null default could be null": {
+			defaults: &Defaults{
+				Type: cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+					"foo": cty.String,
+				}, []string{"foo"}),
+				DefaultValues: map[string]cty.Value{
+					"foo": cty.NullVal(cty.String), // Important: default is null
+				},
+			},
+			value: cty.ObjectVal(map[string]cty.Value{
+				"foo": cty.UnknownVal(cty.String), // could potentially be null once known
+			}),
+			want: cty.ObjectVal(map[string]cty.Value{
+				// The default value is itself null, so this result is nullable.
+				"foo": cty.UnknownVal(cty.String),
+			}),
+		},
+		"optional attribute with no default could be null": {
+			defaults: &Defaults{
+				Type: cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+					"foo": cty.String,
+				}, []string{"foo"}),
+			},
+			value: cty.ObjectVal(map[string]cty.Value{
+				"foo": cty.UnknownVal(cty.String), // could potentially be null once known
+			}),
+			want: cty.ObjectVal(map[string]cty.Value{
+				// The default value is itself null, so this result is nullable.
+				"foo": cty.UnknownVal(cty.String),
+			}),
+		},
+		"optional attribute with non-null unknown value cannot be null": {
+			defaults: &Defaults{
+				Type: cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+					"foo": cty.String,
+				}, []string{"foo"}),
+				DefaultValues: map[string]cty.Value{
+					"foo": cty.NullVal(cty.String), // Important: default is null
+				},
+			},
+			value: cty.ObjectVal(map[string]cty.Value{
+				"foo": cty.UnknownVal(cty.String).RefineNotNull(),
+			}),
+			want: cty.ObjectVal(map[string]cty.Value{
+				// If the input is guaranteed not null then the default
+				// value can't possibly be selected, and so the result can
+				// also not be null.
+				"foo": cty.UnknownVal(cty.String).RefineNotNull(),
+			}),
+		},
 	}
 
 	for name, tc := range testCases {
