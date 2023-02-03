@@ -60,7 +60,7 @@ func TestExpressionParseAndValue(t *testing.T) {
 					"unk": cty.UnknownVal(cty.Number),
 				},
 			},
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 			0,
 		},
 		{
@@ -70,7 +70,7 @@ func TestExpressionParseAndValue(t *testing.T) {
 					"unk": cty.DynamicVal,
 				},
 			},
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 			0,
 		},
 		{
@@ -80,7 +80,7 @@ func TestExpressionParseAndValue(t *testing.T) {
 					"unk": cty.DynamicVal,
 				},
 			},
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 			0,
 		},
 		{
@@ -2098,7 +2098,7 @@ func TestFunctionCallExprValue(t *testing.T) {
 			&hcl.EvalContext{
 				Functions: funcs,
 			},
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).Refine().NotNull().NumberRangeLowerBound(cty.NumberIntVal(0), true).NewValue(),
 			0,
 		},
 		"valid call with unknown arg needing conversion": {
@@ -2113,7 +2113,7 @@ func TestFunctionCallExprValue(t *testing.T) {
 			&hcl.EvalContext{
 				Functions: funcs,
 			},
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).Refine().NotNull().NumberRangeLowerBound(cty.NumberIntVal(0), true).NewValue(),
 			0,
 		},
 		"valid call with dynamic arg": {
@@ -2128,7 +2128,7 @@ func TestFunctionCallExprValue(t *testing.T) {
 			&hcl.EvalContext{
 				Functions: funcs,
 			},
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).Refine().NotNull().NumberRangeLowerBound(cty.NumberIntVal(0), true).NewValue(),
 			0,
 		},
 		"invalid arg type": {
