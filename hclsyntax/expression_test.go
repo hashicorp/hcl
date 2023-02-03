@@ -1151,6 +1151,20 @@ upper(
 			0,
 		},
 		{
+			`unkstr[*]`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unkstr": cty.UnknownVal(cty.String).RefineNotNull(),
+				},
+			},
+			// If the unknown string is definitely not null then we already
+			// know that the result will be a single-element tuple.
+			cty.TupleVal([]cty.Value{
+				cty.UnknownVal(cty.String).RefineNotNull(),
+			}),
+			0,
+		},
+		{
 			`unkstr.*.name`,
 			&hcl.EvalContext{
 				Variables: map[string]cty.Value{
@@ -1183,6 +1197,20 @@ upper(
 			0,
 		},
 		{
+			`unkobj.*.name`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unkobj": cty.UnknownVal(cty.Object(map[string]cty.Type{
+						"name": cty.String,
+					})).RefineNotNull(),
+				},
+			},
+			cty.TupleVal([]cty.Value{
+				cty.UnknownVal(cty.String),
+			}),
+			0,
+		},
+		{
 			`unkobj.*.names`,
 			&hcl.EvalContext{
 				Variables: map[string]cty.Value{
@@ -1203,7 +1231,24 @@ upper(
 					}))),
 				},
 			},
-			cty.UnknownVal(cty.List(cty.String)),
+			cty.UnknownVal(cty.List(cty.String)).RefineNotNull(),
+			0,
+		},
+		{
+			`unklistobj.*.name`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unklistobj": cty.UnknownVal(cty.List(cty.Object(map[string]cty.Type{
+						"name": cty.String,
+					}))).Refine().
+						CollectionLengthUpperBound(5).
+						NewValue(),
+				},
+			},
+			cty.UnknownVal(cty.List(cty.String)).Refine().
+				NotNull().
+				CollectionLengthUpperBound(5).
+				NewValue(),
 			0,
 		},
 		{
@@ -1222,7 +1267,7 @@ upper(
 					),
 				},
 			},
-			cty.UnknownVal(cty.Tuple([]cty.Type{cty.String, cty.Bool})),
+			cty.UnknownVal(cty.Tuple([]cty.Type{cty.String, cty.Bool})).RefineNotNull(),
 			0,
 		},
 		{

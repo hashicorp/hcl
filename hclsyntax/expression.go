@@ -1684,11 +1684,15 @@ func (e *SplatExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 		// example, it is valid to use a splat on a single object to retrieve a
 		// list of a single attribute, but we still need to check if that
 		// attribute actually exists.
-		upgradedUnknown = !sourceVal.IsKnown()
+		if !sourceVal.IsKnown() {
+			sourceRng := sourceVal.Range()
+			if sourceRng.CouldBeNull() {
+				upgradedUnknown = true
+			}
+		}
 
 		sourceVal = cty.TupleVal([]cty.Value{sourceVal})
 		sourceTy = sourceVal.Type()
-
 	}
 
 	// We'll compute our result type lazily if we need it. In the normal case
@@ -1727,7 +1731,20 @@ func (e *SplatExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 		// checking to proceed.
 		ty, tyDiags := resultTy()
 		diags = append(diags, tyDiags...)
-		return cty.UnknownVal(ty), diags
+		ret := cty.UnknownVal(ty)
+		if ty != cty.DynamicPseudoType {
+			ret = ret.RefineNotNull()
+		}
+		if ty.IsListType() && sourceVal.Type().IsCollectionType() {
+			// We can refine the length of an unknown list result based on
+			// the source collection's own length.
+			sourceRng := sourceVal.Range()
+			ret = ret.Refine().
+				CollectionLengthLowerBound(sourceRng.LengthLowerBound()).
+				CollectionLengthUpperBound(sourceRng.LengthUpperBound()).
+				NewValue()
+		}
+		return ret.WithSameMarks(sourceVal), diags
 	}
 
 	// Unmark the collection, and save the marks to apply to the returned
