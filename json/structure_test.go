@@ -1433,7 +1433,7 @@ func TestExpressionValue_Diags(t *testing.T) {
 		{
 			name:     "string: unhappy",
 			src:      `{"v": "happy ${UNKNOWN}"}`,
-			expected: cty.UnknownVal(cty.String),
+			expected: cty.UnknownVal(cty.String).RefineNotNull(),
 			error:    "Unknown variable",
 		},
 		{
@@ -1447,7 +1447,7 @@ func TestExpressionValue_Diags(t *testing.T) {
 			name: "object_val: unhappy",
 			src:  `{"v": {"key": "happy ${UNKNOWN}"}}`,
 			expected: cty.ObjectVal(map[string]cty.Value{
-				"key": cty.UnknownVal(cty.String),
+				"key": cty.UnknownVal(cty.String).RefineNotNull(),
 			}),
 			error: "Unknown variable",
 		},
@@ -1472,7 +1472,7 @@ func TestExpressionValue_Diags(t *testing.T) {
 		{
 			name:     "array: unhappy",
 			src:      `{"v": ["happy ${UNKNOWN}"]}`,
-			expected: cty.TupleVal([]cty.Value{cty.UnknownVal(cty.String)}),
+			expected: cty.TupleVal([]cty.Value{cty.UnknownVal(cty.String).RefineNotNull()}),
 			error:    "Unknown variable",
 		},
 	}
