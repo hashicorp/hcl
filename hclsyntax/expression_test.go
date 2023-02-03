@@ -1840,6 +1840,85 @@ EOT
 			cty.DynamicVal,
 			0,
 		},
+		{
+			`unknown ? 1 : 0`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unknown": cty.UnknownVal(cty.Bool),
+				},
+			},
+			cty.UnknownVal(cty.Number).Refine().
+				NotNull().
+				NumberRangeLowerBound(cty.Zero, true).
+				NumberRangeUpperBound(cty.NumberIntVal(1), true).
+				NewValue(),
+			0,
+		},
+		{
+			`unknown ? 0 : 1`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unknown": cty.UnknownVal(cty.Bool),
+				},
+			},
+			cty.UnknownVal(cty.Number).Refine().
+				NotNull().
+				NumberRangeLowerBound(cty.Zero, true).
+				NumberRangeUpperBound(cty.NumberIntVal(1), true).
+				NewValue(),
+			0,
+		},
+		{
+			`unknown ? a : b`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unknown": cty.UnknownVal(cty.Bool),
+					"a":       cty.UnknownVal(cty.Bool).RefineNotNull(),
+					"b":       cty.UnknownVal(cty.Bool).RefineNotNull(),
+				},
+			},
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
+			0,
+		},
+		{
+			`unknown ? a : b`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unknown": cty.UnknownVal(cty.Bool),
+					"a":       cty.ListValEmpty(cty.String),
+					"b":       cty.ListValEmpty(cty.String),
+				},
+			},
+			cty.ListValEmpty(cty.String), // deduced through refinements
+			0,
+		},
+		{
+			`unknown ? a : b`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unknown": cty.UnknownVal(cty.Bool),
+					"a":       cty.ListValEmpty(cty.String),
+					"b":       cty.ListVal([]cty.Value{cty.UnknownVal(cty.String)}),
+				},
+			},
+			cty.UnknownVal(cty.List(cty.String)).Refine().
+				NotNull().
+				CollectionLengthUpperBound(1).
+				NewValue(),
+			0,
+		},
+		{
+			`unknown ? a : b`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unknown": cty.UnknownVal(cty.Bool),
+					"a":       cty.ListVal([]cty.Value{cty.StringVal("hello")}),
+					"b":       cty.ListVal([]cty.Value{cty.UnknownVal(cty.String)}),
+				},
+			},
+			cty.ListVal([]cty.Value{cty.UnknownVal(cty.String)}), // deduced through refinements
+			0,
+		},
 		{ // marked conditional
 			`var.foo ? 1 : 0`,
 			&hcl.EvalContext{

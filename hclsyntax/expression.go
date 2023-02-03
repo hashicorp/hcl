@@ -696,7 +696,59 @@ func (e *ConditionalExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostic
 		return cty.UnknownVal(resultType), diags
 	}
 	if !condResult.IsKnown() {
-		return cty.UnknownVal(resultType), diags
+		// We might be able to offer a refined range for the result based on
+		// the two possible outcomes.
+		if trueResult.Type() == cty.Number && falseResult.Type() == cty.Number {
+			// This case deals with the common case of (predicate ? 1 : 0) and
+			// significantly decreases the range of the result in that case.
+			if !(trueResult.IsNull() || falseResult.IsNull()) {
+				if gt := trueResult.GreaterThan(falseResult); gt.IsKnown() {
+					b := cty.UnknownVal(cty.Number).Refine()
+					if gt.True() {
+						b = b.
+							NumberRangeLowerBound(falseResult, true).
+							NumberRangeUpperBound(trueResult, true)
+					} else {
+						b = b.
+							NumberRangeLowerBound(trueResult, true).
+							NumberRangeUpperBound(falseResult, true)
+					}
+					b = b.NotNull() // If neither of the results is null then the result can't be either
+					return b.NewValue().WithSameMarks(condResult).WithSameMarks(trueResult).WithSameMarks(falseResult), diags
+				}
+			}
+		}
+		if trueResult.Type().IsCollectionType() && falseResult.Type().IsCollectionType() {
+			if trueResult.Type().Equals(falseResult.Type()) {
+				if !(trueResult.IsNull() || falseResult.IsNull()) {
+					trueLen := trueResult.Length()
+					falseLen := falseResult.Length()
+					if gt := trueLen.GreaterThan(falseLen); gt.IsKnown() {
+						b := cty.UnknownVal(resultType).Refine()
+						trueLen, _ := trueLen.AsBigFloat().Int64()
+						falseLen, _ := falseLen.AsBigFloat().Int64()
+						if gt.True() {
+							b = b.
+								CollectionLengthLowerBound(int(falseLen)).
+								CollectionLengthUpperBound(int(trueLen))
+						} else {
+							b = b.
+								CollectionLengthLowerBound(int(trueLen)).
+								CollectionLengthUpperBound(int(falseLen))
+						}
+						b = b.NotNull() // If neither of the results is null then the result can't be either
+						return b.NewValue().WithSameMarks(condResult).WithSameMarks(trueResult).WithSameMarks(falseResult), diags
+					}
+				}
+			}
+		}
+		trueRng := trueResult.Range()
+		falseRng := falseResult.Range()
+		ret := cty.UnknownVal(resultType)
+		if trueRng.DefinitelyNotNull() && falseRng.DefinitelyNotNull() {
+			ret = ret.RefineNotNull()
+		}
+		return ret.WithSameMarks(condResult).WithSameMarks(trueResult).WithSameMarks(falseResult), diags
 	}
 	condResult, err := convert.Convert(condResult, cty.Bool)
 	if err != nil {
