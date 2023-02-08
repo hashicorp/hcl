@@ -1606,7 +1606,52 @@ func (s *TransformFuncSpec) sourceRange(content *hcl.BodyContent, blockLabels []
 	return s.Wrapped.sourceRange(content, blockLabels)
 }
 
-// ValidateFuncSpec is a spec that allows for extended
+// RefineValueSpec is a spec that wraps another and applies a fixed set of [cty]
+// value refinements to whatever value it produces.
+//
+// Refinements serve to constrain the range of any unknown values, and act as
+// assertions for known values by panicking if the final value does not meet
+// the refinement. Therefore applications using this spec must guarantee that
+// any value passing through the RefineValueSpec will always be consistent with
+// the refinements; if not then that is a bug in the application.
+//
+// The wrapped spec should typically be a [ValidateSpec], a [TransformFuncSpec],
+// or some other adapter that guarantees that the inner result cannot possibly
+// violate the refinements.
+type RefineValueSpec struct {
+	Wrapped Spec
+
+	// Refine is a function which accepts a builder for a refinement in
+	// progress and uses the builder pattern to add extra refinements to it,
+	// finally returning the same builder with those modifications applied.
+	Refine func(*cty.RefinementBuilder) *cty.RefinementBuilder
+}
+
+func (s *RefineValueSpec) visitSameBodyChildren(cb visitFunc) {
+	cb(s.Wrapped)
+}
+
+func (s *RefineValueSpec) decode(content *hcl.BodyContent, blockLabels []blockLabel, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
+	wrappedVal, diags := s.Wrapped.decode(content, blockLabels, ctx)
+	if diags.HasErrors() {
+		// We won't try to run our function in this case, because it'll probably
+		// generate confusing additional errors that will distract from the
+		// root cause.
+		return cty.UnknownVal(s.impliedType()), diags
+	}
+
+	return wrappedVal.RefineWith(s.Refine), diags
+}
+
+func (s *RefineValueSpec) impliedType() cty.Type {
+	return s.Wrapped.impliedType()
+}
+
+func (s *RefineValueSpec) sourceRange(content *hcl.BodyContent, blockLabels []blockLabel) hcl.Range {
+	return s.Wrapped.sourceRange(content, blockLabels)
+}
+
+// ValidateSpec is a spec that allows for extended
 // developer-defined validation. The validation function receives the
 // result of the wrapped spec.
 //

@@ -9,6 +9,8 @@ import (
 	"testing"
 
 	"github.com/apparentlymart/go-dump/dump"
+	"github.com/google/go-cmp/cmp"
+	"github.com/zclconf/go-cty-debug/ctydebug"
 	"github.com/zclconf/go-cty/cty"
 
 	"github.com/hashicorp/hcl/v2"
@@ -208,5 +210,74 @@ foo = "invalid"
 				t.Fatalf("expected range %s, got range %s", expectRange[name], diags[0].Subject)
 			}
 		})
+	}
+}
+
+func TestRefineValueSpec(t *testing.T) {
+	config := `
+foo = "hello"
+bar = unk
+`
+
+	f, diags := hclsyntax.ParseConfig([]byte(config), "", hcl.InitialPos)
+	if diags.HasErrors() {
+		t.Fatal(diags.Error())
+	}
+
+	attrSpec := func(name string) Spec {
+		return &RefineValueSpec{
+			// RefineValueSpec should typically have a ValidateSpec wrapped
+			// inside it to catch any values that are outside of the required
+			// range and return a helpful error message about it. In this
+			// case our refinement is .NotNull so the validation function
+			// must reject null values.
+			Wrapped: &ValidateSpec{
+				Wrapped: &AttrSpec{
+					Name:     name,
+					Required: true,
+					Type:     cty.String,
+				},
+				Func: func(value cty.Value) hcl.Diagnostics {
+					var diags hcl.Diagnostics
+					if value.IsNull() {
+						diags = diags.Append(&hcl.Diagnostic{
+							Severity: hcl.DiagError,
+							Summary:  "Cannot be null",
+							Detail:   "Argument is required.",
+						})
+					}
+					return diags
+				},
+			},
+			Refine: func(rb *cty.RefinementBuilder) *cty.RefinementBuilder {
+				return rb.NotNull()
+			},
+		}
+	}
+	spec := &ObjectSpec{
+		"foo": attrSpec("foo"),
+		"bar": attrSpec("bar"),
+	}
+
+	got, diags := Decode(f.Body, spec, &hcl.EvalContext{
+		Variables: map[string]cty.Value{
+			"unk": cty.UnknownVal(cty.String),
+		},
+	})
+	if diags.HasErrors() {
+		t.Fatal(diags.Error())
+	}
+
+	want := cty.ObjectVal(map[string]cty.Value{
+		// This argument had a known value, so it's unchanged but the
+		// RefineValueSpec still checks that it isn't null to catch
+		// bugs in the application's validation function.
+		"foo": cty.StringVal("hello"),
+
+		// The final value of bar is unknown but refined as non-null.
+		"bar": cty.UnknownVal(cty.String).RefineNotNull(),
+	})
+	if diff := cmp.Diff(want, got, ctydebug.CmpOptions); diff != "" {
+		t.Errorf("wrong result\n%s", diff)
 	}
 }
