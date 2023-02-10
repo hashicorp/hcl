@@ -1,8 +1,10 @@
 package hclsyntax
 
 import (
+	"fmt"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-cty/cty/function"
@@ -2267,5 +2269,79 @@ func TestStaticExpressionList(t *testing.T) {
 	}
 	if !first.Val.RawEquals(cty.Zero) {
 		t.Fatalf("wrong first value %#v; want cty.Zero", first.Val)
+	}
+}
+
+// Check that function call w/ incomplete argument still reports correct range
+func TestParseExpression_incompleteFunctionCall(t *testing.T) {
+	tests := []struct {
+		cfg           string
+		expectedRange hcl.Range
+	}{
+		{
+			`object({ foo = })`,
+			hcl.Range{
+				Filename: "test.hcl",
+				Start:    hcl.InitialPos,
+				End:      hcl.Pos{Line: 1, Column: 18, Byte: 17},
+			},
+		},
+		{
+			`object({
+  foo =
+})`,
+			hcl.Range{
+				Filename: "test.hcl",
+				Start:    hcl.InitialPos,
+				End:      hcl.Pos{Line: 3, Column: 3, Byte: 19},
+			},
+		},
+		{
+			`object({ foo = }`,
+			hcl.Range{
+				Filename: "test.hcl",
+				Start:    hcl.InitialPos,
+				End:      hcl.Pos{Line: 0, Column: 0, Byte: 0},
+			},
+		},
+		{
+			`object({
+  foo =
+}`,
+			hcl.Range{
+				Filename: "test.hcl",
+				Start:    hcl.InitialPos,
+				End:      hcl.Pos{Line: 0, Column: 0, Byte: 0},
+			},
+		},
+		{
+			`object({
+  foo =
+`,
+			hcl.Range{
+				Filename: "test.hcl",
+				Start:    hcl.InitialPos,
+				End:      hcl.Pos{Line: 0, Column: 0, Byte: 0},
+			},
+		},
+		{
+			`object({
+  foo =
+)`,
+			hcl.Range{
+				Filename: "test.hcl",
+				Start:    hcl.InitialPos,
+				End:      hcl.Pos{Line: 0, Column: 0, Byte: 0},
+			},
+		},
+	}
+
+	for i, tc := range tests {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			expr, _ := ParseExpression([]byte(tc.cfg), "test.hcl", hcl.InitialPos)
+			if diff := cmp.Diff(tc.expectedRange, expr.Range()); diff != "" {
+				t.Fatalf("range mismatch: %s", diff)
+			}
+		})
 	}
 }
