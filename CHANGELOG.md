@@ -1,5 +1,11 @@
 # HCL Changelog
 
+## v2.16.1 (February 13, 2023)
+
+### Bugs Fixed
+
+* hclsyntax: Report correct `Range.End` for `FunctionCall` with incomplete argument ([#588](https://github.com/hashicorp/hcl/pull/588))
+
 ## v2.16.0 (January 30, 2023)
 
 ### Enhancements
