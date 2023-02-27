@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 // Package hclwrite deals with the problem of generating HCL configuration
 // and of making specific surgical changes to existing HCL configurations.
 //

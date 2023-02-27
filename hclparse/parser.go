@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 // Package hclparse has the main API entry point for parsing both HCL native
 // syntax and HCL JSON.
 //

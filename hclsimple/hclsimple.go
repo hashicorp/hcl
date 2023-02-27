@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 // Package hclsimple is a higher-level entry point for loading HCL
 // configuration files directly into Go struct values in a single step.
 //

@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 // Package transform is a helper package for writing extensions that work
 // by applying transforms to bodies.
 //

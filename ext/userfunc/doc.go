@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 // Package userfunc implements a HCL extension that allows user-defined
 // functions in HCL configuration.
 //

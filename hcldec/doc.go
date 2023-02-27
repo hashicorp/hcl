@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 // Package hcldec provides a higher-level API for unpacking the content of
 // HCL bodies, implemented in terms of the low-level "Content" API exposed
 // by the bodies themselves.
