@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 // This is a 'go generate'-oriented program for producing the "Variables"
 // method on every Expression implementation found within this package.
 // All expressions share the same implementation for this method, which

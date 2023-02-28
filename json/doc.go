@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 // Package json is the JSON parser for HCL. It parses JSON files and returns
 // implementations of the core HCL structural interfaces in terms of the
 // JSON data inside.

@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package hcl
 
 // AbsTraversalForExpr attempts to interpret the given expression as

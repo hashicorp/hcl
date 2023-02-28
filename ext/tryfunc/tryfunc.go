@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 // Package tryfunc contains some optional functions that can be exposed in
 // HCL-based languages to allow authors to test whether a particular expression
 // can succeed and take dynamic action based on that result.

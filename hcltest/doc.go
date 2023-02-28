@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 // Package hcltest contains utilities that aim to make it more convenient
 // to write tests for code that interacts with the HCL API.
 //
