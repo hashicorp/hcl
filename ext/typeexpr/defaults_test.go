@@ -751,6 +751,85 @@ func TestDefaults_Apply(t *testing.T) {
 				}),
 			}),
 		},
+		"applies default safely where possible when types mismatch": {
+			defaults: &Defaults{
+				Type: cty.Map(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+					"description": cty.String,
+					"rules": cty.Map(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+						"description":           cty.String,
+						"destination_ports":     cty.List(cty.String),
+						"destination_addresses": cty.List(cty.String),
+						"translated_address":    cty.String,
+						"translated_port":       cty.String,
+					}, []string{"destination_addresses"})),
+				}, []string{"description"})),
+				Children: map[string]*Defaults{
+					"": {
+						Type: cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+							"description": cty.String,
+							"rules": cty.Map(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+								"description":           cty.String,
+								"destination_ports":     cty.List(cty.String),
+								"destination_addresses": cty.List(cty.String),
+								"translated_address":    cty.String,
+								"translated_port":       cty.String,
+							}, []string{"destination_addresses"})),
+						}, []string{"description"}),
+						DefaultValues: map[string]cty.Value{
+							"description": cty.StringVal("unknown"),
+						},
+						Children: map[string]*Defaults{
+							"rules": {
+								Type: cty.Map(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+									"description":           cty.String,
+									"destination_ports":     cty.List(cty.String),
+									"destination_addresses": cty.List(cty.String),
+									"translated_address":    cty.String,
+									"translated_port":       cty.String,
+								}, []string{"destination_addresses"})),
+								Children: map[string]*Defaults{
+									"": {
+										Type: cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+											"description":           cty.String,
+											"destination_ports":     cty.List(cty.String),
+											"destination_addresses": cty.List(cty.String),
+											"translated_address":    cty.String,
+											"translated_port":       cty.String,
+										}, []string{"destination_addresses"}),
+										DefaultValues: map[string]cty.Value{
+											"destination_addresses": cty.ListValEmpty(cty.String),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			value: cty.MapVal(map[string]cty.Value{
+				"mysql": cty.ObjectVal(map[string]cty.Value{
+					"rules": cty.ObjectVal(map[string]cty.Value{
+						"description":           cty.StringVal("Port forward"),
+						"destination_ports":     cty.ListVal([]cty.Value{cty.StringVal("3306")}),
+						"destination_addresses": cty.ListVal([]cty.Value{cty.StringVal("192.168.0.1")}),
+						"translated_address":    cty.StringVal("192.168.0.1"),
+						"translated_port":       cty.StringVal("3306"),
+					}),
+				}),
+			}),
+			want: cty.MapVal(map[string]cty.Value{
+				"mysql": cty.ObjectVal(map[string]cty.Value{
+					"description": cty.StringVal("unknown"),
+					"rules": cty.ObjectVal(map[string]cty.Value{
+						"description":           cty.StringVal("Port forward"),
+						"destination_ports":     cty.ListVal([]cty.Value{cty.StringVal("3306")}),
+						"destination_addresses": cty.ListVal([]cty.Value{cty.StringVal("192.168.0.1")}),
+						"translated_address":    cty.StringVal("192.168.0.1"),
+						"translated_port":       cty.StringVal("3306"),
+					}),
+				}),
+			}),
+		},
 	}
 
 	for name, tc := range testCases {
