@@ -1,5 +1,9 @@
 # HCL Changelog
 
+## v2.16.2 (Unreleased)
+
+* ext/typeexpr: Verify type assumptions when applying default values, and ignore input values that do not match type assumptions. ([#594](https://github.com/hashicorp/hcl/pull/594))
+
 ## v2.16.1 (February 13, 2023)
 
 ### Bugs Fixed
