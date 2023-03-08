@@ -139,16 +139,58 @@ func (d *Defaults) applyAsMap(value cty.Value) map[string]cty.Value {
 }
 
 func (d *Defaults) getChild(key interface{}) *Defaults {
-	switch {
-	case d.Type.IsMapType(), d.Type.IsSetType(), d.Type.IsListType():
-		return d.Children[""]
-	case d.Type.IsTupleType():
-		return d.Children[strconv.Itoa(key.(int))]
-	case d.Type.IsObjectType():
-		return d.Children[key.(string)]
-	default:
-		return nil
+	// Children for tuples are keyed by an int.
+	// Children for objects are keyed by a string.
+	// Children for maps, lists, and sets are always keyed by the empty string.
+	//
+	// For maps and objects the supplied key type is a string type.
+	// For lists, sets, and tuples the supplied key type is an int type.
+	//
+	// The callers of the defaults package could, in theory, pass a value in
+	// where the types expected based on the defaults do not match the actual
+	// type in the value. In this case, we get a mismatch between what the
+	// defaults package expects the key to be, and which type it actually is.
+	//
+	// In the event of such a mismatch, we just won't apply defaults. Instead,
+	// relying on the user later calling go-cty.Convert to detect this same
+	// error (as  documented). In this case we'd just want to return nil to
+	// indicate either there are no defaults or we can't work out how to apply
+	// them. Both of  these outcomes are treated the same by the rest of the
+	// package.
+	//
+	// For the above reasons it isn't necessarily safe to just rely on a single
+	// metric for working out how we should retrieve the key. If the defaults
+	// type is a tuple we can't just assume the supplied key will be an int (as
+	// the concrete value actually supplied by the user could be an object or a
+	// map). Similarly, if the supplied key is an int we can't just assume we
+	// should treat the type as a tuple (as a list would also specify an int,
+	// but we should return the children keyed by the empty string rather than
+	// the index).
+
+	switch concrete := key.(type) {
+	case int:
+		if d.Type.IsTupleType() {
+			// If the type is an int, and our defaults are expecting a tuple
+			// then we return the children for the tuple at the index.
+			return d.Children[strconv.Itoa(concrete)]
+		}
+	case string:
+		if d.Type.IsObjectType() {
+			// If the type is a string, and our defaults are expecting an object
+			// then we return the children for the object at the key.
+			return d.Children[concrete]
+		}
 	}
+
+	// Otherwise, either our defaults are expecting this to be a map, list, or
+	// set or the type our defaults expecting didn't line up with something we
+	// can convert between. So, either we want to return the child keyed by
+	// the empty string (in the first case) or nil (in the second case).
+	// Luckily, Golang maps return nil when referencing something that doesn't
+	// exist. So, we can just try and retrieve the child at the empty key and
+	// if it doesn't exist then that's fine since we'd just return nil anyway.
+
+	return d.Children[""]
 }
 
 func (d *Defaults) unifyAsSlice(values []cty.Value) []cty.Value {
