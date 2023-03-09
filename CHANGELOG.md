@@ -1,6 +1,6 @@
 # HCL Changelog
 
-## v2.16.2 (Unreleased)
+## v2.16.2 (March 9, 2023)
 
 ### Bugs Fixed
 
