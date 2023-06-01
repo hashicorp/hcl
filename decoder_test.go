@@ -593,6 +593,35 @@ func TestDecode_structure(t *testing.T) {
 	}
 }
 
+func TestDecode_struct_hasKey(t *testing.T) {
+	type Child struct {
+		Name  string `hcl:",key"`
+		Value string `hcl:"value"`
+	}
+
+	type Parent struct {
+		Children []Child `hcl:"child,hasKey"`
+	}
+
+	var actual Parent
+	err := Decode(&actual, testReadFile(t, "struct_has_key.hcl"))
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	expected := Parent{
+		Children: []Child{
+			{
+				Name:  "",
+				Value: "v",
+			},
+		},
+	}
+	if !reflect.DeepEqual(actual, expected) {
+		t.Fatalf("Actual: %#v\n\nExpected: %#v", actual, expected)
+	}
+}
+
 func TestDecode_structurePtr(t *testing.T) {
 	type V struct {
 		Key int

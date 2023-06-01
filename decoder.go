@@ -677,7 +677,11 @@ func (d *decoder) decodeStruct(name string, node ast.Node, result reflect.Value)
 					}
 				}
 
-				fieldValue.SetString(item.Keys[0].Token.Value().(string))
+				if len(item.Keys) > 0 {
+					fieldValue.SetString(item.Keys[0].Token.Value().(string))
+				} else {
+					fieldValue.SetString("")
+				}
 				continue
 			case "unusedKeys":
 				unusedKeysVal = append(unusedKeysVal, fieldValue)
@@ -698,6 +702,17 @@ func (d *decoder) decodeStruct(name string, node ast.Node, result reflect.Value)
 		matches := filter.Elem()
 		if len(matches.Items) == 0 && len(prefixMatches.Items) == 0 {
 			continue
+		}
+
+		// If the field has the hasKey tag, all matches need to be a prefix
+		// match because an exact match represents a block without label.
+		// Moving all exact matches to partial matches sets the key to an empty
+		// string instead of whatever is the next token in the AST.
+		if strings.Contains(tagValue, ",hasKey") {
+			for _, m := range matches.Items {
+				prefixMatches.Items = append(prefixMatches.Items, m)
+			}
+			matches = &ast.ObjectList{}
 		}
 
 		// Track the used keys
