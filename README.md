@@ -1,31 +1,31 @@
 # HCL
 
 HCL is a toolkit for creating structured configuration languages that are
-both human- and machine-friendly, for use with command-line tools.
+both human-friendly and machine-friendly, for use with command-line tools.
 Although intended to be generally useful, it is primarily targeted
 towards devops tools, servers, etc.
 
 > **NOTE:** This is major version 2 of HCL, whose Go API is incompatible with
 > major version 1. Both versions are available for selection in Go Modules
-> projects. HCL 2 _cannot_ be imported from Go projects that are not using Go Modules. For more information, see
-> [our version selection guide](https://github.com/hashicorp/hcl/wiki/Version-Selection).
+> projects. HCL 2 _cannot_ be imported from Go projects that are not using Go Modules. For more information, see our
+> [version selection guide](https://github.com/hashicorp/hcl/wiki/Version-Selection).
 
 HCL has both a _native syntax_, intended to be pleasant to read and write for
-humans, and a JSON-based variant that is easier for machines to generate
+humans and a JSON-based variant that is easier for machines to generate
 and parse.
 
 The HCL native syntax is inspired by [libucl](https://github.com/vstakhov/libucl),
-[nginx configuration](http://nginx.org/en/docs/beginners_guide.html#conf_structure),
+[nginx configuration](http://nginx.org/en/docs/beginners_guide.html#conf_structure)
 and others.
 
-It includes an expression syntax that allows basic inline computation and,
+It includes an expression syntax that allows basic inline computation and
 with support from the calling application, use of variables and functions
 for more dynamic configuration languages.
 
 HCL provides a set of constructs that can be used by a calling application to
 construct a configuration language. The application defines which attribute
-names and nested block types are expected, and HCL parses the configuration
-file, verifies that it conforms to the expected structure, and returns
+names and nested block types are expected and HCL parses the configuration
+file, verifies that it conforms to the expected structure and returns
 high-level objects that the application can use for further processing.
 
 ```go
@@ -70,7 +70,7 @@ see [the package documentation](https://pkg.go.dev/github.com/hashicorp/hcl/v2).
 
 ## Why?
 
-Newcomers to HCL often ask: why not JSON, YAML, etc?
+Newcomers to HCL often ask : why not JSON, YAML, etc?
 
 Whereas JSON and YAML are formats for serializing data structures, HCL is
 a syntax and API specifically designed for building structured configuration
@@ -78,12 +78,12 @@ formats.
 
 HCL attempts to strike a compromise between generic serialization formats
 such as JSON and configuration formats built around full programming languages
-such as Ruby. HCL syntax is designed to be easily read and written by humans,
+such as Ruby. HCL syntax is designed to be easily read and written by humans
 and allows _declarative_ logic to permit its use in more complex applications.
 
 HCL is intended as a base syntax for configuration formats built
 around key-value pairs and hierarchical blocks whose structure is well-defined
-by the calling application, and this definition of the configuration structure
+by the calling application and this definition of the configuration structure
 allows for better error messages and more convenient definition within the
 calling application.
 
@@ -181,7 +181,7 @@ Version 2.0 of HCL combines the features of HCL 1.0 with those of the
 interpolation language HIL to produce a single configuration language that
 supports arbitrary expressions.
 
-This new version has a completely new parser and Go API, with no direct
+This new version has a completely new parser and Go API with no direct
 migration path. Although the syntax is similar, the implementation takes some
 very different approaches to improve on some "rough edges" that existed with
 the original implementation and to allow for more robust error handling.
