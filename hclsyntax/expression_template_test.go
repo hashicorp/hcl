@@ -4,6 +4,7 @@
 package hclsyntax
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/hcl/v2"
@@ -305,6 +306,16 @@ trim`,
 				},
 			},
 			cty.UnknownVal(cty.String).Refine().NotNull().StringPrefixFull("test_known_").NewValue(),
+			0,
+		},
+		{ // can preserve a static prefix as a refinement, but the length is limited to 128 B
+			strings.Repeat("_", 130) + `${unknown}`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unknown": cty.UnknownVal(cty.String),
+				},
+			},
+			cty.UnknownVal(cty.String).Refine().NotNull().StringPrefixFull(strings.Repeat("_", 128)).NewValue(),
 			0,
 		},
 		{ // marks from uninterpolated values are ignored
