@@ -72,18 +72,35 @@ func try(args []cty.Value) (cty.Value, error) {
 	var diags hcl.Diagnostics
 	for _, arg := range args {
 		closure := customdecode.ExpressionClosureFromVal(arg)
-		if dependsOnUnknowns(closure.Expression, closure.EvalContext) {
-			// We can't safely decide if this expression will succeed yet,
-			// and so our entire result must be unknown until we have
-			// more information.
-			return cty.DynamicVal, nil
-		}
 
 		v, moreDiags := closure.Value()
 		diags = append(diags, moreDiags...)
+
 		if moreDiags.HasErrors() {
-			continue // try the next one, if there is one to try
+			// If there's an error we know it will always fail and can
+			// continue. A more refined value will not remove an error from
+			// the expression.
+			continue
 		}
+
+		if !v.IsWhollyKnown() {
+			// If there are any unknowns in the value at all, we cannot be
+			// certain that the final value will be consistent or have the same
+			// type, so wee need to be conservative and return a dynamic value.
+
+			// There are two different classes of failure that can happen when
+			// an expression transitions from unknown to known; an operation on
+			// a dynamic value becomes invalid for the type once the type is
+			// known, or an index expression on a collection fails once the
+			// collection value is known. These changes from a
+			// valid-partially-unknown expression to an invalid-known
+			// expression can produce inconsistent results by changing which
+			// "try" argument is returned, which may be a collection with
+			// different previously known values, or a different type entirely
+			// ("try" does not require consistent argument types)
+			return cty.DynamicVal, nil
+		}
+
 		return v, nil // ignore any accumulated diagnostics if one succeeds
 	}
 
@@ -111,43 +128,17 @@ func try(args []cty.Value) (cty.Value, error) {
 
 func can(arg cty.Value) (cty.Value, error) {
 	closure := customdecode.ExpressionClosureFromVal(arg)
-	if dependsOnUnknowns(closure.Expression, closure.EvalContext) {
-		// Can't decide yet, then.
-		return cty.UnknownVal(cty.Bool), nil
-	}
-
-	_, diags := closure.Value()
+	v, diags := closure.Value()
 	if diags.HasErrors() {
 		return cty.False, nil
 	}
-	return cty.True, nil
-}
 
-// dependsOnUnknowns returns true if any of the variables that the given
-// expression might access are unknown values or contain unknown values.
-//
-// This is a conservative result that prefers to return true if there's any
-// chance that the expression might derive from an unknown value during its
-// evaluation; it is likely to produce false-positives for more complex
-// expressions involving deep data structures.
-func dependsOnUnknowns(expr hcl.Expression, ctx *hcl.EvalContext) bool {
-	for _, traversal := range expr.Variables() {
-		val, diags := traversal.TraverseAbs(ctx)
-		if diags.HasErrors() {
-			// If the traversal returned a definitive error then it must
-			// not traverse through any unknowns.
-			continue
-		}
-		if !val.IsWhollyKnown() {
-			// The value will be unknown if either it refers directly to
-			// an unknown value or if the traversal moves through an unknown
-			// collection. We're using IsWhollyKnown, so this also catches
-			// situations where the traversal refers to a compound data
-			// structure that contains any unknown values. That's important,
-			// because during evaluation the expression might evaluate more
-			// deeply into this structure and encounter the unknowns.
-			return true
-		}
+	if !v.IsWhollyKnown() {
+		// If the value is not wholly known, we still cannot be certain that
+		// the expression was valid. There may be yet index expressions which
+		// will fail once values are completely known.
+		return cty.UnknownVal(cty.Bool), nil
 	}
-	return false
+
+	return cty.True, nil
 }

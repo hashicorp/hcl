@@ -107,6 +107,36 @@ func TestTryFunc(t *testing.T) {
 			cty.StringVal("list").Mark("secret"),
 			``,
 		},
+		"nested known expression from unknown": {
+			// this expression contains an unknown, but will always return in
+			// "bar"
+			`try({u: false ? unknown : "bar"}, other)`,
+			map[string]cty.Value{
+				"unknown": cty.UnknownVal(cty.String),
+				"other": cty.MapVal(map[string]cty.Value{
+					"v": cty.StringVal("oops"),
+				}),
+			},
+			cty.ObjectVal(map[string]cty.Value{
+				"u": cty.StringVal("bar"),
+			}),
+			``,
+		},
+		"nested index op on unknown": {
+			// unknown and other have identical types, but we must return a
+			// dynamic value since v could change within the final result value
+			// after the first argument becomes known.
+			`try({u: unknown["foo"], v: "orig"}, other)`,
+			map[string]cty.Value{
+				"unknown": cty.UnknownVal(cty.Map(cty.String)),
+				"other": cty.MapVal(map[string]cty.Value{
+					"u": cty.StringVal("oops"),
+					"v": cty.StringVal("oops"),
+				}),
+			},
+			cty.DynamicVal,
+			``,
+		},
 		"three arguments, all fail": {
 			`try(this, that, this_thing_in_particular)`,
 			nil,
