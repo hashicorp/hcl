@@ -6,9 +6,10 @@ package typeexpr
 import (
 	"fmt"
 
-	"github.com/hashicorp/hcl/v2"
 	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-cty/cty/convert"
+
+	"github.com/hashicorp/hcl/v2"
 )
 
 const invalidTypeSummary = "Invalid type specification"
@@ -179,6 +180,18 @@ func getType(expr hcl.Expression, constraint, withDefaults bool) (cty.Type, *Def
 				})
 				continue
 			}
+
+			if _, exists := atys[attrName]; exists {
+				diags = append(diags, &hcl.Diagnostic{
+					Severity: hcl.DiagError,
+					Summary:  invalidTypeSummary,
+					Detail:   "Object constructor map keys must be unique.",
+					Subject:  attrDef.Key.Range().Ptr(),
+					Context:  expr.Range().Ptr(),
+				})
+				continue
+			}
+
 			atyExpr := attrDef.Value
 
 			// the attribute type expression might be wrapped in the special
