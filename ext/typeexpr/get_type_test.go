@@ -10,10 +10,11 @@ import (
 	"github.com/hashicorp/hcl/v2/gohcl"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/zclconf/go-cty/cty"
+
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/hcl/v2/json"
-	"github.com/zclconf/go-cty/cty"
 )
 
 var (
@@ -699,6 +700,30 @@ func TestGetTypeDefaults(t *testing.T) {
 			`object({name=string,meta=optional(string, "hello", "world")})`,
 			nil,
 			`Optional attribute modifier expects at most two arguments: the attribute type, and a default value.`,
+		},
+
+		// Duplicate arguments.
+		{
+			`map(object({operations=optional(list(string), []),type=optional(string, "ABC"),type=optional(number)}))`,
+			&Defaults{
+				Type: cty.Map(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+					"operations": cty.List(cty.String),
+					"type":       cty.String,
+				}, []string{"operations", "type"})),
+				Children: map[string]*Defaults{
+					"": {
+						Type: cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+							"operations": cty.List(cty.String),
+							"type":       cty.String,
+						}, []string{"operations", "type"}),
+						DefaultValues: map[string]cty.Value{
+							"operations": cty.ListValEmpty(cty.String),
+							"type":       cty.StringVal("ABC"),
+						},
+					},
+				},
+			},
+			"Object constructor map keys must be unique.",
 		},
 	}
 
