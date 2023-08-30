@@ -95,7 +95,7 @@ func (d *Defaults) apply(v cty.Value) cty.Value {
 				}
 				values[key] = defaultValue
 			}
-			if defaultRng := defaultValue.Range(); defaultRng.DefinitelyNotNull() {
+			if defaultRng := defaultValue.Range(); defaultRng.DefinitelyNotNull() && values[key].Type() != cty.DynamicPseudoType {
 				values[key] = values[key].RefineNotNull()
 			}
 		}
