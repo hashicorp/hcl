@@ -898,6 +898,23 @@ func TestDefaults_Apply(t *testing.T) {
 				"foo": cty.UnknownVal(cty.String).RefineNotNull(),
 			}),
 		},
+		"optional attribute with dynamic value can be null": {
+			defaults: &Defaults{
+				Type: cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+					"foo": cty.String,
+				}, []string{"foo"}),
+				DefaultValues: map[string]cty.Value{
+					"foo": cty.StringVal("bar"), // Important: default is non-null
+				},
+			},
+			value: cty.ObjectVal(map[string]cty.Value{
+				"foo": cty.DynamicVal,
+			}),
+			want: cty.ObjectVal(map[string]cty.Value{
+				// The default value is itself non-null, but dynamic value cannot be refined.
+				"foo": cty.DynamicVal,
+			}),
+		},
 	}
 
 	for name, tc := range testCases {
