@@ -1,5 +1,17 @@
 # HCL Changelog
 
+## v2.17.1 (August 30, 2023)
+
+### Enhancements
+
+* hclsyntax: When evaluating string templates that have a long known constant prefix, HCL will truncate the known prefix to avoid creating excessively-large refinements. String prefix refinements are intended primarily for relatively-short fixed prefixes, such as `https://` at the start of a URL known to use that scheme. ([#617](https://github.com/hashicorp/hcl/pull/617))
+* ext/tryfunc: The "try" and "can" functions now handle unknown values slightly more precisely, and so can return known values in more situations when given expressions referring to unknown symbols. ([#622](https://github.com/hashicorp/hcl/pull/622))
+
+### Bugs Fixed
+
+* ext/typeexpr: Will no longer try to refine unknown values of unknown type when dealing with a user-specified type constraint containing the `any` keyword, avoiding an incorrect panic at runtime. ([#625](https://github.com/hashicorp/hcl/pull/625))
+* ext/typeexpr: Now correctly handles attempts to declare the same object type attribute multiple times by returning an error. Previously this could potentially panic by creating an incoherent internal state. ([#624](https://github.com/hashicorp/hcl/pull/624))
+
 ## v2.17.0 (May 31, 2023)
 
 ### Enhancements
