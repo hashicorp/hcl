@@ -217,6 +217,7 @@ func TestRefineValueSpec(t *testing.T) {
 	config := `
 foo = "hello"
 bar = unk
+dyn = dyn
 `
 
 	f, diags := hclsyntax.ParseConfig([]byte(config), "", hcl.InitialPos)
@@ -257,11 +258,13 @@ bar = unk
 	spec := &ObjectSpec{
 		"foo": attrSpec("foo"),
 		"bar": attrSpec("bar"),
+		"dyn": attrSpec("dyn"),
 	}
 
 	got, diags := Decode(f.Body, spec, &hcl.EvalContext{
 		Variables: map[string]cty.Value{
 			"unk": cty.UnknownVal(cty.String),
+			"dyn": cty.DynamicVal,
 		},
 	})
 	if diags.HasErrors() {
@@ -276,6 +279,11 @@ bar = unk
 
 		// The final value of bar is unknown but refined as non-null.
 		"bar": cty.UnknownVal(cty.String).RefineNotNull(),
+
+		// The final value of dyn is unknown but refined as non-null.
+		// Correct behavior here requires that we convert the DynamicVal
+		// to an unknown string first and then refine it.
+		"dyn": cty.UnknownVal(cty.String).RefineNotNull(),
 	})
 	if diff := cmp.Diff(want, got, ctydebug.CmpOptions); diff != "" {
 		t.Errorf("wrong result\n%s", diff)
