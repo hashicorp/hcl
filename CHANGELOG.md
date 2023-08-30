@@ -1,5 +1,13 @@
 # HCL Changelog
 
+## v2.18.0 (August 30, 2023)
+
+### Enhancements
+
+* HCL now uses the tables from Unicode 15 when performing string normalization and character segmentation. HCL was previously using the Unicode 13 tables.
+
+    For calling applications where consistent Unicode support is important, consider also upgrading to Go 1.21 at the same time as adopting HCL v2.18.0 so that the standard library unicode tables (used for case folding, etc) will also be from Unicode 15.
+
 ## v2.17.1 (August 30, 2023)
 
 ### Enhancements
