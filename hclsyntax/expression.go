@@ -742,13 +742,17 @@ func (e *ConditionalExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostic
 				}
 			}
 		}
+		_, condResultMarks := condResult.Unmark()
+		trueResult, trueResultMarks := trueResult.Unmark()
+		falseResult, falseResultMarks := falseResult.Unmark()
+
 		trueRng := trueResult.Range()
 		falseRng := falseResult.Range()
 		ret := cty.UnknownVal(resultType)
 		if trueRng.DefinitelyNotNull() && falseRng.DefinitelyNotNull() {
 			ret = ret.RefineNotNull()
 		}
-		return ret.WithSameMarks(condResult).WithSameMarks(trueResult).WithSameMarks(falseResult), diags
+		return ret.WithMarks(condResultMarks, trueResultMarks, falseResultMarks), diags
 	}
 	condResult, err := convert.Convert(condResult, cty.Bool)
 	if err != nil {

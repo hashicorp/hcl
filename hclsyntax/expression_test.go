@@ -2015,6 +2015,18 @@ EOT
 			cty.NumberIntVal(1).Mark("sensitive"),
 			0,
 		},
+		{
+			`test ? sensitiveString : ""`,
+			&hcl.EvalContext{
+				Functions: map[string]function.Function{},
+				Variables: map[string]cty.Value{
+					"test":            cty.UnknownVal(cty.Bool),
+					"sensitiveString": cty.StringVal("test").Mark("sensitive"),
+				},
+			},
+			cty.UnknownVal(cty.String).RefineNotNull().Mark("sensitive"),
+			0,
+		},
 	}
 
 	for _, test := range tests {
