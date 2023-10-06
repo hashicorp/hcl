@@ -1397,6 +1397,26 @@ upper(
 			}).Mark("sensitive"),
 			0,
 		},
+		{ // splat with sensitive collection that's unknown
+			`maps.*.enabled`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"maps": cty.UnknownVal(cty.List(cty.Map(cty.Bool))).Mark("sensitive"),
+				},
+			},
+			cty.UnknownVal(cty.List(cty.Bool)).RefineNotNull().Mark("sensitive"),
+			0,
+		},
+		{ // splat with sensitive collection that's unknown and not null
+			`maps.*.enabled`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"maps": cty.UnknownVal(cty.List(cty.Map(cty.Bool))).RefineNotNull().Mark("sensitive"),
+				},
+			},
+			cty.UnknownVal(cty.List(cty.Bool)).RefineNotNull().Mark("sensitive"),
+			0,
+		},
 		{ // splat with collection with sensitive elements
 			`maps.*.x`,
 			&hcl.EvalContext{
