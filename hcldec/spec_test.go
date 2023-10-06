@@ -12,6 +12,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/zclconf/go-cty-debug/ctydebug"
 	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-cty/cty/function"
 
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
@@ -218,6 +219,7 @@ func TestRefineValueSpec(t *testing.T) {
 foo = "hello"
 bar = unk
 dyn = dyn
+marked = mark(unk)
 `
 
 	f, diags := hclsyntax.ParseConfig([]byte(config), "", hcl.InitialPos)
@@ -256,15 +258,36 @@ dyn = dyn
 		}
 	}
 	spec := &ObjectSpec{
-		"foo": attrSpec("foo"),
-		"bar": attrSpec("bar"),
-		"dyn": attrSpec("dyn"),
+		"foo":    attrSpec("foo"),
+		"bar":    attrSpec("bar"),
+		"dyn":    attrSpec("dyn"),
+		"marked": attrSpec("marked"),
 	}
 
 	got, diags := Decode(f.Body, spec, &hcl.EvalContext{
 		Variables: map[string]cty.Value{
 			"unk": cty.UnknownVal(cty.String),
 			"dyn": cty.DynamicVal,
+		},
+		Functions: map[string]function.Function{
+			"mark": function.New(&function.Spec{
+				Params: []function.Parameter{
+					{
+						Name:             "v",
+						Type:             cty.DynamicPseudoType,
+						AllowMarked:      true,
+						AllowNull:        true,
+						AllowUnknown:     true,
+						AllowDynamicType: true,
+					},
+				},
+				Type: func(args []cty.Value) (cty.Type, error) {
+					return args[0].Type(), nil
+				},
+				Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
+					return args[0].Mark("boop"), nil
+				},
+			}),
 		},
 	})
 	if diags.HasErrors() {
@@ -284,6 +307,10 @@ dyn = dyn
 		// Correct behavior here requires that we convert the DynamicVal
 		// to an unknown string first and then refine it.
 		"dyn": cty.UnknownVal(cty.String).RefineNotNull(),
+
+		// This argument had a mark applied, which should be preserved
+		// despite the refinement.
+		"marked": cty.UnknownVal(cty.String).RefineNotNull().Mark("boop"),
 	})
 	if diff := cmp.Diff(want, got, ctydebug.CmpOptions); diff != "" {
 		t.Errorf("wrong result\n%s", diff)
