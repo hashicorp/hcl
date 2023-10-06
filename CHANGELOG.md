@@ -1,5 +1,11 @@
 # HCL Changelog
 
+## v2.18.1 (October 5, 2023)
+
+### Bugs Fixed
+
+* hclsyntax: Conditional expressions will no longer panic when one or both of their results are "marked", as is the case for situations like how HashiCorp Terraform tracks its concept of "sensitive values". ([#630](https://github.com/hashicorp/hcl/pull/630))
+
 ## v2.18.0 (August 30, 2023)
 
 ### Enhancements
