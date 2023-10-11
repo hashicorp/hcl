@@ -1958,6 +1958,20 @@ EOT
 			0,
 		},
 		{
+			`unknown ? ar : br`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unknown": cty.UnknownVal(cty.Bool),
+					"ar": cty.UnknownVal(cty.Set(cty.String)).Refine().
+						CollectionLengthLowerBound(1).CollectionLengthUpperBound(2).NewValue(),
+					"br": cty.UnknownVal(cty.Set(cty.String)).Refine().
+						CollectionLengthLowerBound(3).CollectionLengthUpperBound(4).NewValue(),
+				},
+			},
+			cty.UnknownVal(cty.Set(cty.String)).Refine().NotNull().CollectionLengthLowerBound(1).CollectionLengthUpperBound(4).NewValue(), // deduced through refinements
+			0,
+		},
+		{
 			`unknown ? a : b`,
 			&hcl.EvalContext{
 				Variables: map[string]cty.Value{

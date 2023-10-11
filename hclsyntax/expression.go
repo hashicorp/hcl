@@ -725,16 +725,14 @@ func (e *ConditionalExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostic
 					falseLen := falseResult.Length()
 					if gt := trueLen.GreaterThan(falseLen); gt.IsKnown() {
 						b := cty.UnknownVal(resultType).Refine()
-						trueLen, _ := trueLen.AsBigFloat().Int64()
-						falseLen, _ := falseLen.AsBigFloat().Int64()
 						if gt.True() {
 							b = b.
-								CollectionLengthLowerBound(int(falseLen)).
-								CollectionLengthUpperBound(int(trueLen))
+								CollectionLengthLowerBound(falseResult.Range().LengthLowerBound()).
+								CollectionLengthUpperBound(trueResult.Range().LengthUpperBound())
 						} else {
 							b = b.
-								CollectionLengthLowerBound(int(trueLen)).
-								CollectionLengthUpperBound(int(falseLen))
+								CollectionLengthLowerBound(trueResult.Range().LengthLowerBound()).
+								CollectionLengthUpperBound(falseResult.Range().LengthUpperBound())
 						}
 						b = b.NotNull() // If neither of the results is null then the result can't be either
 						return b.NewValue().WithSameMarks(condResult).WithSameMarks(trueResult).WithSameMarks(falseResult), diags
@@ -1244,9 +1242,9 @@ func (e *ObjectConsKeyExpr) UnwrapExpression() Expression {
 
 // ForExpr represents iteration constructs:
 //
-//     tuple = [for i, v in list: upper(v) if i > 2]
-//     object = {for k, v in map: k => upper(v)}
-//     object_of_tuples = {for v in list: v.key: v...}
+//	tuple = [for i, v in list: upper(v) if i > 2]
+//	object = {for k, v in map: k => upper(v)}
+//	object_of_tuples = {for v in list: v.key: v...}
 type ForExpr struct {
 	KeyVar string // empty if ignoring the key
 	ValVar string
