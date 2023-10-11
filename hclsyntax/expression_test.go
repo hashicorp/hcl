@@ -1934,6 +1934,74 @@ EOT
 			0,
 		},
 		{
+			`unknown ? i : j`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unknown": cty.UnknownVal(cty.Bool),
+					"i":       cty.NullVal(cty.Number),
+					"j":       cty.NullVal(cty.Number),
+				},
+			},
+			cty.NullVal(cty.Number),
+			0,
+		},
+		{
+			`unknown ? im : jm`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unknown": cty.UnknownVal(cty.Bool),
+					"im":      cty.NullVal(cty.Number).Mark("a"),
+					"jm":      cty.NullVal(cty.Number).Mark("b"),
+				},
+			},
+			cty.NullVal(cty.Number).Mark("a").Mark("b"),
+			0,
+		},
+		{
+			`unknown ? im : jm`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unknown": cty.UnknownVal(cty.Bool).Mark("a"),
+					"im":      cty.UnknownVal(cty.Number),
+					"jm":      cty.UnknownVal(cty.Number).Mark("b"),
+				},
+			},
+			// the empty refinement may eventually be removed, but does nothing here
+			cty.UnknownVal(cty.Number).Refine().NewValue().Mark("a").Mark("b"),
+			0,
+		},
+		{
+			`unknown ? ix : jx`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unknown": cty.UnknownVal(cty.Bool),
+					"ix":      cty.UnknownVal(cty.Number),
+					"jx":      cty.UnknownVal(cty.Number),
+				},
+			},
+			// the empty refinement may eventually be removed, but does nothing here
+			cty.UnknownVal(cty.Number).Refine().NewValue(),
+			0,
+		},
+		{
+			`unknown ? ir : jr`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unknown": cty.UnknownVal(cty.Bool),
+					"ir": cty.UnknownVal(cty.Number).Refine().
+						NumberRangeLowerBound(cty.NumberIntVal(1), false).
+						NumberRangeUpperBound(cty.NumberIntVal(3), false).NewValue(),
+					"jr": cty.UnknownVal(cty.Number).Refine().
+						NumberRangeLowerBound(cty.NumberIntVal(2), true).
+						NumberRangeUpperBound(cty.NumberIntVal(4), true).NewValue(),
+				},
+			},
+			cty.UnknownVal(cty.Number).Refine().
+				NumberRangeLowerBound(cty.NumberIntVal(1), false).
+				NumberRangeUpperBound(cty.NumberIntVal(4), true).NewValue(),
+			0,
+		},
+		{
 			`unknown ? a : b`,
 			&hcl.EvalContext{
 				Variables: map[string]cty.Value{
@@ -1946,15 +2014,27 @@ EOT
 			0,
 		},
 		{
-			`unknown ? a : b`,
+			`unknown ? al : bl`,
 			&hcl.EvalContext{
 				Variables: map[string]cty.Value{
 					"unknown": cty.UnknownVal(cty.Bool),
-					"a":       cty.ListValEmpty(cty.String),
-					"b":       cty.ListValEmpty(cty.String),
+					"al":      cty.ListValEmpty(cty.String),
+					"bl":      cty.ListValEmpty(cty.String),
 				},
 			},
 			cty.ListValEmpty(cty.String), // deduced through refinements
+			0,
+		},
+		{
+			`unknown ? am : bm`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unknown": cty.UnknownVal(cty.Bool),
+					"am":      cty.MapValEmpty(cty.String),
+					"bm":      cty.MapValEmpty(cty.String).Mark("test"),
+				},
+			},
+			cty.MapValEmpty(cty.String).Mark("test"), // deduced through refinements
 			0,
 		},
 		{
@@ -1963,8 +2043,22 @@ EOT
 				Variables: map[string]cty.Value{
 					"unknown": cty.UnknownVal(cty.Bool),
 					"ar": cty.UnknownVal(cty.Set(cty.String)).Refine().
-						CollectionLengthLowerBound(1).CollectionLengthUpperBound(2).NewValue(),
+						CollectionLengthLowerBound(1).CollectionLengthUpperBound(3).NewValue(),
 					"br": cty.UnknownVal(cty.Set(cty.String)).Refine().
+						CollectionLengthLowerBound(2).CollectionLengthUpperBound(4).NewValue(),
+				},
+			},
+			cty.UnknownVal(cty.Set(cty.String)).Refine().CollectionLengthLowerBound(1).CollectionLengthUpperBound(4).NewValue(), // deduced through refinements
+			0,
+		},
+		{
+			`unknown ? arn : brn`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unknown": cty.UnknownVal(cty.Bool),
+					"arn": cty.UnknownVal(cty.Set(cty.String)).Refine().NotNull().
+						CollectionLengthLowerBound(1).CollectionLengthUpperBound(2).NewValue(),
+					"brn": cty.UnknownVal(cty.Set(cty.String)).Refine().NotNull().
 						CollectionLengthLowerBound(3).CollectionLengthUpperBound(4).NewValue(),
 				},
 			},
@@ -1982,7 +2076,7 @@ EOT
 						CollectionLengthLowerBound(3).CollectionLengthUpperBound(4).NewValue(),
 				},
 			},
-			cty.UnknownVal(cty.Set(cty.String)).Refine().NotNull().CollectionLengthLowerBound(1).CollectionLengthUpperBound(4).NewValue().Mark("test"), // deduced through refinements
+			cty.UnknownVal(cty.Set(cty.String)).Refine().CollectionLengthLowerBound(1).CollectionLengthUpperBound(4).NewValue().Mark("test"), // deduced through refinements
 			0,
 		},
 		{

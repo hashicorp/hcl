@@ -696,68 +696,95 @@ func (e *ConditionalExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostic
 		return cty.UnknownVal(resultType), diags
 	}
 	if !condResult.IsKnown() {
-		// We might be able to offer a refined range for the result based on
-		// the two possible outcomes.
-		if trueResult.Type() == cty.Number && falseResult.Type() == cty.Number {
-			// This case deals with the common case of (predicate ? 1 : 0) and
-			// significantly decreases the range of the result in that case.
-			if !(trueResult.IsNull() || falseResult.IsNull()) {
-				if gt := trueResult.GreaterThan(falseResult); gt.IsKnown() {
-					b := cty.UnknownVal(cty.Number).Refine()
-					if gt.True() {
-						b = b.
-							NumberRangeLowerBound(falseResult, true).
-							NumberRangeUpperBound(trueResult, true)
-					} else {
-						b = b.
-							NumberRangeLowerBound(trueResult, true).
-							NumberRangeUpperBound(falseResult, true)
-					}
-					b = b.NotNull() // If neither of the results is null then the result can't be either
-					return b.NewValue().WithSameMarks(condResult).WithSameMarks(trueResult).WithSameMarks(falseResult), diags
-				}
-			}
-		}
-		if trueResult.Type().IsCollectionType() && falseResult.Type().IsCollectionType() {
-			if trueResult.Type().Equals(falseResult.Type()) {
-				if !(trueResult.IsNull() || falseResult.IsNull()) {
-					// the bounds are not part of the final result value, so
-					// the marks are not needed
-					tr, _ := trueResult.Unmark()
-					fr, _ := falseResult.Unmark()
-					trueRange := tr.Range()
-					falseRange := fr.Range()
-
-					if gt := trueResult.Length().GreaterThan(falseResult.Length()); gt.IsKnown() {
-						gt, _ := gt.Unmark()
-						b := cty.UnknownVal(resultType).Refine()
-						if gt.True() {
-							b = b.
-								CollectionLengthLowerBound(falseRange.LengthLowerBound()).
-								CollectionLengthUpperBound(trueRange.LengthUpperBound())
-						} else {
-							b = b.
-								CollectionLengthLowerBound(trueRange.LengthLowerBound()).
-								CollectionLengthUpperBound(falseRange.LengthUpperBound())
-						}
-						b = b.NotNull() // If neither of the results is null then the result can't be either
-						return b.NewValue().WithSameMarks(condResult).WithSameMarks(trueResult).WithSameMarks(falseResult), diags
-					}
-				}
-			}
-		}
+		// we use the unmarked values throughout the unknown branch
 		_, condResultMarks := condResult.Unmark()
 		trueResult, trueResultMarks := trueResult.Unmark()
 		falseResult, falseResultMarks := falseResult.Unmark()
 
-		trueRng := trueResult.Range()
-		falseRng := falseResult.Range()
+		// use a value to merge marks
+		_, resMarks := cty.DynamicVal.WithMarks(condResultMarks, trueResultMarks, falseResultMarks).Unmark()
+
+		trueRange := trueResult.Range()
+		falseRange := falseResult.Range()
+
+		// if both branches are known to be null, then the result must still be null
+		if trueResult.IsNull() && falseResult.IsNull() {
+			return cty.NullVal(resultType).WithMarks(resMarks), diags
+		}
+
+		// We might be able to offer a refined range for the result based on
+		// the two possible outcomes.
+		if trueResult.Type() == cty.Number && falseResult.Type() == cty.Number {
+			ref := cty.UnknownVal(cty.Number).Refine()
+			if trueRange.DefinitelyNotNull() && falseRange.DefinitelyNotNull() {
+				ref = ref.NotNull()
+			}
+
+			falseLo, falseLoInc := falseRange.NumberLowerBound()
+			falseHi, falseHiInc := falseRange.NumberUpperBound()
+			trueLo, trueLoInc := trueRange.NumberLowerBound()
+			trueHi, trueHiInc := trueRange.NumberUpperBound()
+
+			if falseLo.IsKnown() && trueLo.IsKnown() {
+				lo, loInc := falseLo, falseLoInc
+				switch {
+				case trueLo.LessThan(falseLo).True():
+					lo, loInc = trueLo, trueLoInc
+				case trueLo.Equals(falseLo).True():
+					loInc = trueLoInc || falseLoInc
+				}
+
+				ref = ref.NumberRangeLowerBound(lo, loInc)
+			}
+
+			if falseHi.IsKnown() && trueHi.IsKnown() {
+				hi, hiInc := falseHi, falseHiInc
+				switch {
+				case trueHi.GreaterThan(falseHi).True():
+					hi, hiInc = trueHi, trueHiInc
+				case trueHi.Equals(falseHi).True():
+					hiInc = trueHiInc || falseHiInc
+				}
+				ref = ref.NumberRangeUpperBound(hi, hiInc)
+			}
+
+			return ref.NewValue().WithMarks(resMarks), diags
+		}
+
+		if trueResult.Type().IsCollectionType() && falseResult.Type().IsCollectionType() {
+			if trueResult.Type().Equals(falseResult.Type()) {
+				ref := cty.UnknownVal(resultType).Refine()
+				if trueRange.DefinitelyNotNull() && falseRange.DefinitelyNotNull() {
+					ref = ref.NotNull()
+				}
+
+				falseLo := falseRange.LengthLowerBound()
+				falseHi := falseRange.LengthUpperBound()
+				trueLo := trueRange.LengthLowerBound()
+				trueHi := trueRange.LengthUpperBound()
+
+				lo := falseLo
+				if trueLo < falseLo {
+					lo = trueLo
+				}
+
+				hi := falseHi
+				if trueHi > falseHi {
+					hi = trueHi
+				}
+
+				ref = ref.CollectionLengthLowerBound(lo).CollectionLengthUpperBound(hi)
+				return ref.NewValue().WithMarks(resMarks), diags
+			}
+		}
+
 		ret := cty.UnknownVal(resultType)
-		if trueRng.DefinitelyNotNull() && falseRng.DefinitelyNotNull() {
+		if trueRange.DefinitelyNotNull() && falseRange.DefinitelyNotNull() {
 			ret = ret.RefineNotNull()
 		}
-		return ret.WithMarks(condResultMarks, trueResultMarks, falseResultMarks), diags
+		return ret.WithMarks(resMarks), diags
 	}
+
 	condResult, err := convert.Convert(condResult, cty.Bool)
 	if err != nil {
 		diags = append(diags, &hcl.Diagnostic{
