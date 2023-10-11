@@ -721,18 +721,24 @@ func (e *ConditionalExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostic
 		if trueResult.Type().IsCollectionType() && falseResult.Type().IsCollectionType() {
 			if trueResult.Type().Equals(falseResult.Type()) {
 				if !(trueResult.IsNull() || falseResult.IsNull()) {
-					trueLen := trueResult.Length()
-					falseLen := falseResult.Length()
-					if gt := trueLen.GreaterThan(falseLen); gt.IsKnown() {
+					// the bounds are not part of the final result value, so
+					// the marks are not needed
+					tr, _ := trueResult.Unmark()
+					fr, _ := falseResult.Unmark()
+					trueRange := tr.Range()
+					falseRange := fr.Range()
+
+					if gt := trueResult.Length().GreaterThan(falseResult.Length()); gt.IsKnown() {
+						gt, _ := gt.Unmark()
 						b := cty.UnknownVal(resultType).Refine()
 						if gt.True() {
 							b = b.
-								CollectionLengthLowerBound(falseResult.Range().LengthLowerBound()).
-								CollectionLengthUpperBound(trueResult.Range().LengthUpperBound())
+								CollectionLengthLowerBound(falseRange.LengthLowerBound()).
+								CollectionLengthUpperBound(trueRange.LengthUpperBound())
 						} else {
 							b = b.
-								CollectionLengthLowerBound(trueResult.Range().LengthLowerBound()).
-								CollectionLengthUpperBound(falseResult.Range().LengthUpperBound())
+								CollectionLengthLowerBound(trueRange.LengthLowerBound()).
+								CollectionLengthUpperBound(falseRange.LengthUpperBound())
 						}
 						b = b.NotNull() // If neither of the results is null then the result can't be either
 						return b.NewValue().WithSameMarks(condResult).WithSameMarks(trueResult).WithSameMarks(falseResult), diags
@@ -1740,7 +1746,8 @@ func (e *SplatExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 		if ty.IsListType() && sourceVal.Type().IsCollectionType() {
 			// We can refine the length of an unknown list result based on
 			// the source collection's own length.
-			sourceRng := sourceVal.Range()
+			sv, _ := sourceVal.Unmark()
+			sourceRng := sv.Range()
 			ret = ret.Refine().
 				CollectionLengthLowerBound(sourceRng.LengthLowerBound()).
 				CollectionLengthUpperBound(sourceRng.LengthUpperBound()).

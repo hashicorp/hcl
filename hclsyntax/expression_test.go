@@ -1972,6 +1972,20 @@ EOT
 			0,
 		},
 		{
+			`unknown ? amr : bmr`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unknown": cty.UnknownVal(cty.Bool),
+					"amr": cty.UnknownVal(cty.Set(cty.String)).Mark("test").Refine().
+						CollectionLengthLowerBound(1).CollectionLengthUpperBound(2).NewValue(),
+					"bmr": cty.UnknownVal(cty.Set(cty.String)).Mark("test").Refine().
+						CollectionLengthLowerBound(3).CollectionLengthUpperBound(4).NewValue(),
+				},
+			},
+			cty.UnknownVal(cty.Set(cty.String)).Refine().NotNull().CollectionLengthLowerBound(1).CollectionLengthUpperBound(4).NewValue().Mark("test"), // deduced through refinements
+			0,
+		},
+		{
 			`unknown ? a : b`,
 			&hcl.EvalContext{
 				Variables: map[string]cty.Value{
