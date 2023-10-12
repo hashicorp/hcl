@@ -7,9 +7,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hcldec"
 	"github.com/hashicorp/hcl/v2/hcltest"
+	"github.com/zclconf/go-cty-debug/ctydebug"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -334,6 +336,89 @@ func TestExpand(t *testing.T) {
 		}
 	})
 
+}
+
+func TestExpandWithForEachCheck(t *testing.T) {
+	forEachExpr := hcltest.MockExprLiteral(cty.MapValEmpty(cty.String).Mark("boop"))
+	evalCtx := &hcl.EvalContext{}
+	srcContent := &hcl.BodyContent{
+		Blocks: hcl.Blocks{
+			{
+				Type:        "dynamic",
+				Labels:      []string{"foo"},
+				LabelRanges: []hcl.Range{{}},
+				Body: hcltest.MockBody(&hcl.BodyContent{
+					Attributes: hcltest.MockAttrs(map[string]hcl.Expression{
+						"for_each": forEachExpr,
+					}),
+					Blocks: hcl.Blocks{
+						{
+							Type: "content",
+							Body: hcltest.MockBody(&hcl.BodyContent{}),
+						},
+					},
+				}),
+			},
+		},
+	}
+	srcBody := hcltest.MockBody(srcContent)
+
+	hookCalled := false
+	var gotV cty.Value
+	var gotEvalCtx *hcl.EvalContext
+
+	expBody := Expand(
+		srcBody, evalCtx,
+		OptCheckForEach(func(v cty.Value, e hcl.Expression, ec *hcl.EvalContext) hcl.Diagnostics {
+			hookCalled = true
+			gotV = v
+			gotEvalCtx = ec
+			return hcl.Diagnostics{
+				&hcl.Diagnostic{
+					Severity:    hcl.DiagError,
+					Summary:     "Bad for_each",
+					Detail:      "I don't like it.",
+					Expression:  e,
+					EvalContext: ec,
+					Extra:       "diagnostic extra",
+				},
+			}
+		}),
+	)
+
+	_, diags := expBody.Content(&hcl.BodySchema{
+		Blocks: []hcl.BlockHeaderSchema{
+			{
+				Type: "foo",
+			},
+		},
+	})
+	if !diags.HasErrors() {
+		t.Fatal("succeeded; want an error")
+	}
+	if len(diags) != 1 {
+		t.Fatalf("wrong number of diagnostics; want only one\n%s", spew.Sdump(diags))
+	}
+	if got, want := diags[0].Summary, "Bad for_each"; got != want {
+		t.Fatalf("wrong error\ngot:  %s\nwant: %s\n\n%s", got, want, spew.Sdump(diags[0]))
+	}
+	if got, want := diags[0].Extra, "diagnostic extra"; got != want {
+		// This is important to allow the application which provided the
+		// hook to pass application-specific extra values through this
+		// API in case the hook's diagnostics need some sort of special
+		// treatment.
+		t.Fatalf("diagnostic didn't preserve 'extra' field\ngot:  %s\nwant: %s\n\n%s", got, want, spew.Sdump(diags[0]))
+	}
+
+	if !hookCalled {
+		t.Fatal("check hook wasn't called")
+	}
+	if !gotV.HasMark("boop") {
+		t.Errorf("wrong value passed to check hook; want the value marked \"boop\"\n%s", ctydebug.ValueString(gotV))
+	}
+	if gotEvalCtx != evalCtx {
+		t.Error("wrong EvalContext passed to check hook; want the one passed to Expand")
+	}
 }
 
 func TestExpandUnknownBodies(t *testing.T) {

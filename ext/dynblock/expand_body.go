@@ -17,6 +17,8 @@ type expandBody struct {
 	forEachCtx *hcl.EvalContext
 	iteration  *iteration // non-nil if we're nested inside another "dynamic" block
 
+	checkForEach []func(cty.Value, hcl.Expression, *hcl.EvalContext) hcl.Diagnostics
+
 	// These are used with PartialContent to produce a "remaining items"
 	// body to return. They are nil on all bodies fresh out of the transformer.
 	//
@@ -66,6 +68,7 @@ func (b *expandBody) PartialContent(schema *hcl.BodySchema) (*hcl.BodyContent, h
 		original:     b.original,
 		forEachCtx:   b.forEachCtx,
 		iteration:    b.iteration,
+		checkForEach: b.checkForEach,
 		hiddenAttrs:  make(map[string]struct{}),
 		hiddenBlocks: make(map[string]hcl.BlockHeaderSchema),
 	}
@@ -236,6 +239,7 @@ func (b *expandBody) expandChild(child hcl.Body, i *iteration) hcl.Body {
 	chiCtx := i.EvalContext(b.forEachCtx)
 	ret := Expand(child, chiCtx)
 	ret.(*expandBody).iteration = i
+	ret.(*expandBody).checkForEach = b.checkForEach
 	return ret
 }
 

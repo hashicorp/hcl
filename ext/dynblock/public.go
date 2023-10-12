@@ -27,24 +27,28 @@ import (
 // multi-dimensional iteration. However, it is not possible to
 // dynamically-generate the "dynamic" blocks themselves except through nesting.
 //
-//     parent {
-//       dynamic "child" {
-//         for_each = child_objs
-//         content {
-//           dynamic "grandchild" {
-//             for_each = child.value.children
-//             labels   = [grandchild.key]
-//             content {
-//               parent_key = child.key
-//               value      = grandchild.value
-//             }
-//           }
-//         }
-//       }
-//     }
-func Expand(body hcl.Body, ctx *hcl.EvalContext) hcl.Body {
-	return &expandBody{
+//	parent {
+//	  dynamic "child" {
+//	    for_each = child_objs
+//	    content {
+//	      dynamic "grandchild" {
+//	        for_each = child.value.children
+//	        labels   = [grandchild.key]
+//	        content {
+//	          parent_key = child.key
+//	          value      = grandchild.value
+//	        }
+//	      }
+//	    }
+//	  }
+//	}
+func Expand(body hcl.Body, ctx *hcl.EvalContext, opts ...ExpandOption) hcl.Body {
+	ret := &expandBody{
 		original:   body,
 		forEachCtx: ctx,
 	}
+	for _, opt := range opts {
+		opt.applyExpandOption(ret)
+	}
+	return ret
 }

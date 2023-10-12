@@ -43,6 +43,16 @@ func (b *expandBody) decodeSpec(blockS *hcl.BlockHeaderSchema, rawSpec *hcl.Bloc
 	eachAttr := specContent.Attributes["for_each"]
 	eachVal, eachDiags := eachAttr.Expr.Value(b.forEachCtx)
 	diags = append(diags, eachDiags...)
+	if diags.HasErrors() {
+		return nil, diags
+	}
+	for _, check := range b.checkForEach {
+		moreDiags := check(eachVal, eachAttr.Expr, b.forEachCtx)
+		diags = append(diags, moreDiags...)
+		if moreDiags.HasErrors() {
+			return nil, diags
+		}
+	}
 
 	if !eachVal.CanIterateElements() && eachVal.Type() != cty.DynamicPseudoType {
 		// We skip this error for DynamicPseudoType because that means we either
