@@ -200,13 +200,13 @@ func (s *AttrSpec) decode(content *hcl.BodyContent, blockLabels []blockLabel, ct
 	if !exists {
 		// We don't need to check required and emit a diagnostic here, because
 		// that would already have happened when building "content".
-		return cty.NullVal(s.Type), nil
+		return cty.NullVal(s.Type.WithoutOptionalAttributesDeep()), nil
 	}
 
 	if decodeFn := customdecode.CustomExpressionDecoderForType(s.Type); decodeFn != nil {
 		v, diags := decodeFn(attr.Expr, ctx)
 		if v == cty.NilVal {
-			v = cty.UnknownVal(s.Type)
+			v = cty.UnknownVal(s.Type.WithoutOptionalAttributesDeep())
 		}
 		return v, diags
 	}
@@ -229,7 +229,7 @@ func (s *AttrSpec) decode(content *hcl.BodyContent, blockLabels []blockLabel, ct
 		})
 		// We'll return an unknown value of the _correct_ type so that the
 		// incomplete result can still be used for some analysis use-cases.
-		val = cty.UnknownVal(s.Type)
+		val = cty.UnknownVal(s.Type.WithoutOptionalAttributesDeep())
 	} else {
 		val = convVal
 	}
@@ -381,7 +381,7 @@ func (s *BlockSpec) decode(content *hcl.BodyContent, blockLabels []blockLabel, c
 				Subject: &content.MissingItemRange,
 			})
 		}
-		return cty.NullVal(s.Nested.impliedType()), diags
+		return cty.NullVal(s.Nested.impliedType().WithoutOptionalAttributesDeep()), diags
 	}
 
 	if s.Nested == nil {
@@ -478,7 +478,7 @@ func (s *BlockListSpec) decode(content *hcl.BodyContent, blockLabels []blockLabe
 			if u.Unknown() {
 				// If any block Body is unknown, then the entire block value
 				// must be unknown
-				return cty.UnknownVal(s.impliedType()), diags
+				return cty.UnknownVal(s.impliedType().WithoutOptionalAttributesDeep()), diags
 			}
 		}
 
@@ -640,7 +640,7 @@ func (s *BlockTupleSpec) decode(content *hcl.BodyContent, blockLabels []blockLab
 			if u.Unknown() {
 				// If any block Body is unknown, then the entire block value
 				// must be unknown
-				return cty.UnknownVal(s.impliedType()), diags
+				return cty.UnknownVal(s.impliedType().WithoutOptionalAttributesDeep()), diags
 			}
 		}
 
@@ -763,7 +763,7 @@ func (s *BlockSetSpec) decode(content *hcl.BodyContent, blockLabels []blockLabel
 			if u.Unknown() {
 				// If any block Body is unknown, then the entire block value
 				// must be unknown
-				return cty.UnknownVal(s.impliedType()), diags
+				return cty.UnknownVal(s.impliedType().WithoutOptionalAttributesDeep()), diags
 			}
 		}
 
@@ -922,7 +922,7 @@ func (s *BlockMapSpec) decode(content *hcl.BodyContent, blockLabels []blockLabel
 			if u.Unknown() {
 				// If any block Body is unknown, then the entire block value
 				// must be unknown
-				return cty.UnknownVal(s.impliedType()), diags
+				return cty.UnknownVal(s.impliedType().WithoutOptionalAttributesDeep()), diags
 			}
 		}
 
@@ -1076,7 +1076,7 @@ func (s *BlockObjectSpec) decode(content *hcl.BodyContent, blockLabels []blockLa
 			if u.Unknown() {
 				// If any block Body is unknown, then the entire block value
 				// must be unknown
-				return cty.UnknownVal(s.impliedType()), diags
+				return cty.UnknownVal(s.impliedType().WithoutOptionalAttributesDeep()), diags
 			}
 		}
 
@@ -1250,7 +1250,7 @@ func (s *BlockAttrsSpec) decode(content *hcl.BodyContent, blockLabels []blockLab
 				Subject: &content.MissingItemRange,
 			})
 		}
-		return cty.NullVal(cty.Map(s.ElementType)), diags
+		return cty.NullVal(cty.Map(s.ElementType).WithoutOptionalAttributesDeep()), diags
 	}
 	if other != nil {
 		diags = append(diags, &hcl.Diagnostic{
@@ -1513,7 +1513,7 @@ func (s *TransformExprSpec) decode(content *hcl.BodyContent, blockLabels []block
 		// We won't try to run our function in this case, because it'll probably
 		// generate confusing additional errors that will distract from the
 		// root cause.
-		return cty.UnknownVal(s.impliedType()), diags
+		return cty.UnknownVal(s.impliedType().WithoutOptionalAttributesDeep()), diags
 	}
 
 	chiCtx := s.TransformCtx.NewChild()
@@ -1569,7 +1569,7 @@ func (s *TransformFuncSpec) decode(content *hcl.BodyContent, blockLabels []block
 		// We won't try to run our function in this case, because it'll probably
 		// generate confusing additional errors that will distract from the
 		// root cause.
-		return cty.UnknownVal(s.impliedType()), diags
+		return cty.UnknownVal(s.impliedType().WithoutOptionalAttributesDeep()), diags
 	}
 
 	resultVal, err := s.Func.Call([]cty.Value{wrappedVal})
@@ -1583,7 +1583,7 @@ func (s *TransformFuncSpec) decode(content *hcl.BodyContent, blockLabels []block
 			Detail:   fmt.Sprintf("Decoder transform returned an error: %s", err),
 			Subject:  s.sourceRange(content, blockLabels).Ptr(),
 		})
-		return cty.UnknownVal(s.impliedType()), diags
+		return cty.UnknownVal(s.impliedType().WithoutOptionalAttributesDeep()), diags
 	}
 
 	return resultVal, diags
@@ -1637,7 +1637,7 @@ func (s *RefineValueSpec) decode(content *hcl.BodyContent, blockLabels []blockLa
 		// We won't try to run our function in this case, because it'll probably
 		// generate confusing additional errors that will distract from the
 		// root cause.
-		return cty.UnknownVal(s.impliedType()), diags
+		return cty.UnknownVal(s.impliedType().WithoutOptionalAttributesDeep()), diags
 	}
 
 	return wrappedVal.RefineWith(s.Refine), diags
@@ -1658,7 +1658,6 @@ func (s *RefineValueSpec) sourceRange(content *hcl.BodyContent, blockLabels []bl
 // The Subject field of the returned Diagnostic is optional. If not
 // specified, it is automatically populated with the range covered by
 // the wrapped spec.
-//
 type ValidateSpec struct {
 	Wrapped Spec
 	Func    func(value cty.Value) hcl.Diagnostics
@@ -1674,7 +1673,7 @@ func (s *ValidateSpec) decode(content *hcl.BodyContent, blockLabels []blockLabel
 		// We won't try to run our function in this case, because it'll probably
 		// generate confusing additional errors that will distract from the
 		// root cause.
-		return cty.UnknownVal(s.impliedType()), diags
+		return cty.UnknownVal(s.impliedType().WithoutOptionalAttributesDeep()), diags
 	}
 
 	validateDiags := s.Func(wrappedVal)
