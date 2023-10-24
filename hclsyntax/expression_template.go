@@ -186,9 +186,7 @@ func (e *TemplateJoinExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnosti
 			diags = append(diags, &hcl.Diagnostic{
 				Severity: hcl.DiagError,
 				Summary:  "Invalid template interpolation value",
-				Detail: fmt.Sprintf(
-					"An iteration result is null. Cannot include a null value in a string template.",
-				),
+				Detail:  "An iteration result is null. Cannot include a null value in a string template.",
 				Subject:     e.Range().Ptr(),
 				Expression:  e,
 				EvalContext: ctx,
