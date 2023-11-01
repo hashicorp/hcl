@@ -363,6 +363,36 @@ upper(
 			0,
 		},
 		{
+			`::upper("foo")`, // :: is still not a valid identifier
+			&hcl.EvalContext{
+				Functions: map[string]function.Function{
+					"::upper": stdlib.UpperFunc,
+				},
+			},
+			cty.DynamicVal,
+			1,
+		},
+		{
+			`double::::upper("foo")`, // missing name after ::
+			&hcl.EvalContext{
+				Functions: map[string]function.Function{
+					"double::::upper": stdlib.UpperFunc,
+				},
+			},
+			cty.NilVal,
+			1,
+		},
+		{
+			`missing::("foo")`, // missing name after ::
+			&hcl.EvalContext{
+				Functions: map[string]function.Function{
+					"missing::": stdlib.UpperFunc,
+				},
+			},
+			cty.NilVal,
+			1,
+		},
+		{
 			`misbehave()`,
 			&hcl.EvalContext{
 				Functions: map[string]function.Function{
@@ -2194,8 +2224,12 @@ EOT
 	for _, test := range tests {
 		t.Run(test.input, func(t *testing.T) {
 			expr, parseDiags := ParseExpression([]byte(test.input), "", hcl.Pos{Line: 1, Column: 1, Byte: 0})
+			var got cty.Value
+			var valDiags hcl.Diagnostics
 
-			got, valDiags := expr.Value(test.ctx)
+			if expr != nil {
+				got, valDiags = expr.Value(test.ctx)
+			}
 
 			diagCount := len(parseDiags) + len(valDiags)
 
