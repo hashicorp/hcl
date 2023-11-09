@@ -53,6 +53,7 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
         LogicalAnd = "&&";
         LogicalOr = "||";
 
+        DoubleColon = "::";
         Ellipsis = "...";
         FatArrow = "=>";
 
@@ -294,6 +295,7 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
             LessThanEqual    => { token(TokenLessThanEq); };
             LogicalAnd       => { token(TokenAnd); };
             LogicalOr        => { token(TokenOr); };
+            DoubleColon      => { token(TokenDoubleColon); };
             Ellipsis         => { token(TokenEllipsis); };
             FatArrow         => { token(TokenFatArrow); };
             SelfToken        => { selfToken() };

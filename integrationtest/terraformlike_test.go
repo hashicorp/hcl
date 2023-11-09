@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/hcl/v2/json"
 	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-cty/cty/function"
 )
 
 // TestTerraformLike parses both a native syntax and a JSON representation
@@ -53,10 +54,14 @@ func TestTerraformLike(t *testing.T) {
 		Name      string         `hcl:"name,label"`
 		Providers hcl.Expression `hcl:"providers"`
 	}
+	type Locals struct {
+		Config hcl.Body `hcl:",remain"`
+	}
 	type Root struct {
 		Variables []*Variable `hcl:"variable,block"`
 		Resources []*Resource `hcl:"resource,block"`
 		Modules   []*Module   `hcl:"module,block"`
+		Locals    []*Locals   `hcl:"locals,block"`
 	}
 	instanceDecode := &hcldec.ObjectSpec{
 		"image_id": &hcldec.AttrSpec{
@@ -343,6 +348,57 @@ func TestTerraformLike(t *testing.T) {
 					t.Errorf("wrong value traversal [1] type %T; want hcl.TraverseAttr", vt[1])
 				}
 			})
+
+			t.Run("locals", func(t *testing.T) {
+				locals := root.Locals[0]
+				attrs, diags := locals.Config.JustAttributes()
+				if diags.HasErrors() {
+					t.Fatal(diags)
+				}
+
+				ctx := &hcl.EvalContext{
+					Functions: map[string]function.Function{
+						"func": function.New(&function.Spec{
+							Params: []function.Parameter{{Type: cty.String}},
+							Type:   function.StaticReturnType(cty.String),
+							Impl: func([]cty.Value, cty.Type) (cty.Value, error) {
+								return cty.StringVal("func_result"), nil
+							},
+						}),
+						"scoped::func": function.New(&function.Spec{
+							Params: []function.Parameter{{Type: cty.String}},
+							Type:   function.StaticReturnType(cty.String),
+							Impl: func([]cty.Value, cty.Type) (cty.Value, error) {
+								return cty.StringVal("scoped::func_result"), nil
+							},
+						}),
+					},
+				}
+
+				res := attrs["func_result"]
+				funcVal, diags := res.Expr.Value(ctx)
+				if diags.HasErrors() {
+					t.Fatal(diags)
+				}
+
+				wantVal := cty.StringVal("func_result")
+
+				if !funcVal.RawEquals(wantVal) {
+					t.Errorf("expected %#v, got %#v", wantVal, funcVal)
+				}
+
+				res = attrs["scoped_func_result"]
+				funcVal, diags = res.Expr.Value(ctx)
+				if diags.HasErrors() {
+					t.Fatal(diags)
+				}
+
+				wantVal = cty.StringVal("scoped::func_result")
+
+				if !funcVal.RawEquals(wantVal) {
+					t.Errorf("expected %#v, got %#v", wantVal, funcVal)
+				}
+			})
 		})
 	}
 }
@@ -350,6 +406,11 @@ func TestTerraformLike(t *testing.T) {
 const terraformLikeNativeSyntax = `
 
 variable "image_id" {
+}
+
+locals {
+  func_result        = func("arg")
+  scoped_func_result = scoped::func("arg")
 }
 
 resource "happycloud_instance" "test" {
@@ -399,6 +460,10 @@ const terraformLikeJSON = `
 {
   "variable": {
     "image_id": {}
+  },
+  "locals": {
+    "func_result": "${func(\"arg\")}",
+	"scoped_func_result": "${scoped::func(\"arg\")}"
   },
   "resource": {
     "happycloud_instance": {

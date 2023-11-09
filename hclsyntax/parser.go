@@ -999,7 +999,7 @@ func (p *parser) parseExpressionTerm() (Expression, hcl.Diagnostics) {
 	case TokenIdent:
 		tok := p.Read() // eat identifier token
 
-		if p.Peek().Type == TokenOParen {
+		if p.Peek().Type == TokenOParen || p.Peek().Type == TokenDoubleColon {
 			return p.finishParsingFunctionCall(tok)
 		}
 
@@ -1145,16 +1145,57 @@ func (p *parser) numberLitValue(tok Token) (cty.Value, hcl.Diagnostics) {
 
 // finishParsingFunctionCall parses a function call assuming that the function
 // name was already read, and so the peeker should be pointing at the opening
-// parenthesis after the name.
+// parenthesis after the name, or at the double-colon after the initial
+// function scope name.
 func (p *parser) finishParsingFunctionCall(name Token) (Expression, hcl.Diagnostics) {
+	var diags hcl.Diagnostics
+
 	openTok := p.Read()
-	if openTok.Type != TokenOParen {
+	if openTok.Type != TokenOParen && openTok.Type != TokenDoubleColon {
 		// should never happen if callers behave
-		panic("finishParsingFunctionCall called with non-parenthesis as next token")
+		panic("finishParsingFunctionCall called with unsupported next token")
+	}
+
+	nameStr := string(name.Bytes)
+	for openTok.Type == TokenDoubleColon {
+		nextName := p.Read()
+		if nextName.Type != TokenIdent {
+			diags = append(diags, &hcl.Diagnostic{
+				Severity: hcl.DiagError,
+				Summary:  "Missing function name",
+				Detail:   "Function scope resolution symbol :: must be followed by a function name in this scope.",
+				Subject:  &nextName.Range,
+				Context:  hcl.RangeBetween(name.Range, nextName.Range).Ptr(),
+			})
+			p.recoverOver(TokenOParen)
+			return nil, diags
+		}
+
+		// Initial versions of HCLv2 didn't support function namespaces, and
+		// so for backward compatibility we just treat namespaced functions
+		// as weird names with "::" separators in them, saved as a string
+		// to keep the API unchanged. FunctionCallExpr also has some special
+		// handling of names containing :: when referring to a function that
+		// doesn't exist in EvalContext, to return better error messages
+		// when namespaces are used incorrectly.
+		nameStr = nameStr + "::" + string(nextName.Bytes)
+
+		openTok = p.Read()
+	}
+
+	if openTok.Type != TokenOParen {
+		diags = append(diags, &hcl.Diagnostic{
+			Severity: hcl.DiagError,
+			Summary:  "Missing open parenthesis",
+			Detail:   "Function selector must be followed by an open parenthesis to begin the function call.",
+			Subject:  &openTok.Range,
+			Context:  hcl.RangeBetween(name.Range, openTok.Range).Ptr(),
+		})
+		p.recoverOver(TokenOParen)
+		return nil, diags
 	}
 
 	var args []Expression
-	var diags hcl.Diagnostics
 	var expandFinal bool
 	var closeTok Token
 
@@ -1245,7 +1286,7 @@ Token:
 	p.PopIncludeNewlines()
 
 	return &FunctionCallExpr{
-		Name: string(name.Bytes),
+		Name: nameStr,
 		Args: args,
 
 		ExpandFinal: expandFinal,

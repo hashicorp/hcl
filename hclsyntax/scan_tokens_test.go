@@ -372,6 +372,66 @@ func TestScanTokens_normal(t *testing.T) {
 			},
 		},
 
+		// TokenDoubleColon and associated TokenIdent
+		{
+			`::`,
+			[]Token{
+				{
+					Type:  TokenDoubleColon,
+					Bytes: []byte(`::`),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   hcl.Pos{Byte: 2, Line: 1, Column: 3},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 2, Line: 1, Column: 3},
+						End:   hcl.Pos{Byte: 2, Line: 1, Column: 3},
+					},
+				},
+			},
+		},
+		{
+			`a::b`,
+			[]Token{
+				{
+					Type:  TokenIdent,
+					Bytes: []byte(`a`),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 0, Line: 1, Column: 1},
+						End:   hcl.Pos{Byte: 1, Line: 1, Column: 2},
+					},
+				},
+				{
+					Type:  TokenDoubleColon,
+					Bytes: []byte(`::`),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 1, Line: 1, Column: 2},
+						End:   hcl.Pos{Byte: 3, Line: 1, Column: 4},
+					},
+				},
+				{
+					Type:  TokenIdent,
+					Bytes: []byte(`b`),
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 3, Line: 1, Column: 4},
+						End:   hcl.Pos{Byte: 4, Line: 1, Column: 5},
+					},
+				},
+				{
+					Type:  TokenEOF,
+					Bytes: []byte{},
+					Range: hcl.Range{
+						Start: hcl.Pos{Byte: 4, Line: 1, Column: 5},
+						End:   hcl.Pos{Byte: 4, Line: 1, Column: 5},
+					},
+				},
+			},
+		},
+
 		// Literal-only Templates (string literals, effectively)
 		{
 			`""`,
