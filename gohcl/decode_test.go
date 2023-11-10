@@ -44,6 +44,11 @@ func TestDecodeBody(t *testing.T) {
 		Nested []withTwoAttributes `hcl:"nested,block"`
 	}
 
+	type Custom string
+	type withCustomAttribute struct {
+		Custom `hcl:"custom,optional"`
+	}
+
 	tests := []struct {
 		Body      map[string]interface{}
 		Target    func() interface{}
@@ -449,6 +454,62 @@ func TestDecodeBody(t *testing.T) {
 				return noodle.Name == "foo_foo"
 			},
 			0,
+		},
+		{
+			map[string]interface{}{
+				"noodle": map[string]interface{}{
+					"foo_foo": map[string]interface{}{},
+				},
+			},
+			makeInstantiateType(struct {
+				Noodle struct {
+					Custom `hcl:"name,label"`
+				} `hcl:"noodle,block"`
+			}{}),
+			func(gotI interface{}) bool {
+				noodle := gotI.(struct {
+					Noodle struct {
+						Custom `hcl:"name,label"`
+					} `hcl:"noodle,block"`
+				}).Noodle
+				return noodle.Custom == "foo_foo"
+			},
+			0,
+		},
+		{
+			map[string]interface{}{
+				"noodle": map[string]interface{}{
+					"foo_foo": map[string]interface{}{},
+				},
+			},
+			makeInstantiateType(struct {
+				Noodle struct {
+					Name Custom `hcl:"name,label"`
+				} `hcl:"noodle,block"`
+			}{}),
+			func(gotI interface{}) bool {
+				noodle := gotI.(struct {
+					Noodle struct {
+						Name Custom `hcl:"name,label"`
+					} `hcl:"noodle,block"`
+				}).Noodle
+				return noodle.Name == "foo_foo"
+			},
+			0,
+		},
+		{
+			Body: map[string]interface{}{
+				"custom": "foo",
+			},
+			Target:    makeInstantiateType(withCustomAttribute{}),
+			DiagCount: 0,
+			Check: func(v interface{}) bool {
+				val, ok := v.(withCustomAttribute)
+				if !ok {
+					return false
+				}
+				return val.Custom == "foo"
+			},
 		},
 		{
 			map[string]interface{}{
