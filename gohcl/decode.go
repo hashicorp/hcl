@@ -102,6 +102,10 @@ func (d *Decoder) decodeBodyToValue(body hcl.Body, ctx *hcl.EvalContext, val ref
 }
 
 func (d *Decoder) decodeBodyToStruct(body hcl.Body, ctx *hcl.EvalContext, val reflect.Value) hcl.Diagnostics {
+	if fn, ok := d.bodyConvertors[val.Type()]; ok {
+		return fn(body, ctx, val.Addr().Interface())
+	}
+
 	schema, partial := ImpliedBodySchema(val.Interface())
 
 	var content *hcl.BodyContent
