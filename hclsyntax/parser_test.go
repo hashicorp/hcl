@@ -3757,7 +3757,7 @@ func TestParseConfigDiagnostics(t *testing.T) {
 				{
 					Severity: hcl.DiagError,
 					Summary:  "Unterminated function call",
-					Detail:   "There is no closing parenthesis for this function call before the end of the file. This may be caused by incorrect parethesis nesting elsewhere in this file.",
+					Detail:   "There is no closing parenthesis for this function call before the end of the file. This may be caused by incorrect parenthesis nesting elsewhere in this file.",
 					Subject: &hcl.Range{
 						Filename: "test.hcl",
 						Start:    hcl.Pos{Line: 1, Column: 7, Byte: 6},
