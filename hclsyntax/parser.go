@@ -1157,6 +1157,7 @@ func (p *parser) finishParsingFunctionCall(name Token) (Expression, hcl.Diagnost
 	}
 
 	nameStr := string(name.Bytes)
+	nameEndPos := name.Range.End
 	for openTok.Type == TokenDoubleColon {
 		nextName := p.Read()
 		if nextName.Type != TokenIdent {
@@ -1179,8 +1180,15 @@ func (p *parser) finishParsingFunctionCall(name Token) (Expression, hcl.Diagnost
 		// doesn't exist in EvalContext, to return better error messages
 		// when namespaces are used incorrectly.
 		nameStr = nameStr + "::" + string(nextName.Bytes)
+		nameEndPos = nextName.Range.End
 
 		openTok = p.Read()
+	}
+
+	nameRange := hcl.Range{
+		Filename: name.Range.Filename,
+		Start:    name.Range.Start,
+		End:      nameEndPos,
 	}
 
 	if openTok.Type != TokenOParen {
@@ -1259,7 +1267,7 @@ Token:
 				diags = append(diags, &hcl.Diagnostic{
 					Severity: hcl.DiagError,
 					Summary:  "Unterminated function call",
-					Detail:   "There is no closing parenthesis for this function call before the end of the file. This may be caused by incorrect parethesis nesting elsewhere in this file.",
+					Detail:   "There is no closing parenthesis for this function call before the end of the file. This may be caused by incorrect parenthesis nesting elsewhere in this file.",
 					Subject:  hcl.RangeBetween(name.Range, openTok.Range).Ptr(),
 				})
 			default:
@@ -1291,7 +1299,7 @@ Token:
 
 		ExpandFinal: expandFinal,
 
-		NameRange:       name.Range,
+		NameRange:       nameRange,
 		OpenParenRange:  openTok.Range,
 		CloseParenRange: closeTok.Range,
 	}, diags
