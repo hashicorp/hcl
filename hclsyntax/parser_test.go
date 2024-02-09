@@ -2462,6 +2462,103 @@ block "valid" {}
 				},
 			},
 		},
+		{
+			"a = a::namespaced::func(data.first.ref.attr)\n",
+			0,
+			&Body{
+				Attributes: Attributes{
+					"a": {
+						Name: "a",
+						Expr: &FunctionCallExpr{
+							Name: "a::namespaced::func",
+							Args: []Expression{
+								&ScopeTraversalExpr{
+									Traversal: hcl.Traversal{
+										hcl.TraverseRoot{
+											Name: "data",
+											SrcRange: hcl.Range{
+												Filename: "",
+												Start:    hcl.Pos{Line: 1, Column: 25, Byte: 24},
+												End:      hcl.Pos{Line: 1, Column: 29, Byte: 28},
+											},
+										},
+										hcl.TraverseAttr{
+											Name: "first",
+											SrcRange: hcl.Range{
+												Filename: "",
+												Start:    hcl.Pos{Line: 1, Column: 29, Byte: 28},
+												End:      hcl.Pos{Line: 1, Column: 35, Byte: 34},
+											},
+										},
+										hcl.TraverseAttr{
+											Name: "ref",
+											SrcRange: hcl.Range{
+												Filename: "",
+												Start:    hcl.Pos{Line: 1, Column: 35, Byte: 34},
+												End:      hcl.Pos{Line: 1, Column: 39, Byte: 38},
+											},
+										},
+										hcl.TraverseAttr{
+											Name: "attr",
+											SrcRange: hcl.Range{
+												Filename: "",
+												Start:    hcl.Pos{Line: 1, Column: 39, Byte: 38},
+												End:      hcl.Pos{Line: 1, Column: 44, Byte: 43},
+											},
+										},
+									},
+									SrcRange: hcl.Range{
+										Filename: "",
+										Start:    hcl.Pos{Line: 1, Column: 25, Byte: 24},
+										End:      hcl.Pos{Line: 1, Column: 44, Byte: 43},
+									},
+								},
+							},
+							ExpandFinal: false,
+							NameRange: hcl.Range{
+								Filename: "",
+								Start:    hcl.Pos{Line: 1, Column: 5, Byte: 4},
+								End:      hcl.Pos{Line: 1, Column: 24, Byte: 23},
+							},
+							OpenParenRange: hcl.Range{
+								Filename: "",
+								Start:    hcl.Pos{Line: 1, Column: 24, Byte: 23},
+								End:      hcl.Pos{Line: 1, Column: 25, Byte: 24},
+							},
+							CloseParenRange: hcl.Range{
+								Filename: "",
+								Start:    hcl.Pos{Line: 1, Column: 44, Byte: 43},
+								End:      hcl.Pos{Line: 1, Column: 45, Byte: 44},
+							},
+						},
+						SrcRange: hcl.Range{
+							Filename: "",
+							Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:      hcl.Pos{Line: 1, Column: 45, Byte: 44},
+						},
+						NameRange: hcl.Range{
+							Filename: "",
+							Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:      hcl.Pos{Line: 1, Column: 2, Byte: 1},
+						},
+						EqualsRange: hcl.Range{
+							Filename: "",
+							Start:    hcl.Pos{Line: 1, Column: 3, Byte: 2},
+							End:      hcl.Pos{Line: 1, Column: 4, Byte: 3},
+						},
+					},
+				},
+				Blocks: Blocks{},
+				SrcRange: hcl.Range{
+					Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   hcl.Pos{Line: 2, Column: 1, Byte: 45},
+				},
+				EndRange: hcl.Range{
+					Start: hcl.Pos{Line: 2, Column: 1, Byte: 45},
+					End:   hcl.Pos{Line: 2, Column: 1, Byte: 45},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -3660,7 +3757,7 @@ func TestParseConfigDiagnostics(t *testing.T) {
 				{
 					Severity: hcl.DiagError,
 					Summary:  "Unterminated function call",
-					Detail:   "There is no closing parenthesis for this function call before the end of the file. This may be caused by incorrect parethesis nesting elsewhere in this file.",
+					Detail:   "There is no closing parenthesis for this function call before the end of the file. This may be caused by incorrect parenthesis nesting elsewhere in this file.",
 					Subject: &hcl.Range{
 						Filename: "test.hcl",
 						Start:    hcl.Pos{Line: 1, Column: 7, Byte: 6},
