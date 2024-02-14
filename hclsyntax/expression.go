@@ -252,6 +252,10 @@ func (e *FunctionCallExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnosti
 			}
 		}
 
+		extraUnknown := &functionCallUnknown{
+			name: e.Name,
+		}
+
 		// For historical reasons, we represent namespaced function names
 		// as strings with :: separating the names. If this was an attempt
 		// to call a namespaced function then we'll try to distinguish
@@ -274,6 +278,9 @@ func (e *FunctionCallExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnosti
 				}
 			}
 
+			extraUnknown.name = name
+			extraUnknown.namespace = namespace
+
 			if len(avail) == 0 {
 				// TODO: Maybe use nameSuggestion for the other available
 				// namespaces? But that'd require us to go scan the function
@@ -291,6 +298,7 @@ func (e *FunctionCallExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnosti
 						Context:     e.Range().Ptr(),
 						Expression:  e,
 						EvalContext: ctx,
+						Extra:       extraUnknown,
 					},
 				}
 			} else {
@@ -308,6 +316,7 @@ func (e *FunctionCallExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnosti
 						Context:     e.Range().Ptr(),
 						Expression:  e,
 						EvalContext: ctx,
+						Extra:       extraUnknown,
 					},
 				}
 			}
@@ -331,6 +340,7 @@ func (e *FunctionCallExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnosti
 				Context:     e.Range().Ptr(),
 				Expression:  e,
 				EvalContext: ctx,
+				Extra:       extraUnknown,
 			},
 		}
 	}
@@ -676,6 +686,27 @@ func (e *functionCallDiagExtra) CalledFunctionName() string {
 
 func (e *functionCallDiagExtra) FunctionCallError() error {
 	return e.functionCallError
+}
+
+// FunctionCallUnknownDiagExtra is an interface implemented by a value in the Extra
+// field of some diagnostics to indicate when the error was caused by a call to
+// an unknown function.
+type FunctionCallUnknownDiagExtra interface {
+	CalledFunctionName() string
+	CalledFunctionNamespace() string
+}
+
+type functionCallUnknown struct {
+	name      string
+	namespace string
+}
+
+func (e *functionCallUnknown) CalledFunctionName() string {
+	return e.name
+}
+
+func (e *functionCallUnknown) CalledFunctionNamespace() string {
+	return e.namespace
 }
 
 type ConditionalExpr struct {
