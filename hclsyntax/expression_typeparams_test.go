@@ -24,6 +24,71 @@ func TestExpressionDiagnosticExtra(t *testing.T) {
 		ctx    *hcl.EvalContext
 		assert func(t *testing.T, diags hcl.Diagnostics)
 	}{
+		// Errors for unknown function calls
+		{
+			"boop()",
+			&hcl.EvalContext{
+				Functions: map[string]function.Function{
+					"zap": function.New(&function.Spec{
+						Type: function.StaticReturnType(cty.String),
+						Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
+							return cty.DynamicVal, fmt.Errorf("the expected error")
+						},
+					}),
+				},
+			},
+			func(t *testing.T, diags hcl.Diagnostics) {
+				t.Helper()
+				for _, diag := range diags {
+					extra, ok := hcl.DiagnosticExtra[FunctionCallUnknownDiagExtra](diag)
+					if !ok {
+						continue
+					}
+
+					if got, want := extra.CalledFunctionName(), "boop"; got != want {
+						t.Errorf("wrong called function name %q; want %q", got, want)
+					}
+					ns := extra.CalledFunctionNamespace()
+					if ns != "" {
+						t.Fatal("expected no namespace, got", ns)
+					}
+					return
+				}
+				t.Fatalf("None of the returned diagnostics implement FunctionCallUnknownDiagExtra\n%s", diags.Error())
+			},
+		},
+		{
+			"ns::source::boop()",
+			&hcl.EvalContext{
+				Functions: map[string]function.Function{
+					"zap": function.New(&function.Spec{
+						Type: function.StaticReturnType(cty.String),
+						Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
+							return cty.DynamicVal, fmt.Errorf("the expected error")
+						},
+					}),
+				},
+			},
+			func(t *testing.T, diags hcl.Diagnostics) {
+				t.Helper()
+				for _, diag := range diags {
+					extra, ok := hcl.DiagnosticExtra[FunctionCallUnknownDiagExtra](diag)
+					if !ok {
+						continue
+					}
+
+					if got, want := extra.CalledFunctionName(), "boop"; got != want {
+						t.Errorf("wrong called function name %q; want %q", got, want)
+					}
+					ns := extra.CalledFunctionNamespace()
+					if ns != "ns::source::" {
+						t.Fatal("expected namespace ns::source::, got", ns)
+					}
+					return
+				}
+				t.Fatalf("None of the returned diagnostics implement FunctionCallUnknownDiagExtra\n%s", diags.Error())
+			},
+		},
 		// Error messages describing inconsistent result types for conditional expressions.
 		{
 			"boop()",
