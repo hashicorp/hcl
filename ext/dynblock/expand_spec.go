@@ -38,6 +38,29 @@ func (b *expandBody) decodeSpec(blockS *hcl.BlockHeaderSchema, rawSpec *hcl.Bloc
 		return nil, diags
 	}
 
+	//// iterator attribute
+
+	iteratorName := blockS.Type
+	if iteratorAttr := specContent.Attributes["iterator"]; iteratorAttr != nil {
+		itTraversal, itDiags := hcl.AbsTraversalForExpr(iteratorAttr.Expr)
+		diags = append(diags, itDiags...)
+		if itDiags.HasErrors() {
+			return nil, diags
+		}
+
+		if len(itTraversal) != 1 {
+			diags = append(diags, &hcl.Diagnostic{
+				Severity: hcl.DiagError,
+				Summary:  "Invalid dynamic iterator name",
+				Detail:   "Dynamic iterator must be a single variable name.",
+				Subject:  itTraversal.SourceRange().Ptr(),
+			})
+			return nil, diags
+		}
+
+		iteratorName = itTraversal.RootName()
+	}
+
 	//// for_each attribute
 
 	eachAttr := specContent.Attributes["for_each"]
@@ -80,28 +103,7 @@ func (b *expandBody) decodeSpec(blockS *hcl.BlockHeaderSchema, rawSpec *hcl.Bloc
 		return nil, diags
 	}
 
-	//// iterator attribute
-
-	iteratorName := blockS.Type
-	if iteratorAttr := specContent.Attributes["iterator"]; iteratorAttr != nil {
-		itTraversal, itDiags := hcl.AbsTraversalForExpr(iteratorAttr.Expr)
-		diags = append(diags, itDiags...)
-		if itDiags.HasErrors() {
-			return nil, diags
-		}
-
-		if len(itTraversal) != 1 {
-			diags = append(diags, &hcl.Diagnostic{
-				Severity: hcl.DiagError,
-				Summary:  "Invalid dynamic iterator name",
-				Detail:   "Dynamic iterator must be a single variable name.",
-				Subject:  itTraversal.SourceRange().Ptr(),
-			})
-			return nil, diags
-		}
-
-		iteratorName = itTraversal.RootName()
-	}
+	//// labels attribute
 
 	var labelExprs []hcl.Expression
 	if labelsAttr := specContent.Attributes["labels"]; labelsAttr != nil {

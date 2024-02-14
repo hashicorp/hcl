@@ -709,3 +709,81 @@ func TestExpandUnknownBodies(t *testing.T) {
 	})
 
 }
+
+func TestExpandInvalidIteratorError(t *testing.T) {
+	srcBody := hcltest.MockBody(&hcl.BodyContent{
+		Blocks: hcl.Blocks{
+			{
+				Type:        "dynamic",
+				Labels:      []string{"b"},
+				LabelRanges: []hcl.Range{hcl.Range{}},
+				Body: hcltest.MockBody(&hcl.BodyContent{
+					Attributes: hcltest.MockAttrs(map[string]hcl.Expression{
+						"for_each": hcltest.MockExprLiteral(cty.ListVal([]cty.Value{
+							cty.StringVal("dynamic b 0"),
+							cty.StringVal("dynamic b 1"),
+						})),
+						"iterator": hcltest.MockExprLiteral(cty.StringVal("dyn_b")),
+					}),
+					Blocks: hcl.Blocks{
+						{
+							Type: "content",
+							Body: hcltest.MockBody(&hcl.BodyContent{
+								Blocks: hcl.Blocks{
+									{
+										Type: "c",
+										Body: hcltest.MockBody(&hcl.BodyContent{
+											Attributes: hcltest.MockAttrs(map[string]hcl.Expression{
+												"val0": hcltest.MockExprLiteral(cty.StringVal("static c 1")),
+												"val1": hcltest.MockExprTraversalSrc("dyn_b.value"),
+											}),
+										}),
+									},
+								},
+							}),
+						},
+					},
+				}),
+			},
+		},
+	})
+
+	dynBody := Expand(srcBody, nil)
+
+	t.Run("Decode", func(t *testing.T) {
+		decSpec := &hcldec.BlockListSpec{
+			TypeName: "b",
+			Nested: &hcldec.BlockListSpec{
+				TypeName: "c",
+				Nested: &hcldec.ObjectSpec{
+					"val0": &hcldec.AttrSpec{
+						Name: "val0",
+						Type: cty.String,
+					},
+					"val1": &hcldec.AttrSpec{
+						Name: "val1",
+						Type: cty.String,
+					},
+				},
+			},
+		}
+
+		var diags hcl.Diagnostics
+		_, diags = hcldec.Decode(dynBody, decSpec, nil)
+
+		if len(diags) < 1 {
+			t.Errorf("Expected diagnostics, got none")
+		}
+		if len(diags) > 1 {
+			t.Errorf("Expected one diagnostic message, got %d", len(diags))
+			for _, diag := range diags {
+				t.Logf("- %s", diag)
+			}
+		}
+
+		if diags[0].Summary != "Invalid expression" {
+			t.Errorf("Expected error subject to be invalid expression, instead it was %q", diags[0].Summary)
+		}
+	})
+
+}
