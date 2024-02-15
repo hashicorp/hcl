@@ -620,6 +620,14 @@ module "x" {
 			`attr = provider::framework::example()`,
 		},
 		{
+			`attr = provider :: framework :: example()`,
+			`attr = provider::framework::example()`,
+		},
+		{
+			`attr = provider ::framework:: example()`,
+			`attr = provider::framework::example()`,
+		},
+		{
 			// This is invalid syntax so formatting it with spaces
 			// does not have any meaning other than to make the fact more visible
 			`attr = provider::+example()`,
