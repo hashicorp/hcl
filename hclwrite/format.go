@@ -234,6 +234,11 @@ func spaceAfterToken(subject, before, after *Token) bool {
 		// Don't split a function name from open paren in a call
 		return false
 
+	case (subject.Type == hclsyntax.TokenIdent && after.Type == hclsyntax.TokenDoubleColon) ||
+		(subject.Type == hclsyntax.TokenDoubleColon && after.Type == hclsyntax.TokenIdent):
+		// Don't split namespace segments in a function call
+		return false
+
 	case subject.Type == hclsyntax.TokenDot || after.Type == hclsyntax.TokenDot:
 		// Don't use spaces around attribute access dots
 		return false
