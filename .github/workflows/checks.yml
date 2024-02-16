@@ -1,4 +1,4 @@
-name: Per-commit Checks
+name: Checks
 
 on:
   push:
