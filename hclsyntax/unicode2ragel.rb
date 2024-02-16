@@ -1,6 +1,4 @@
 #!/usr/bin/env ruby
-# Copyright (c) HashiCorp, Inc.
-# SPDX-License-Identifier: MPL-2.0
 
 #
 # This scripted has been updated to accept more command-line arguments:

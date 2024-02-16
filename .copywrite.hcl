@@ -8,6 +8,7 @@ project {
   # Supports doublestar glob patterns for more flexibility in defining which
   # files or folders should be ignored
   header_ignore = [
+    "hclsyntax/unicode2ragel.rb",
     "hclsyntax/fuzz/testdata/**",
     "hclwrite/fuzz/testdata/**",
     "json/fuzz/testdata/**",
