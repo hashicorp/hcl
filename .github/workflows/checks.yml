@@ -39,10 +39,9 @@ jobs:
         run: |
           go test ./... -race
 
-  fmt_and_vet:
-    name: "fmt and lint"
+  copyright:
+    name: "copyright headers"
     runs-on: ubuntu-latest
-
     steps:
       - name: "Fetch source code"
         uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
@@ -50,16 +49,34 @@ jobs:
         uses: actions/setup-go@93397bea11091df50f3d7e59dc26a7711a8bcfbe # v4.1.0
         with:
           go-version-file: go.mod
-      - name: "Check vet"
+      - name: "copyright headers check"
         run: |
-          go vet ./...
-      - name: "Check fmt"
+          make copyrightcheck
+
+  govet:
+    name: "go vet"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Fetch source code"
+        uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
+      - name: Install Go
+        uses: actions/setup-go@93397bea11091df50f3d7e59dc26a7711a8bcfbe # v4.1.0
+        with:
+          go-version-file: go.mod
+      - name: "go vet"
         run: |
-          go fmt ./...
-          if [[ -z "$(git status --porcelain)" ]]; then
-            echo "Formatting is consistent with 'go fmt'."
-          else
-            echo "Run 'go fmt ./...' to automatically apply standard Go style to all packages."
-            git status --porcelain
-            exit 1
-          fi
+          make vetcheck
+
+  gofmt:
+    name: "gofmt"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Fetch source code"
+        uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
+      - name: Install Go
+        uses: actions/setup-go@93397bea11091df50f3d7e59dc26a7711a8bcfbe # v4.1.0
+        with:
+          go-version-file: go.mod
+      - name: "gofmt"
+        run: |
+          make fmtcheck
