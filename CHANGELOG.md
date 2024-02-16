@@ -9,7 +9,6 @@
 ### Bugs Fixed
 
 * ext/dynblock: if `iterator` is invalid return this error instead of consequential errors ([#656](https://github.com/hashicorp/hcl/pull/656))
-* hclwrite: Fix formatting of namespaced functions ([#658](https://github.com/hashicorp/hcl/pull/658))
 
 ## v2.19.0 (October 16, 2023)
 
