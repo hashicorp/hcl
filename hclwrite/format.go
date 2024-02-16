@@ -234,6 +234,11 @@ func spaceAfterToken(subject, before, after *Token) bool {
 		// Don't split a function name from open paren in a call
 		return false
 
+	case (subject.Type == hclsyntax.TokenIdent && after.Type == hclsyntax.TokenDoubleColon) ||
+		(subject.Type == hclsyntax.TokenDoubleColon && after.Type == hclsyntax.TokenIdent):
+		// Don't split namespace segments in a function call
+		return false
+
 	case subject.Type == hclsyntax.TokenDot || after.Type == hclsyntax.TokenDot:
 		// Don't use spaces around attribute access dots
 		return false
@@ -450,11 +455,11 @@ func tokenBracketChange(tok *Token) int {
 // formatLine represents a single line of source code for formatting purposes,
 // splitting its tokens into up to three "cells":
 //
-// lead: always present, representing everything up to one of the others
-// assign: if line contains an attribute assignment, represents the tokens
-//    starting at (and including) the equals symbol
-// comment: if line contains any non-comment tokens and ends with a
-//    single-line comment token, represents the comment.
+//   - lead: always present, representing everything up to one of the others
+//   - assign: if line contains an attribute assignment, represents the tokens
+//     starting at (and including) the equals symbol
+//   - comment: if line contains any non-comment tokens and ends with a
+//     single-line comment token, represents the comment.
 //
 // When formatting, the leading spaces of the first tokens in each of these
 // cells is adjusted to align vertically their occurences on consecutive
