@@ -17,6 +17,7 @@ require (
 	github.com/zclconf/go-cty v1.13.0
 	github.com/zclconf/go-cty-debug v0.0.0-20191215020915-b22d67c1ba0b
 	golang.org/x/crypto v0.0.0-20220517005047-85d78b3ac167
+	golang.org/x/tools v0.6.0
 )
 
 require (
@@ -24,6 +25,7 @@ require (
 	github.com/kr/text v0.1.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/testify v1.2.2 // indirect
+	golang.org/x/mod v0.8.0 // indirect
 	golang.org/x/sys v0.5.0 // indirect
 	golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1 // indirect
 	golang.org/x/text v0.11.0 // indirect

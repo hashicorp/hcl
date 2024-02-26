@@ -4,6 +4,24 @@ package json
 
 import "strconv"
 
+func _() {
+	// An "invalid array index" compiler error signifies that the constant values have changed.
+	// Re-run the stringer command to generate them again.
+	var x [1]struct{}
+	_ = x[tokenBraceO-123]
+	_ = x[tokenBraceC-125]
+	_ = x[tokenBrackO-91]
+	_ = x[tokenBrackC-93]
+	_ = x[tokenComma-44]
+	_ = x[tokenColon-58]
+	_ = x[tokenKeyword-75]
+	_ = x[tokenString-83]
+	_ = x[tokenNumber-78]
+	_ = x[tokenEOF-9220]
+	_ = x[tokenInvalid-0]
+	_ = x[tokenEquals-61]
+}
+
 const _tokenType_name = "tokenInvalidtokenCommatokenColontokenEqualstokenKeywordtokenNumbertokenStringtokenBrackOtokenBrackCtokenBraceOtokenBraceCtokenEOF"
 
 var _tokenType_map = map[tokenType]string{
