@@ -1,4 +1,4 @@
-name: Per-commit Checks
+name: Checks
 
 on:
   push:
@@ -14,6 +14,8 @@ jobs:
             target: linux_amd64
           - runs-on: windows-latest
             target: windows_amd64
+          - runs-on: macos-latest
+            target: darwin_amd64
       fail-fast: false
 
     name: "Unit Tests on ${{ matrix.target }}"
@@ -32,7 +34,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@93397bea11091df50f3d7e59dc26a7711a8bcfbe # v4.1.0
         with:
-          go-version: 1.18
+          go-version-file: go.mod
       - name: Go test
         run: |
           go test ./... -race
@@ -47,7 +49,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@93397bea11091df50f3d7e59dc26a7711a8bcfbe # v4.1.0
         with:
-          go-version: 1.18
+          go-version-file: go.mod
       - name: "Check vet"
         run: |
           go vet ./...
