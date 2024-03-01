@@ -34,6 +34,11 @@ type Walker interface {
 // node, which provides information about the tree structure via separate
 // Enter and Exit functions.
 func Walk(node Node, w Walker) hcl.Diagnostics {
+	// nothing to walk into
+	if node == nil {
+		return nil
+	}
+
 	diags := w.Enter(node)
 	node.walkChildNodes(func(node Node) {
 		diags = append(diags, Walk(node, w)...)

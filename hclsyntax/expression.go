@@ -1133,9 +1133,7 @@ type TupleConsExpr struct {
 
 func (e *TupleConsExpr) walkChildNodes(w internalWalkFunc) {
 	for _, expr := range e.Exprs {
-		if expr != nil {
-			w(expr)
-		}
+		w(expr)
 	}
 }
 
