@@ -250,6 +250,10 @@ func (e *TemplateWrapExpr) walkChildNodes(w internalWalkFunc) {
 }
 
 func (e *TemplateWrapExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
+	if e.Wrapped == nil {
+		return cty.NilVal, nil
+	}
+
 	return e.Wrapped.Value(ctx)
 }
 
