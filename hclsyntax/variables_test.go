@@ -293,6 +293,15 @@ func TestVariables(t *testing.T) {
 				},
 			},
 		},
+		{
+			// happens e.g. when parsing an invalid [ provider:: ]
+			&TupleConsExpr{
+				Exprs: []Expression{
+					nil,
+				},
+			},
+			nil,
+		},
 	}
 
 	for _, test := range tests {
