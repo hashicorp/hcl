@@ -440,6 +440,17 @@ trim`,
 
 func TestTemplateExprGracefulValue(t *testing.T) {
 	// we don't care about diags since we know it's invalid config
+	expr, _ := ParseTemplate([]byte(`prefix${provider::}`), "", hcl.Pos{Line: 1, Column: 1, Byte: 0})
+
+	got, _ := expr.Value(nil) // this should not panic
+
+	if !got.RawEquals(cty.StringVal("prefix")) {
+		t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, cty.NilVal)
+	}
+}
+
+func TestTemplateExprWrappedGracefulValue(t *testing.T) {
+	// we don't care about diags since we know it's invalid config
 	expr, _ := ParseTemplate([]byte(`${provider::}`), "", hcl.Pos{Line: 1, Column: 1, Byte: 0})
 
 	got, _ := expr.Value(nil) // this should not panic

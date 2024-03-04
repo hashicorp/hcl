@@ -33,6 +33,11 @@ func (e *TemplateExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) 
 	marks := make(cty.ValueMarks)
 
 	for _, part := range e.Parts {
+		if part == nil {
+			// we silently ignore nil parts as they only occur for configuration that is already known to be invalid
+			continue
+		}
+
 		partVal, partDiags := part.Value(ctx)
 		diags = append(diags, partDiags...)
 
