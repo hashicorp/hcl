@@ -7,7 +7,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/sergi/go-diff/diffmatchpatch"
+	"github.com/google/go-cmp/cmp"
 	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-cty/cty/function"
 	"github.com/zclconf/go-cty/cty/function/stdlib"
@@ -71,12 +71,8 @@ block {
 			}
 
 			result := wr.Bytes()
-
 			if !bytes.Equal(result, src) {
-				dmp := diffmatchpatch.New()
-				diffs := dmp.DiffMain(string(src), string(result), false)
-				// t.Errorf("wrong result\nresult:\n%s\ninput:\n%s", result, src)
-				t.Errorf("wrong result\ndiff: (red indicates missing lines, and green indicates unexpected lines)\n%s", dmp.DiffPrettyText(diffs))
+				t.Errorf("wrong result\ndiff:\n%s", cmp.Diff(string(src), string(result)))
 			}
 		})
 	}

@@ -8,8 +8,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/hcl/v2"
-	"github.com/kr/pretty"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -300,7 +300,10 @@ func TestVariables(t *testing.T) {
 			got := Variables(test.Expr)
 
 			if !reflect.DeepEqual(got, test.Want) {
-				t.Errorf("wrong result\ngot:  %s\nwant: %s", pretty.Sprint(got), pretty.Sprint(test.Want))
+				t.Errorf(
+					"wrong result\ngot:  %s\nwant: %s",
+					spew.Sdump(got), spew.Sdump(test.Want),
+				)
 			}
 		})
 	}
