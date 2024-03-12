@@ -2559,6 +2559,112 @@ block "valid" {}
 				},
 			},
 		},
+		{
+			"a = partial::namespaced\n",
+			1,
+			&Body{
+				Attributes: Attributes{
+					"a": {
+						Name: "a",
+						Expr: &ExprSyntaxError{
+							Placeholder: cty.DynamicVal,
+							ParseDiags: hcl.Diagnostics{
+								{
+									Severity: hcl.DiagError,
+									Summary:  "Missing open parenthesis",
+									Detail:   "Function selector must be followed by an open parenthesis to begin the function call.",
+									Subject: &hcl.Range{
+										Start: hcl.Pos{Line: 1, Column: 24, Byte: 23},
+										End:   hcl.Pos{Line: 2, Column: 1, Byte: 24},
+									},
+									Context: &hcl.Range{
+										Start: hcl.Pos{Line: 1, Column: 5, Byte: 4},
+										End:   hcl.Pos{Line: 2, Column: 1, Byte: 24},
+									},
+								},
+							},
+						},
+						SrcRange: hcl.Range{
+							Filename: "",
+							Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:      hcl.Pos{Line: 2, Column: 1, Byte: 24},
+						},
+						NameRange: hcl.Range{
+							Filename: "",
+							Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:      hcl.Pos{Line: 1, Column: 2, Byte: 1},
+						},
+						EqualsRange: hcl.Range{
+							Filename: "",
+							Start:    hcl.Pos{Line: 1, Column: 3, Byte: 2},
+							End:      hcl.Pos{Line: 1, Column: 4, Byte: 3},
+						},
+					},
+				},
+				Blocks: Blocks{},
+				SrcRange: hcl.Range{
+					Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   hcl.Pos{Line: 2, Column: 1, Byte: 24},
+				},
+				EndRange: hcl.Range{
+					Start: hcl.Pos{Line: 2, Column: 1, Byte: 24},
+					End:   hcl.Pos{Line: 2, Column: 1, Byte: 24},
+				},
+			},
+		},
+		{
+			"a = partial::\n",
+			1,
+			&Body{
+				Attributes: Attributes{
+					"a": {
+						Name: "a",
+						Expr: &ExprSyntaxError{
+							Placeholder: cty.DynamicVal,
+							ParseDiags: hcl.Diagnostics{
+								{
+									Severity: hcl.DiagError,
+									Summary:  "Missing function name",
+									Detail:   "Function scope resolution symbol :: must be followed by a function name in this scope.",
+									Subject: &hcl.Range{
+										Start: hcl.Pos{Line: 1, Column: 14, Byte: 13},
+										End:   hcl.Pos{Line: 2, Column: 1, Byte: 14},
+									},
+									Context: &hcl.Range{
+										Start: hcl.Pos{Line: 1, Column: 5, Byte: 4},
+										End:   hcl.Pos{Line: 2, Column: 1, Byte: 14},
+									},
+								},
+							},
+						},
+						SrcRange: hcl.Range{
+							Filename: "",
+							Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:      hcl.Pos{Line: 2, Column: 1, Byte: 14},
+						},
+						NameRange: hcl.Range{
+							Filename: "",
+							Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:      hcl.Pos{Line: 1, Column: 2, Byte: 1},
+						},
+						EqualsRange: hcl.Range{
+							Filename: "",
+							Start:    hcl.Pos{Line: 1, Column: 3, Byte: 2},
+							End:      hcl.Pos{Line: 1, Column: 4, Byte: 3},
+						},
+					},
+				},
+				Blocks: Blocks{},
+				SrcRange: hcl.Range{
+					Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   hcl.Pos{Line: 2, Column: 1, Byte: 14},
+				},
+				EndRange: hcl.Range{
+					Start: hcl.Pos{Line: 2, Column: 1, Byte: 14},
+					End:   hcl.Pos{Line: 2, Column: 1, Byte: 14},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {

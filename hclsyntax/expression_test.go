@@ -379,8 +379,8 @@ upper(
 					"double::::upper": stdlib.UpperFunc,
 				},
 			},
-			cty.NilVal,
-			1,
+			cty.DynamicVal,
+			2,
 		},
 		{
 			`missing::("foo")`, // missing name after ::
@@ -389,8 +389,8 @@ upper(
 					"missing::": stdlib.UpperFunc,
 				},
 			},
-			cty.NilVal,
-			1,
+			cty.DynamicVal,
+			2,
 		},
 		{
 			`misbehave()`,
