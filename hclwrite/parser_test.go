@@ -5,14 +5,10 @@ package hclwrite
 
 import (
 	"fmt"
-	"reflect"
 	"testing"
 
 	"github.com/davecgh/go-spew/spew"
-
 	"github.com/google/go-cmp/cmp"
-
-	"github.com/kylelemons/godebug/pretty"
 
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
@@ -1360,12 +1356,6 @@ func TestPartitionTokens(t *testing.T) {
 		},
 	}
 
-	prettyConfig := &pretty.Config{
-		Diffable:          true,
-		IncludeUnexported: true,
-		PrintStringers:    true,
-	}
-
 	for i, test := range tests {
 		t.Run(fmt.Sprintf("%02d", i), func(t *testing.T) {
 			gotStart, gotEnd := partitionTokens(test.tokens, test.rng)
@@ -1373,7 +1363,7 @@ func TestPartitionTokens(t *testing.T) {
 			if gotStart != test.wantStart || gotEnd != test.wantEnd {
 				t.Errorf(
 					"wrong result\ntokens: %s\nrange: %#v\ngot:   %d, %d\nwant:  %d, %d",
-					prettyConfig.Sprint(test.tokens), test.rng,
+					spew.Sdump(test.tokens), test.rng,
 					gotStart, test.wantStart,
 					gotEnd, test.wantEnd,
 				)
@@ -1437,12 +1427,6 @@ func TestPartitionLeadCommentTokens(t *testing.T) {
 		},
 	}
 
-	prettyConfig := &pretty.Config{
-		Diffable:          true,
-		IncludeUnexported: true,
-		PrintStringers:    true,
-	}
-
 	for i, test := range tests {
 		t.Run(fmt.Sprintf("%02d", i), func(t *testing.T) {
 			gotStart := partitionLeadCommentTokens(test.tokens)
@@ -1450,7 +1434,7 @@ func TestPartitionLeadCommentTokens(t *testing.T) {
 			if gotStart != test.wantStart {
 				t.Errorf(
 					"wrong result\ntokens: %s\ngot:   %d\nwant:  %d",
-					prettyConfig.Sprint(test.tokens),
+					spew.Sdump(test.tokens),
 					gotStart, test.wantStart,
 				)
 			}
@@ -1589,20 +1573,15 @@ foo "bar" "baz" {
 		},
 	}
 
-	prettyConfig := &pretty.Config{
-		Diffable:          true,
-		IncludeUnexported: true,
-		PrintStringers:    true,
-	}
-
 	for _, test := range tests {
 		t.Run(test.input, func(t *testing.T) {
 			got := lexConfig([]byte(test.input))
 
-			if !reflect.DeepEqual(got, test.want) {
-				diff := prettyConfig.Compare(test.want, got)
+			diff := cmp.Diff(test.want, got)
+			if diff != "" {
 				t.Errorf(
-					"wrong result\ninput: %s\ndiff:  %s", test.input, diff,
+					"wrong result\ninput: %s\ndiff:\n%s",
+					test.input, diff,
 				)
 			}
 		})

@@ -8,7 +8,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/apparentlymart/go-dump/dump"
 	"github.com/google/go-cmp/cmp"
 	"github.com/zclconf/go-cty-debug/ctydebug"
 	"github.com/zclconf/go-cty/cty"
@@ -98,7 +97,16 @@ bar = barval
 			},
 		}
 		if !reflect.DeepEqual(gotVars, wantVars) {
-			t.Errorf("wrong Variables result\ngot: %s\nwant: %s", dump.Value(gotVars), dump.Value(wantVars))
+			t.Errorf(
+				"wrong Variables result\n%s",
+				cmp.Diff(
+					wantVars, gotVars,
+					cmp.AllowUnexported(
+						hcl.TraverseRoot{},
+					),
+					ctydebug.CmpOptions,
+				),
+			)
 		}
 
 		ctx := &hcl.EvalContext{
