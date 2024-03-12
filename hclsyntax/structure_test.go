@@ -8,8 +8,10 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/davecgh/go-spew/spew"
+	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/hcl/v2"
-	"github.com/kylelemons/godebug/pretty"
+	"github.com/zclconf/go-cty-debug/ctydebug"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -390,12 +392,6 @@ func TestBodyContent(t *testing.T) {
 		},
 	}
 
-	prettyConfig := &pretty.Config{
-		Diffable:          true,
-		IncludeUnexported: true,
-		PrintStringers:    true,
-	}
-
 	for i, test := range tests {
 		t.Run(fmt.Sprintf("%02d", i), func(t *testing.T) {
 			var got *hcl.BodyContent
@@ -416,7 +412,7 @@ func TestBodyContent(t *testing.T) {
 			if !reflect.DeepEqual(got, test.want) {
 				t.Errorf(
 					"wrong result\ndiff: %s",
-					prettyConfig.Compare(test.want, got),
+					cmp.Diff(test.want, got),
 				)
 			}
 		})
@@ -499,18 +495,12 @@ func TestBodyJustAttributes(t *testing.T) {
 					},
 				},
 				hiddenAttrs: map[string]struct{}{
-					"foo": struct{}{},
+					"foo": {},
 				},
 			},
 			hcl.Attributes{},
 			0,
 		},
-	}
-
-	prettyConfig := &pretty.Config{
-		Diffable:          true,
-		IncludeUnexported: true,
-		PrintStringers:    true,
 	}
 
 	for i, test := range tests {
@@ -524,11 +514,15 @@ func TestBodyJustAttributes(t *testing.T) {
 				}
 			}
 
-			if !reflect.DeepEqual(got, test.want) {
+			diff := cmp.Diff(
+				test.want, got,
+				ctydebug.CmpOptions,
+			)
+			if diff != "" {
 				t.Errorf(
 					"wrong result\nbody: %s\ndiff: %s",
-					prettyConfig.Sprint(test.body),
-					prettyConfig.Compare(test.want, got),
+					spew.Sdump(test.body),
+					diff,
 				)
 			}
 		})
