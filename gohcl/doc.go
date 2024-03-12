@@ -10,18 +10,18 @@
 // A struct field tag scheme is used, similar to other decoding and
 // unmarshalling libraries. The tags are formatted as in the following example:
 //
-//    ThingType string `hcl:"thing_type,attr"`
+//	ThingType string `hcl:"thing_type,attr"`
 //
 // Within each tag there are two comma-separated tokens. The first is the
 // name of the corresponding construct in configuration, while the second
 // is a keyword giving the kind of construct expected. The following
 // kind keywords are supported:
 //
-//    attr (the default) indicates that the value is to be populated from an attribute
-//    block indicates that the value is to populated from a block
-//    label indicates that the value is to populated from a block label
-//    optional is the same as attr, but the field is optional
-//    remain indicates that the value is to be populated from the remaining body after populating other fields
+//	attr (the default) indicates that the value is to be populated from an attribute
+//	block indicates that the value is to populated from a block
+//	label indicates that the value is to populated from a block label
+//	optional is the same as attr, but the field is optional
+//	remain indicates that the value is to be populated from the remaining body after populating other fields
 //
 // "attr" fields may either be of type *hcl.Expression, in which case the raw
 // expression is assigned, or of any type accepted by gocty, in which case
