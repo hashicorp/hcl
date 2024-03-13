@@ -456,7 +456,7 @@ func TestTemplateExprWrappedGracefulValue(t *testing.T) {
 	got, _ := expr.Value(nil) // this should not panic
 
 	if !got.RawEquals(cty.DynamicVal) {
-		t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, cty.NilVal)
+		t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, cty.DynamicVal)
 	}
 }
 
