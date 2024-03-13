@@ -1161,15 +1161,20 @@ func (p *parser) finishParsingFunctionCall(name Token) (Expression, hcl.Diagnost
 	for openTok.Type == TokenDoubleColon {
 		nextName := p.Read()
 		if nextName.Type != TokenIdent {
-			diags = append(diags, &hcl.Diagnostic{
+			diag := hcl.Diagnostic{
 				Severity: hcl.DiagError,
 				Summary:  "Missing function name",
 				Detail:   "Function scope resolution symbol :: must be followed by a function name in this scope.",
 				Subject:  &nextName.Range,
 				Context:  hcl.RangeBetween(name.Range, nextName.Range).Ptr(),
-			})
+			}
+			diags = append(diags, &diag)
 			p.recoverOver(TokenOParen)
-			return nil, diags
+			return &ExprSyntaxError{
+				ParseDiags:  hcl.Diagnostics{&diag},
+				Placeholder: cty.DynamicVal,
+				SrcRange:    hcl.RangeBetween(name.Range, nextName.Range),
+			}, diags
 		}
 
 		// Initial versions of HCLv2 didn't support function namespaces, and
@@ -1192,15 +1197,21 @@ func (p *parser) finishParsingFunctionCall(name Token) (Expression, hcl.Diagnost
 	}
 
 	if openTok.Type != TokenOParen {
-		diags = append(diags, &hcl.Diagnostic{
+		diag := hcl.Diagnostic{
 			Severity: hcl.DiagError,
 			Summary:  "Missing open parenthesis",
 			Detail:   "Function selector must be followed by an open parenthesis to begin the function call.",
 			Subject:  &openTok.Range,
 			Context:  hcl.RangeBetween(name.Range, openTok.Range).Ptr(),
-		})
+		}
+
+		diags = append(diags, &diag)
 		p.recoverOver(TokenOParen)
-		return nil, diags
+		return &ExprSyntaxError{
+			ParseDiags:  hcl.Diagnostics{&diag},
+			Placeholder: cty.DynamicVal,
+			SrcRange:    hcl.RangeBetween(name.Range, openTok.Range),
+		}, diags
 	}
 
 	var args []Expression

@@ -2013,3 +2013,27 @@ func (e *AnonSymbolExpr) Range() hcl.Range {
 func (e *AnonSymbolExpr) StartRange() hcl.Range {
 	return e.SrcRange
 }
+
+// ExprSyntaxError is a placeholder for an invalid expression that could not
+// be parsed due to syntax errors.
+type ExprSyntaxError struct {
+	Placeholder cty.Value
+	ParseDiags  hcl.Diagnostics
+	SrcRange    hcl.Range
+}
+
+func (e *ExprSyntaxError) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
+	return e.Placeholder, e.ParseDiags
+}
+
+func (e *ExprSyntaxError) walkChildNodes(w internalWalkFunc) {
+	// ExprSyntaxError is a leaf node in the tree
+}
+
+func (e *ExprSyntaxError) Range() hcl.Range {
+	return e.SrcRange
+}
+
+func (e *ExprSyntaxError) StartRange() hcl.Range {
+	return e.SrcRange
+}
