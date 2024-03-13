@@ -1173,6 +1173,7 @@ func (p *parser) finishParsingFunctionCall(name Token) (Expression, hcl.Diagnost
 			return &ExprSyntaxError{
 				ParseDiags:  hcl.Diagnostics{&diag},
 				Placeholder: cty.DynamicVal,
+				SrcRange:    hcl.RangeBetween(name.Range, nextName.Range),
 			}, diags
 		}
 
@@ -1209,6 +1210,7 @@ func (p *parser) finishParsingFunctionCall(name Token) (Expression, hcl.Diagnost
 		return &ExprSyntaxError{
 			ParseDiags:  hcl.Diagnostics{&diag},
 			Placeholder: cty.DynamicVal,
+			SrcRange:    hcl.RangeBetween(name.Range, openTok.Range),
 		}, diags
 	}
 

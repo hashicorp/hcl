@@ -2583,6 +2583,10 @@ block "valid" {}
 									},
 								},
 							},
+							SrcRange: hcl.Range{
+								Start: hcl.Pos{Line: 1, Column: 5, Byte: 4},
+								End:   hcl.Pos{Line: 2, Column: 1, Byte: 24},
+							},
 						},
 						SrcRange: hcl.Range{
 							Filename: "",
@@ -2635,6 +2639,10 @@ block "valid" {}
 										End:   hcl.Pos{Line: 2, Column: 1, Byte: 14},
 									},
 								},
+							},
+							SrcRange: hcl.Range{
+								Start: hcl.Pos{Line: 1, Column: 5, Byte: 4},
+								End:   hcl.Pos{Line: 2, Column: 1, Byte: 14},
 							},
 						},
 						SrcRange: hcl.Range{

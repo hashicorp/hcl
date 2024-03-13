@@ -2019,6 +2019,7 @@ func (e *AnonSymbolExpr) StartRange() hcl.Range {
 type ExprSyntaxError struct {
 	Placeholder cty.Value
 	ParseDiags  hcl.Diagnostics
+	SrcRange    hcl.Range
 }
 
 func (e *ExprSyntaxError) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
@@ -2030,9 +2031,9 @@ func (e *ExprSyntaxError) walkChildNodes(w internalWalkFunc) {
 }
 
 func (e *ExprSyntaxError) Range() hcl.Range {
-	return hcl.Range{}
+	return e.SrcRange
 }
 
 func (e *ExprSyntaxError) StartRange() hcl.Range {
-	return hcl.Range{}
+	return e.SrcRange
 }
