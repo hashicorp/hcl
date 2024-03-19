@@ -432,6 +432,27 @@ func TestDecodeBody(t *testing.T) {
 		{
 			map[string]interface{}{
 				"noodle": map[string]interface{}{
+					"sample_label": map[string]interface{}{},
+				},
+			},
+			makeInstantiateType(struct {
+				Noodle struct {
+					Name *string `hcl:"name,label"`
+				} `hcl:"noodle,block"`
+			}{}),
+			func(gotI interface{}) bool {
+				noodle := gotI.(struct {
+					Noodle struct {
+						Name *string `hcl:"name,label"`
+					} `hcl:"noodle,block"`
+				}).Noodle
+				return noodle.Name != nil && *noodle.Name == "sample_label"
+			},
+			0,
+		},
+		{
+			map[string]interface{}{
+				"noodle": map[string]interface{}{
 					"foo_foo": map[string]interface{}{},
 				},
 			},
@@ -487,6 +508,68 @@ func TestDecodeBody(t *testing.T) {
 					} `hcl:"noodle,block"`
 				}).Noodles
 				return len(noodles) == 2 && (noodles[0].Name == "foo_foo" || noodles[0].Name == "bar_baz") && (noodles[1].Name == "foo_foo" || noodles[1].Name == "bar_baz") && noodles[0].Name != noodles[1].Name
+			},
+			0,
+		},
+		{
+			map[string]interface{}{
+				"noodle": map[string]interface{}{
+					"foo_foo": map[string]interface{}{},
+					"bar_baz": map[string]interface{}{},
+				},
+			},
+			makeInstantiateType(struct {
+				Noodles map[string]struct {
+					Name string `hcl:"name,label"`
+				} `hcl:"noodle,block"`
+			}{}),
+			func(gotI interface{}) bool {
+				noodles := gotI.(struct {
+					Noodles map[string]struct {
+						Name string `hcl:"name,label"`
+					} `hcl:"noodle,block"`
+				}).Noodles
+				if len(noodles) != 2 {
+					return false
+				}
+				if _, ok := noodles["foo_foo"]; !ok {
+					return false
+				}
+				if _, ok := noodles["bar_baz"]; !ok {
+					return false
+				}
+				return true
+			},
+			0,
+		},
+		{
+			map[string]interface{}{
+				"noodle": map[string]interface{}{
+					"foo_foo": map[string]interface{}{},
+					"bar_baz": map[string]interface{}{},
+				},
+			},
+			makeInstantiateType(struct {
+				Noodles map[string]*struct {
+					Name string `hcl:"name,label"`
+				} `hcl:"noodle,block"`
+			}{}),
+			func(gotI interface{}) bool {
+				noodles := gotI.(struct {
+					Noodles map[string]*struct {
+						Name string `hcl:"name,label"`
+					} `hcl:"noodle,block"`
+				}).Noodles
+				if len(noodles) != 2 {
+					return false
+				}
+				if _, ok := noodles["foo_foo"]; !ok {
+					return false
+				}
+				if _, ok := noodles["bar_baz"]; !ok {
+					return false
+				}
+				return true
 			},
 			0,
 		},
