@@ -150,7 +150,7 @@ func (b *Body) SetAttributeRaw(name string, tokens Tokens) *Attribute {
 	if attr != nil {
 		attr.expr = attr.expr.ReplaceWith(expr)
 	} else {
-		attr := newAttribute()
+		attr = newAttribute()
 		attr.init(name, expr)
 		b.appendItem(attr)
 	}
@@ -171,7 +171,7 @@ func (b *Body) SetAttributeValue(name string, val cty.Value) *Attribute {
 	if attr != nil {
 		attr.expr = attr.expr.ReplaceWith(expr)
 	} else {
-		attr := newAttribute()
+		attr = newAttribute()
 		attr.init(name, expr)
 		b.appendItem(attr)
 	}
@@ -192,7 +192,7 @@ func (b *Body) SetAttributeTraversal(name string, traversal hcl.Traversal) *Attr
 	if attr != nil {
 		attr.expr = attr.expr.ReplaceWith(expr)
 	} else {
-		attr := newAttribute()
+		attr = newAttribute()
 		attr.init(name, expr)
 		b.appendItem(attr)
 	}
