@@ -137,6 +137,111 @@ func (b *Body) RemoveBlock(block *Block) bool {
 	return false
 }
 
+// AttributeLeadComments returns the comments that annotate an attribute.
+//
+// The return value is nil if there was no such attribute, an empty slice if
+// it had no lead comments, or a slice of strings representing the raw text of
+// the comments, including leading and trailing comment markers.
+func (b *Body) AttributeLeadComments(name string) []string {
+	attr := b.GetAttribute(name)
+	if attr == nil {
+		return nil
+	}
+
+	tokens := attr.leadComments.content.(*comments).tokens
+	attrComments := make([]string, len(tokens))
+	for i := range tokens {
+		attrComments[i] = string(tokens[i].Bytes)
+	}
+	return attrComments
+}
+
+// SetAttributeLeadComments replaces the comments that annotate an attribute.
+//
+// Each item should contain any leading and trailing markers, i.e. single-
+// line comments should start with either “#” or “//” and end with a
+// newline character, and block comments should start with “/*” and end with
+// “*/”.
+func (b *Body) SetAttributeLeadComments(name string, leadComments []string) *Attribute {
+	attr := b.GetAttribute(name)
+	if attr == nil {
+		return nil
+	}
+
+	c := attr.leadComments.content.(*comments)
+	c.tokens = make(Tokens, len(leadComments))
+
+	for i := range leadComments {
+		c.tokens[i] = &Token{
+			Type:  hclsyntax.TokenComment,
+			Bytes: []byte(leadComments[i]),
+		}
+	}
+
+	return attr
+}
+
+// Single-comment alternative to [SetAttributeLeadComments]
+func (b *Body) SetAttributeLeadComment(name string, leadComment string) *Attribute {
+	return b.SetAttributeLeadComments(name, []string{leadComment})
+}
+
+// AttributeLineComments returns the comments that follow an attribute on
+// the same line.
+//
+// The return value is nil if there was no such attribute, an empty slice if
+// it had no line comments, or a slice of strings representing the raw text of
+// the comments, including leading and trailing comment markers.
+func (b *Body) AttributeLineComments(name string) []string {
+	attr := b.GetAttribute(name)
+	if attr == nil {
+		return nil
+	}
+
+	tokens := attr.lineComments.content.(*comments).tokens
+	attrComments := make([]string, len(tokens))
+	for i := range tokens {
+		attrComments[i] = string(tokens[i].Bytes)
+	}
+	return attrComments
+}
+
+// SetAttributeLineComments replaces the comments that follow an attribute on
+// the same line.
+//
+// Each item should contain any leading and trailing markers, i.e. single-
+// line comments should start with either “#” or “//” and end with a
+// newline character, and block comments should start with “/*” and end with
+// “*/”.
+//
+// While it is technically possible to set multiple single-line comments using
+// this function, doing so is discouraged since the parser would never produce
+// such constructs. For single-line comments, prefer to use
+// [SetAttributeLineComment].
+func (b *Body) SetAttributeLineComments(name string, lineComments []string) *Attribute {
+	attr := b.GetAttribute(name)
+	if attr == nil {
+		return nil
+	}
+
+	c := attr.lineComments.content.(*comments)
+	c.tokens = make(Tokens, len(lineComments))
+
+	for i := range lineComments {
+		c.tokens[i] = &Token{
+			Type:  hclsyntax.TokenComment,
+			Bytes: []byte(lineComments[i]),
+		}
+	}
+
+	return attr
+}
+
+// Single-comment alternative to [SetAttributeLineComments]
+func (b *Body) SetAttributeLineComment(name string, lineComment string) *Attribute {
+	return b.SetAttributeLineComments(name, []string{lineComment})
+}
+
 // SetAttributeRaw either replaces the expression of an existing attribute
 // of the given name or adds a new attribute definition to the end of the block,
 // using the given tokens verbatim as the expression.
