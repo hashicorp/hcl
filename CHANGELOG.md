@@ -1,5 +1,15 @@
 # HCL Changelog
 
+## v2.20.1 (March 26, 2024)
+
+### Bugs Fixed
+
+* Return `ExprSyntaxError` when an invalid namespaced function is encountered during parsing ([#668](https://github.com/hashicorp/hcl/pull/668))
+
+### Internal
+
+* Standardize on only two value dumping/diffing libraries ([#669](https://github.com/hashicorp/hcl/pull/669))
+
 ## v2.20.0 (February 29, 2024)
 
 ### Enhancements
