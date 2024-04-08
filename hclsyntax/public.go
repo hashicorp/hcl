@@ -118,6 +118,37 @@ func ParseTraversalAbs(src []byte, filename string, start hcl.Pos) (hcl.Traversa
 	return expr, diags
 }
 
+// ParseTraversalPartial matches the behavior of ParseTraversalAbs except
+// that it allows splat expressions ([*]) to appear in the traversal.
+//
+// The returned traversals are "partial" in that the splat expression indicates
+// an unknown value for the index.
+//
+// Traversals that include splats cannot be automatically traversed by HCL using
+// the TraversalAbs or TraversalRel methods. Instead, the caller must handle
+// the traversals manually.
+func ParseTraversalPartial(src []byte, filename string, start hcl.Pos) (hcl.Traversal, hcl.Diagnostics) {
+	tokens, diags := LexExpression(src, filename, start)
+	peeker := newPeeker(tokens, false)
+	parser := &parser{peeker: peeker}
+
+	// Bare traverals are always parsed in  "ignore newlines" mode, as if
+	// they were wrapped in parentheses.
+	parser.PushIncludeNewlines(false)
+
+	expr, parseDiags := parser.ParseTraversalPartial()
+	diags = append(diags, parseDiags...)
+
+	parser.PopIncludeNewlines()
+
+	// Panic if the parser uses incorrect stack discipline with the peeker's
+	// newlines stack, since otherwise it will produce confusing downstream
+	// errors.
+	peeker.AssertEmptyIncludeNewlinesStack()
+
+	return expr, diags
+}
+
 // LexConfig performs lexical analysis on the given buffer, treating it as a
 // whole HCL config file, and returns the resulting tokens.
 //
