@@ -33,6 +33,13 @@ func (e exprWrap) Variables() []hcl.Traversal {
 	return ret
 }
 
+func (e exprWrap) Functions() []hcl.Traversal {
+	if fexpr, ok := e.Expression.(hcl.ExpressionWithFunctions); ok {
+		return fexpr.Functions()
+	}
+	return nil
+}
+
 func (e exprWrap) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	extCtx := e.i.EvalContext(ctx)
 	return e.Expression.Value(extCtx)

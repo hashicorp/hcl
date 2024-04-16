@@ -34,6 +34,10 @@ func (e staticExpr) Variables() []Traversal {
 	return nil
 }
 
+func (e staticExpr) Functions() []Traversal {
+	return nil
+}
+
 func (e staticExpr) Range() Range {
 	return e.rng
 }
