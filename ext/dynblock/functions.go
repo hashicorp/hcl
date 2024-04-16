@@ -9,7 +9,7 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
-// This is duplicated from dynblock/variables.go and modified to suit functions
+// This is duplicated from ext/dynblock/variables.go and modified to suit functions
 
 // WalkFunctions begins the recursive process of walking all expressions and
 // nested blocks in the given body and its child bodies while taking into
