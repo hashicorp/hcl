@@ -65,11 +65,16 @@ func (c WalkFunctionsChild) Body() hcl.Body {
 	return c.Node.body
 }
 
+// exprFunctions handles the
 func exprFunctions(expr hcl.Expression) []hcl.Traversal {
+	if ef, ok := expr.(hcl.ExpressionWithFunctions); ok {
+		return ef.Functions()
+	}
+	// hclsyntax Fallback
 	if hsexpr, ok := expr.(hclsyntax.Expression); ok {
 		return hclsyntax.Functions(hsexpr)
 	}
-	// TODO custom interface / top level support for functions
+	// Not exposed
 	return nil
 }
 
