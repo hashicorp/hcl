@@ -261,7 +261,9 @@ func TestParseTraversalAbs(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.src, func(t *testing.T) {
 			if test.src == "foo[*]" {
-				// Skip the test that introduces splat syntax.
+				// The foo[*] test will fail because the function we test in
+				// this branch does not support the splat syntax. So we will
+				// skip this test case here.
 				t.Skip("skipping test for unsupported splat syntax")
 			}
 
@@ -282,8 +284,11 @@ func TestParseTraversalAbs(t *testing.T) {
 
 		t.Run(fmt.Sprintf("partial_%s", test.src), func(t *testing.T) {
 			if test.src == "foo[*].bar" {
-				// Skip the test that's supposed to fail for splat syntax.
-				t.Skip("skipping test for unsupported splat syntax")
+				// The foo[*].bar test will fail because the function we test in
+				// this branch does support the splat syntax and this test is
+				// designed to make sure that the other branch still fails with
+				// the splat syntax. So we will skip this test case here.
+				t.Skip("skipping test that fails for splat syntax")
 			}
 
 			got, diags := ParseTraversalPartial([]byte(test.src), "", hcl.Pos{Line: 1, Column: 1})
