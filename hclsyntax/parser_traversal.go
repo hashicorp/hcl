@@ -4,8 +4,9 @@
 package hclsyntax
 
 import (
-	"github.com/hashicorp/hcl/v2"
 	"github.com/zclconf/go-cty/cty"
+
+	"github.com/hashicorp/hcl/v2"
 )
 
 // ParseTraversalAbs parses an absolute traversal that is assumed to consume
@@ -13,6 +14,26 @@ import (
 // behavior is not supported here because traversals are not expected to
 // be parsed as part of a larger program.
 func (p *parser) ParseTraversalAbs() (hcl.Traversal, hcl.Diagnostics) {
+	return p.parseTraversal(false)
+}
+
+// ParseTraversalPartial parses an absolute traversal that is permitted
+// to contain splat ([*]) expressions. Only splat expressions within square
+// brackets are permitted ([*]); splat expressions within attribute names are
+// not permitted (.*).
+//
+// The meaning of partial here is that the traversal may be incomplete, in that
+// any splat expression indicates reference to a potentially unknown number of
+// elements.
+//
+// Traversals that include splats cannot be automatically traversed by HCL using
+// the TraversalAbs or TraversalRel methods. Instead, the caller must handle
+// the traversals manually.
+func (p *parser) ParseTraversalPartial() (hcl.Traversal, hcl.Diagnostics) {
+	return p.parseTraversal(true)
+}
+
+func (p *parser) parseTraversal(allowSplats bool) (hcl.Traversal, hcl.Diagnostics) {
 	var ret hcl.Traversal
 	var diags hcl.Diagnostics
 
@@ -127,6 +148,34 @@ func (p *parser) ParseTraversalAbs() (hcl.Traversal, hcl.Diagnostics) {
 					return ret, diags
 				}
 
+			case TokenStar:
+				if allowSplats {
+
+					p.Read() // Eat the star.
+					close := p.Read()
+					if close.Type != TokenCBrack {
+						diags = append(diags, &hcl.Diagnostic{
+							Severity: hcl.DiagError,
+							Summary:  "Unclosed index brackets",
+							Detail:   "Index key must be followed by a closing bracket.",
+							Subject:  &close.Range,
+							Context:  hcl.RangeBetween(open.Range, close.Range).Ptr(),
+						})
+					}
+
+					ret = append(ret, hcl.TraverseSplat{
+						SrcRange: hcl.RangeBetween(open.Range, close.Range),
+					})
+
+					if diags.HasErrors() {
+						return ret, diags
+					}
+
+					continue
+				}
+
+				// Otherwise, return the error below for the star.
+				fallthrough
 			default:
 				if next.Type == TokenStar {
 					diags = append(diags, &hcl.Diagnostic{

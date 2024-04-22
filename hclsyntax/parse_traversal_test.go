@@ -4,11 +4,13 @@
 package hclsyntax
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/go-test/deep"
-	"github.com/hashicorp/hcl/v2"
 	"github.com/zclconf/go-cty/cty"
+
+	"github.com/hashicorp/hcl/v2"
 )
 
 func TestParseTraversalAbs(t *testing.T) {
@@ -208,11 +210,88 @@ func TestParseTraversalAbs(t *testing.T) {
 			},
 			1, // extra junk after traversal
 		},
+
+		{
+			"foo[*]",
+			hcl.Traversal{
+				hcl.TraverseRoot{
+					Name: "foo",
+					SrcRange: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:   hcl.Pos{Line: 1, Column: 4, Byte: 3},
+					},
+				},
+				hcl.TraverseSplat{
+					SrcRange: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 4, Byte: 3},
+						End:   hcl.Pos{Line: 1, Column: 7, Byte: 6},
+					},
+				},
+			},
+			0,
+		},
+		{
+			"foo.*", // Still not supporting this.
+			hcl.Traversal{
+				hcl.TraverseRoot{
+					Name: "foo",
+					SrcRange: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:   hcl.Pos{Line: 1, Column: 4, Byte: 3},
+					},
+				},
+			},
+			1,
+		},
+		{
+			"foo[*].bar", // Run this through the unsupported function.
+			hcl.Traversal{
+				hcl.TraverseRoot{
+					Name: "foo",
+					SrcRange: hcl.Range{
+						Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:   hcl.Pos{Line: 1, Column: 4, Byte: 3},
+					},
+				},
+			},
+			1,
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.src, func(t *testing.T) {
+			if test.src == "foo[*]" {
+				// The foo[*] test will fail because the function we test in
+				// this branch does not support the splat syntax. So we will
+				// skip this test case here.
+				t.Skip("skipping test for unsupported splat syntax")
+			}
+
 			got, diags := ParseTraversalAbs([]byte(test.src), "", hcl.Pos{Line: 1, Column: 1})
+			if len(diags) != test.diagCount {
+				for _, diag := range diags {
+					t.Logf(" - %s", diag.Error())
+				}
+				t.Errorf("wrong number of diagnostics %d; want %d", len(diags), test.diagCount)
+			}
+
+			if diff := deep.Equal(got, test.want); diff != nil {
+				for _, problem := range diff {
+					t.Error(problem)
+				}
+			}
+		})
+
+		t.Run(fmt.Sprintf("partial_%s", test.src), func(t *testing.T) {
+			if test.src == "foo[*].bar" {
+				// The foo[*].bar test will fail because the function we test in
+				// this branch does support the splat syntax and this test is
+				// designed to make sure that the other branch still fails with
+				// the splat syntax. So we will skip this test case here.
+				t.Skip("skipping test that fails for splat syntax")
+			}
+
+			got, diags := ParseTraversalPartial([]byte(test.src), "", hcl.Pos{Line: 1, Column: 1})
 			if len(diags) != test.diagCount {
 				for _, diag := range diags {
 					t.Logf(" - %s", diag.Error())
