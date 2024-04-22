@@ -1,5 +1,11 @@
 # HCL Changelog
 
+## v2.21.0 (Unreleased)
+
+### Enhancements
+
+* Introduce `ParseTraversalPartial`, which allows traversals that include the splat (`[*]`) index operator.  ([#673](https://github.com/hashicorp/hcl/pull/673))
+
 ## v2.20.1 (March 26, 2024)
 
 ### Bugs Fixed
