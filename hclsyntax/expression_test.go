@@ -1457,6 +1457,16 @@ upper(
 			cty.UnknownVal(cty.List(cty.Bool)).RefineNotNull().Mark("sensitive"),
 			0,
 		},
+		{ // splat with sensitive non-collection that's unknown
+			`not_a_list.*`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"not_a_list": cty.UnknownVal(cty.EmptyObject).RefineNotNull().Mark("sensitive"),
+				},
+			},
+			cty.TupleVal([]cty.Value{cty.UnknownVal(cty.EmptyObject).RefineNotNull().Mark("sensitive")}).Mark("sensitive"),
+			0,
+		},
 		{ // splat with sensitive collection that's unknown and not null
 			`maps.*.enabled`,
 			&hcl.EvalContext{
