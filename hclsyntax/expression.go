@@ -1780,7 +1780,7 @@ func (e *SplatExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 
 	if sourceVal.IsNull() {
 		if autoUpgrade {
-			return cty.EmptyTupleVal, diags
+			return cty.EmptyTupleVal.WithSameMarks(sourceVal), diags
 		}
 		diags = append(diags, &hcl.Diagnostic{
 			Severity:    hcl.DiagError,
@@ -1798,7 +1798,7 @@ func (e *SplatExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 		// If we don't even know the _type_ of our source value yet then
 		// we'll need to defer all processing, since we can't decide our
 		// result type either.
-		return cty.DynamicVal, diags
+		return cty.DynamicVal.WithSameMarks(sourceVal), diags
 	}
 
 	upgradedUnknown := false
@@ -1813,13 +1813,14 @@ func (e *SplatExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 		// list of a single attribute, but we still need to check if that
 		// attribute actually exists.
 		if !sourceVal.IsKnown() {
-			sourceRng := sourceVal.Range()
+			unmarkedVal, _ := sourceVal.Unmark()
+			sourceRng := unmarkedVal.Range()
 			if sourceRng.CouldBeNull() {
 				upgradedUnknown = true
 			}
 		}
 
-		sourceVal = cty.TupleVal([]cty.Value{sourceVal})
+		sourceVal = cty.TupleVal([]cty.Value{sourceVal}).WithSameMarks(sourceVal)
 		sourceTy = sourceVal.Type()
 	}
 
@@ -1900,14 +1901,14 @@ func (e *SplatExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	e.Item.clearValue(ctx) // clean up our temporary value
 
 	if upgradedUnknown {
-		return cty.DynamicVal, diags
+		return cty.DynamicVal.WithMarks(marks), diags
 	}
 
 	if !isKnown {
 		// We'll ingore the resultTy diagnostics in this case since they
 		// will just be the same errors we saw while iterating above.
 		ty, _ := resultTy()
-		return cty.UnknownVal(ty), diags
+		return cty.UnknownVal(ty).WithMarks(marks), diags
 	}
 
 	switch {
@@ -1915,7 +1916,7 @@ func (e *SplatExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 		if len(vals) == 0 {
 			ty, tyDiags := resultTy()
 			diags = append(diags, tyDiags...)
-			return cty.ListValEmpty(ty.ElementType()), diags
+			return cty.ListValEmpty(ty.ElementType()).WithMarks(marks), diags
 		}
 		return cty.ListVal(vals).WithMarks(marks), diags
 	default:
