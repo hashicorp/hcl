@@ -5,6 +5,7 @@ package dynblock
 
 import (
 	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/hcldec"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -18,14 +19,24 @@ import (
 // we instead arrange for everything _inside_ the block to be unknown instead,
 // to give the best possible approximation.
 type unknownBody struct {
-	template hcl.Body
+	template   hcl.Body
+	valueMarks cty.ValueMarks
 }
 
 var _ hcl.Body = unknownBody{}
 
-// hcldec.UnkownBody impl
+// hcldec.UnknownBody impl
 func (b unknownBody) Unknown() bool {
 	return true
+}
+
+// hcldec.MarkedBody impl
+func (b unknownBody) BodyValueMarks() cty.ValueMarks {
+	// We'll pass through to our template if it is a MarkedBody
+	if t, ok := b.template.(hcldec.MarkedBody); ok {
+		return t.BodyValueMarks()
+	}
+	return nil
 }
 
 func (b unknownBody) Content(schema *hcl.BodySchema) (*hcl.BodyContent, hcl.Diagnostics) {
@@ -41,7 +52,7 @@ func (b unknownBody) Content(schema *hcl.BodySchema) (*hcl.BodyContent, hcl.Diag
 func (b unknownBody) PartialContent(schema *hcl.BodySchema) (*hcl.BodyContent, hcl.Body, hcl.Diagnostics) {
 	content, remain, diags := b.template.PartialContent(schema)
 	content = b.fixupContent(content)
-	remain = unknownBody{remain} // remaining content must also be wrapped
+	remain = unknownBody{template: remain, valueMarks: b.valueMarks} // remaining content must also be wrapped
 
 	// We're intentionally preserving the diagnostics reported from the
 	// inner body so that we can still report where the template body doesn't
@@ -69,8 +80,8 @@ func (b unknownBody) fixupContent(got *hcl.BodyContent) *hcl.BodyContent {
 	if len(got.Blocks) > 0 {
 		ret.Blocks = make(hcl.Blocks, 0, len(got.Blocks))
 		for _, gotBlock := range got.Blocks {
-			new := *gotBlock                      // shallow copy
-			new.Body = unknownBody{gotBlock.Body} // nested content must also be marked unknown
+			new := *gotBlock                                                          // shallow copy
+			new.Body = unknownBody{template: gotBlock.Body, valueMarks: b.valueMarks} // nested content must also be marked unknown
 			ret.Blocks = append(ret.Blocks, &new)
 		}
 	}
@@ -85,7 +96,7 @@ func (b unknownBody) fixupAttrs(got hcl.Attributes) hcl.Attributes {
 	ret := make(hcl.Attributes, len(got))
 	for name, gotAttr := range got {
 		new := *gotAttr // shallow copy
-		new.Expr = hcl.StaticExpr(cty.DynamicVal, gotAttr.Expr.Range())
+		new.Expr = hcl.StaticExpr(cty.DynamicVal.WithMarks(b.valueMarks), gotAttr.Expr.Range())
 		ret[name] = &new
 	}
 	return ret

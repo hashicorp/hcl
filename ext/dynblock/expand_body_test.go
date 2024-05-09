@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/davecgh/go-spew/spew"
+	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hcldec"
 	"github.com/hashicorp/hcl/v2/hcltest"
@@ -708,6 +709,69 @@ func TestExpandUnknownBodies(t *testing.T) {
 		}
 	})
 
+}
+
+func TestExpandMarkedForEach(t *testing.T) {
+	srcBody := hcltest.MockBody(&hcl.BodyContent{
+		Blocks: hcl.Blocks{
+			{
+				Type:        "dynamic",
+				Labels:      []string{"b"},
+				LabelRanges: []hcl.Range{{}},
+				Body: hcltest.MockBody(&hcl.BodyContent{
+					Attributes: hcltest.MockAttrs(map[string]hcl.Expression{
+						"for_each": hcltest.MockExprLiteral(cty.TupleVal([]cty.Value{
+							cty.StringVal("hey"),
+						}).Mark("boop")),
+						"iterator": hcltest.MockExprTraversalSrc("dyn_b"),
+					}),
+					Blocks: hcl.Blocks{
+						{
+							Type: "content",
+							Body: hcltest.MockBody(&hcl.BodyContent{
+								Attributes: hcltest.MockAttrs(map[string]hcl.Expression{
+									"val0": hcltest.MockExprLiteral(cty.StringVal("static c 1")),
+									"val1": hcltest.MockExprTraversalSrc("dyn_b.value"),
+								}),
+							}),
+						},
+					},
+				}),
+			},
+		},
+	})
+
+	dynBody := Expand(srcBody, nil)
+
+	t.Run("Decode", func(t *testing.T) {
+		decSpec := &hcldec.BlockListSpec{
+			TypeName: "b",
+			Nested: &hcldec.ObjectSpec{
+				"val0": &hcldec.AttrSpec{
+					Name: "val0",
+					Type: cty.String,
+				},
+				"val1": &hcldec.AttrSpec{
+					Name: "val1",
+					Type: cty.String,
+				},
+			},
+		}
+
+		want := cty.ListVal([]cty.Value{
+			cty.ObjectVal(map[string]cty.Value{
+				"val0": cty.StringVal("static c 1").Mark("boop"),
+				"val1": cty.StringVal("hey").Mark("boop"),
+			}),
+		})
+		got, diags := hcldec.Decode(dynBody, decSpec, nil)
+		if diags.HasErrors() {
+			t.Fatalf("unexpected errors\n%s", diags.Error())
+		}
+		if diff := cmp.Diff(want, got, ctydebug.CmpOptions); diff != "" {
+			t.Errorf("wrong result\n%s", diff)
+		}
+	})
 }
 
 func TestExpandInvalidIteratorError(t *testing.T) {

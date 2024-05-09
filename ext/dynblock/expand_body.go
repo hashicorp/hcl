@@ -16,6 +16,7 @@ type expandBody struct {
 	original   hcl.Body
 	forEachCtx *hcl.EvalContext
 	iteration  *iteration // non-nil if we're nested inside another "dynamic" block
+	valueMarks cty.ValueMarks
 
 	checkForEach []func(cty.Value, hcl.Expression, *hcl.EvalContext) hcl.Diagnostics
 
@@ -125,7 +126,7 @@ func (b *expandBody) extendSchema(schema *hcl.BodySchema) *hcl.BodySchema {
 }
 
 func (b *expandBody) prepareAttributes(rawAttrs hcl.Attributes) hcl.Attributes {
-	if len(b.hiddenAttrs) == 0 && b.iteration == nil {
+	if len(b.hiddenAttrs) == 0 && b.iteration == nil && len(b.valueMarks) == 0 {
 		// Easy path: just pass through the attrs from the original body verbatim
 		return rawAttrs
 	}
@@ -142,13 +143,24 @@ func (b *expandBody) prepareAttributes(rawAttrs hcl.Attributes) hcl.Attributes {
 		if b.iteration != nil {
 			attr := *rawAttr // shallow copy so we can mutate it
 			attr.Expr = exprWrap{
-				Expression: attr.Expr,
-				i:          b.iteration,
+				Expression:  attr.Expr,
+				i:           b.iteration,
+				resultMarks: b.valueMarks,
 			}
 			attrs[name] = &attr
 		} else {
-			// If we have no active iteration then no wrapping is required.
-			attrs[name] = rawAttr
+			// If we have no active iteration then no wrapping is required
+			// unless we have marks to apply.
+			if len(b.valueMarks) != 0 {
+				attr := *rawAttr // shallow copy so we can mutate it
+				attr.Expr = exprWrap{
+					Expression:  attr.Expr,
+					resultMarks: b.valueMarks,
+				}
+				attrs[name] = &attr
+			} else {
+				attrs[name] = rawAttr
+			}
 		}
 	}
 	return attrs
@@ -192,8 +204,9 @@ func (b *expandBody) expandBlocks(schema *hcl.BodySchema, rawBlocks hcl.Blocks, 
 				continue
 			}
 
-			if spec.forEachVal.IsKnown() {
-				for it := spec.forEachVal.ElementIterator(); it.Next(); {
+			forEachVal, marks := spec.forEachVal.Unmark()
+			if forEachVal.IsKnown() {
+				for it := forEachVal.ElementIterator(); it.Next(); {
 					key, value := it.Element()
 					i := b.iteration.MakeChild(spec.iteratorName, key, value)
 
@@ -202,7 +215,7 @@ func (b *expandBody) expandBlocks(schema *hcl.BodySchema, rawBlocks hcl.Blocks, 
 					if block != nil {
 						// Attach our new iteration context so that attributes
 						// and other nested blocks can refer to our iterator.
-						block.Body = b.expandChild(block.Body, i)
+						block.Body = b.expandChild(block.Body, i, marks)
 						blocks = append(blocks, block)
 					}
 				}
@@ -214,7 +227,10 @@ func (b *expandBody) expandBlocks(schema *hcl.BodySchema, rawBlocks hcl.Blocks, 
 				block, blockDiags := spec.newBlock(i, b.forEachCtx)
 				diags = append(diags, blockDiags...)
 				if block != nil {
-					block.Body = unknownBody{b.expandChild(block.Body, i)}
+					block.Body = unknownBody{
+						template:   b.expandChild(block.Body, i, marks),
+						valueMarks: marks,
+					}
 					blocks = append(blocks, block)
 				}
 			}
@@ -226,7 +242,7 @@ func (b *expandBody) expandBlocks(schema *hcl.BodySchema, rawBlocks hcl.Blocks, 
 				// case it contains expressions that refer to our inherited
 				// iterators, or nested "dynamic" blocks.
 				expandedBlock := *rawBlock // shallow copy
-				expandedBlock.Body = b.expandChild(rawBlock.Body, b.iteration)
+				expandedBlock.Body = b.expandChild(rawBlock.Body, b.iteration, nil)
 				blocks = append(blocks, &expandedBlock)
 			}
 		}
@@ -235,11 +251,12 @@ func (b *expandBody) expandBlocks(schema *hcl.BodySchema, rawBlocks hcl.Blocks, 
 	return blocks, diags
 }
 
-func (b *expandBody) expandChild(child hcl.Body, i *iteration) hcl.Body {
+func (b *expandBody) expandChild(child hcl.Body, i *iteration, valueMarks cty.ValueMarks) hcl.Body {
 	chiCtx := i.EvalContext(b.forEachCtx)
 	ret := Expand(child, chiCtx)
 	ret.(*expandBody).iteration = i
 	ret.(*expandBody).checkForEach = b.checkForEach
+	ret.(*expandBody).valueMarks = valueMarks
 	return ret
 }
 
