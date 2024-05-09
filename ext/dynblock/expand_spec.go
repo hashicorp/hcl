@@ -77,7 +77,8 @@ func (b *expandBody) decodeSpec(blockS *hcl.BlockHeaderSchema, rawSpec *hcl.Bloc
 		}
 	}
 
-	if !eachVal.CanIterateElements() && eachVal.Type() != cty.DynamicPseudoType {
+	unmarkedEachVal, _ := eachVal.Unmark()
+	if !unmarkedEachVal.CanIterateElements() && unmarkedEachVal.Type() != cty.DynamicPseudoType {
 		// We skip this error for DynamicPseudoType because that means we either
 		// have a null (which is checked immediately below) or an unknown
 		// (which is handled in the expandBody Content methods).
@@ -91,7 +92,7 @@ func (b *expandBody) decodeSpec(blockS *hcl.BlockHeaderSchema, rawSpec *hcl.Bloc
 		})
 		return nil, diags
 	}
-	if eachVal.IsNull() {
+	if unmarkedEachVal.IsNull() {
 		diags = append(diags, &hcl.Diagnostic{
 			Severity:    hcl.DiagError,
 			Summary:     "Invalid dynamic for_each value",
@@ -206,6 +207,28 @@ func (s *expandSpec) newBlock(i *iteration, ctx *hcl.EvalContext) (*hcl.Block, h
 				Severity:    hcl.DiagError,
 				Summary:     "Invalid dynamic block label",
 				Detail:      "This value is not yet known. Dynamic block labels must be immediately-known values.",
+				Subject:     labelExpr.Range().Ptr(),
+				Expression:  labelExpr,
+				EvalContext: lCtx,
+			})
+			return nil, diags
+		}
+		if labelVal.IsMarked() {
+			// This situation is tricky because HCL just works generically
+			// with marks and so doesn't have any good language to talk about
+			// the meaning of specific mark types, but yet we cannot allow
+			// marked values here because the HCL API guarantees that a block's
+			// labels are always known static constant Go strings.
+			// Therefore this is a low-quality error message but at least
+			// better than panicking below when we call labelVal.AsString.
+			// If this becomes a problem then we could potentially add a new
+			// option for the public function [Expand] to allow calling
+			// applications to specify custom label validation functions that
+			// could then supersede this generic message.
+			diags = append(diags, &hcl.Diagnostic{
+				Severity:    hcl.DiagError,
+				Summary:     "Invalid dynamic block label",
+				Detail:      "This value has dynamic marks that make it unsuitable for use as a block label.",
 				Subject:     labelExpr.Range().Ptr(),
 				Expression:  labelExpr,
 				EvalContext: lCtx,
