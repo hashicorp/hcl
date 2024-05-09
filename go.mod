@@ -11,7 +11,7 @@ require (
 	github.com/mitchellh/go-wordwrap v0.0.0-20150314170334-ad45545899c7
 	github.com/spf13/pflag v1.0.2
 	github.com/zclconf/go-cty v1.13.0
-	github.com/zclconf/go-cty-debug v0.0.0-20191215020915-b22d67c1ba0b
+	github.com/zclconf/go-cty-debug v0.0.0-20240509010212-0d6042c53940
 	golang.org/x/crypto v0.0.0-20220517005047-85d78b3ac167
 	golang.org/x/tools v0.6.0
 )

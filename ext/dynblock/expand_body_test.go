@@ -762,7 +762,7 @@ func TestExpandMarkedForEach(t *testing.T) {
 			cty.ObjectVal(map[string]cty.Value{
 				"val0": cty.StringVal("static c 1").Mark("boop"),
 				"val1": cty.StringVal("hey").Mark("boop"),
-			}),
+			}).Mark("boop"),
 		})
 		got, diags := hcldec.Decode(dynBody, decSpec, nil)
 		if diags.HasErrors() {
