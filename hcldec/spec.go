@@ -73,6 +73,12 @@ type UnknownBody interface {
 	Unknown() bool
 }
 
+// MarkedBody can be optionally implemented by an hcl.Body instance to
+// indicate that a value created from it ought to be marked.
+type MarkedBody interface {
+	BodyValueMarks() cty.ValueMarks
+}
+
 func (s ObjectSpec) visitSameBodyChildren(cb visitFunc) {
 	for _, c := range s {
 		cb(c)
@@ -473,6 +479,7 @@ func (s *BlockListSpec) decode(content *hcl.BodyContent, blockLabels []blockLabe
 
 		val, _, childDiags := decode(childBlock.Body, labelsForBlock(childBlock), ctx, s.Nested, false)
 		diags = append(diags, childDiags...)
+		val = prepareBodyVal(val, childBlock.Body)
 
 		if u, ok := childBlock.Body.(UnknownBody); ok {
 			if u.Unknown() {
@@ -635,6 +642,7 @@ func (s *BlockTupleSpec) decode(content *hcl.BodyContent, blockLabels []blockLab
 
 		val, _, childDiags := decode(childBlock.Body, labelsForBlock(childBlock), ctx, s.Nested, false)
 		diags = append(diags, childDiags...)
+		val = prepareBodyVal(val, childBlock.Body)
 
 		if u, ok := childBlock.Body.(UnknownBody); ok {
 			if u.Unknown() {
@@ -758,6 +766,7 @@ func (s *BlockSetSpec) decode(content *hcl.BodyContent, blockLabels []blockLabel
 
 		val, _, childDiags := decode(childBlock.Body, labelsForBlock(childBlock), ctx, s.Nested, false)
 		diags = append(diags, childDiags...)
+		val = prepareBodyVal(val, childBlock.Body)
 
 		if u, ok := childBlock.Body.(UnknownBody); ok {
 			if u.Unknown() {
@@ -928,6 +937,7 @@ func (s *BlockMapSpec) decode(content *hcl.BodyContent, blockLabels []blockLabel
 
 		childLabels := labelsForBlock(childBlock)
 		val, _, childDiags := decode(childBlock.Body, childLabels[len(s.LabelNames):], ctx, s.Nested, false)
+		val = prepareBodyVal(val, childBlock.Body)
 		targetMap := elems
 		for _, key := range childBlock.Labels[:len(s.LabelNames)-1] {
 			if _, exists := targetMap[key]; !exists {
@@ -1082,6 +1092,7 @@ func (s *BlockObjectSpec) decode(content *hcl.BodyContent, blockLabels []blockLa
 
 		childLabels := labelsForBlock(childBlock)
 		val, _, childDiags := decode(childBlock.Body, childLabels[len(s.LabelNames):], ctx, s.Nested, false)
+		val = prepareBodyVal(val, childBlock.Body)
 		targetMap := elems
 		for _, key := range childBlock.Labels[:len(s.LabelNames)-1] {
 			if _, exists := targetMap[key]; !exists {
@@ -1719,4 +1730,12 @@ func (s noopSpec) sourceRange(content *hcl.BodyContent, blockLabels []blockLabel
 	return hcl.Range{
 		Filename: "noopSpec",
 	}
+}
+
+func prepareBodyVal(decodeResult cty.Value, body hcl.Body) cty.Value {
+	if m, ok := body.(MarkedBody); ok {
+		marks := m.BodyValueMarks()
+		return decodeResult.WithMarks(marks)
+	}
+	return decodeResult
 }

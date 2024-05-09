@@ -270,3 +270,8 @@ func (b *expandBody) JustAttributes() (hcl.Attributes, hcl.Diagnostics) {
 func (b *expandBody) MissingItemRange() hcl.Range {
 	return b.original.MissingItemRange()
 }
+
+// hcldec.MarkedBody impl
+func (b *expandBody) BodyValueMarks() cty.ValueMarks {
+	return b.valueMarks
+}
