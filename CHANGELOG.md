@@ -5,6 +5,11 @@
 ### Enhancements
 
 * Introduce `ParseTraversalPartial`, which allows traversals that include the splat (`[*]`) index operator.  ([#673](https://github.com/hashicorp/hcl/pull/673))
+* ext/dynblock: Now accepts marked values in `for_each`, and will transfer those marks (as much as technically possible) to values in the generated blocks. ([#679](https://github.com/hashicorp/hcl/pull/679))
+
+### Bugs Fixed
+
+* Expression evaluation will no longer panic if the splat operator is applied to an unknown value that has cty marks. ([#678](https://github.com/hashicorp/hcl/pull/678))
 
 ## v2.20.1 (March 26, 2024)
 
