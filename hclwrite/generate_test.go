@@ -499,6 +499,440 @@ func TestTokensForValue(t *testing.T) {
 	}
 }
 
+func TestTokenHandling(t *testing.T) {
+	tests := []struct {
+		Val          cty.Value
+		HandleString HandlingStrategy
+		Want         Tokens
+	}{
+		{
+			cty.StringVal(`${foo}`),
+			AsLiteral,
+			Tokens{
+				{
+					Type:  hclsyntax.TokenOQuote,
+					Bytes: []byte(`"`),
+				},
+				{
+					Type:  hclsyntax.TokenQuotedLit,
+					Bytes: []byte(`$${foo}`),
+				},
+				{
+					Type:  hclsyntax.TokenCQuote,
+					Bytes: []byte(`"`),
+				},
+			},
+		},
+		{
+			cty.StringVal(`${foo}`),
+			AsTemplate,
+			Tokens{
+				{
+					Type:  hclsyntax.TokenOQuote,
+					Bytes: []byte(`"`),
+				},
+				{
+					Type:  hclsyntax.TokenTemplateInterp,
+					Bytes: []byte(`${`),
+				},
+				{
+					Type:  hclsyntax.TokenIdent,
+					Bytes: []byte(`foo`),
+				},
+				{
+					Type:  hclsyntax.TokenTemplateSeqEnd,
+					Bytes: []byte(`}`),
+				},
+				{
+					Type:  hclsyntax.TokenCQuote,
+					Bytes: []byte(`"`),
+				},
+			},
+		},
+		{
+			cty.StringVal(`${foo.bar}`),
+			AsLiteral,
+			Tokens{
+				{
+					Type:  hclsyntax.TokenOQuote,
+					Bytes: []byte(`"`),
+				},
+				{
+					Type:  hclsyntax.TokenQuotedLit,
+					Bytes: []byte(`$${foo.bar}`),
+				},
+				{
+					Type:  hclsyntax.TokenCQuote,
+					Bytes: []byte(`"`),
+				},
+			},
+		},
+		{
+			cty.StringVal(`${foo.bar}`),
+			AsTemplate,
+			Tokens{
+				{
+					Type:  hclsyntax.TokenOQuote,
+					Bytes: []byte(`"`),
+				},
+				{
+					Type:  hclsyntax.TokenTemplateInterp,
+					Bytes: []byte(`${`),
+				},
+				{
+					Type:  hclsyntax.TokenIdent,
+					Bytes: []byte(`foo`),
+				},
+				{
+					Type:  hclsyntax.TokenDot,
+					Bytes: []byte(`.`),
+				},
+				{
+					Type:  hclsyntax.TokenIdent,
+					Bytes: []byte(`bar`),
+				},
+				{
+					Type:  hclsyntax.TokenTemplateSeqEnd,
+					Bytes: []byte(`}`),
+				},
+				{
+					Type:  hclsyntax.TokenCQuote,
+					Bytes: []byte(`"`),
+				},
+			},
+		},
+		{
+			cty.TupleVal([]cty.Value{cty.StringVal(`%{foo}`), cty.StringVal(`%{bar}`), cty.StringVal(`%{baz}`)}),
+			AsLiteral,
+			Tokens{
+				{
+					Type:  hclsyntax.TokenOBrack,
+					Bytes: []byte(`[`),
+				},
+				{
+					Type:  hclsyntax.TokenOQuote,
+					Bytes: []byte(`"`),
+				},
+				{
+					Type:  hclsyntax.TokenQuotedLit,
+					Bytes: []byte(`%%{foo}`),
+				},
+				{
+					Type:  hclsyntax.TokenCQuote,
+					Bytes: []byte(`"`),
+				},
+				{
+					Type:  hclsyntax.TokenComma,
+					Bytes: []byte(`,`),
+				},
+				{
+					Type:  hclsyntax.TokenOQuote,
+					Bytes: []byte(`"`),
+				},
+				{
+					Type:  hclsyntax.TokenQuotedLit,
+					Bytes: []byte(`%%{bar}`),
+				},
+				{
+					Type:  hclsyntax.TokenCQuote,
+					Bytes: []byte(`"`),
+				},
+				{
+					Type:  hclsyntax.TokenComma,
+					Bytes: []byte(`,`),
+				},
+				{
+					Type:  hclsyntax.TokenOQuote,
+					Bytes: []byte(`"`),
+				},
+				{
+					Type:  hclsyntax.TokenQuotedLit,
+					Bytes: []byte(`%%{baz}`),
+				},
+				{
+					Type:  hclsyntax.TokenCQuote,
+					Bytes: []byte(`"`),
+				},
+				{
+					Type:  hclsyntax.TokenCBrack,
+					Bytes: []byte(`]`),
+				},
+			},
+		},
+		{
+			cty.TupleVal([]cty.Value{cty.StringVal(`%{foo}`), cty.StringVal(`%{bar}`), cty.StringVal(`%{baz}`)}),
+			AsTemplate,
+			Tokens{
+				{
+					Type:  hclsyntax.TokenOBrack,
+					Bytes: []byte(`[`),
+				},
+				{
+					Type:  hclsyntax.TokenOQuote,
+					Bytes: []byte(`"`),
+				},
+				{
+					Type:  hclsyntax.TokenTemplateControl,
+					Bytes: []byte(`%{`),
+				},
+				{
+					Type:  hclsyntax.TokenIdent,
+					Bytes: []byte(`foo`),
+				},
+				{
+					Type:  hclsyntax.TokenTemplateSeqEnd,
+					Bytes: []byte(`}`),
+				},
+				{
+					Type:  hclsyntax.TokenCQuote,
+					Bytes: []byte(`"`),
+				},
+				{
+					Type:  hclsyntax.TokenComma,
+					Bytes: []byte(`,`),
+				},
+				{
+					Type:  hclsyntax.TokenOQuote,
+					Bytes: []byte(`"`),
+				},
+				{
+					Type:  hclsyntax.TokenTemplateControl,
+					Bytes: []byte(`%{`),
+				},
+				{
+					Type:  hclsyntax.TokenIdent,
+					Bytes: []byte(`bar`),
+				},
+				{
+					Type:  hclsyntax.TokenTemplateSeqEnd,
+					Bytes: []byte(`}`),
+				},
+				{
+					Type:  hclsyntax.TokenCQuote,
+					Bytes: []byte(`"`),
+				},
+				{
+					Type:  hclsyntax.TokenComma,
+					Bytes: []byte(`,`),
+				},
+				{
+					Type:  hclsyntax.TokenOQuote,
+					Bytes: []byte(`"`),
+				},
+				{
+					Type:  hclsyntax.TokenTemplateControl,
+					Bytes: []byte(`%{`),
+				},
+				{
+					Type:  hclsyntax.TokenIdent,
+					Bytes: []byte(`baz`),
+				},
+				{
+					Type:  hclsyntax.TokenTemplateSeqEnd,
+					Bytes: []byte(`}`),
+				},
+				{
+					Type:  hclsyntax.TokenCQuote,
+					Bytes: []byte(`"`),
+				},
+				{
+					Type:  hclsyntax.TokenCBrack,
+					Bytes: []byte(`]`),
+				},
+			},
+		},
+		{
+			cty.ObjectVal(map[string]cty.Value{
+				"foo": cty.StringVal(`${foo}`),
+				"bar": cty.StringVal(`${bar}`),
+			}),
+			AsLiteral,
+			Tokens{
+				{
+					Type:  hclsyntax.TokenOBrace,
+					Bytes: []byte(`{`),
+				},
+				{
+					Type:  hclsyntax.TokenNewline,
+					Bytes: []byte("\n"),
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte(`bar`),
+					SpacesBefore: 2,
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte(`=`),
+					SpacesBefore: 1,
+				},
+				{
+					Type:  hclsyntax.TokenOQuote,
+					Bytes: []byte(`"`),
+				},
+				{
+					Type:  hclsyntax.TokenQuotedLit,
+					Bytes: []byte(`$${bar}`),
+				},
+				{
+					Type:  hclsyntax.TokenCQuote,
+					Bytes: []byte(`"`),
+				},
+				{
+					Type:  hclsyntax.TokenNewline,
+					Bytes: []byte("\n"),
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte(`foo`),
+					SpacesBefore: 2,
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte(`=`),
+					SpacesBefore: 1,
+				},
+				{
+					Type:  hclsyntax.TokenOQuote,
+					Bytes: []byte(`"`),
+				},
+				{
+					Type:  hclsyntax.TokenQuotedLit,
+					Bytes: []byte(`$${foo}`),
+				},
+				{
+					Type:  hclsyntax.TokenCQuote,
+					Bytes: []byte(`"`),
+				},
+				{
+					Type:  hclsyntax.TokenNewline,
+					Bytes: []byte("\n"),
+				},
+				{
+					Type:  hclsyntax.TokenCBrace,
+					Bytes: []byte(`}`),
+				},
+			},
+		},
+		{
+			cty.ObjectVal(map[string]cty.Value{
+				"foo": cty.StringVal(`${foo}`),
+				"bar": cty.StringVal(`${bar}`),
+			}),
+			AsTemplate,
+			Tokens{
+				{
+					Type:  hclsyntax.TokenOBrace,
+					Bytes: []byte(`{`),
+				},
+				{
+					Type:  hclsyntax.TokenNewline,
+					Bytes: []byte("\n"),
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte(`bar`),
+					SpacesBefore: 2,
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte(`=`),
+					SpacesBefore: 1,
+				},
+				{
+					Type:  hclsyntax.TokenOQuote,
+					Bytes: []byte(`"`),
+				},
+				{
+					Type:  hclsyntax.TokenTemplateInterp,
+					Bytes: []byte(`${`),
+				},
+				{
+					Type:  hclsyntax.TokenIdent,
+					Bytes: []byte(`bar`),
+				},
+				{
+					Type:  hclsyntax.TokenTemplateSeqEnd,
+					Bytes: []byte(`}`),
+				},
+				{
+					Type:  hclsyntax.TokenCQuote,
+					Bytes: []byte(`"`),
+				},
+				{
+					Type:  hclsyntax.TokenNewline,
+					Bytes: []byte("\n"),
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte(`foo`),
+					SpacesBefore: 2,
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte(`=`),
+					SpacesBefore: 1,
+				},
+				{
+					Type:  hclsyntax.TokenOQuote,
+					Bytes: []byte(`"`),
+				},
+				{
+					Type:  hclsyntax.TokenTemplateInterp,
+					Bytes: []byte(`${`),
+				},
+				{
+					Type:  hclsyntax.TokenIdent,
+					Bytes: []byte(`foo`),
+				},
+				{
+					Type:  hclsyntax.TokenTemplateSeqEnd,
+					Bytes: []byte(`}`),
+				},
+				{
+					Type:  hclsyntax.TokenCQuote,
+					Bytes: []byte(`"`),
+				},
+				{
+					Type:  hclsyntax.TokenNewline,
+					Bytes: []byte("\n"),
+				},
+				{
+					Type:  hclsyntax.TokenCBrace,
+					Bytes: []byte(`}`),
+				},
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.Val.GoString(), func(t *testing.T) {
+			generator := Generator{GenerateOptions{Handling{String: test.HandleString}}}
+			tokenSequences := []Tokens{
+				generator.TokensForValue(test.Val),
+			}
+			if test.HandleString == AsLiteral {
+				// verify that legacy function behaves identically:
+				tokenSequences = append(tokenSequences, TokensForValue(test.Val))
+			}
+			format(test.Want)
+			for _, got := range tokenSequences {
+				if !cmp.Equal(got, test.Want) {
+					diff := cmp.Diff(got, test.Want, cmp.Comparer(func(a, b []byte) bool {
+						return bytes.Equal(a, b)
+					}))
+					var gotBuf, wantBuf bytes.Buffer
+					got.WriteTo(&gotBuf)
+					test.Want.WriteTo(&wantBuf)
+					t.Errorf(
+						"wrong result\nvalue: %#v\ngot:   %s\nwant:  %s\ndiff:  %s",
+						test.Val, gotBuf.String(), wantBuf.String(), diff,
+					)
+				}
+			}
+		})
+	}
+}
+
 func TestTokensForTraversal(t *testing.T) {
 	tests := []struct {
 		Val  hcl.Traversal
