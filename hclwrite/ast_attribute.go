@@ -49,3 +49,10 @@ func (a *Attribute) init(name string, expr *Expression) {
 func (a *Attribute) Expr() *Expression {
 	return a.expr.content.(*Expression)
 }
+
+// SetName updates the name of the attribute to a given name.
+func (a *Attribute) SetName(name string) {
+	nameTok := newIdentToken(name)
+	nameObj := newIdentifier(nameTok)
+	a.name.ReplaceWith(nameObj)
+}
