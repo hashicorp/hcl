@@ -528,24 +528,8 @@ func TestTokenHandling(t *testing.T) {
 			AsTemplate,
 			Tokens{
 				{
-					Type:  hclsyntax.TokenOQuote,
-					Bytes: []byte(`"`),
-				},
-				{
-					Type:  hclsyntax.TokenTemplateInterp,
-					Bytes: []byte(`${`),
-				},
-				{
 					Type:  hclsyntax.TokenIdent,
 					Bytes: []byte(`foo`),
-				},
-				{
-					Type:  hclsyntax.TokenTemplateSeqEnd,
-					Bytes: []byte(`}`),
-				},
-				{
-					Type:  hclsyntax.TokenCQuote,
-					Bytes: []byte(`"`),
 				},
 			},
 		},
@@ -572,20 +556,34 @@ func TestTokenHandling(t *testing.T) {
 			AsTemplate,
 			Tokens{
 				{
-					Type:  hclsyntax.TokenOQuote,
-					Bytes: []byte(`"`),
-				},
-				{
-					Type:  hclsyntax.TokenTemplateInterp,
-					Bytes: []byte(`${`),
-				},
-				{
 					Type:  hclsyntax.TokenIdent,
 					Bytes: []byte(`foo`),
 				},
 				{
 					Type:  hclsyntax.TokenDot,
 					Bytes: []byte(`.`),
+				},
+				{
+					Type:  hclsyntax.TokenIdent,
+					Bytes: []byte(`bar`),
+				},
+			},
+		},
+		{
+			cty.StringVal(`foo${bar}`),
+			AsTemplate,
+			Tokens{
+				{
+					Type:  hclsyntax.TokenOQuote,
+					Bytes: []byte(`"`),
+				},
+				{
+					Type:  hclsyntax.TokenStringLit,
+					Bytes: []byte(`foo`),
+				},
+				{
+					Type:  hclsyntax.TokenTemplateInterp,
+					Bytes: []byte(`${`),
 				},
 				{
 					Type:  hclsyntax.TokenIdent,
@@ -668,72 +666,24 @@ func TestTokenHandling(t *testing.T) {
 					Bytes: []byte(`[`),
 				},
 				{
-					Type:  hclsyntax.TokenOQuote,
-					Bytes: []byte(`"`),
-				},
-				{
-					Type:  hclsyntax.TokenTemplateControl,
-					Bytes: []byte(`%{`),
-				},
-				{
 					Type:  hclsyntax.TokenIdent,
 					Bytes: []byte(`foo`),
 				},
 				{
-					Type:  hclsyntax.TokenTemplateSeqEnd,
-					Bytes: []byte(`}`),
-				},
-				{
-					Type:  hclsyntax.TokenCQuote,
-					Bytes: []byte(`"`),
-				},
-				{
 					Type:  hclsyntax.TokenComma,
 					Bytes: []byte(`,`),
-				},
-				{
-					Type:  hclsyntax.TokenOQuote,
-					Bytes: []byte(`"`),
-				},
-				{
-					Type:  hclsyntax.TokenTemplateControl,
-					Bytes: []byte(`%{`),
 				},
 				{
 					Type:  hclsyntax.TokenIdent,
 					Bytes: []byte(`bar`),
 				},
 				{
-					Type:  hclsyntax.TokenTemplateSeqEnd,
-					Bytes: []byte(`}`),
-				},
-				{
-					Type:  hclsyntax.TokenCQuote,
-					Bytes: []byte(`"`),
-				},
-				{
 					Type:  hclsyntax.TokenComma,
 					Bytes: []byte(`,`),
 				},
 				{
-					Type:  hclsyntax.TokenOQuote,
-					Bytes: []byte(`"`),
-				},
-				{
-					Type:  hclsyntax.TokenTemplateControl,
-					Bytes: []byte(`%{`),
-				},
-				{
 					Type:  hclsyntax.TokenIdent,
 					Bytes: []byte(`baz`),
-				},
-				{
-					Type:  hclsyntax.TokenTemplateSeqEnd,
-					Bytes: []byte(`}`),
-				},
-				{
-					Type:  hclsyntax.TokenCQuote,
-					Bytes: []byte(`"`),
 				},
 				{
 					Type:  hclsyntax.TokenCBrack,
@@ -840,24 +790,8 @@ func TestTokenHandling(t *testing.T) {
 					SpacesBefore: 1,
 				},
 				{
-					Type:  hclsyntax.TokenOQuote,
-					Bytes: []byte(`"`),
-				},
-				{
-					Type:  hclsyntax.TokenTemplateInterp,
-					Bytes: []byte(`${`),
-				},
-				{
 					Type:  hclsyntax.TokenIdent,
 					Bytes: []byte(`bar`),
-				},
-				{
-					Type:  hclsyntax.TokenTemplateSeqEnd,
-					Bytes: []byte(`}`),
-				},
-				{
-					Type:  hclsyntax.TokenCQuote,
-					Bytes: []byte(`"`),
 				},
 				{
 					Type:  hclsyntax.TokenNewline,
@@ -874,24 +808,8 @@ func TestTokenHandling(t *testing.T) {
 					SpacesBefore: 1,
 				},
 				{
-					Type:  hclsyntax.TokenOQuote,
-					Bytes: []byte(`"`),
-				},
-				{
-					Type:  hclsyntax.TokenTemplateInterp,
-					Bytes: []byte(`${`),
-				},
-				{
 					Type:  hclsyntax.TokenIdent,
 					Bytes: []byte(`foo`),
-				},
-				{
-					Type:  hclsyntax.TokenTemplateSeqEnd,
-					Bytes: []byte(`}`),
-				},
-				{
-					Type:  hclsyntax.TokenCQuote,
-					Bytes: []byte(`"`),
 				},
 				{
 					Type:  hclsyntax.TokenNewline,

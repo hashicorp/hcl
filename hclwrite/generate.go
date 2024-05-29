@@ -351,11 +351,27 @@ func (g *Generator) appendTokensForValue(val cty.Value, toks Tokens) Tokens {
 					panic(fmt.Sprintf(`cannot lex "%s" as template`, s))
 				}
 				content = make(Tokens, 0, len(syntaxTokens)-1)
-				for _, v := range syntaxTokens {
+				var n int
+				for i, v := range syntaxTokens {
 					if v.Type == hclsyntax.TokenEOF {
 						break
 					}
+					n = i
 					content = append(content, &Token{Type: v.Type, Bytes: v.Bytes})
+				}
+				if n > 0 && content[n].Type == hclsyntax.TokenTemplateSeqEnd {
+					findTemplateSequence := func(start int) int {
+						for i, v := range content[start:] {
+							if v.Type == hclsyntax.TokenTemplateControl || v.Type == hclsyntax.TokenTemplateInterp {
+								return i
+							}
+						}
+						return -1
+					}
+					if findTemplateSequence(0) == 0 && findTemplateSequence(1) < 0 {
+						// i.e., the entire string was a single template control or interpolation
+						return append(toks, content[1:n]...)
+					}
 				}
 			default:
 				panic(fmt.Sprintf("Unknown string handling strategy %d", strategy))
