@@ -134,7 +134,7 @@ func walkVariables(node dynblock.WalkVariablesNode, schema *hcl.BodySchema) []hc
 			panic(fmt.Errorf("can't find schema for unknown block type %q", child.BlockTypeName))
 		}
 
-		vars = append(vars, testWalkAndAccumVars(child.Node, childSchema)...)
+		vars = append(vars, walkVariables(child.Node, childSchema)...)
 	}
 }
 ```
