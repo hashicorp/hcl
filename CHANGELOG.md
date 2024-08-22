@@ -1,5 +1,11 @@
 # HCL Changelog
 
+## v2.22.0 (Unreleased)
+
+### Enhancements
+
+* feat: return an ExprSyntaxError for invalid references that end in a dot ([#692](https://github.com/hashicorp/hcl/pull/692))
+
 ## v2.21.0 (June 19, 2024)
 
 ### Enhancements
