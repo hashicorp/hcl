@@ -249,6 +249,113 @@ func TestApplyPath(t *testing.T) {
 			cty.NilVal,
 			`Attempt to get attribute from null value: This value is null, so it does not have any attributes.`,
 		},
+
+		// Marks should be retained during index and getattr ops, even when
+		// types and values are unknown. This reflects the same behavior when
+		// using cty to directly call GetAttr and Index methods.
+		{
+			cty.DynamicVal.Mark("marked"),
+			(cty.Path)(nil).GetAttr("foo"),
+			cty.DynamicVal.Mark("marked"),
+			``,
+		},
+		{
+			cty.ObjectVal(map[string]cty.Value{
+				"foo": cty.StringVal("should be marked"),
+			}).Mark("marked"),
+			(cty.Path)(nil).GetAttr("foo"),
+			cty.StringVal("should be marked").Mark("marked"),
+			``,
+		},
+		{
+			cty.UnknownVal(cty.Object(map[string]cty.Type{
+				"foo": cty.DynamicPseudoType,
+			})).Mark("marked"),
+			(cty.Path)(nil).GetAttr("foo"),
+			cty.DynamicVal.Mark("marked"),
+			``,
+		},
+		{
+			cty.DynamicVal.Mark("marked"),
+			(cty.Path)(nil).Index(cty.StringVal("foo")),
+			cty.DynamicVal.Mark("marked"),
+			``,
+		},
+		{
+			cty.ObjectVal(map[string]cty.Value{
+				"foo": cty.StringVal("should be marked"),
+			}).Mark("marked"),
+			(cty.Path)(nil).Index(cty.StringVal("foo")),
+			cty.StringVal("should be marked").Mark("marked"),
+			``,
+		},
+		{
+			cty.UnknownVal(cty.Object(map[string]cty.Type{
+				"foo": cty.DynamicPseudoType,
+			})).Mark("marked"),
+			(cty.Path)(nil).Index(cty.StringVal("foo")),
+			cty.DynamicVal.Mark("marked"),
+			``,
+		},
+		{
+			cty.DynamicVal.Mark("marked"),
+			(cty.Path)(nil).Index(cty.NumberIntVal(0)),
+			cty.DynamicVal.Mark("marked"),
+			``,
+		},
+		{
+			cty.ListVal([]cty.Value{cty.StringVal("should be marked")}).Mark("marked"),
+			(cty.Path)(nil).Index(cty.NumberIntVal(0)),
+			cty.StringVal("should be marked").Mark("marked"),
+			``,
+		},
+		{
+			cty.UnknownVal(cty.List(cty.String)).Mark("marked"),
+			(cty.Path)(nil).Index(cty.NumberIntVal(0)),
+			cty.UnknownVal(cty.String).Mark("marked"),
+			``,
+		},
+
+		{
+			cty.DynamicVal.Mark("marked"),
+			(cty.Path)(nil).Index(cty.UnknownVal(cty.String)),
+			cty.DynamicVal.Mark("marked"),
+			``,
+		},
+		{
+			cty.ObjectVal(map[string]cty.Value{
+				"foo": cty.StringVal("should be marked"),
+			}).Mark("marked"),
+			(cty.Path)(nil).Index(cty.UnknownVal(cty.String)),
+			cty.DynamicVal.Mark("marked"),
+			``,
+		},
+		{
+			cty.UnknownVal(cty.Object(map[string]cty.Type{
+				"foo": cty.DynamicPseudoType,
+			})).Mark("marked"),
+			(cty.Path)(nil).Index(cty.UnknownVal(cty.String)),
+			cty.DynamicVal.Mark("marked"),
+			``,
+		},
+		{
+			cty.DynamicVal.Mark("marked"),
+			(cty.Path)(nil).Index(cty.UnknownVal(cty.Number)),
+			cty.DynamicVal.Mark("marked"),
+			``,
+		},
+		{
+			cty.ListVal([]cty.Value{cty.StringVal("should be marked")}).Mark("marked"),
+			(cty.Path)(nil).Index(cty.UnknownVal(cty.Number)),
+			cty.UnknownVal(cty.String).Mark("marked"),
+			``,
+		},
+		{
+			cty.UnknownVal(cty.List(cty.String)).Mark("marked"),
+			(cty.Path)(nil).Index(cty.UnknownVal(cty.Number)),
+			cty.UnknownVal(cty.String).Mark("marked"),
+			``,
+		},
 	}
 
 	for _, test := range tests {
@@ -257,7 +364,7 @@ func TestApplyPath(t *testing.T) {
 			t.Logf("testing ApplyPath\nstart: %#v\npath:  %#v", test.Start, test.Path)
 
 			for _, diag := range diags {
-				t.Logf(diag.Error())
+				t.Log(diag.Error())
 			}
 
 			if test.WantErr != "" {
