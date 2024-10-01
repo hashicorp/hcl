@@ -96,7 +96,7 @@ of the implementation language.
 ### _Dynamic Attributes_ Processing
 
 The _schema-driven_ processing model is useful when the expected structure
-of a body is known a priori by the calling application. Some blocks are
+of a body is known by the calling application. Some blocks are
 instead more free-form, such as a user-provided set of arbitrary key/value
 pairs.
 
