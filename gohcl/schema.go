@@ -4,9 +4,10 @@
 package gohcl
 
 import (
+	"cmp"
 	"fmt"
 	"reflect"
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/hashicorp/hcl/v2"
@@ -24,6 +25,10 @@ import (
 // mapping is attempted, this function will panic.
 func ImpliedBodySchema(val interface{}) (schema *hcl.BodySchema, partial bool) {
 	ty := reflect.TypeOf(val)
+	if nty, ok := val.(reflect.Value); ok {
+		// Recursion through embedded structs
+		ty = nty.Type()
+	}
 
 	if ty.Kind() == reflect.Ptr {
 		ty = ty.Elem()
@@ -38,12 +43,7 @@ func ImpliedBodySchema(val interface{}) (schema *hcl.BodySchema, partial bool) {
 
 	tags := getFieldTags(ty)
 
-	attrNames := make([]string, 0, len(tags.Attributes))
 	for n := range tags.Attributes {
-		attrNames = append(attrNames, n)
-	}
-	sort.Strings(attrNames)
-	for _, n := range attrNames {
 		idx := tags.Attributes[n]
 		optional := tags.Optional[n]
 		field := ty.Field(idx)
@@ -68,12 +68,7 @@ func ImpliedBodySchema(val interface{}) (schema *hcl.BodySchema, partial bool) {
 		})
 	}
 
-	blockNames := make([]string, 0, len(tags.Blocks))
 	for n := range tags.Blocks {
-		blockNames = append(blockNames, n)
-	}
-	sort.Strings(blockNames)
-	for _, n := range blockNames {
 		idx := tags.Blocks[n]
 		field := ty.Field(idx)
 		fty := field.Type
@@ -104,6 +99,25 @@ func ImpliedBodySchema(val interface{}) (schema *hcl.BodySchema, partial bool) {
 	}
 
 	partial = tags.Remain != nil
+
+	for _, embedded := range tags.Embedded {
+		nested, npartial := ImpliedBodySchema(reflect.New(embedded.Type))
+		if npartial && partial {
+			panic("only one 'remain' tag is permitted (nested)")
+		}
+
+		attrSchemas = append(attrSchemas, nested.Attributes...)
+		blockSchemas = append(blockSchemas, nested.Blocks...)
+		println(fmt.Sprintf("%v: %#v\n", embedded.Type, nested))
+	}
+
+	slices.SortStableFunc(attrSchemas, func(a, b hcl.AttributeSchema) int {
+		return cmp.Compare(a.Name, b.Name)
+	})
+	slices.SortStableFunc(blockSchemas, func(a, b hcl.BlockHeaderSchema) int {
+		return cmp.Compare(a.Type, b.Type)
+	})
+
 	schema = &hcl.BodySchema{
 		Attributes: attrSchemas,
 		Blocks:     blockSchemas,
@@ -118,6 +132,12 @@ type fieldTags struct {
 	Remain     *int
 	Body       *int
 	Optional   map[string]bool
+	Embedded   []embeddedField
+}
+
+type embeddedField struct {
+	FieldIndex int
+	Type       reflect.Type
 }
 
 type labelField struct {
@@ -135,8 +155,15 @@ func getFieldTags(ty reflect.Type) *fieldTags {
 	ct := ty.NumField()
 	for i := 0; i < ct; i++ {
 		field := ty.Field(i)
+
 		tag := field.Tag.Get("hcl")
 		if tag == "" {
+			if field.Type.Kind() == reflect.Struct && field.Anonymous {
+				ret.Embedded = append(ret.Embedded, embeddedField{
+					FieldIndex: i,
+					Type:       field.Type,
+				})
+			}
 			continue
 		}
 
