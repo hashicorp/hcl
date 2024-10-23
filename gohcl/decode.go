@@ -66,6 +66,11 @@ func decodeBodyToStruct(body hcl.Body, ctx *hcl.EvalContext, val reflect.Value) 
 		return diags
 	}
 
+	return append(diags, decodeBodyToStructInner(body, content, leftovers, ctx, val)...)
+}
+func decodeBodyToStructInner(body hcl.Body, content *hcl.BodyContent, leftovers hcl.Body, ctx *hcl.EvalContext, val reflect.Value) hcl.Diagnostics {
+	var diags hcl.Diagnostics
+
 	tags := getFieldTags(val.Type())
 
 	if tags.Body != nil {
@@ -97,6 +102,10 @@ func decodeBodyToStruct(body hcl.Body, ctx *hcl.EvalContext, val reflect.Value) 
 		default:
 			diags = append(diags, decodeBodyToValue(leftovers, ctx, fieldV)...)
 		}
+	}
+	for _, embedded := range tags.Embedded {
+		fieldV := val.Field(embedded.FieldIndex)
+		diags = append(diags, decodeBodyToStructInner(body, content, leftovers, ctx, fieldV)...)
 	}
 
 	for name, fieldIdx := range tags.Attributes {
