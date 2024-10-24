@@ -118,18 +118,31 @@ type fieldTags struct {
 	Remain     *int
 	Body       *int
 	Optional   map[string]bool
+
+	AttributeRange      map[string]int
+	AttributeNameRange  map[string]int
+	AttributeValueRange map[string]int
+
+	DefRange   *int
+	TypeRange  *int
+	LabelRange map[string]int
 }
 
 type labelField struct {
 	FieldIndex int
+	RangeIndex int
 	Name       string
 }
 
 func getFieldTags(ty reflect.Type) *fieldTags {
 	ret := &fieldTags{
-		Attributes: map[string]int{},
-		Blocks:     map[string]int{},
-		Optional:   map[string]bool{},
+		Attributes:          map[string]int{},
+		Blocks:              map[string]int{},
+		Optional:            map[string]bool{},
+		AttributeRange:      map[string]int{},
+		AttributeNameRange:  map[string]int{},
+		AttributeValueRange: map[string]int{},
+		LabelRange:          map[string]int{},
 	}
 
 	ct := ty.NumField()
@@ -175,6 +188,26 @@ func getFieldTags(ty reflect.Type) *fieldTags {
 		case "optional":
 			ret.Attributes[name] = i
 			ret.Optional[name] = true
+		case "def_range":
+			if ret.DefRange != nil {
+				panic("only one 'def_range' tag is permitted")
+			}
+			idx := i // copy, because this loop will continue assigning to i
+			ret.DefRange = &idx
+		case "type_range":
+			if ret.TypeRange != nil {
+				panic("only one 'type_range' tag is permitted")
+			}
+			idx := i // copy, because this loop will continue assigning to i
+			ret.TypeRange = &idx
+		case "label_range":
+			ret.LabelRange[name] = i
+		case "attr_range":
+			ret.AttributeRange[name] = i
+		case "attr_name_range":
+			ret.AttributeNameRange[name] = i
+		case "attr_value_range":
+			ret.AttributeValueRange[name] = i
 		default:
 			panic(fmt.Sprintf("invalid hcl field tag kind %q on %s %q", kind, field.Type.String(), field.Name))
 		}

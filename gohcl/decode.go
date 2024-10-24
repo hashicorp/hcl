@@ -9,9 +9,10 @@ import (
 
 	"github.com/zclconf/go-cty/cty"
 
-	"github.com/hashicorp/hcl/v2"
 	"github.com/zclconf/go-cty/cty/convert"
 	"github.com/zclconf/go-cty/cty/gocty"
+
+	"github.com/hashicorp/hcl/v2"
 )
 
 // DecodeBody extracts the configuration within the given body into the given
@@ -110,12 +111,24 @@ func decodeBodyToStruct(body hcl.Body, ctx *hcl.EvalContext, val reflect.Value) 
 			}
 
 			// As a special case, if the target is of type hcl.Expression then
-			// we'll assign an actual expression that evalues to a cty null,
+			// we'll assign an actual expression that evaluates to a cty null,
 			// so the caller can deal with it within the cty realm rather
 			// than within the Go realm.
 			synthExpr := hcl.StaticExpr(cty.NullVal(cty.DynamicPseudoType), body.MissingItemRange())
 			fieldV.Set(reflect.ValueOf(synthExpr))
 			continue
+		}
+
+		if attrRange, exists := tags.AttributeRange[name]; exists {
+			val.Field(attrRange).Set(reflect.ValueOf(attr.Range))
+		}
+
+		if attrNameRange, exists := tags.AttributeNameRange[name]; exists {
+			val.Field(attrNameRange).Set(reflect.ValueOf(attr.NameRange))
+		}
+
+		if attrValueRange, exists := tags.AttributeValueRange[name]; exists {
+			val.Field(attrValueRange).Set(reflect.ValueOf(attr.Expr.Range()))
 		}
 
 		switch {
@@ -263,12 +276,24 @@ func decodeBodyToMap(body hcl.Body, ctx *hcl.EvalContext, v reflect.Value) hcl.D
 func decodeBlockToValue(block *hcl.Block, ctx *hcl.EvalContext, v reflect.Value) hcl.Diagnostics {
 	diags := decodeBodyToValue(block.Body, ctx, v)
 
-	if len(block.Labels) > 0 {
-		blockTags := getFieldTags(v.Type())
-		for li, lv := range block.Labels {
-			lfieldIdx := blockTags.Labels[li].FieldIndex
-			v.Field(lfieldIdx).Set(reflect.ValueOf(lv))
+	blockTags := getFieldTags(v.Type())
+	for li, lv := range block.Labels {
+		lfieldIdx := blockTags.Labels[li].FieldIndex
+		lfieldName := blockTags.Labels[li].Name
+
+		v.Field(lfieldIdx).Set(reflect.ValueOf(lv))
+
+		if ix, exists := blockTags.LabelRange[lfieldName]; exists {
+			v.Field(ix).Set(reflect.ValueOf(block.LabelRanges[li]))
 		}
+	}
+
+	if blockTags.TypeRange != nil {
+		v.Field(*blockTags.TypeRange).Set(reflect.ValueOf(block.TypeRange))
+	}
+
+	if blockTags.DefRange != nil {
+		v.Field(*blockTags.DefRange).Set(reflect.ValueOf(block.DefRange))
 	}
 
 	return diags
