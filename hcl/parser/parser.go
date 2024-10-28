@@ -84,22 +84,28 @@ func (p *Parser) objectList(obj bool) (*ast.ObjectList, error) {
 			if tok.Type == token.RBRACE {
 				break
 			}
+
 		}
 
 		n, err := p.objectItem()
+
 		if err == errEofToken {
 			break // we are finished
 		} else if err != nil {
 			return nil, err
 		}
 
-		for _, key := range n.Keys {
-			_, ok := seenKeys[key.Token.Text]
-			if ok {
-				return nil, errors.New(fmt.Sprintf("The argument %q at %s was already set. Each argument can only be defined once per block.", key.Token.Text, node.Pos().String()))
+		if n.Assign.String() != "-" {
+			for _, key := range n.Keys {
+				_, ok := seenKeys[key.Token.Text]
+				if ok {
+					return nil, errors.New(fmt.Sprintf("The argument %q at %s was already set. Each argument can only be defined once", key.Token.Text, key.Token.Pos.String()))
+
+				}
+				seenKeys[key.Token.Text] = struct{}{}
 			}
-			seenKeys[key.Token.Text] = struct{}{}
 		}
+
 		// we don't return a nil node, because might want to use already
 		// collected items.
 		if err != nil {
