@@ -1,6 +1,7 @@
 package hcl
 
 import (
+	"github.com/hashicorp/hcl/hcl/token"
 	"io/ioutil"
 	"path/filepath"
 	"reflect"
@@ -783,6 +784,68 @@ func TestDecode_structureMapInvalid(t *testing.T) {
 	err := Decode(&actual, testReadFile(t, "terraform_variable_invalid.json"))
 	if err == nil {
 		t.Fatal("expected error")
+	}
+}
+
+func TestDecode_structureMapExtraKeys(t *testing.T) {
+	type hclVariable struct {
+		A     int
+		B     int
+		Found []string               `hcl:",decodedFields"`
+		Extra map[string][]token.Pos `hcl:",unusedKeyPositions"`
+	}
+
+	q := hclVariable{
+		A:     1,
+		B:     2,
+		Found: []string{"A", "B"},
+		Extra: map[string][]token.Pos{
+			"extra1": {{
+				Line:   3,
+				Column: 1,
+				Offset: 12,
+			}},
+			"extra2": {{
+				Line:   4,
+				Column: 1,
+				Offset: 23,
+			}},
+		},
+	}
+
+	var p hclVariable
+	ast, _ := Parse(testReadFile(t, "structure_map_extra_keys.hcl"))
+	DecodeObject(&p, ast)
+	if !reflect.DeepEqual(p, q) {
+		t.Fatal("not equal")
+	}
+
+	p.Extra = map[string][]token.Pos{
+		"extra1": {{}},
+		"extra2": {{}},
+	}
+
+	var j hclVariable
+	ast, _ = Parse(testReadFile(t, "structure_map_extra_keys.json"))
+	DecodeObject(&j, ast)
+	if !reflect.DeepEqual(p, j) {
+		t.Fatal("not equal")
+	}
+}
+
+func TestDecode_structureMapExtraKeysNestedObjects(t *testing.T) {
+	type hclVariable struct {
+		A     int
+		B     struct{}
+		Found []string               `hcl:",decodedFields"`
+		Extra map[string][]token.Pos `hcl:",unusedKeyPositions"`
+	}
+
+	var j hclVariable
+	ast, _ := Parse(testReadFile(t, "structure_map_nested_keys.json"))
+	DecodeObject(&j, ast)
+	if len(j.Extra) > 0 {
+		t.Fatalf("Extra keys found in map: %x", j.Extra)
 	}
 }
 

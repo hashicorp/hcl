@@ -1,0 +1,180 @@
+version: 2.1
+
+orbs:
+  win: circleci/windows@2.2.0
+
+references:
+  environment: &ENVIRONMENT
+    GOMAXPROCS: 4
+    GO111MODULE: "on"
+    GOPROXY: https://proxy.golang.org/
+    TEST_RESULTS_DIR: &TEST_RESULTS_DIR /tmp/test-results
+    WIN_TEST_RESULTS: &WIN_TEST_RESULTS c:\Users\circleci\AppData\Local\Temp\test-results
+
+commands:
+  git-verify:
+    steps:
+      - run: 
+          name: "Verify no code was generated"
+          command: |
+            if [[ -z $(git status --porcelain) ]]; then
+              echo "Git directory is clean."
+            else
+              echo "Git is dirty. Run `make fmt` and `make generate` locally and commit any formatting fixes or generated code."
+              git status --porcelain
+              exit 1
+            fi
+
+  run-gotests:
+      parameters:
+        cmd:
+          type: string
+        platform:
+          type: string
+      steps:
+        - run:
+            name: "Run go tests"
+            command: |
+              PACKAGE_NAMES=$(go list ./... | circleci tests split --split-by=timings --timings-type=classname)
+              echo "Running $(echo $PACKAGE_NAMES | wc -w) packages"
+              echo $PACKAGE_NAMES
+              << parameters.cmd >> --format=short-verbose --junitfile $TEST_RESULTS_DIR/hcl2/gotestsum-report.xml -- -p 2 -cover -coverprofile=<< parameters.platform >>_cov_$CIRCLE_NODE_INDEX.part $PACKAGE_NAMES
+
+jobs:
+  go-checks:
+    docker:
+      - image: circleci/golang:<< parameters.go-version >>
+    environment: 
+      <<: *ENVIRONMENT
+    parameters:
+      go-version:
+        type: string
+    steps:
+      - checkout
+      - run: go mod verify
+      - run: make fmt
+      - git-verify
+
+  linux-tests:
+    docker:
+      - image: circleci/golang:<< parameters.go-version >>
+    environment: 
+      <<: *ENVIRONMENT
+    parameters:
+      go-version:
+        type: string
+    parallelism: 4
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run: mkdir -p $TEST_RESULTS_DIR/hcl2
+      - run-gotests:
+          cmd: "gotestsum"
+          platform: "linux"
+
+      # save coverage report parts
+      - persist_to_workspace:
+          root: .
+          paths:
+            - linux_cov_*.part
+
+      - store_test_results:
+          path: *TEST_RESULTS_DIR
+      - store_artifacts:
+          path: *TEST_RESULTS_DIR
+
+  win-tests:
+    executor: 
+      name: win/default
+      shell: bash --login -eo pipefail
+    environment:
+      <<: *ENVIRONMENT
+    working_directory: c:\gopath\src\github.com\hashicorp\hcl
+    parameters:
+      go-version:
+        type: string
+      gotestsum-version:
+        type: string
+    steps: 
+      - add_ssh_keys:
+            fingerprints:
+              - "3f:fc:7c:7b:7f:45:55:70:d0:7a:6b:26:7f:0d:50:e9"
+      - run: git config --global core.autocrlf false
+      - checkout
+      - attach_workspace:
+          at: .
+      # - git-verify
+      - run: 
+          name: Setup (remove pre-installed golang version)
+          command: |
+            rm -rf "c:\Go"
+            mkdir -p $TEST_RESULTS_DIR/hcl2
+      - restore_cache:
+          keys:
+            - win-golang-<< parameters.go-version >>-cache-v1
+            - win-gomod-cache-{{ checksum "go.mod" }}-v1
+
+      - run: 
+          name: Install go version << parameters.go-version >>
+          command: | 
+            if [ ! -d "c:\go" ]; then
+              echo "Cache not found, installing new version of go"
+              curl --fail --location https://dl.google.com/go/go<< parameters.go-version >>.windows-amd64.zip --output go.zip
+              unzip go.zip -d "/c"
+            fi
+      - run: 
+          name: Go mod download
+          command: |
+            go mod verify
+            go mod download
+  
+      - save_cache:
+          key: win-golang-<< parameters.go-version >>-cache-v1
+          paths:
+            - /go
+
+      - save_cache:
+          key: win-gomod-cache-{{ checksum "go.mod" }}-v1
+          paths:
+            - c:\Windows\system32\config\systemprofile\go\pkg\mod
+
+      - run:
+          name: Install gotestsum
+          command: |
+            curl --fail --location https://github.com/gotestyourself/gotestsum/releases/download/v<< parameters.gotestsum-version >>/gotestsum_<< parameters.gotestsum-version >>_windows_amd64.tar.gz --output gotestsum.tar.gz
+            tar -xvzf gotestsum.tar.gz
+      - run-gotests:
+          cmd: "./gotestsum.exe"
+          platform: "win"
+
+      # save coverage report parts
+      - persist_to_workspace:
+          root: .
+          paths:
+            - win_cov_*.part
+
+      - store_test_results:
+          path: *WIN_TEST_RESULTS
+      - store_artifacts:
+          path: *WIN_TEST_RESULTS
+          
+workflows:
+  hcl2:
+    jobs:
+      # - go-checks:
+      #     matrix:
+      #       parameters:
+      #         go-version: ["1.14"]
+      #     name: go-checks-<< matrix.go-version >>
+      - linux-tests:
+          matrix:
+            parameters:
+              go-version: ["1.14"]
+          name: linux-test-go-<< matrix.go-version >>
+      - win-tests:
+          matrix:
+            parameters:
+              go-version: ["1.12"]
+              gotestsum-version: ["0.4.1"]
+          name: win-test-go-<< matrix.go-version >>
