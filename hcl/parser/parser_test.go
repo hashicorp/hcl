@@ -134,6 +134,53 @@ func TestListOfMaps(t *testing.T) {
 	}
 }
 
+func TestDuplicateKeys_NotAllowed(t *testing.T) {
+	src := `key = "value1"
+			key = "value2"
+  `
+	p := newParser([]byte(src))
+
+	_, err := p.Parse()
+	if err == nil {
+		t.Fatalf("Expected error, got none!")
+	}
+
+	expected := "Each argument can only be defined once"
+	if !strings.Contains(err.Error(), expected) {
+		t.Fatalf("Expected err:\n  %s\nTo contain:\n  %s\n", err, expected)
+	}
+}
+
+func TestDuplicateKeys_NotAllowedInBlock(t *testing.T) {
+	src := `key = "value1"
+			structkey "structname" { name = "test" name = "test2"}
+  `
+	p := newParser([]byte(src))
+
+	_, err := p.Parse()
+	if err == nil {
+		t.Fatalf("Expected error, got none!")
+	}
+
+	expected := "Each argument can only be defined once"
+	if !strings.Contains(err.Error(), expected) {
+		t.Fatalf("Expected err:\n  %s\nTo contain:\n  %s\n", err, expected)
+	}
+}
+
+func TestDuplicateBlocks_allowed(t *testing.T) {
+	src := `structkey  { name = "test" }
+			structkey  { name = "test" }
+  `
+	p := newParser([]byte(src))
+
+	_, err := p.Parse()
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+}
+
 func TestListOfMaps_requiresComma(t *testing.T) {
 	src := `foo = [
     {key = "bar"}
@@ -240,7 +287,7 @@ func TestListType_lineComment(t *testing.T) {
 			comment := l.comment[i]
 
 			if (lt.LineComment == nil) != (comment == "") {
-				t.Fatalf("bad: %s", lt.Token.Value())
+				t.Fatalf("bad: %v", lt)
 			}
 
 			if comment == "" {

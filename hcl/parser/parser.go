@@ -76,6 +76,7 @@ func (p *Parser) objectList(obj bool) (*ast.ObjectList, error) {
 	defer un(trace(p, "ParseObjectList"))
 	node := &ast.ObjectList{}
 
+	seenKeys := map[string]struct{}{}
 	for {
 		if obj {
 			tok := p.scan()
@@ -83,11 +84,26 @@ func (p *Parser) objectList(obj bool) (*ast.ObjectList, error) {
 			if tok.Type == token.RBRACE {
 				break
 			}
+
 		}
 
 		n, err := p.objectItem()
+
 		if err == errEofToken {
 			break // we are finished
+		} else if err != nil {
+			return nil, err
+		}
+
+		if n.Assign.String() != "-" {
+			for _, key := range n.Keys {
+				_, ok := seenKeys[key.Token.Text]
+				if ok {
+					return nil, errors.New(fmt.Sprintf("The argument %q at %s was already set. Each argument can only be defined once", key.Token.Text, key.Token.Pos.String()))
+
+				}
+				seenKeys[key.Token.Text] = struct{}{}
+			}
 		}
 
 		// we don't return a nil node, because might want to use already
@@ -225,6 +241,7 @@ func (p *Parser) objectItem() (*ast.ObjectItem, error) {
 func (p *Parser) objectKey() ([]*ast.ObjectKey, error) {
 	keyCount := 0
 	keys := make([]*ast.ObjectKey, 0)
+	seenKeys := map[string]struct{}{}
 
 	for {
 		tok := p.scan()
@@ -268,6 +285,12 @@ func (p *Parser) objectKey() ([]*ast.ObjectKey, error) {
 			// object
 			return keys, err
 		case token.IDENT, token.STRING:
+			_, ok := seenKeys[p.tok.Text]
+			if ok {
+				return nil, errors.New(fmt.Sprintf("The argument %q at %s was already set. Each argument can only be defined once", p.tok.Text, p.tok.Pos.String()))
+			}
+			seenKeys[p.tok.Text] = struct{}{}
+
 			keyCount++
 			keys = append(keys, &ast.ObjectKey{Token: p.tok})
 		case token.ILLEGAL:
@@ -324,6 +347,8 @@ func (p *Parser) objectType() (*ast.ObjectType, error) {
 	// not a RBRACE, it's an syntax error and we just return it.
 	if err != nil && p.tok.Type != token.RBRACE {
 		return nil, err
+	} else if err != nil {
+		return nil, err
 	}
 
 	// No error, scan and expect the ending to be a brace
@@ -365,6 +390,7 @@ func (p *Parser) listType() (*ast.ListType, error) {
 		}
 		switch tok.Type {
 		case token.BOOL, token.NUMBER, token.FLOAT, token.STRING, token.HEREDOC:
+
 			node, err := p.literalType()
 			if err != nil {
 				return nil, err
