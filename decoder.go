@@ -24,7 +24,18 @@ var (
 // Unmarshal accepts a byte slice as input and writes the
 // data to the value pointed to by v.
 func Unmarshal(bs []byte, v interface{}) error {
-	root, err := parse(bs)
+	root, err := parse(bs, true)
+	if err != nil {
+		return err
+	}
+
+	return DecodeObject(v, root)
+}
+
+// Unmarshal accepts a byte slice as input and writes the
+// data to the value pointed to by v.
+func UnmarshalDontErrorOnDuplicates(bs []byte, v interface{}) error {
+	root, err := parse(bs, false)
 	if err != nil {
 		return err
 	}
@@ -35,7 +46,20 @@ func Unmarshal(bs []byte, v interface{}) error {
 // Decode reads the given input and decodes it into the structure
 // given by `out`.
 func Decode(out interface{}, in string) error {
-	obj, err := Parse(in)
+	panic("what")
+	return decode(out, in, true)
+}
+
+// Decode reads the given input and decodes it into the structure
+// given by `out`.
+func DecodeDontErrorOnDuplicates(out interface{}, in string) error {
+	return decode(out, in, false)
+}
+
+// Decode reads the given input and decodes it into the structure
+// given by `out`.
+func decode(out interface{}, in string, errorOnDuplicateAtributes bool) error {
+	obj, err := parse([]byte(in), errorOnDuplicateAtributes)
 	if err != nil {
 		return err
 	}
@@ -393,14 +417,15 @@ func (d *decoder) decodeMap(name string, node ast.Node, result reflect.Value) er
 
 	// Set the final map if we can
 	set.Set(resultMap)
+
 	return nil
 }
 
 func (d *decoder) decodePtr(name string, node ast.Node, result reflect.Value) error {
-        // if pointer is not nil, decode into existing value
-        if !result.IsNil() {
-                return d.decode(name, node, result.Elem())
-        }
+	// if pointer is not nil, decode into existing value
+	if !result.IsNil() {
+		return d.decode(name, node, result.Elem())
+	}
 
 	// Create an element of the concrete (non pointer) type and decode
 	// into that. Then set the value of the pointer to this type.
