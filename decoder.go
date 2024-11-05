@@ -24,7 +24,7 @@ var (
 // Unmarshal accepts a byte slice as input and writes the
 // data to the value pointed to by v.
 func Unmarshal(bs []byte, v interface{}) error {
-	root, err := parse(bs, true)
+	root, err := parse(bs, false)
 	if err != nil {
 		return err
 	}
@@ -34,8 +34,8 @@ func Unmarshal(bs []byte, v interface{}) error {
 
 // Unmarshal accepts a byte slice as input and writes the
 // data to the value pointed to by v.
-func UnmarshalDontErrorOnDuplicates(bs []byte, v interface{}) error {
-	root, err := parse(bs, false)
+func UnmarshalErrorOnDuplicates(bs []byte, v interface{}) error {
+	root, err := parse(bs, true)
 	if err != nil {
 		return err
 	}
@@ -46,13 +46,13 @@ func UnmarshalDontErrorOnDuplicates(bs []byte, v interface{}) error {
 // Decode reads the given input and decodes it into the structure
 // given by `out`.
 func Decode(out interface{}, in string) error {
-	return decode(out, in, true)
+	return decode(out, in, false)
 }
 
 // Decode reads the given input and decodes it into the structure
 // given by `out`.
-func DecodeDontErrorOnDuplicates(out interface{}, in string) error {
-	return decode(out, in, false)
+func DecodeErrorOnDuplicates(out interface{}, in string) error {
+	return decode(out, in, true)
 }
 
 // Decode reads the given input and decodes it into the structure

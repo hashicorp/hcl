@@ -37,8 +37,10 @@ func TestDecode_interface(t *testing.T) {
 		},
 		{
 			"basic_duplicates.hcl",
-			true,
-			nil,
+			false,
+			map[string]interface{}{
+				"foo": "${file(\"bing/bong.txt\")}",
+			},
 		},
 		{
 			"empty.hcl",
@@ -455,7 +457,7 @@ func TestDecode_interface(t *testing.T) {
 	}
 }
 
-func TestDecodeDontErrorOnDuplicates_interface(t *testing.T) {
+func TestDecodeErrorOnDuplicates_interface(t *testing.T) {
 	cases := []struct {
 		File string
 		Err  bool
@@ -463,10 +465,8 @@ func TestDecodeDontErrorOnDuplicates_interface(t *testing.T) {
 	}{
 		{
 			"basic_duplicates.hcl",
-			false,
-			map[string]interface{}{
-				"foo": "${file(\"bing/bong.txt\")}",
-			},
+			true,
+			nil,
 		},
 	}
 
@@ -478,7 +478,7 @@ func TestDecodeDontErrorOnDuplicates_interface(t *testing.T) {
 			}
 
 			var out interface{}
-			err = DecodeDontErrorOnDuplicates(&out, string(d))
+			err = DecodeErrorOnDuplicates(&out, string(d))
 			if (err != nil) != tc.Err {
 				t.Fatalf("Input: %s\n\nError: %s", tc.File, err)
 			}
@@ -488,7 +488,7 @@ func TestDecodeDontErrorOnDuplicates_interface(t *testing.T) {
 			}
 
 			var v interface{}
-			err = UnmarshalDontErrorOnDuplicates(d, &v)
+			err = UnmarshalErrorOnDuplicates(d, &v)
 			if (err != nil) != tc.Err {
 				t.Fatalf("Input: %s\n\nError: %s", tc.File, err)
 			}
