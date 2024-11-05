@@ -46,7 +46,6 @@ func UnmarshalDontErrorOnDuplicates(bs []byte, v interface{}) error {
 // Decode reads the given input and decodes it into the structure
 // given by `out`.
 func Decode(out interface{}, in string) error {
-	panic("what")
 	return decode(out, in, true)
 }
 
