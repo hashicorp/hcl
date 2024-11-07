@@ -28,7 +28,7 @@ func TestType(t *testing.T) {
 	}
 
 	for _, l := range literals {
-		p := newParser([]byte(l.src))
+		p := newParser([]byte(l.src), true)
 		item, err := p.objectItem()
 		if err != nil {
 			t.Error(err)
@@ -78,7 +78,7 @@ EOF
 	}
 
 	for _, l := range literals {
-		p := newParser([]byte(l.src))
+		p := newParser([]byte(l.src), true)
 		item, err := p.objectItem()
 		if err != nil {
 			t.Error(err)
@@ -105,7 +105,7 @@ func TestListOfMaps(t *testing.T) {
     {key = "bar"},
     {key = "baz", key2 = "qux"},
   ]`
-	p := newParser([]byte(src))
+	p := newParser([]byte(src), true)
 
 	file, err := p.Parse()
 	if err != nil {
@@ -138,7 +138,7 @@ func TestDuplicateKeys_NotAllowed(t *testing.T) {
 	src := `key = "value1"
 			key = "value2"
   `
-	p := newParser([]byte(src))
+	p := newParser([]byte(src), true)
 
 	_, err := p.Parse()
 	if err == nil {
@@ -151,11 +151,23 @@ func TestDuplicateKeys_NotAllowed(t *testing.T) {
 	}
 }
 
+func TestDuplicateKeys_DontErrorWhenErrorOnDuplicateKeysIsFalse(t *testing.T) {
+	src := `key = "value1"
+			key = "value2"
+  `
+	p := newParser([]byte(src), false)
+
+	_, err := p.Parse()
+	if err != nil {
+		t.Fatalf("Unexpected error " + err.Error())
+	}
+}
+
 func TestDuplicateKeys_NotAllowedInBlock(t *testing.T) {
 	src := `key = "value1"
 			structkey "structname" { name = "test" name = "test2"}
   `
-	p := newParser([]byte(src))
+	p := newParser([]byte(src), true)
 
 	_, err := p.Parse()
 	if err == nil {
@@ -170,9 +182,8 @@ func TestDuplicateKeys_NotAllowedInBlock(t *testing.T) {
 
 func TestDuplicateBlocks_allowed(t *testing.T) {
 	src := `structkey  { name = "test" }
-			structkey  { name = "test" }
-  `
-	p := newParser([]byte(src))
+			structkey  { name = "test" }`
+	p := newParser([]byte(src), true)
 
 	_, err := p.Parse()
 	if err != nil {
@@ -186,7 +197,7 @@ func TestListOfMaps_requiresComma(t *testing.T) {
     {key = "bar"}
     {key = "baz"}
   ]`
-	p := newParser([]byte(src))
+	p := newParser([]byte(src), true)
 
 	_, err := p.Parse()
 	if err == nil {
@@ -216,7 +227,7 @@ func TestListType_leadComment(t *testing.T) {
 	}
 
 	for _, l := range literals {
-		p := newParser([]byte(l.src))
+		p := newParser([]byte(l.src), true)
 		item, err := p.objectItem()
 		if err != nil {
 			t.Fatal(err)
@@ -267,7 +278,7 @@ func TestListType_lineComment(t *testing.T) {
 	}
 
 	for _, l := range literals {
-		p := newParser([]byte(l.src))
+		p := newParser([]byte(l.src), true)
 		item, err := p.objectItem()
 		if err != nil {
 			t.Fatal(err)
@@ -356,7 +367,7 @@ func TestObjectType(t *testing.T) {
 	for _, l := range literals {
 		t.Logf("Source: %s", l.src)
 
-		p := newParser([]byte(l.src))
+		p := newParser([]byte(l.src), true)
 		// p.enableTrace = true
 		item, err := p.objectItem()
 		if err != nil {
@@ -402,7 +413,7 @@ func TestObjectKey(t *testing.T) {
 	}
 
 	for _, k := range keys {
-		p := newParser([]byte(k.src))
+		p := newParser([]byte(k.src), true)
 		keys, err := p.objectKey()
 		if err != nil {
 			t.Fatal(err)
@@ -426,7 +437,7 @@ func TestObjectKey(t *testing.T) {
 	}
 
 	for _, k := range errKeys {
-		p := newParser([]byte(k.src))
+		p := newParser([]byte(k.src), true)
 		_, err := p.objectKey()
 		if err == nil {
 			t.Errorf("case '%s' should give an error", k.src)
@@ -445,7 +456,7 @@ func TestCommentGroup(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.src, func(t *testing.T) {
-			p := newParser([]byte(tc.src))
+			p := newParser([]byte(tc.src), true)
 			file, err := p.Parse()
 			if err != nil {
 				t.Fatalf("parse error: %s", err)
