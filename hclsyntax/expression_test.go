@@ -2229,6 +2229,19 @@ EOT
 			cty.UnknownVal(cty.String).RefineNotNull().Mark("sensitive"),
 			0,
 		},
+		{
+			`lower(lower(arg))`,
+			&hcl.EvalContext{
+				Functions: map[string]function.Function{
+					"lower": stdlib.LowerFunc,
+				},
+				Variables: map[string]cty.Value{
+					"arg": cty.UnknownVal(cty.String).Mark("sensitive"),
+				},
+			},
+			cty.UnknownVal(cty.String).Mark("sensitive"),
+			0,
+		},
 	}
 
 	for _, test := range tests {
