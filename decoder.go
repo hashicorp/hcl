@@ -32,8 +32,8 @@ func Unmarshal(bs []byte, v interface{}) error {
 	return DecodeObject(v, root)
 }
 
-// Unmarshal accepts a byte slice as input and writes the
-// data to the value pointed to by v.
+// UnmarshalErrorOnDuplicates accepts a byte slice as input and writes the
+// data to the value pointed to by v but errors on duplicate attribute key.
 func UnmarshalErrorOnDuplicates(bs []byte, v interface{}) error {
 	root, err := parse(bs, true)
 	if err != nil {
@@ -49,13 +49,13 @@ func Decode(out interface{}, in string) error {
 	return decode(out, in, false)
 }
 
-// Decode reads the given input and decodes it into the structure
+// DecodeErrorOnDuplicates reads the given input and decodes it into the structure but errrors on duplicate attribute key
 // given by `out`.
 func DecodeErrorOnDuplicates(out interface{}, in string) error {
 	return decode(out, in, true)
 }
 
-// Decode reads the given input and decodes it into the structure
+// decode reads the given input and decodes it into the structure, takes in a boolean to determine if it should error on duplicate attribute
 // given by `out`.
 func decode(out interface{}, in string, errorOnDuplicateAtributes bool) error {
 	obj, err := parse([]byte(in), errorOnDuplicateAtributes)
