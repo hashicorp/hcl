@@ -55,8 +55,8 @@ func DecodeErrorOnDuplicates(out interface{}, in string) error {
 	return decode(out, in, true)
 }
 
-// decode reads the given input and decodes it into the structure, takes in a boolean to determine if it should error on duplicate attribute
-// given by `out`.
+// decode reads the given input and decodes it into the structure given by `out`.
+// takes in a boolean to determine if it should error on duplicate attribute
 func decode(out interface{}, in string, errorOnDuplicateAtributes bool) error {
 	obj, err := parse([]byte(in), errorOnDuplicateAtributes)
 	if err != nil {
