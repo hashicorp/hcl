@@ -2175,7 +2175,7 @@ EOT
 					}).Mark("sensitive"),
 				},
 			},
-			cty.NumberIntVal(1),
+			cty.NumberIntVal(1).Mark("sensitive"),
 			0,
 		},
 		{ // auto-converts collection types

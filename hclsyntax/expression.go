@@ -788,21 +788,24 @@ func (e *ConditionalExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostic
 		})
 		return cty.UnknownVal(resultType), diags
 	}
+
+	// Now that we have all three values, collect all the marks for the result.
+	// Since it's possible that a condition value could be unknown, and the
+	// consumer needs to deal with any marks from either branch anyway, we must
+	// always combine them for consistent results.
+	condResult, condResultMarks := condResult.Unmark()
+	trueResult, trueResultMarks := trueResult.Unmark()
+	falseResult, falseResultMarks := falseResult.Unmark()
+	var resMarks []cty.ValueMarks
+	resMarks = append(resMarks, condResultMarks, trueResultMarks, falseResultMarks)
+
 	if !condResult.IsKnown() {
-		// we use the unmarked values throughout the unknown branch
-		_, condResultMarks := condResult.Unmark()
-		trueResult, trueResultMarks := trueResult.Unmark()
-		falseResult, falseResultMarks := falseResult.Unmark()
-
-		// use a value to merge marks
-		_, resMarks := cty.DynamicVal.WithMarks(condResultMarks, trueResultMarks, falseResultMarks).Unmark()
-
 		trueRange := trueResult.Range()
 		falseRange := falseResult.Range()
 
 		// if both branches are known to be null, then the result must still be null
 		if trueResult.IsNull() && falseResult.IsNull() {
-			return cty.NullVal(resultType).WithMarks(resMarks), diags
+			return cty.NullVal(resultType).WithMarks(resMarks...), diags
 		}
 
 		// We might be able to offer a refined range for the result based on
@@ -841,7 +844,7 @@ func (e *ConditionalExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostic
 				ref = ref.NumberRangeUpperBound(hi, hiInc)
 			}
 
-			return ref.NewValue().WithMarks(resMarks), diags
+			return ref.NewValue().WithMarks(resMarks...), diags
 		}
 
 		if trueResult.Type().IsCollectionType() && falseResult.Type().IsCollectionType() {
@@ -867,7 +870,7 @@ func (e *ConditionalExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostic
 				}
 
 				ref = ref.CollectionLengthLowerBound(lo).CollectionLengthUpperBound(hi)
-				return ref.NewValue().WithMarks(resMarks), diags
+				return ref.NewValue().WithMarks(resMarks...), diags
 			}
 		}
 
@@ -875,7 +878,7 @@ func (e *ConditionalExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostic
 		if trueRange.DefinitelyNotNull() && falseRange.DefinitelyNotNull() {
 			ret = ret.RefineNotNull()
 		}
-		return ret.WithMarks(resMarks), diags
+		return ret.WithMarks(resMarks...), diags
 	}
 
 	condResult, err := convert.Convert(condResult, cty.Bool)
@@ -892,8 +895,6 @@ func (e *ConditionalExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostic
 		return cty.UnknownVal(resultType), diags
 	}
 
-	// Unmark result before testing for truthiness
-	condResult, _ = condResult.UnmarkDeep()
 	if condResult.True() {
 		diags = append(diags, trueDiags...)
 		if convs[0] != nil {
@@ -916,7 +917,7 @@ func (e *ConditionalExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostic
 				trueResult = cty.UnknownVal(resultType)
 			}
 		}
-		return trueResult, diags
+		return trueResult.WithMarks(resMarks...), diags
 	} else {
 		diags = append(diags, falseDiags...)
 		if convs[1] != nil {
@@ -939,7 +940,7 @@ func (e *ConditionalExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostic
 				falseResult = cty.UnknownVal(resultType)
 			}
 		}
-		return falseResult, diags
+		return falseResult.WithMarks(resMarks...), diags
 	}
 }
 
