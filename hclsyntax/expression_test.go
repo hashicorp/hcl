@@ -1144,6 +1144,49 @@ upper(
 			0,
 		},
 		{
+			`{ for k, v in things: k => v if k != unknown_secret }`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"things": cty.MapVal(map[string]cty.Value{
+						"a": cty.True,
+						"b": cty.False,
+						"c": cty.False,
+					}),
+					"unknown_secret": cty.UnknownVal(cty.String).Mark("sensitive"),
+				},
+			},
+			cty.DynamicVal.Mark("sensitive"),
+			0,
+		},
+		{
+			`[ for v in things: v if v != unknown_secret ]`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"things": cty.TupleVal([]cty.Value{
+						cty.StringVal("a"),
+						cty.StringVal("b"),
+					}),
+					"unknown_secret": cty.UnknownVal(cty.String).Mark("sensitive"),
+				},
+			},
+			cty.DynamicVal.Mark("sensitive"),
+			0,
+		},
+		{
+			`[ for v in things: v if v != secret ]`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"things": cty.TupleVal([]cty.Value{
+						cty.UnknownVal(cty.String).Mark("mark"),
+						cty.StringVal("b"),
+					}),
+					"secret": cty.StringVal("b").Mark("sensitive"),
+				},
+			},
+			cty.DynamicVal.WithMarks(cty.NewValueMarks("mark", "sensitive")),
+			0,
+		},
+		{
 			`[{name: "Steve"}, {name: "Ermintrude"}].*.name`,
 			nil,
 			cty.TupleVal([]cty.Value{

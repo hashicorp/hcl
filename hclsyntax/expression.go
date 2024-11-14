@@ -1430,9 +1430,9 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 		})
 		return cty.DynamicVal, diags
 	}
-	if !collVal.IsKnown() {
-		return cty.DynamicVal, diags
-	}
+
+	// Grab the CondExpr marks when we're returning early with an unknown
+	var condMarks cty.ValueMarks
 
 	// Before we start we'll do an early check to see if any CondExpr we've
 	// been given is of the wrong type. This isn't 100% reliable (it may
@@ -1460,6 +1460,9 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 			})
 			return cty.DynamicVal, diags
 		}
+
+		_, condMarks = result.Unmark()
+
 		_, err := convert.Convert(result, cty.Bool)
 		if err != nil {
 			diags = append(diags, &hcl.Diagnostic{
@@ -1476,6 +1479,10 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 		if condDiags.HasErrors() {
 			return cty.DynamicVal, diags
 		}
+	}
+
+	if !collVal.IsKnown() {
+		return cty.DynamicVal.WithMarks(append(marks, condMarks)...), diags
 	}
 
 	if e.KeyExpr != nil {
@@ -1518,6 +1525,12 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 					known = false
 					continue
 				}
+
+				// Extract and merge marks from the include expression into the
+				// main set of marks
+				_, includeMarks := includeRaw.Unmark()
+				marks = append(marks, includeMarks)
+
 				include, err := convert.Convert(includeRaw, cty.Bool)
 				if err != nil {
 					if known {
@@ -1541,7 +1554,7 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 
 				// Extract and merge marks from the include expression into the
 				// main set of marks
-				includeUnmarked, includeMarks := include.Unmark()
+				includeUnmarked, _ := include.Unmark()
 				marks = append(marks, includeMarks)
 				if includeUnmarked.False() {
 					// Skip this element
@@ -1566,6 +1579,10 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 				known = false
 				continue
 			}
+
+			_, keyMarks := keyRaw.Unmark()
+			marks = append(marks, keyMarks)
+
 			if !keyRaw.IsKnown() {
 				known = false
 				continue
@@ -1588,8 +1605,7 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 				continue
 			}
 
-			key, keyMarks := key.Unmark()
-			marks = append(marks, keyMarks)
+			key, _ = key.Unmark()
 
 			val, valDiags := e.ValExpr.Value(childCtx)
 			diags = append(diags, valDiags...)
@@ -1619,7 +1635,7 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 		}
 
 		if !known {
-			return cty.DynamicVal, diags
+			return cty.DynamicVal.WithMarks(marks...), diags
 		}
 
 		if e.Group {
@@ -1665,6 +1681,12 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 					known = false
 					continue
 				}
+
+				// Extract and merge marks from the include expression into the
+				// main set of marks
+				_, includeMarks := includeRaw.Unmark()
+				marks = append(marks, includeMarks)
+
 				if !includeRaw.IsKnown() {
 					// We will eventually return DynamicVal, but we'll continue
 					// iterating in case there are other diagnostics to gather
@@ -1690,10 +1712,7 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 					continue
 				}
 
-				// Extract and merge marks from the include expression into the
-				// main set of marks
-				includeUnmarked, includeMarks := include.Unmark()
-				marks = append(marks, includeMarks)
+				includeUnmarked, _ := include.Unmark()
 				if includeUnmarked.False() {
 					// Skip this element
 					continue
@@ -1706,7 +1725,7 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 		}
 
 		if !known {
-			return cty.DynamicVal, diags
+			return cty.DynamicVal.WithMarks(marks...), diags
 		}
 
 		return cty.TupleVal(vals).WithMarks(marks...), diags
