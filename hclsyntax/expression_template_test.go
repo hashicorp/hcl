@@ -318,14 +318,14 @@ trim`,
 			cty.UnknownVal(cty.String).Refine().NotNull().StringPrefixFull(strings.Repeat("_", 128)).NewValue(),
 			0,
 		},
-		{ // marks from uninterpolated values are ignored
+		{ // all marks are passed through to ensure result is always consistent
 			`hello%{ if false } ${target}%{ endif }`,
 			&hcl.EvalContext{
 				Variables: map[string]cty.Value{
 					"target": cty.StringVal("world").Mark("sensitive"),
 				},
 			},
-			cty.StringVal("hello"),
+			cty.StringVal("hello").Mark("sensitive"),
 			0,
 		},
 		{ // marks from interpolated values are passed through
