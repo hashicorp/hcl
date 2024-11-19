@@ -1,5 +1,18 @@
 # HCL Changelog
 
+## v2.24.0 (Unreleased)
+
+### Enhancements
+
+* Add support for decoding block and attribute source ranges when using `gohcl`. ([#703](https://github.com/hashicorp/hcl/pull/703))
+
+## v2.23.0 (November 15, 2024)
+
+### Bugs Fixed
+
+* Preserve marks when traversing through unknown values. ([#699](https://github.com/hashicorp/hcl/pull/699))
+* Retain marks through conditional and for expressions. ([#710](https://github.com/hashicorp/hcl/pull/710))
+
 ## v2.22.0 (August 26, 2024)
 
 ### Enhancements
