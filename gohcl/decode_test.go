@@ -10,9 +10,10 @@ import (
 	"testing"
 
 	"github.com/davecgh/go-spew/spew"
+	"github.com/zclconf/go-cty/cty"
+
 	"github.com/hashicorp/hcl/v2"
 	hclJSON "github.com/hashicorp/hcl/v2/json"
-	"github.com/zclconf/go-cty/cty"
 )
 
 func TestDecodeBody(t *testing.T) {
@@ -681,6 +682,76 @@ func TestDecodeBody(t *testing.T) {
 			},
 			0,
 		},
+		{
+			map[string]interface{}{
+				"foo": map[string]interface{}{
+					"foo_type": map[string]interface{}{
+						"foo_name": map[string]interface{}{
+							"value": "foo",
+						},
+					},
+				},
+			},
+			makeInstantiateType(struct {
+				Foo struct {
+					Type           string    `hcl:"type,label"`
+					TypeLabelRange hcl.Range `hcl:"type,label_range"`
+					Name           string    `hcl:"name,label"`
+					NameLabelRange hcl.Range `hcl:"name,label_range"`
+
+					DefRange  hcl.Range `hcl:",def_range"`
+					TypeRange hcl.Range `hcl:",type_range"`
+
+					Attribute           string    `hcl:"value,attr"`
+					AttributeRange      hcl.Range `hcl:"value,attr_range"`
+					AttributeNameRange  hcl.Range `hcl:"value,attr_name_range"`
+					AttributeValueRange hcl.Range `hcl:"value,attr_value_range"`
+				} `hcl:"foo,block"`
+			}{}),
+			deepEquals(struct {
+				Foo struct {
+					Type           string    `hcl:"type,label"`
+					TypeLabelRange hcl.Range `hcl:"type,label_range"`
+					Name           string    `hcl:"name,label"`
+					NameLabelRange hcl.Range `hcl:"name,label_range"`
+
+					DefRange  hcl.Range `hcl:",def_range"`
+					TypeRange hcl.Range `hcl:",type_range"`
+
+					Attribute           string    `hcl:"value,attr"`
+					AttributeRange      hcl.Range `hcl:"value,attr_range"`
+					AttributeNameRange  hcl.Range `hcl:"value,attr_name_range"`
+					AttributeValueRange hcl.Range `hcl:"value,attr_value_range"`
+				} `hcl:"foo,block"`
+			}{
+				Foo: struct {
+					Type           string    `hcl:"type,label"`
+					TypeLabelRange hcl.Range `hcl:"type,label_range"`
+					Name           string    `hcl:"name,label"`
+					NameLabelRange hcl.Range `hcl:"name,label_range"`
+
+					DefRange  hcl.Range `hcl:",def_range"`
+					TypeRange hcl.Range `hcl:",type_range"`
+
+					Attribute           string    `hcl:"value,attr"`
+					AttributeRange      hcl.Range `hcl:"value,attr_range"`
+					AttributeNameRange  hcl.Range `hcl:"value,attr_name_range"`
+					AttributeValueRange hcl.Range `hcl:"value,attr_value_range"`
+				}{
+					Type:                "foo_type",
+					TypeLabelRange:      makeRange("test.json", 1, 9, 19),
+					Name:                "foo_name",
+					NameLabelRange:      makeRange("test.json", 1, 21, 31),
+					DefRange:            makeRange("test.json", 1, 32, 33),
+					TypeRange:           makeRange("test.json", 1, 2, 7),
+					Attribute:           "foo",
+					AttributeRange:      makeRange("test.json", 1, 33, 46),
+					AttributeNameRange:  makeRange("test.json", 1, 33, 40),
+					AttributeValueRange: makeRange("test.json", 1, 41, 46),
+				},
+			}),
+			0,
+		},
 	}
 
 	for i, test := range tests {
@@ -809,5 +880,21 @@ func (e *fixedExpression) Variables() []hcl.Traversal {
 func makeInstantiateType(target interface{}) func() interface{} {
 	return func() interface{} {
 		return reflect.New(reflect.TypeOf(target)).Interface()
+	}
+}
+
+func makeRange(filename string, line int, start, end int) hcl.Range {
+	return hcl.Range{
+		Filename: filename,
+		Start: hcl.Pos{
+			Line:   line,
+			Column: start,
+			Byte:   start - 1,
+		},
+		End: hcl.Pos{
+			Line:   line,
+			Column: end,
+			Byte:   end - 1,
+		},
 	}
 }

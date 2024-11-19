@@ -10,18 +10,18 @@
 // A struct field tag scheme is used, similar to other decoding and
 // unmarshalling libraries. The tags are formatted as in the following example:
 //
-//    ThingType string `hcl:"thing_type,attr"`
+//	ThingType string `hcl:"thing_type,attr"`
 //
 // Within each tag there are two comma-separated tokens. The first is the
 // name of the corresponding construct in configuration, while the second
 // is a keyword giving the kind of construct expected. The following
 // kind keywords are supported:
 //
-//    attr (the default) indicates that the value is to be populated from an attribute
-//    block indicates that the value is to populated from a block
-//    label indicates that the value is to populated from a block label
-//    optional is the same as attr, but the field is optional
-//    remain indicates that the value is to be populated from the remaining body after populating other fields
+//	attr (the default) indicates that the value is to be populated from an attribute
+//	block indicates that the value is to populated from a block
+//	label indicates that the value is to populated from a block label
+//	optional is the same as attr, but the field is optional
+//	remain indicates that the value is to be populated from the remaining body after populating other fields
 //
 // "attr" fields may either be of type *hcl.Expression, in which case the raw
 // expression is assigned, or of any type accepted by gocty, in which case
@@ -40,8 +40,9 @@
 //
 // "label" fields are considered only in a struct used as the type of a field
 // marked as "block", and are used sequentially to capture the labels of
-// the blocks being decoded. In this case, the name token is used only as
-// an identifier for the label in diagnostic messages.
+// the blocks being decoded. In this case, the name token is used (a) as
+// an identifier for the label in diagnostic messages and (b) to match the
+// which with the equivalent "label_range" field (if it exists).
 //
 // "optional" fields behave like "attr" fields, but they are optional
 // and will not give parsing errors if they are missing.
@@ -51,6 +52,35 @@
 // placed into this field for delayed processing. If no "remain" field is
 // present then any attributes or blocks not matched by another valid tag
 // will cause an error diagnostic.
+//
+// "def_range" can be placed on a single field that must be of type hcl.Range.
+// This field is only considered in a struct used as the type of a field marked
+// as "block", and is used to capture the range of the block's definition.
+//
+// "type_range" can be placed on a single field that must be of type hcl.Range.
+// This field is only considered in a struct used as the type of a field marked
+// as "block", and is used to capture the range of the block's type label.
+//
+// "label_range" can be placed on multiple fields that must be of type
+// hcl.Range. This field is only considered in a struct used as the type of a
+// field marked as "block", and is used to capture the range of the block's
+// labels. The name token is used to match with the equivalent "label" field
+// that this range will specify.
+//
+// "attr_range" can be placed on multiple fields that must be of type hcl.Range.
+// This field will be assigned the complete hcl.Range for the attribute with
+// the corresponding name. The name token is used to match with the name of the
+// attribute that this range will specify.
+//
+// "attr_name_range" can be placed on multiple fields that must be of type
+// hcl.Range. This field will be assigned the hcl.Range for the name of the
+// attribute with the corresponding name. The name token is used to match with
+// the name of the attribute that this range will specify.
+//
+// "attr_value_range" can be placed on multiple fields that must be of type
+// hcl.Range. This field will be assigned the hcl.Range for the value of the
+// attribute with the corresponding name. The name token is used to match with
+// the name of the attribute that this range will specify.
 //
 // Only a subset of this tagging/typing vocabulary is supported for the
 // "Encode" family of functions. See the EncodeIntoBody docs for full details
