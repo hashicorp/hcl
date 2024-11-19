@@ -11,7 +11,7 @@
 ### Bugs Fixed
 
 * Preserve marks when traversing through unknown values. ([#699](https://github.com/hashicorp/hcl/pull/699))
-* Retiain marks through conditionl and for expressions. ([#710](https://github.com/hashicorp/hcl/pull/710))
+* Retain marks through conditional and for expressions. ([#710](https://github.com/hashicorp/hcl/pull/710))
 
 ## v2.22.0 (August 26, 2024)
 
