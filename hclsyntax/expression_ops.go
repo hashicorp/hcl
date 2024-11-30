@@ -16,16 +16,73 @@ import (
 type Operation struct {
 	Impl function.Function
 	Type cty.Type
+
+	// ShortCircuit is an optional callback for binary operations which, if set,
+	// will be called with the result of evaluating the LHS and RHS expressions
+	// and their individual diagnostics. The LHS and RHS values are guaranteed
+	// to be unmarked and of the correct type.
+	//
+	// ShortCircuit may return cty.NilVal to allow evaluation to proceed as
+	// normal, or it may return a non-nil value with diagnostics to return
+	// before the main Impl is called. The returned diagnostics should match
+	// the side of the Operation which was taken.
+	ShortCircuit func(lhs, rhs cty.Value, lhsDiags, rhsDiags hcl.Diagnostics) (cty.Value, hcl.Diagnostics)
 }
 
 var (
 	OpLogicalOr = &Operation{
 		Impl: stdlib.OrFunc,
 		Type: cty.Bool,
+
+		ShortCircuit: func(lhs, rhs cty.Value, lhsDiags, rhsDiags hcl.Diagnostics) (cty.Value, hcl.Diagnostics) {
+			switch {
+			// if both are unknown, we don't short circuit anything
+			case !lhs.IsKnown() && !rhs.IsKnown():
+				return cty.NilVal, nil
+
+			// for ||, a single true is the controlling condition
+			case lhs.IsKnown() && lhs.True():
+				return cty.True, lhsDiags
+			case rhs.IsKnown() && rhs.True():
+				return cty.True, rhsDiags
+
+			// if the opposing side is false we can't sort-circuit based on
+			// boolean logic, so an unknown becomes the controlling condition
+			case !lhs.IsKnown() && rhs.False():
+				return cty.UnknownVal(cty.Bool).RefineNotNull(), lhsDiags
+			case !rhs.IsKnown() && lhs.False():
+				return cty.UnknownVal(cty.Bool).RefineNotNull(), rhsDiags
+			}
+
+			return cty.NilVal, nil
+		},
 	}
 	OpLogicalAnd = &Operation{
 		Impl: stdlib.AndFunc,
 		Type: cty.Bool,
+
+		ShortCircuit: func(lhs, rhs cty.Value, lhsDiags, rhsDiags hcl.Diagnostics) (cty.Value, hcl.Diagnostics) {
+			switch {
+			// if both are unknown, we don't short circuit anything
+			case !lhs.IsKnown() && !rhs.IsKnown():
+				return cty.NilVal, nil
+
+			// For &&, a single false is the controlling condition
+			case lhs.IsKnown() && lhs.False():
+				return cty.False, lhsDiags
+			case rhs.IsKnown() && rhs.False():
+				return cty.False, rhsDiags
+
+			// if the opposing side is true we can't sort-circuit based on
+			// boolean logic, so an unknown becomes the controlling condition
+			case !lhs.IsKnown() && rhs.True():
+				return cty.UnknownVal(cty.Bool).RefineNotNull(), lhsDiags
+			case !rhs.IsKnown() && lhs.True():
+				return cty.UnknownVal(cty.Bool).RefineNotNull(), rhsDiags
+			}
+
+			return cty.NilVal, nil
+		},
 	}
 	OpLogicalNot = &Operation{
 		Impl: stdlib.NotFunc,
@@ -145,10 +202,6 @@ func (e *BinaryOpExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) 
 	var diags hcl.Diagnostics
 
 	givenLHSVal, lhsDiags := e.LHS.Value(ctx)
-	givenRHSVal, rhsDiags := e.RHS.Value(ctx)
-	diags = append(diags, lhsDiags...)
-	diags = append(diags, rhsDiags...)
-
 	lhsVal, err := convert.Convert(givenLHSVal, lhsParam.Type)
 	if err != nil {
 		diags = append(diags, &hcl.Diagnostic{
@@ -161,6 +214,8 @@ func (e *BinaryOpExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) 
 			EvalContext: ctx,
 		})
 	}
+
+	givenRHSVal, rhsDiags := e.RHS.Value(ctx)
 	rhsVal, err := convert.Convert(givenRHSVal, rhsParam.Type)
 	if err != nil {
 		diags = append(diags, &hcl.Diagnostic{
@@ -174,10 +229,37 @@ func (e *BinaryOpExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) 
 		})
 	}
 
+	// diags so far only contains conversion errors, which should cover
+	// incorrect parameter types.
 	if diags.HasErrors() {
-		// Don't actually try the call if we have errors already, since the
-		// this will probably just produce a confusing duplicative diagnostic.
+		// Add the rest of the diagnostic in case that helps the user, but keep
+		// them separate as we continue for short-circuit handling.
+		diags = append(diags, lhsDiags...)
+		diags = append(diags, rhsDiags...)
 		return cty.UnknownVal(e.Op.Type), diags
+	}
+
+	lhsVal, lhsMarks := lhsVal.Unmark()
+	rhsVal, rhsMarks := rhsVal.Unmark()
+
+	// If we short-circuited above and still passed the type-check of RHS then
+	// we'll halt here and return the short-circuit result rather than actually
+	// executing the operation.
+	if e.Op.ShortCircuit != nil {
+		forceResult, diags := e.Op.ShortCircuit(lhsVal, rhsVal, lhsDiags, rhsDiags)
+		if forceResult != cty.NilVal {
+			// It would be technically more correct to insert rhs diagnostics if
+			// forceResult is not known since we didn't really short-circuit. That
+			// would however not match the behavior of conditional expressions which
+			// do drop all diagnostics from the unevaluated expressions
+			return forceResult.WithMarks(lhsMarks, rhsMarks), diags
+		}
+	}
+
+	if diags.HasErrors() {
+		// Don't actually try the call if we have errors, since the this will
+		// probably just produce confusing duplicate diagnostics.
+		return cty.UnknownVal(e.Op.Type).WithMarks(lhsMarks, rhsMarks), diags
 	}
 
 	args := []cty.Value{lhsVal, rhsVal}
@@ -195,7 +277,7 @@ func (e *BinaryOpExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) 
 		return cty.UnknownVal(e.Op.Type), diags
 	}
 
-	return result, diags
+	return result.WithMarks(lhsMarks, rhsMarks), diags
 }
 
 func (e *BinaryOpExpr) Range() hcl.Range {

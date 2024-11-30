@@ -1914,6 +1914,112 @@ EOT
 			0,
 		},
 		{
+			// Logical AND operator short-circuit behavior
+			`nullobj != null && nullobj.is_thingy`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"nullobj": cty.NullVal(cty.Object(map[string]cty.Type{
+						"is_thingy": cty.Bool,
+					})),
+				},
+			},
+			cty.False,
+			0, // nullobj != null prevents evaluating nullobj.is_thingy
+		},
+		{
+			// Logical AND short-circuit handling of unknown values
+			// If the first operand is an unknown bool then we can't know if
+			// we will short-circuit or not, and so we must assume we will
+			// and wait until the value becomes known before fully evaluating RHS.
+			`unknown < 4 && list[zero]`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unknown": cty.UnknownVal(cty.Number),
+					"zero":    cty.Zero,
+					"list":    cty.ListValEmpty(cty.Bool),
+				},
+			},
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
+			0,
+		},
+		{
+			// Logical OR operator short-circuit behavior
+			`nullobj == null || nullobj.is_thingy`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"nullobj": cty.NullVal(cty.Object(map[string]cty.Type{
+						"is_thingy": cty.Bool,
+					})),
+				},
+			},
+			cty.True,
+			0, // nullobj == null prevents evaluating nullobj.is_thingy
+		},
+		{
+			// Logical OR short-circuit handling of unknown values
+			// If the first operand is an unknown bool then we can't know if
+			// we will short-circuit or not, and so we must assume we will
+			// and wait until the value becomes known before fully evaluating RHS.
+			`unknown > 4 || list[zero]`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unknown": cty.UnknownVal(cty.Number),
+					"zero":    cty.Zero,
+					"list":    cty.ListValEmpty(cty.Bool),
+				},
+			},
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
+			0,
+		},
+		{
+			// short circuit calls must still retain marks
+			`lhsTrue || rhsUnknown`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"lhsTrue":    cty.True.Mark("a"),
+					"rhsUnknown": cty.UnknownVal(cty.Bool).Mark("b"),
+				},
+			},
+			cty.True.Mark("a").Mark("b"),
+			0,
+		},
+		{
+			// short circuit calls must still retain marks
+			`lhsUnknown || rhsTrue`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"rhsTrue":    cty.True.Mark("a"),
+					"lhsUnknown": cty.UnknownVal(cty.Bool).Mark("b"),
+				},
+			},
+			cty.True.Mark("a").Mark("b"),
+			0,
+		},
+		{
+			// short circuit calls must still retain marks
+			`lhsUnknown && rhsFalse`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"rhsFalse":   cty.False.Mark("a"),
+					"lhsUnknown": cty.UnknownVal(cty.Bool).Mark("b"),
+				},
+			},
+			cty.False.Mark("a").Mark("b"),
+			0,
+		},
+		{
+			// short circuit calls must still retain marks
+			`lhsFalse && rhsUnknown`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"lhsFalse":   cty.False.Mark("a"),
+					"rhsUnknown": cty.UnknownVal(cty.Bool).Mark("b"),
+				},
+			},
+			cty.False.Mark("a").Mark("b"),
+			0,
+		},
+		{
 			`true ? var : null`,
 			&hcl.EvalContext{
 				Variables: map[string]cty.Value{
@@ -2272,6 +2378,36 @@ EOT
 			cty.UnknownVal(cty.String).RefineNotNull().Mark("sensitive"),
 			0,
 		},
+		{
+			// foo does not exist, but we need to catch the diagnostics when
+			// coming out of a ShortCircuit call
+			"foo(value) && true",
+			&hcl.EvalContext{},
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
+			1,
+		},
+		{
+			// foo does not exist, but the short-circuit wins
+			"foo(value) && false",
+			&hcl.EvalContext{},
+			cty.False,
+			0,
+		},
+		{
+			// foo does not exist, but we need to catch the diagnostics when
+			// coming out of a ShortCircuit call
+			"foo(value) || false",
+			&hcl.EvalContext{},
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
+			1,
+		},
+		{
+			// foo does not exist, but the short-circuit wins
+			"foo(value) || true",
+			&hcl.EvalContext{},
+			cty.True,
+			0,
+		},
 	}
 
 	for _, test := range tests {
@@ -2398,6 +2534,87 @@ func TestExpressionErrorMessages(t *testing.T) {
 			// for situations that are too complex for any of our rules to
 			// describe coherently.
 			"The true and false result expressions must have consistent types. At least one deeply-nested attribute or element is not compatible across both the 'true' and the 'false' value.",
+		},
+
+		// Error messages describing situations where the logical operator
+		// short-circuit behavior still found a type error on the RHS that
+		// we therefore still report, because the LHS only guards against
+		// value-related problems in the RHS.
+		{
+			// It's not valid to access an attribute on a non-object-typed
+			// value even if we've proven it isn't null.
+			"notobj != null && notobj.foo",
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"notobj": cty.True,
+				},
+			},
+			"Unsupported attribute",
+			"Can't access attributes on a primitive-typed value (bool).",
+		},
+		{
+			// It's not valid to access an attribute on a non-object-typed
+			// value even if we've proven it isn't null.
+			"notobj == null || notobj.foo",
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"notobj": cty.True,
+				},
+			},
+			"Unsupported attribute",
+			"Can't access attributes on a primitive-typed value (bool).",
+		},
+		{
+			// It's not valid to access an index on an unindexable type
+			// even if we've proven it isn't null.
+			"notlist != null && notlist[0]",
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"notlist": cty.True,
+				},
+			},
+			"Invalid index",
+			"This value does not have any indices.",
+		},
+		{
+			// Short-circuit can't avoid an error accessing a variable that
+			// doesn't exist at all, so we can still report typos.
+			"value != null && valeu",
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"value": cty.True,
+				},
+			},
+			"Unknown variable",
+			`There is no variable named "valeu". Did you mean "value"?`,
+		},
+		{
+			// Short-circuit must still catch type errors on the opposite side
+			"unknown && \"value\"",
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unknown": cty.UnknownVal(cty.Bool),
+				},
+			},
+			"Invalid operand",
+			`Unsuitable value for right operand: a bool is required.`,
+		},
+		{
+			// Short-circuiting must still catch type errors on the opposite side
+			"value && \"value\"",
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"value": cty.False,
+				},
+			},
+			"Invalid operand",
+			`Unsuitable value for right operand: a bool is required.`,
+		},
+		{
+			"foo(value) && true",
+			&hcl.EvalContext{},
+			"Function calls not allowed",
+			`Functions may not be called here.`,
 		},
 	}
 
@@ -2729,6 +2946,186 @@ func TestParseExpression_incompleteFunctionCall(t *testing.T) {
 			expr, _ := ParseExpression([]byte(tc.cfg), "test.hcl", hcl.InitialPos)
 			if diff := cmp.Diff(tc.expectedRange, expr.Range()); diff != "" {
 				t.Fatalf("range mismatch: %s", diff)
+			}
+		})
+	}
+}
+
+func TestAllBoolExpressions(t *testing.T) {
+	inputs := map[string]cty.Value{
+		// truth table for all boolean expressions
+		"true && true":       cty.True,
+		"true || true":       cty.True,
+		"true && false":      cty.False,
+		"true || false":      cty.True,
+		"true && unknown":    cty.DynamicVal,
+		"true || unknown":    cty.True,
+		"false && true":      cty.False,
+		"false || true":      cty.True,
+		"false && false":     cty.False,
+		"false || false":     cty.False,
+		"false && unknown":   cty.False,
+		"false || unknown":   cty.DynamicVal,
+		"unknown && true":    cty.DynamicVal,
+		"unknown || true":    cty.True,
+		"unknown && false":   cty.False,
+		"unknown || false":   cty.DynamicVal,
+		"unknown && unknown": cty.DynamicVal,
+		"unknown || unknown": cty.DynamicVal,
+
+		// Truth table for all possible combinations of 3 part boolean
+		// expressions. Also added equivalent parenthesized versions for when
+		// the operator precedense affects the result.
+		"true && true && true":          cty.True,
+		"true || true && true":          cty.True,
+		"true || true || true":          cty.True,
+		"true && true || true":          cty.True,
+		"true && true && false":         cty.False,
+		"true || true && false":         cty.True,
+		"true || true || false":         cty.True,
+		"true && true || false":         cty.True,
+		"true && true && unknown":       cty.DynamicVal,
+		"true || true && unknown":       cty.True,
+		"true || true || unknown":       cty.True,
+		"true && true || unknown":       cty.True,
+		"true && false && true":         cty.False,
+		"true || false && true":         cty.True,
+		"true || false || true":         cty.True,
+		"true && false || true":         cty.True,
+		"true && false && false":        cty.False,
+		"true || false && false":        cty.True,
+		"true || false || false":        cty.True,
+		"true && false || false":        cty.False,
+		"true && false && unknown":      cty.False,
+		"true || false && unknown":      cty.True,
+		"true || false || unknown":      cty.True,
+		"true && false || unknown":      cty.DynamicVal,
+		"true && unknown && true":       cty.DynamicVal,
+		"true || unknown && true":       cty.True,
+		"true || unknown || true":       cty.True,
+		"true && unknown || true":       cty.True,
+		"true && unknown && false":      cty.False,
+		"true || unknown && false":      cty.True,
+		"true || unknown || false":      cty.True,
+		"true && unknown || false":      cty.DynamicVal,
+		"true && unknown && unknown":    cty.DynamicVal,
+		"true || unknown && unknown":    cty.True,
+		"true || unknown || unknown":    cty.True,
+		"true && unknown || unknown":    cty.DynamicVal,
+		"false && true && true":         cty.False,
+		"false || true && true":         cty.True,
+		"false || true || true":         cty.True,
+		"false && true || true":         cty.True,
+		"(false && true) || true":       cty.True,
+		"false && true && false":        cty.False,
+		"false || true && false":        cty.False,
+		"false || true || false":        cty.True,
+		"false && true || false":        cty.False,
+		"false && true && unknown":      cty.False,
+		"false || true && unknown":      cty.DynamicVal,
+		"false || true || unknown":      cty.True,
+		"false && true || unknown":      cty.DynamicVal,
+		"(false && true) || unknown":    cty.DynamicVal,
+		"false && false && true":        cty.False,
+		"false || false && true":        cty.False,
+		"false || false || true":        cty.True,
+		"false && false || true":        cty.True,
+		"false && false && false":       cty.False,
+		"false || false && false":       cty.False,
+		"false || false || false":       cty.False,
+		"false && false || false":       cty.False,
+		"false && false && unknown":     cty.False,
+		"false || false && unknown":     cty.False,
+		"false || false || unknown":     cty.DynamicVal,
+		"false && false || unknown":     cty.DynamicVal,
+		"(false && false) || unknown":   cty.DynamicVal,
+		"false && unknown && true":      cty.False,
+		"false || unknown && true":      cty.DynamicVal,
+		"false || unknown || true":      cty.True,
+		"false && unknown || true":      cty.True,
+		"(false && unknown) || true":    cty.True,
+		"false && unknown && false":     cty.False,
+		"false || unknown && false":     cty.False,
+		"false || unknown || false":     cty.DynamicVal,
+		"false && unknown || false":     cty.False,
+		"false && unknown && unknown":   cty.False,
+		"false || unknown && unknown":   cty.DynamicVal,
+		"false || unknown || unknown":   cty.DynamicVal,
+		"false && unknown || unknown":   cty.DynamicVal,
+		"(false && unknown) || unknown": cty.DynamicVal,
+		"unknown && true && true":       cty.DynamicVal,
+		"unknown || true && true":       cty.True,
+		"unknown || true || true":       cty.True,
+		"unknown && true || true":       cty.True,
+		"unknown && true && false":      cty.False,
+		"unknown || true && false":      cty.DynamicVal,
+		"unknown || (true && false)":    cty.DynamicVal,
+		"unknown || true || false":      cty.True,
+		"unknown && true || false":      cty.DynamicVal,
+		"unknown && true && unknown":    cty.DynamicVal,
+		"unknown || true && unknown":    cty.DynamicVal,
+		"unknown || true || unknown":    cty.True,
+		"unknown && true || unknown":    cty.DynamicVal,
+		"unknown && false && true":      cty.False,
+		"unknown || false && true":      cty.DynamicVal,
+		"unknown || false || true":      cty.True,
+		"unknown && false || true":      cty.True,
+		"(unknown && false) || true":    cty.True,
+		"unknown && false && false":     cty.False,
+		"unknown || false && false":     cty.DynamicVal,
+		"unknown || false || false":     cty.DynamicVal,
+		"unknown && false || false":     cty.False,
+		"unknown && false && unknown":   cty.False,
+		"unknown || false && unknown":   cty.DynamicVal,
+		"unknown || false || unknown":   cty.DynamicVal,
+		"unknown && false || unknown":   cty.DynamicVal,
+		"unknown && unknown && true":    cty.DynamicVal,
+		"unknown || unknown && true":    cty.DynamicVal,
+		"unknown || unknown || true":    cty.True,
+		"unknown && unknown || true":    cty.True,
+		"unknown && unknown && false":   cty.False,
+		"unknown || unknown && false":   cty.DynamicVal,
+		"unknown || unknown || false":   cty.DynamicVal,
+		"unknown && unknown || false":   cty.DynamicVal,
+		"unknown && unknown && unknown": cty.DynamicVal,
+		"unknown || unknown && unknown": cty.DynamicVal,
+		"unknown || unknown || unknown": cty.DynamicVal,
+		"unknown && unknown || unknown": cty.DynamicVal,
+	}
+
+	for input, want := range inputs {
+		t.Run(input, func(t *testing.T) {
+			if !want.IsKnown() {
+				want = cty.UnknownVal(cty.Bool).RefineNotNull()
+			}
+			ctx := &hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"unknown": cty.UnknownVal(cty.DynamicPseudoType),
+				},
+			}
+			expr, diags := ParseExpression([]byte(input), "", hcl.Pos{Line: 1, Column: 1, Byte: 0})
+			if diags.HasErrors() {
+				t.Fatal(diags.Error())
+			}
+			got, diags := expr.Value(ctx)
+			if diags.HasErrors() {
+				t.Fatal(diags.Error())
+			}
+
+			if got.IsKnown() != want.IsKnown() {
+				t.Fatalf("%q resulted in %#v, wanted %#v\n", input, got, want)
+			}
+			if !got.IsKnown() {
+				// this validates that the uknown refinements are correct too
+				if !got.RawEquals(want) {
+					t.Fatalf("wrong unknown, got:%#v, want:%#v\n", got, want)
+				}
+				// covered in known comparison
+				return
+			}
+
+			if got.Equals(want).False() {
+				t.Fatalf("%q resulted in %#v, wanted %#v\n", input, got, want)
 			}
 		})
 	}
