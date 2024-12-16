@@ -242,9 +242,6 @@ func (e *BinaryOpExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) 
 	lhsVal, lhsMarks := lhsVal.Unmark()
 	rhsVal, rhsMarks := rhsVal.Unmark()
 
-	// If we short-circuited above and still passed the type-check of RHS then
-	// we'll halt here and return the short-circuit result rather than actually
-	// executing the operation.
 	if e.Op.ShortCircuit != nil {
 		forceResult, diags := e.Op.ShortCircuit(lhsVal, rhsVal, lhsDiags, rhsDiags)
 		if forceResult != cty.NilVal {
@@ -256,6 +253,8 @@ func (e *BinaryOpExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) 
 		}
 	}
 
+	diags = append(diags, lhsDiags...)
+	diags = append(diags, rhsDiags...)
 	if diags.HasErrors() {
 		// Don't actually try the call if we have errors, since the this will
 		// probably just produce confusing duplicate diagnostics.
