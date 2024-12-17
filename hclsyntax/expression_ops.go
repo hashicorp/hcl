@@ -38,6 +38,13 @@ var (
 			switch {
 			// if both are unknown, we don't short circuit anything
 			case !lhs.IsKnown() && !rhs.IsKnown():
+				// short-circuit left-to-right when encountering a good unknown
+				// value and both are unknown.
+				if !lhsDiags.HasErrors() {
+					return cty.UnknownVal(cty.Bool).RefineNotNull(), lhsDiags
+				}
+				// If the LHS has an error, the RHS might too. Don't
+				// short-circuit so both diags get collected.
 				return cty.NilVal, nil
 
 			// for ||, a single true is the controlling condition
@@ -46,7 +53,7 @@ var (
 			case rhs.IsKnown() && rhs.True():
 				return cty.True, rhsDiags
 
-			// if the opposing side is false we can't sort-circuit based on
+			// if the opposing side is false we can't short-circuit based on
 			// boolean logic, so an unknown becomes the controlling condition
 			case !lhs.IsKnown() && rhs.False():
 				return cty.UnknownVal(cty.Bool).RefineNotNull(), lhsDiags
@@ -62,9 +69,16 @@ var (
 		Type: cty.Bool,
 
 		ShortCircuit: func(lhs, rhs cty.Value, lhsDiags, rhsDiags hcl.Diagnostics) (cty.Value, hcl.Diagnostics) {
+
 			switch {
-			// if both are unknown, we don't short circuit anything
 			case !lhs.IsKnown() && !rhs.IsKnown():
+				// short-circuit left-to-right when encountering a good unknown
+				// value and both are unknown.
+				if !lhsDiags.HasErrors() {
+					return cty.UnknownVal(cty.Bool).RefineNotNull(), lhsDiags
+				}
+				// If the LHS has an error, the RHS might too. Don't
+				// short-circuit so both diags get collected.
 				return cty.NilVal, nil
 
 			// For &&, a single false is the controlling condition
@@ -73,14 +87,13 @@ var (
 			case rhs.IsKnown() && rhs.False():
 				return cty.False, rhsDiags
 
-			// if the opposing side is true we can't sort-circuit based on
+			// if the opposing side is true we can't short-circuit based on
 			// boolean logic, so an unknown becomes the controlling condition
 			case !lhs.IsKnown() && rhs.True():
 				return cty.UnknownVal(cty.Bool).RefineNotNull(), lhsDiags
 			case !rhs.IsKnown() && lhs.True():
 				return cty.UnknownVal(cty.Bool).RefineNotNull(), rhsDiags
 			}
-
 			return cty.NilVal, nil
 		},
 	}
