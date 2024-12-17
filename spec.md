@@ -54,8 +54,8 @@ A _body schema_ is a description of what is expected within a particular body,
 which can then be used to extract the _body content_, which then provides
 access to the specific attributes and blocks requested.
 
-A _body schema_ consists of a list of _attribute schemata_ and
-_block header schemata_:
+A _body schema_ consists of a list of _attribute schema_ and
+_block header schema_:
 
 - An _attribute schema_ provides the name of an attribute and whether its
   presence is required.
@@ -102,7 +102,7 @@ pairs.
 
 The alternative _dynamic attributes_ processing mode allows for this more
 ad-hoc approach. Processing in this mode behaves as if a schema had been
-constructed without any _block header schemata_ and with an attribute
+constructed without any _block header schema_ and with an attribute
 schema for each distinct key provided within the physical representation
 of the body.
 
@@ -147,7 +147,7 @@ to be processed by different parts of the calling application.
 
 Processing a body in two steps — first partial processing of a source body,
 then exhaustive processing of the returned body — is equivalent to single-step
-processing with a schema that is the union of the schemata used
+processing with a schema that is the union of the schema used
 across the two steps.
 
 ## Expressions
