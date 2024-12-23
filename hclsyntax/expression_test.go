@@ -2616,6 +2616,16 @@ func TestExpressionErrorMessages(t *testing.T) {
 			"Function calls not allowed",
 			`Functions may not be called here.`,
 		},
+		{
+			`map != null || map["key"] == "value"`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"map": cty.NullVal(cty.Map(cty.String)),
+				},
+			},
+			"Attempt to index null value",
+			`This value is null, so it does not have any indices.`,
+		},
 	}
 
 	for _, test := range tests {
