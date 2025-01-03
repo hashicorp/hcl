@@ -1938,6 +1938,22 @@ func (e *SplatExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 			diags = append(diags, tyDiags...)
 			return cty.ListValEmpty(ty.ElementType()).WithMarks(marks), diags
 		}
+		// Unfortunately it's possible for a nested splat on scalar values to
+		// generate non-homogenously-typed vals, and we discovered this bad
+		// interaction after the two conflicting behaviors were both
+		// well-established so it isn't clear how to change them without
+		// breaking existing code. Therefore we just make that an error for
+		// now, to avoid crashing trying to constuct an impossible list.
+		if !cty.CanListVal(vals) {
+			diags = append(diags, &hcl.Diagnostic{
+				Severity: hcl.DiagError,
+				Summary:  "Invalid nested splat expressions",
+				Detail:   "The second level of splat expression produced elements of different types, so it isn't possible to construct a valid list to represent the top-level result.\n\nConsider using a for expression instead, to produce a tuple-typed result which can therefore have non-homogenous element types.",
+				Subject:  e.Each.Range().Ptr(),
+				Context:  e.Range().Ptr(), // encourage a diagnostic renderer to also include the "source" part of the expression in its code snippet
+			})
+			return cty.DynamicVal, diags
+		}
 		return cty.ListVal(vals).WithMarks(marks), diags
 	default:
 		return cty.TupleVal(vals).WithMarks(marks), diags
