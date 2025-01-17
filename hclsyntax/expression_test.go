@@ -1388,6 +1388,54 @@ upper(
 			1, // splat cannot be applied to null sequence
 		},
 		{
+			`listofobj[*].scalar[*]`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"listofobj": cty.ListVal([]cty.Value{
+						cty.ObjectVal(map[string]cty.Value{
+							"scalar": cty.StringVal("foo"),
+						}),
+						cty.ObjectVal(map[string]cty.Value{
+							"scalar": cty.StringVal("bar"),
+						}),
+					}),
+				},
+			},
+			cty.ListVal([]cty.Value{
+				// The second-level splat promotes the scalars to single-element tuples.
+				cty.TupleVal([]cty.Value{cty.StringVal("foo")}),
+				cty.TupleVal([]cty.Value{cty.StringVal("bar")}),
+			}),
+			0,
+		},
+		{
+			// This is a particularly tricky case where two splat rules interact in
+			// a sub-optimal way:
+			// 1. The top-level splat is applied to a list and so it wants to return a list.
+			// 2. The nested splat is applied to a scalar, and so it wants to return different tuple types depending on the nullness.
+			// Rule 2 breaks rule 1, because we can't make a list with elements of different types.
+			// For now we're treating this as an error because we didn't learn of this bad
+			// interaction until long after both of these rules were in separate wide use,
+			// and so it isn't clear how to make this work without potentially breaking other
+			// behavior. Perhaps this can become valid in future if we find a viable way to
+			// do it.
+			`listofobj[*].scalar[*]`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"listofobj": cty.ListVal([]cty.Value{
+						cty.ObjectVal(map[string]cty.Value{
+							"scalar": cty.NullVal(cty.String),
+						}),
+						cty.ObjectVal(map[string]cty.Value{
+							"scalar": cty.StringVal("bar"),
+						}),
+					}),
+				},
+			},
+			cty.DynamicVal,
+			1, // nested splat produces non-homogenously-typed results in this case, so cannot produce a valid list
+		},
+		{
 			`["hello", "goodbye"].*`,
 			nil,
 			cty.TupleVal([]cty.Value{
