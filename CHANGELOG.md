@@ -5,6 +5,7 @@
 ### Enhancements
 
 * Add support for decoding block and attribute source ranges when using `gohcl`. ([#703](https://github.com/hashicorp/hcl/pull/703))
+* hclsyntax: Detect and reject invalid nested splat result. ([#724](https://github.com/hashicorp/hcl/pull/724))
 
 ## v2.23.0 (November 15, 2024)
 
