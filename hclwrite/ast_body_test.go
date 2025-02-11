@@ -1149,6 +1149,170 @@ func TestBodyRemoveAttribute(t *testing.T) {
 	}
 }
 
+func TestBodyRenameAttribute(t *testing.T) {
+	tests := []struct {
+		src     string
+		oldName string
+		newName string
+		want    Tokens
+	}{
+		{
+			"",
+			"a",
+			"b",
+			Tokens{
+				{
+					Type:         hclsyntax.TokenEOF,
+					Bytes:        []byte{},
+					SpacesBefore: 0,
+				},
+			},
+		},
+		{
+			"a = false\n",
+			"a",
+			"b",
+			Tokens{
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte{'b'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte{'='},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte("false"),
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenNewline,
+					Bytes:        []byte{'\n'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEOF,
+					Bytes:        []byte{},
+					SpacesBefore: 0,
+				},
+			},
+		},
+		{
+			"a = false\n",
+			"b",
+			"c",
+			Tokens{
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte{'a'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte{'='},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte("false"),
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenNewline,
+					Bytes:        []byte{'\n'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEOF,
+					Bytes:        []byte{},
+					SpacesBefore: 0,
+				},
+			},
+		},
+		{
+			"a = false\nb = false\n",
+			"a",
+			"b",
+			Tokens{
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte{'a'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte{'='},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte("false"),
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenNewline,
+					Bytes:        []byte{'\n'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte{'b'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte{'='},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte("false"),
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenNewline,
+					Bytes:        []byte{'\n'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEOF,
+					Bytes:        []byte{},
+					SpacesBefore: 0,
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%s->%s in %s", test.oldName, test.newName, test.src), func(t *testing.T) {
+			f, diags := ParseConfig([]byte(test.src), "", hcl.Pos{Line: 1, Column: 1})
+			if len(diags) != 0 {
+				for _, diag := range diags {
+					t.Logf("- %s", diag.Error())
+				}
+				t.Fatalf("unexpected diagnostics")
+			}
+			oldExists := nil != f.Body().GetAttribute(test.oldName)
+			newExists := nil != f.Body().GetAttribute(test.newName)
+			shouldSucceed := (oldExists && !newExists)
+			success := f.Body().RenameAttribute(test.oldName, test.newName)
+
+			got := f.BuildTokens(nil)
+			format(got)
+			if !reflect.DeepEqual(got, test.want) {
+				diff := cmp.Diff(test.want, got)
+				t.Errorf("wrong result\ngot:  %s\nwant: %s\ndiff:\n%s", spew.Sdump(got), spew.Sdump(test.want), diff)
+			}
+			if success != shouldSucceed {
+				t.Errorf("RenameAttribute returned %v when it should have returned %v ", success, shouldSucceed)
+			}
+		})
+	}
+}
+
 func TestBodyAppendBlock(t *testing.T) {
 	tests := []struct {
 		src       string
