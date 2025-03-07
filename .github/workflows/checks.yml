@@ -2,9 +2,8 @@ name: Checks
 
 on:
   push:
-    branches: [coverage-test]
-  #workflow_dispatch:
-  #pull_request:
+  workflow_dispatch:
+  pull_request:
 
 jobs:
   unit_tests:
