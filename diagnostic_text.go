@@ -259,6 +259,8 @@ func (w *diagnosticTextWriter) valueStr(val cty.Value) string {
 		// Should never happen here because we should filter before we get
 		// in here, but we'll do something reasonable rather than panic.
 		return "(not yet known)"
+	case val.IsMarked():
+		return "(marked value)"
 	case ty == cty.Bool:
 		if val.True() {
 			return "true"

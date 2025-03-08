@@ -6,6 +6,7 @@ package hcl
 import (
 	"bytes"
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/zclconf/go-cty/cty"
@@ -235,4 +236,80 @@ type diagnosticTestExpr struct {
 
 func (e *diagnosticTestExpr) Variables() []Traversal {
 	return e.vars
+}
+
+func TestValuestr(t *testing.T) {
+	var i = 0
+
+	tests := []struct {
+		Input cty.Value
+		Want  string
+	}{
+		{
+			Input: cty.NullVal(cty.String),
+			Want:  "null",
+		},
+		{
+			Input: cty.UnknownVal(cty.String),
+			Want:  "(not yet known)",
+		},
+		{
+			Input: cty.StringVal("marked").Mark("x"),
+			Want:  "(marked value)",
+		},
+		{
+			Input: cty.True,
+			Want:  "true",
+		},
+		{
+			Input: cty.False,
+			Want:  "false",
+		},
+		{
+			Input: cty.NumberIntVal(1),
+			Want:  "1",
+		},
+		{
+			Input: cty.StringVal("foo"),
+			Want:  `"foo"`,
+		},
+		{
+			Input: cty.EmptyTupleVal,
+			Want:  "empty tuple",
+		},
+		{
+			Input: cty.TupleVal([]cty.Value{cty.StringVal("foo")}),
+			Want:  "tuple with 1 element",
+		},
+		{
+			Input: cty.TupleVal([]cty.Value{cty.StringVal("foo"), cty.StringVal("bar")}),
+			Want:  "tuple with 2 elements",
+		},
+		{
+			Input: cty.EmptyObjectVal,
+			Want:  "object with no attributes",
+		},
+		{
+			Input: cty.ObjectVal(map[string]cty.Value{"foo": cty.StringVal("bar")}),
+			Want:  `object with 1 attribute "foo"`,
+		},
+		{
+			Input: cty.ObjectVal(map[string]cty.Value{"foo": cty.NumberIntVal(1), "bar": cty.NumberIntVal(2)}),
+			Want:  "object with 2 attributes",
+		},
+		{
+			Input: cty.CapsuleVal(cty.Capsule("capsule", reflect.TypeOf(0)), &i),
+			Want:  "capsule",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Input.GoString(), func(t *testing.T) {
+			dwr := diagnosticTextWriter{}
+			got := dwr.valueStr(test.Input)
+			if got != test.Want {
+				t.Errorf("wrong result\n\ngot:  %s\nwant: %s", got, test.Want)
+			}
+		})
+	}
 }
