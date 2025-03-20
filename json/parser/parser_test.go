@@ -70,6 +70,10 @@ func TestListType(t *testing.T) {
 			`"foo": ["123", {}]`,
 			[]token.Type{token.STRING, token.LBRACE},
 		},
+		{
+			`"foo": [true, false]`,
+			[]token.Type{token.BOOL, token.BOOL},
+		},
 	}
 
 	for _, l := range literals {
