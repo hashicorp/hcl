@@ -13,6 +13,9 @@ copyrightcheck:
 copyrightfix:
 	go run github.com/hashicorp/copywrite@latest headers
 
+test:
+	go test ./... -race
+
 check: copyrightcheck vetcheck fmtcheck
 
 fix: copyrightfix fmtfix

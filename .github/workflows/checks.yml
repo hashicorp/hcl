@@ -37,7 +37,7 @@ jobs:
           go-version-file: go.mod
       - name: Go test
         run: |
-          go test ./... -race
+          make test
 
   copyright:
     name: "copyright headers"
