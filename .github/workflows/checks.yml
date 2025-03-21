@@ -2,8 +2,8 @@ name: Checks
 
 on:
   push:
-  workflow_dispatch:
-  pull_request:
+    branches:
+      - build
 
 jobs:
   unit_tests:
@@ -46,6 +46,8 @@ jobs:
       - name: Display coverage report                   # displayed only for linux and macOS
         if: ${{runner.os != 'Windows'}}
         run: go tool cover -func=coverage.out
+      - name: Build go
+        run: go build ./...
 
   copyright:
     name: "copyright headers"
@@ -56,7 +58,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@f111f3307d8850f501ac008e886eec1fd1932a34 # v5.3.0
         with:
-          go-version: "1.21"
+          go-version: "1.23"
       - name: "copyright headers check"
         run: |
           make copyrightcheck
