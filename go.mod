@@ -8,7 +8,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/go-test/deep v1.0.3
 	github.com/google/go-cmp v0.6.0
-	github.com/mitchellh/go-wordwrap v0.0.0-20150314170334-ad45545899c7
+	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/spf13/pflag v1.0.2
 	github.com/zclconf/go-cty v1.13.0
 	github.com/zclconf/go-cty-debug v0.0.0-20240509010212-0d6042c53940
