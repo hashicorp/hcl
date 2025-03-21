@@ -10,10 +10,10 @@
 //
 // The function declaration syntax looks like this:
 //
-//     function "foo" {
-//       params = ["name"]
-//       result = "Hello, ${name}!"
-//     }
+//	function "foo" {
+//	  params = ["name"]
+//	  result = "Hello, ${name}!"
+//	}
 //
 // When a user-defined function is called, the expression given for the "result"
 // attribute is evaluated in an isolated evaluation context that defines variables

@@ -8,7 +8,7 @@
 // use any of the usual language operators. This is similar to type expressions
 // in statically-typed programming languages.
 //
-//     variable "example" {
-//       type = list(string)
-//     }
+//	variable "example" {
+//	  type = list(string)
+//	}
 package typeexpr
