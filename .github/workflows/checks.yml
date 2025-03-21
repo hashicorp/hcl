@@ -37,7 +37,7 @@ jobs:
           go-version-file: go.mod
       - name: Go test
         run: |
-          go test -v -race -coverprofile="coverage.out" ./...
+          go test -v -race -coverprofile="coverage.out" ./... -coverpkg=./...
       - name: Upload coverage report
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808
         with:
@@ -45,7 +45,7 @@ jobs:
           name: coverage-report-${{matrix.target}}
       - name: Display coverage report                   # displayed only for linux and macOS
         if: ${{runner.os != 'Windows'}}
-        run: go tool cover -func=coverage.out
+        run: go tool cover -func=coverage.out | grep -v .rl
 
   copyright:
     name: "copyright headers"
@@ -56,7 +56,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@f111f3307d8850f501ac008e886eec1fd1932a34 # v5.3.0
         with:
-          go-version: "1.21"
+          go-version: "1.23"
       - name: "copyright headers check"
         run: |
           make copyrightcheck

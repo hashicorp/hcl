@@ -74,7 +74,7 @@ func RelTraversalForExpr(expr Expression) (Traversal, Diagnostics) {
 // For example, the following attribute has an expression that would produce
 // the keyword "foo":
 //
-//     example = foo
+//	example = foo
 //
 // This function is a variant of AbsTraversalForExpr, which uses the same
 // interface on the given expression. This helper constrains the result
@@ -84,16 +84,16 @@ func RelTraversalForExpr(expr Expression) (Traversal, Diagnostics) {
 // situations where one of a fixed set of keywords is required and arbitrary
 // expressions are not allowed:
 //
-//     switch hcl.ExprAsKeyword(expr) {
-//     case "allow":
-//         // (take suitable action for keyword "allow")
-//     case "deny":
-//         // (take suitable action for keyword "deny")
-//     default:
-//         diags = append(diags, &hcl.Diagnostic{
-//             // ... "invalid keyword" diagnostic message ...
-//         })
-//     }
+//	switch hcl.ExprAsKeyword(expr) {
+//	case "allow":
+//	    // (take suitable action for keyword "allow")
+//	case "deny":
+//	    // (take suitable action for keyword "deny")
+//	default:
+//	    diags = append(diags, &hcl.Diagnostic{
+//	        // ... "invalid keyword" diagnostic message ...
+//	    })
+//	}
 //
 // The above approach will generate the same message for both the use of an
 // unrecognized keyword and for not using a keyword at all, which is usually
