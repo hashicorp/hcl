@@ -121,7 +121,7 @@ func (d Diagnostics) Error() string {
 // This is provided as a convenience for returning from a function that
 // collects and then returns a set of diagnostics:
 //
-//     return nil, diags.Append(&hcl.Diagnostic{ ... })
+//	return nil, diags.Append(&hcl.Diagnostic{ ... })
 //
 // Note that this modifies the array underlying the diagnostics slice, so
 // must be used carefully within a single codepath. It is incorrect (and rude)
