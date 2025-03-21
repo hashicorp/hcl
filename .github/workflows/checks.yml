@@ -37,7 +37,15 @@ jobs:
           go-version-file: go.mod
       - name: Go test
         run: |
-          go test ./... -race
+          go test -v -race -coverprofile="coverage.out" ./...
+      - name: Upload coverage report
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808
+        with:
+          path: coverage.out
+          name: coverage-report-${{matrix.target}}
+      - name: Display coverage report                   # displayed only for linux and macOS
+        if: ${{runner.os != 'Windows'}}
+        run: go tool cover -func=coverage.out
 
   copyright:
     name: "copyright headers"
