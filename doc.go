@@ -9,25 +9,25 @@
 // configurations in either native HCL syntax or JSON syntax into a Go struct
 // type:
 //
-//     package main
+//	package main
 //
-//     import (
-//     	"log"
-//     	"github.com/hashicorp/hcl/v2/hclsimple"
-//     )
+//	import (
+//		"log"
+//		"github.com/hashicorp/hcl/v2/hclsimple"
+//	)
 //
-//     type Config struct {
-//     	LogLevel string `hcl:"log_level"`
-//     }
+//	type Config struct {
+//		LogLevel string `hcl:"log_level"`
+//	}
 //
-//     func main() {
-//     	var config Config
-//     	err := hclsimple.DecodeFile("config.hcl", nil, &config)
-//     	if err != nil {
-//     		log.Fatalf("Failed to load configuration: %s", err)
-//     	}
-//     	log.Printf("Configuration is %#v", config)
-//     }
+//	func main() {
+//		var config Config
+//		err := hclsimple.DecodeFile("config.hcl", nil, &config)
+//		if err != nil {
+//			log.Fatalf("Failed to load configuration: %s", err)
+//		}
+//		log.Printf("Configuration is %#v", config)
+//	}
 //
 // If your application needs more control over the evaluation of the
 // configuration, you can use the functions in the subdirectories hclparse,
