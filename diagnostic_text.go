@@ -170,6 +170,9 @@ func (w *diagnosticTextWriter) WriteDiagnostic(diag *Diagnostic) error {
 					continue
 				case val.IsNull():
 					stmts = append(stmts, fmt.Sprintf("%s set to null", traversalStr))
+				case val.IsMarked():
+					// Skip the marked values as it is not clear here how they should be rendered.
+					continue
 				default:
 					stmts = append(stmts, fmt.Sprintf("%s as %s", traversalStr, w.valueStr(val)))
 				}
