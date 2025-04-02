@@ -6,6 +6,7 @@ package hclwrite
 import (
 	"bytes"
 	"io"
+	"log"
 )
 
 type File struct {
@@ -47,7 +48,9 @@ func (f *File) WriteTo(wr io.Writer) (int64, error) {
 // the AST API, these will be reflected in the result.
 func (f *File) Bytes() []byte {
 	buf := &bytes.Buffer{}
-	f.WriteTo(buf)
+	if _, err := f.WriteTo(buf); err != nil {
+		log.Printf("failed to write the tokens to the file: %v", err)
+	}
 	return buf.Bytes()
 }
 

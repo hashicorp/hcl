@@ -488,8 +488,12 @@ func TestTokensForValue(t *testing.T) {
 					return bytes.Equal(a, b)
 				}))
 				var gotBuf, wantBuf bytes.Buffer
-				got.WriteTo(&gotBuf)
-				test.Want.WriteTo(&wantBuf)
+				if _, err := got.WriteTo(&gotBuf); err != nil {
+					t.Fatal(err)
+				}
+				if _, err := test.Want.WriteTo(&wantBuf); err != nil {
+					t.Fatal(err)
+				}
 				t.Errorf(
 					"wrong result\nvalue: %#v\ngot:   %s\nwant:  %s\ndiff:  %s",
 					test.Val, gotBuf.String(), wantBuf.String(), diff,
@@ -531,8 +535,12 @@ func TestTokensForTraversal(t *testing.T) {
 				return bytes.Equal(a, b)
 			}))
 			var gotBuf, wantBuf bytes.Buffer
-			got.WriteTo(&gotBuf)
-			test.Want.WriteTo(&wantBuf)
+			if _, err := got.WriteTo(&gotBuf); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := test.Want.WriteTo(&wantBuf); err != nil {
+				t.Fatal(err)
+			}
 			t.Errorf(
 				"wrong result\nvalue: %#v\ngot:   %s\nwant:  %s\ndiff:  %s",
 				test.Val, gotBuf.String(), wantBuf.String(), diff,
@@ -596,8 +604,12 @@ func TestTokensForTuple(t *testing.T) {
 					return bytes.Equal(a, b)
 				}))
 				var gotBuf, wantBuf bytes.Buffer
-				got.WriteTo(&gotBuf)
-				test.Want.WriteTo(&wantBuf)
+				if _, err := got.WriteTo(&gotBuf); err != nil {
+					t.Fatal(err)
+				}
+				if _, err := test.Want.WriteTo(&wantBuf); err != nil {
+					t.Fatal(err)
+				}
 				t.Errorf(
 					"wrong result\nvalue: %#v\ngot:   %s\nwant:  %s\ndiff:  %s",
 					test.Val, gotBuf.String(), wantBuf.String(), diff,
@@ -687,8 +699,12 @@ func TestTokensForObject(t *testing.T) {
 					return bytes.Equal(a, b)
 				}))
 				var gotBuf, wantBuf bytes.Buffer
-				got.WriteTo(&gotBuf)
-				test.Want.WriteTo(&wantBuf)
+				if _, err := got.WriteTo(&gotBuf); err != nil {
+					t.Fatal(err)
+				}
+				if _, err := test.Want.WriteTo(&wantBuf); err != nil {
+					t.Fatal(err)
+				}
 				t.Errorf(
 					"wrong result\nvalue: %#v\ngot:   %s\nwant:  %s\ndiff:  %s",
 					test.Val, gotBuf.String(), wantBuf.String(), diff,
@@ -753,8 +769,12 @@ func TestTokensForFunctionCall(t *testing.T) {
 					return bytes.Equal(a, b)
 				}))
 				var gotBuf, wantBuf bytes.Buffer
-				got.WriteTo(&gotBuf)
-				test.Want.WriteTo(&wantBuf)
+				if _, err := got.WriteTo(&gotBuf); err != nil {
+					t.Fatal(err)
+				}
+				if _, err := test.Want.WriteTo(&wantBuf); err != nil {
+					t.Fatal(err)
+				}
 				t.Errorf(
 					"wrong result\nvalue: %#v\ngot:   %s\nwant:  %s\ndiff:  %s",
 					test.Val, gotBuf.String(), wantBuf.String(), diff,

@@ -3832,7 +3832,7 @@ another_block {
 			got := file.Body
 
 			if diff := cmp.Diff(got, test.want, opts); diff != "" {
-				t.Errorf(diff)
+				t.Errorf("%s", diff)
 			}
 		})
 	}

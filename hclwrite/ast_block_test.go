@@ -31,7 +31,7 @@ service {
 	}
 
 	for _, test := range tests {
-		t.Run(fmt.Sprintf("%s", test.want), func(t *testing.T) {
+		t.Run(test.want, func(t *testing.T) {
 			f, diags := ParseConfig([]byte(test.src), "", hcl.Pos{Line: 1, Column: 1})
 			if len(diags) != 0 {
 				for _, diag := range diags {
@@ -120,7 +120,7 @@ blank "" {
 	}
 
 	for _, test := range tests {
-		t.Run(fmt.Sprintf("%s", strings.Join(test.want, " ")), func(t *testing.T) {
+		t.Run(strings.Join(test.want, " "), func(t *testing.T) {
 			f, diags := ParseConfig([]byte(test.src), "", hcl.Pos{Line: 1, Column: 1})
 			if len(diags) != 0 {
 				for _, diag := range diags {

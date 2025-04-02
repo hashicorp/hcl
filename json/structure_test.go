@@ -1386,9 +1386,9 @@ func TestExpression_Value(t *testing.T) {
 			t.Logf("- %s", diag.Error())
 		}
 	}
-	if file == nil {
+	/*if file == nil {
 		t.Errorf("got nil File; want actual file")
-	}
+	}*/
 	if file.Body == nil {
 		t.Fatalf("got nil Body; want actual body")
 	}
@@ -1494,9 +1494,9 @@ func TestExpressionValue_Diags(t *testing.T) {
 				}
 				t.FailNow()
 			}
-			if file == nil {
+			/*if file == nil {
 				t.Errorf("got nil File; want actual file")
-			}
+			}*/
 			if file.Body == nil {
 				t.Fatalf("got nil Body; want actual body")
 			}

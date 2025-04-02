@@ -8,14 +8,15 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"strings"
 
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclparse"
 	"github.com/hashicorp/hcl/v2/hclwrite"
-	"golang.org/x/crypto/ssh/terminal"
+
+	"golang.org/x/term"
 )
 
 const versionStr = "0.0.1-dev"
@@ -33,8 +34,8 @@ var checkErrs = false
 var changed []string
 
 func init() {
-	color := terminal.IsTerminal(int(os.Stderr.Fd()))
-	w, _, err := terminal.GetSize(int(os.Stdout.Fd()))
+	color := term.IsTerminal(int(os.Stderr.Fd()))
+	w, _, err := term.GetSize(int(os.Stdout.Fd()))
 	if err != nil {
 		w = 80
 	}
@@ -117,14 +118,16 @@ func processFile(fn string, in *os.File) error {
 		}
 	}
 
-	inSrc, err := ioutil.ReadAll(in)
+	inSrc, err := io.ReadAll(in)
 	if err != nil {
 		return fmt.Errorf("failed to read %s: %s", fn, err)
 	}
 
 	if *check {
 		_, diags := parser.ParseHCL(inSrc, fn)
-		diagWr.WriteDiagnostics(diags)
+		if err := diagWr.WriteDiagnostics(diags); err != nil {
+			return err
+		}
 		if diags.HasErrors() {
 			checkErrs = true
 			return nil
@@ -140,7 +143,7 @@ func processFile(fn string, in *os.File) error {
 
 	if *overwrite {
 		if hasLocalChanges {
-			return ioutil.WriteFile(fn, outSrc, 0644)
+			return os.WriteFile(fn, outSrc, 0644)
 		} else {
 			return nil
 		}

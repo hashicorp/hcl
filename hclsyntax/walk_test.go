@@ -152,7 +152,7 @@ func TestWalk(t *testing.T) {
 			if !reflect.DeepEqual(got, test.want) {
 				t.Errorf("wrong calls\ngot: %swant: %s", spew.Sdump(got), spew.Sdump(test.want))
 				for _, problem := range deep.Equal(got, test.want) {
-					t.Errorf(problem)
+					t.Errorf("%s", problem)
 				}
 			}
 		})

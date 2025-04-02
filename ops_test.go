@@ -485,7 +485,7 @@ func TestIndex(t *testing.T) {
 			got, diags := Index(tc.coll, tc.key, nil)
 
 			for _, diag := range diags {
-				t.Logf(diag.Error())
+				t.Logf("%s", diag.Error())
 			}
 
 			if tc.err != "" {

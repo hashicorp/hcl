@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -39,7 +38,7 @@ func (r *Runner) Run() hcl.Diagnostics {
 func (r *Runner) runDir(dir string) hcl.Diagnostics {
 	var diags hcl.Diagnostics
 
-	infos, err := ioutil.ReadDir(dir)
+	infos, err := os.ReadDir(dir)
 	if err != nil {
 		diags = append(diags, &hcl.Diagnostic{
 			Severity: hcl.DiagError,
@@ -110,7 +109,7 @@ func (r *Runner) runTest(filename string) hcl.Diagnostics {
 	// though it'll actually be parsed by the hcldec child process, since that
 	// way we can produce nice diagnostic messages if hcldec fails to process
 	// the spec file.
-	src, err := ioutil.ReadFile(specFilename)
+	src, err := os.ReadFile(specFilename)
 	if err == nil {
 		r.parser.AddFile(specFilename, &hcl.File{
 			Bytes: src,
@@ -149,7 +148,7 @@ func (r *Runner) runTestInput(specFilename, inputFilename string, tf *TestFile) 
 	// though it'll actually be parsed by the hcldec child process, since that
 	// way we can produce nice diagnostic messages if hcldec fails to process
 	// the input file.
-	src, err := ioutil.ReadFile(inputFilename)
+	src, err := os.ReadFile(inputFilename)
 	if err == nil {
 		r.parser.AddFile(inputFilename, &hcl.File{
 			Bytes: src,

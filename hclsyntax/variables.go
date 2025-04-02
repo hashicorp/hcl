@@ -20,7 +20,7 @@ func Variables(expr Expression) []hcl.Traversal {
 		},
 	}
 
-	Walk(expr, walker)
+	_ = Walk(expr, walker)
 
 	return vars
 }

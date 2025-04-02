@@ -5,13 +5,13 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 
-	"golang.org/x/crypto/ssh/terminal"
-
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclparse"
+	"golang.org/x/term"
 )
 
 func main() {
@@ -35,8 +35,8 @@ func realMain(args []string) int {
 
 	parser := hclparse.NewParser()
 
-	color := terminal.IsTerminal(int(os.Stderr.Fd()))
-	w, _, err := terminal.GetSize(int(os.Stdout.Fd()))
+	color := term.IsTerminal(int(os.Stderr.Fd()))
+	w, _, err := term.GetSize(int(os.Stdout.Fd()))
 	if err != nil {
 		w = 80
 	}
@@ -53,7 +53,9 @@ func realMain(args []string) int {
 		logProblems: func(name string, file *TestFile, diags hcl.Diagnostics) {
 			if len(diags) != 0 {
 				os.Stderr.WriteString("\n")
-				diagWr.WriteDiagnostics(diags)
+				if err := diagWr.WriteDiagnostics(diags); err != nil {
+					log.Fatalf("failed to write a diagnostics: %v", err)
+				}
 				diagCount += len(diags)
 			}
 			fmt.Printf("- %s\n", name)
@@ -63,7 +65,9 @@ func realMain(args []string) int {
 
 	if len(diags) != 0 {
 		os.Stderr.WriteString("\n\n\n== Test harness problems:\n\n")
-		diagWr.WriteDiagnostics(diags)
+		if err := diagWr.WriteDiagnostics(diags); err != nil {
+			log.Fatalf("failed to write a diagnostics: %v", err)
+		}
 		diagCount += len(diags)
 	}
 

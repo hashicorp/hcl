@@ -137,7 +137,9 @@ func (w *diagnosticTextWriter) WriteDiagnostic(diag *Diagnostic) error {
 
 			}
 
-			w.wr.Write([]byte{'\n'})
+			if _, err := w.wr.Write([]byte{'\n'}); err != nil {
+				return err
+			}
 		}
 
 		if diag.Expression != nil && diag.EvalContext != nil {
@@ -182,16 +184,26 @@ func (w *diagnosticTextWriter) WriteDiagnostic(diag *Diagnostic) error {
 			for i, stmt := range stmts {
 				switch i {
 				case 0:
-					w.wr.Write([]byte{'w', 'i', 't', 'h', ' '})
+					if _, err := w.wr.Write([]byte{'w', 'i', 't', 'h', ' '}); err != nil {
+						return err
+					}
 				default:
-					w.wr.Write([]byte{' ', ' ', ' ', ' ', ' '})
+					if _, err := w.wr.Write([]byte{' ', ' ', ' ', ' ', ' '}); err != nil {
+						return err
+					}
 				}
-				w.wr.Write([]byte(stmt))
+				if _, err := w.wr.Write([]byte(stmt)); err != nil {
+					return err
+				}
 				switch i {
 				case last:
-					w.wr.Write([]byte{'.', '\n', '\n'})
+					if _, err := w.wr.Write([]byte{'.', '\n', '\n'}); err != nil {
+						return err
+					}
 				default:
-					w.wr.Write([]byte{',', '\n'})
+					if _, err := w.wr.Write([]byte{',', '\n'}); err != nil {
+						return err
+					}
 				}
 			}
 		}

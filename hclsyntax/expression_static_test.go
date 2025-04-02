@@ -49,7 +49,7 @@ func TestTraversalStatic(t *testing.T) {
 	}
 
 	for _, problem := range deep.Equal(got, want) {
-		t.Errorf(problem)
+		t.Errorf("%s", problem)
 	}
 }
 
@@ -87,7 +87,7 @@ func TestTupleStatic(t *testing.T) {
 	}
 
 	for _, problem := range deep.Equal(got, want) {
-		t.Errorf(problem)
+		t.Errorf("%s", problem)
 	}
 }
 
@@ -129,6 +129,6 @@ func TestMapStatic(t *testing.T) {
 	}
 
 	for _, problem := range deep.Equal(got, want) {
-		t.Errorf(problem)
+		t.Errorf("%s", problem)
 	}
 }
