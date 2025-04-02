@@ -5,6 +5,7 @@ package gohcl
 
 import (
 	"fmt"
+	"github.com/zclconf/go-cty/cty"
 	"reflect"
 	"sort"
 
@@ -67,6 +68,18 @@ func EncodeAsBlock(val interface{}, blockType string) *hclwrite.Block {
 		rv = rv.Elem()
 		ty = rv.Type()
 	}
+
+	if(ty.Kind() == reflect.Map){
+		block := hclwrite.NewBlock(blockType, nil)
+		body := block.Body()
+		for _, e := range rv.MapKeys() {
+			v := rv.MapIndex(e)
+			fieldVal := getFieldVal(v)
+			body.SetAttributeValue(e.String(), fieldVal)
+		}
+		return block
+	}
+
 	if ty.Kind() != reflect.Struct {
 		panic(fmt.Sprintf("value is %s, not struct", ty.Kind()))
 	}
@@ -131,17 +144,7 @@ func populateBody(rv reflect.Value, ty reflect.Type, tags *fieldTags, dst *hclwr
 				prevWasBlock = false
 			}
 
-			valTy, err := gocty.ImpliedType(fieldVal.Interface())
-			if err != nil {
-				panic(fmt.Sprintf("cannot encode %T as HCL expression: %s", fieldVal.Interface(), err))
-			}
-
-			val, err := gocty.ToCtyValue(fieldVal.Interface(), valTy)
-			if err != nil {
-				// This should never happen, since we should always be able
-				// to decode into the implied type.
-				panic(fmt.Sprintf("failed to encode %T as %#v: %s", fieldVal.Interface(), valTy, err))
-			}
+			val := getFieldVal(fieldVal)
 
 			dst.SetAttributeValue(name, val)
 
@@ -191,4 +194,20 @@ func populateBody(rv reflect.Value, ty reflect.Type, tags *fieldTags, dst *hclwr
 			}
 		}
 	}
+}
+
+func getFieldVal(fieldVal reflect.Value) cty.Value {
+	valTy, err := gocty.ImpliedType(fieldVal.Interface())
+	if err != nil {
+		panic(fmt.Sprintf("cannot encode %T as HCL expression: %s", fieldVal.Interface(), err))
+	}
+
+	val, err := gocty.ToCtyValue(fieldVal.Interface(), valTy)
+	if err != nil {
+		// This should never happen, since we should always be able
+		// to decode into the implied type.
+		panic(fmt.Sprintf("failed to encode %T as %#v: %s", fieldVal.Interface(), valTy, err))
+	}
+
+	return val
 }
