@@ -5,7 +5,7 @@ package json
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 
 	"github.com/hashicorp/hcl/v2"
@@ -105,7 +105,7 @@ func ParseFile(filename string) (*hcl.File, hcl.Diagnostics) {
 	}
 	defer f.Close()
 
-	src, err := ioutil.ReadAll(f)
+	src, err := io.ReadAll(f)
 	if err != nil {
 		return nil, hcl.Diagnostics{
 			{

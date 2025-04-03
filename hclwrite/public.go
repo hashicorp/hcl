@@ -5,6 +5,7 @@ package hclwrite
 
 import (
 	"bytes"
+	"log"
 
 	"github.com/hashicorp/hcl/v2"
 )
@@ -42,6 +43,8 @@ func Format(src []byte) []byte {
 	tokens := lexConfig(src)
 	format(tokens)
 	buf := &bytes.Buffer{}
-	tokens.WriteTo(buf)
+	if _, err := tokens.WriteTo(buf); err != nil {
+		log.Printf("failed to write the tokens: %v", err)
+	}
 	return buf.Bytes()
 }

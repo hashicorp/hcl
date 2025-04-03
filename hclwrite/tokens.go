@@ -6,6 +6,7 @@ package hclwrite
 import (
 	"bytes"
 	"io"
+	"log"
 
 	"github.com/apparentlymart/go-textseg/v15/textseg"
 	"github.com/hashicorp/hcl/v2"
@@ -48,7 +49,9 @@ type Tokens []*Token
 
 func (ts Tokens) Bytes() []byte {
 	buf := &bytes.Buffer{}
-	ts.WriteTo(buf)
+	if _, err := ts.WriteTo(buf); err != nil {
+		log.Printf("failed to write tokens: %v", err)
+	}
 	return buf.Bytes()
 }
 

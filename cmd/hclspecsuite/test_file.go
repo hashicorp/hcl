@@ -92,7 +92,7 @@ func (r *Runner) LoadTestFile(filename string) (*TestFile, hcl.Diagnostics) {
 				diags = diags.Append(&hcl.Diagnostic{
 					Severity: hcl.DiagError,
 					Summary:  "Duplicate \"traversals\" block",
-					Detail:   fmt.Sprintf("Only one traversals block is expected."),
+					Detail:   "Only one traversals block is expected.",
 					Subject:  &block.TypeRange,
 				})
 				continue
@@ -110,7 +110,7 @@ func (r *Runner) LoadTestFile(filename string) (*TestFile, hcl.Diagnostics) {
 				diags = diags.Append(&hcl.Diagnostic{
 					Severity: hcl.DiagError,
 					Summary:  "Duplicate \"diagnostics\" block",
-					Detail:   fmt.Sprintf("Only one diagnostics block is expected."),
+					Detail:   "Only one diagnostics block is expected.",
 					Subject:  &block.TypeRange,
 				})
 				continue

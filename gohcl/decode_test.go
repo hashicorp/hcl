@@ -105,11 +105,7 @@ func TestDecodeBody(t *testing.T) {
 				}
 
 				nameVal, _ := wne.Name.Value(nil)
-				if !nameVal.IsNull() {
-					return false
-				}
-
-				return true
+				return nameVal.IsNull()
 			},
 			0,
 		},
@@ -133,11 +129,7 @@ func TestDecodeBody(t *testing.T) {
 				}
 
 				nameVal, _ := wne.Name.Value(nil)
-				if !nameVal.Equals(cty.StringVal("Ermintrude")).True() {
-					return false
-				}
-
-				return true
+				return nameVal.Equals(cty.StringVal("Ermintrude")).True()
 			},
 			0,
 		},

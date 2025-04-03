@@ -375,7 +375,7 @@ func parseNumber(p *peeker) (node, hcl.Diagnostics) {
 			{
 				Severity: hcl.DiagError,
 				Summary:  "Invalid JSON number",
-				Detail:   fmt.Sprintf("There is a syntax error in the given JSON number."),
+				Detail:   "There is a syntax error in the given JSON number.",
 				Subject:  &tok.Range,
 			},
 		}
@@ -394,7 +394,7 @@ func parseNumber(p *peeker) (node, hcl.Diagnostics) {
 			{
 				Severity: hcl.DiagError,
 				Summary:  "Invalid JSON number",
-				Detail:   fmt.Sprintf("There is a syntax error in the given JSON number."),
+				Detail:   "There is a syntax error in the given JSON number.",
 				Subject:  &tok.Range,
 			},
 		}
@@ -448,7 +448,7 @@ func parseString(p *peeker) (node, hcl.Diagnostics) {
 			{
 				Severity: hcl.DiagError,
 				Summary:  "Invalid JSON string",
-				Detail:   fmt.Sprintf("There is a syntax error in the given JSON string."),
+				Detail:   "There is a syntax error in the given JSON string.",
 				Subject:  &errRange,
 				Context:  contextRange,
 			},

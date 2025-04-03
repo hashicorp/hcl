@@ -195,7 +195,7 @@ func decodeBodyToStruct(body hcl.Body, ctx *hcl.EvalContext, val reflect.Value) 
 		case isSlice:
 			elemType := ty
 			if isPtr {
-				elemType = reflect.PtrTo(ty)
+				elemType = reflect.PointerTo(ty)
 			}
 			sli := val.Field(fieldIdx)
 			if sli.IsNil() {

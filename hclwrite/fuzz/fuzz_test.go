@@ -4,7 +4,7 @@
 package fuzzhclwrite
 
 import (
-	"io/ioutil"
+	"io"
 	"testing"
 
 	"github.com/hashicorp/hcl/v2"
@@ -23,7 +23,7 @@ func FuzzParseConfig(f *testing.F) {
 			return
 		}
 
-		_, err := file.WriteTo(ioutil.Discard)
+		_, err := file.WriteTo(io.Discard)
 
 		if err != nil {
 			t.Fatalf("error writing to file: %s", err)

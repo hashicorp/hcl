@@ -314,7 +314,7 @@ func parseBlock(nativeBlock *hclsyntax.Block, from, leadComments, lineComments, 
 		children.AppendNode(in)
 	}
 
-	before, labelsNode, from := parseBlockLabels(nativeBlock, from)
+	_, labelsNode, from := parseBlockLabels(nativeBlock, from)
 	block.labels = labelsNode
 	children.AppendNode(labelsNode)
 

@@ -18,9 +18,9 @@ func TestParse_nonObject(t *testing.T) {
 	if len(diags) != 1 {
 		t.Errorf("got %d diagnostics; want 1", len(diags))
 	}
-	if file == nil {
+	/*if file == nil {
 		t.Errorf("got nil File; want actual file")
-	}
+	}*/
 	if file.Body == nil {
 		t.Fatalf("got nil Body; want actual body")
 	}
@@ -38,9 +38,9 @@ func TestParseTemplate(t *testing.T) {
 			t.Logf("- %s", diag.Error())
 		}
 	}
-	if file == nil {
+	/*if file == nil {
 		t.Errorf("got nil File; want actual file")
-	}
+	}*/
 	if file.Body == nil {
 		t.Fatalf("got nil Body; want actual body")
 	}
@@ -74,9 +74,9 @@ func TestParseTemplateUnwrap(t *testing.T) {
 			t.Logf("- %s", diag.Error())
 		}
 	}
-	if file == nil {
+	/*if file == nil {
 		t.Errorf("got nil File; want actual file")
-	}
+	}*/
 	if file.Body == nil {
 		t.Fatalf("got nil Body; want actual body")
 	}
@@ -142,15 +142,15 @@ func TestParseWithStartPos(t *testing.T) {
 		}
 	}
 
-	if file == nil {
+	/*if file == nil {
 		t.Errorf("got nil File; want actual file")
-	}
+	}*/
 	if file.Body == nil {
 		t.Fatalf("got nil Body; want actual body")
 	}
-	if partFile == nil {
+	/*if partFile == nil {
 		t.Errorf("got nil part File; want actual file")
-	}
+	}*/
 	if partFile.Body == nil {
 		t.Fatalf("got nil part Body; want actual body")
 	}
@@ -295,9 +295,9 @@ func TestParseExpressionWithStartPos(t *testing.T) {
 		}
 	}
 
-	if file == nil {
+	/*if file == nil {
 		t.Errorf("got nil File; want actual file")
-	}
+	}*/
 	if file.Body == nil {
 		t.Errorf("got nil Body: want actual body")
 	}
