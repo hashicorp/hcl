@@ -133,7 +133,7 @@ func TestBlocksAtPos(t *testing.T) {
 				// when the parser does its recovery behavior. However, we do
 				// log them in case it's helpful to someone debugging a failing
 				// test.
-				t.Logf(diag.Error())
+				t.Log(diag.Error())
 			}
 
 			blocks := f.BlocksAtPos(test.Pos)
@@ -233,7 +233,7 @@ func TestAttributeAtPos(t *testing.T) {
 				// when the parser does its recovery behavior. However, we do
 				// log them in case it's helpful to someone debugging a failing
 				// test.
-				t.Logf(diag.Error())
+				t.Log(diag.Error())
 			}
 
 			got := f.AttributeAtPos(test.Pos)
@@ -309,7 +309,7 @@ func TestOutermostExprAtPos(t *testing.T) {
 				// when the parser does its recovery behavior. However, we do
 				// log them in case it's helpful to someone debugging a failing
 				// test.
-				t.Logf(diag.Error())
+				t.Log(diag.Error())
 			}
 
 			gotExpr := f.OutermostExprAtPos(test.Pos)

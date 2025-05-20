@@ -43,7 +43,7 @@ func (b *Body) Clear() {
 }
 
 func (b *Body) AppendUnstructuredTokens(ts Tokens) {
-	b.inTree.children.Append(ts)
+	b.children.Append(ts)
 }
 
 // Attributes returns a new map of all of the attributes in the body, with

@@ -8,7 +8,7 @@ import (
 	"os"
 	"os/exec"
 
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclparse"
@@ -35,8 +35,8 @@ func realMain(args []string) int {
 
 	parser := hclparse.NewParser()
 
-	color := terminal.IsTerminal(int(os.Stderr.Fd()))
-	w, _, err := terminal.GetSize(int(os.Stdout.Fd()))
+	color := term.IsTerminal(int(os.Stderr.Fd()))
+	w, _, err := term.GetSize(int(os.Stdout.Fd()))
 	if err != nil {
 		w = 80
 	}

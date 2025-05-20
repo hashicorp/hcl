@@ -122,7 +122,7 @@ func newBlockLabels(labels []string) *blockLabels {
 }
 
 func (bl *blockLabels) Replace(newLabels []string) {
-	bl.inTree.children.Clear()
+	bl.children.Clear()
 	bl.items.Clear()
 
 	for _, label := range newLabels {

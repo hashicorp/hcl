@@ -88,7 +88,7 @@ func (n WalkVariablesNode) Visit(schema *hcl.BodySchema) (vars []hcl.Traversal, 
 					_, inherited = n.it.Inherited[traversal.RootName()]
 				}
 
-				if !(ours || inherited) {
+				if !ours && !inherited {
 					vars = append(vars, traversal)
 				}
 			}
@@ -134,7 +134,7 @@ func (n WalkVariablesNode) Visit(schema *hcl.BodySchema) (vars []hcl.Traversal, 
 					ours := traversal.RootName() == iteratorName
 					_, inherited := blockIt.Inherited[traversal.RootName()]
 
-					if !(ours || inherited) {
+					if !ours && !inherited {
 						vars = append(vars, traversal)
 					}
 				}

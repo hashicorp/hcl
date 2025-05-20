@@ -106,10 +106,10 @@ func (d *Diagnostic) Error() string {
 // APIs that normally deal in vanilla Go errors.
 func (d Diagnostics) Error() string {
 	count := len(d)
-	switch {
-	case count == 0:
+	switch count {
+	case 0:
 		return "no diagnostics"
-	case count == 1:
+	case 1:
 		return d[0].Error()
 	default:
 		return fmt.Sprintf("%s, and %d other diagnostic(s)", d[0].Error(), count-1)

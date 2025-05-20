@@ -61,7 +61,7 @@ func parse(src []byte, filename string, start hcl.Pos) (*File, hcl.Diagnostics) 
 		body:     root,
 	}
 
-	nodes := ret.inTree.children
+	nodes := ret.children
 	nodes.Append(before.Tokens())
 	nodes.AppendNode(root)
 	nodes.Append(after.Tokens())
@@ -242,7 +242,7 @@ func parseAttribute(nativeAttr *hclsyntax.Attribute, from, leadComments, lineCom
 	attr := &Attribute{
 		inTree: newInTree(),
 	}
-	children := attr.inTree.children
+	children := attr.children
 
 	{
 		cn := newNode(newComments(leadComments.Tokens()))
@@ -293,7 +293,7 @@ func parseBlock(nativeBlock *hclsyntax.Block, from, leadComments, lineComments, 
 	block := &Block{
 		inTree: newInTree(),
 	}
-	children := block.inTree.children
+	children := block.children
 
 	{
 		cn := newNode(newComments(leadComments.Tokens()))
@@ -314,7 +314,7 @@ func parseBlock(nativeBlock *hclsyntax.Block, from, leadComments, lineComments, 
 		children.AppendNode(in)
 	}
 
-	before, labelsNode, from := parseBlockLabels(nativeBlock, from)
+	_, labelsNode, from := parseBlockLabels(nativeBlock, from)
 	block.labels = labelsNode
 	children.AppendNode(labelsNode)
 
@@ -377,7 +377,7 @@ func parseBlockLabels(nativeBlock *hclsyntax.Block, from inputTokens) (inputToke
 
 func parseExpression(nativeExpr hclsyntax.Expression, from inputTokens) *node {
 	expr := newExpression()
-	children := expr.inTree.children
+	children := expr.children
 
 	nativeVars := nativeExpr.Variables()
 
@@ -398,7 +398,7 @@ func parseExpression(nativeExpr hclsyntax.Expression, from inputTokens) *node {
 
 func parseTraversal(nativeTraversal hcl.Traversal, from inputTokens) (before inputTokens, n *node, after inputTokens) {
 	traversal := newTraversal()
-	children := traversal.inTree.children
+	children := traversal.children
 	before, from, after = from.Partition(nativeTraversal.SourceRange())
 
 	stepAfter := from
@@ -419,7 +419,7 @@ func parseTraversalStep(nativeStep hcl.Traverser, from inputTokens) (before inpu
 
 	case hcl.TraverseRoot, hcl.TraverseAttr:
 		step := newTraverseName()
-		children = step.inTree.children
+		children = step.children
 		before, from, after = from.Partition(nativeStep.SourceRange())
 		inBefore, token, inAfter := from.PartitionTypeSingle(hclsyntax.TokenIdent)
 		name := newIdentifier(token)
@@ -430,7 +430,7 @@ func parseTraversalStep(nativeStep hcl.Traverser, from inputTokens) (before inpu
 
 	case hcl.TraverseIndex:
 		step := newTraverseIndex()
-		children = step.inTree.children
+		children = step.children
 		before, from, after = from.Partition(nativeStep.SourceRange())
 
 		if inBefore, dot, from, ok := from.PartitionTypeOk(hclsyntax.TokenDot); ok {

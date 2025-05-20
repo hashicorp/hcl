@@ -1796,6 +1796,7 @@ func (e *SplatExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	// both to tuples/lists and to other values, and in the latter case
 	// the value will be treated as an implicit single-item tuple, or as
 	// an empty tuple if the value is null.
+	//nolint:staticcheck // QF1001: Demorgan's law wouldn't improve readability.
 	autoUpgrade := !(sourceTy.IsTupleType() || sourceTy.IsListType() || sourceTy.IsSetType())
 
 	if sourceVal.IsNull() {
