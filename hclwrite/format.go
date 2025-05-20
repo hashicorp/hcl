@@ -429,9 +429,10 @@ func linesForFormat(tokens Tokens) []formatLine {
 }
 
 func tokenIsNewline(tok *Token) bool {
-	if tok.Type == hclsyntax.TokenNewline {
+	switch tok.Type {
+	case hclsyntax.TokenNewline:
 		return true
-	} else if tok.Type == hclsyntax.TokenComment {
+	case hclsyntax.TokenComment:
 		// Single line tokens (# and //) consume their terminating newline,
 		// so we need to treat them as newline tokens as well.
 		if len(tok.Bytes) > 0 && tok.Bytes[len(tok.Bytes)-1] == '\n' {

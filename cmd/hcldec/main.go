@@ -7,7 +7,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"strings"
 
@@ -18,7 +18,7 @@ import (
 	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-cty/cty/function"
 	ctyjson "github.com/zclconf/go-cty/cty/json"
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 )
 
 const versionStr = "0.0.1-dev"
@@ -57,8 +57,8 @@ func main() {
 
 	switch *diagsFormat {
 	case "":
-		color := terminal.IsTerminal(int(os.Stderr.Fd()))
-		w, _, err := terminal.GetSize(int(os.Stdout.Fd()))
+		color := term.IsTerminal(int(os.Stderr.Fd()))
+		w, _, err := term.GetSize(int(os.Stdout.Fd()))
 		if err != nil {
 			w = 80
 		}
@@ -140,7 +140,7 @@ func realmain(args []string) error {
 	var bodies []hcl.Body
 
 	if len(args) == 0 {
-		src, err := ioutil.ReadAll(os.Stdin)
+		src, err := io.ReadAll(os.Stdin)
 		if err != nil {
 			return fmt.Errorf("failed to read stdin: %s", err)
 		}

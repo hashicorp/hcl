@@ -107,23 +107,21 @@ func (mb mergedBodies) JustAttributes() (Attributes, Diagnostics) {
 			diags = append(diags, thisDiags...)
 		}
 
-		if thisAttrs != nil {
-			for name, attr := range thisAttrs {
-				if existing := attrs[name]; existing != nil {
-					diags = diags.Append(&Diagnostic{
-						Severity: DiagError,
-						Summary:  "Duplicate argument",
-						Detail: fmt.Sprintf(
-							"Argument %q was already set at %s",
-							name, existing.NameRange.String(),
-						),
-						Subject: &attr.NameRange,
-					})
-					continue
-				}
-
-				attrs[name] = attr
+		for name, attr := range thisAttrs {
+			if existing := attrs[name]; existing != nil {
+				diags = diags.Append(&Diagnostic{
+					Severity: DiagError,
+					Summary:  "Duplicate argument",
+					Detail: fmt.Sprintf(
+						"Argument %q was already set at %s",
+						name, existing.NameRange.String(),
+					),
+					Subject: &attr.NameRange,
+				})
+				continue
 			}
+
+			attrs[name] = attr
 		}
 	}
 

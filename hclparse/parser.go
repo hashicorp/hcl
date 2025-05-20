@@ -17,7 +17,7 @@ package hclparse
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
@@ -70,7 +70,7 @@ func (p *Parser) ParseHCLFile(filename string) (*hcl.File, hcl.Diagnostics) {
 		return existing, nil
 	}
 
-	src, err := ioutil.ReadFile(filename)
+	src, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, hcl.Diagnostics{
 			{

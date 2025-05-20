@@ -19,7 +19,7 @@ func NewFile() *File {
 	file := &File{
 		inTree: newInTree(),
 	}
-	file.body = file.inTree.children.Append(body)
+	file.body = file.children.Append(body)
 	return file
 }
 
