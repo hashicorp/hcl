@@ -52,8 +52,11 @@ func realMain(args []string) int {
 		},
 		logProblems: func(name string, file *TestFile, diags hcl.Diagnostics) {
 			if len(diags) != 0 {
-				os.Stderr.WriteString("\n")
-				diagWr.WriteDiagnostics(diags)
+				fmt.Fprint(os.Stderr, "\n")
+				err := diagWr.WriteDiagnostics(diags)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error writing diagnostics: %s\n", err)
+				}
 				diagCount += len(diags)
 			}
 			fmt.Printf("- %s\n", name)
@@ -62,8 +65,11 @@ func realMain(args []string) int {
 	diags := runner.Run()
 
 	if len(diags) != 0 {
-		os.Stderr.WriteString("\n\n\n== Test harness problems:\n\n")
-		diagWr.WriteDiagnostics(diags)
+		fmt.Fprintf(os.Stderr, "\n\n\n== Test harness problems:\n\n")
+		err := diagWr.WriteDiagnostics(diags)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error writing diagnostics: %s\n", err)
+		}
 		diagCount += len(diags)
 	}
 

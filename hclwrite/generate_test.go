@@ -488,8 +488,14 @@ func TestTokensForValue(t *testing.T) {
 					return bytes.Equal(a, b)
 				}))
 				var gotBuf, wantBuf bytes.Buffer
-				got.WriteTo(&gotBuf)
-				test.Want.WriteTo(&wantBuf)
+				_, err := got.WriteTo(&gotBuf)
+				if err != nil {
+					t.Fatalf("failed to write got tokens: %v", err)
+				}
+				_, err = test.Want.WriteTo(&wantBuf)
+				if err != nil {
+					t.Fatalf("failed to write Want tokens: %v", err)
+				}
 				t.Errorf(
 					"wrong result\nvalue: %#v\ngot:   %s\nwant:  %s\ndiff:  %s",
 					test.Val, gotBuf.String(), wantBuf.String(), diff,
@@ -531,8 +537,16 @@ func TestTokensForTraversal(t *testing.T) {
 				return bytes.Equal(a, b)
 			}))
 			var gotBuf, wantBuf bytes.Buffer
-			got.WriteTo(&gotBuf)
-			test.Want.WriteTo(&wantBuf)
+			_, err := got.WriteTo(&gotBuf)
+			if err != nil {
+				t.Fatalf("failed to write got tokens: %v", err)
+			}
+
+			_, err = test.Want.WriteTo(&wantBuf)
+			if err != nil {
+				t.Fatalf("failed to write Want tokens: %v", err)
+			}
+
 			t.Errorf(
 				"wrong result\nvalue: %#v\ngot:   %s\nwant:  %s\ndiff:  %s",
 				test.Val, gotBuf.String(), wantBuf.String(), diff,
@@ -596,8 +610,15 @@ func TestTokensForTuple(t *testing.T) {
 					return bytes.Equal(a, b)
 				}))
 				var gotBuf, wantBuf bytes.Buffer
-				got.WriteTo(&gotBuf)
-				test.Want.WriteTo(&wantBuf)
+				_, err := got.WriteTo(&gotBuf)
+				if err != nil {
+					t.Fatalf("failed to write got tokens: %v", err)
+				}
+
+				_, err = test.Want.WriteTo(&wantBuf)
+				if err != nil {
+					t.Fatalf("failed to write Want tokens: %v", err)
+				}
 				t.Errorf(
 					"wrong result\nvalue: %#v\ngot:   %s\nwant:  %s\ndiff:  %s",
 					test.Val, gotBuf.String(), wantBuf.String(), diff,
@@ -687,8 +708,15 @@ func TestTokensForObject(t *testing.T) {
 					return bytes.Equal(a, b)
 				}))
 				var gotBuf, wantBuf bytes.Buffer
-				got.WriteTo(&gotBuf)
-				test.Want.WriteTo(&wantBuf)
+				_, err := got.WriteTo(&gotBuf)
+				if err != nil {
+					t.Fatalf("failed to write got tokens: %v", err)
+				}
+
+				_, err = test.Want.WriteTo(&wantBuf)
+				if err != nil {
+					t.Fatalf("failed to write Want tokens: %v", err)
+				}
 				t.Errorf(
 					"wrong result\nvalue: %#v\ngot:   %s\nwant:  %s\ndiff:  %s",
 					test.Val, gotBuf.String(), wantBuf.String(), diff,
@@ -753,8 +781,15 @@ func TestTokensForFunctionCall(t *testing.T) {
 					return bytes.Equal(a, b)
 				}))
 				var gotBuf, wantBuf bytes.Buffer
-				got.WriteTo(&gotBuf)
-				test.Want.WriteTo(&wantBuf)
+				_, err := got.WriteTo(&gotBuf)
+				if err != nil {
+					t.Fatalf("failed to write got tokens: %v", err)
+				}
+
+				_, err = test.Want.WriteTo(&wantBuf)
+				if err != nil {
+					t.Fatalf("failed to write Want tokens: %v", err)
+				}
 				t.Errorf(
 					"wrong result\nvalue: %#v\ngot:   %s\nwant:  %s\ndiff:  %s",
 					test.Val, gotBuf.String(), wantBuf.String(), diff,
