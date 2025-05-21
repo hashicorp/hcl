@@ -2,8 +2,6 @@ module github.com/hashicorp/hcl/v2
 
 go 1.23.0
 
-toolchain go1.24.0
-
 require (
 	github.com/agext/levenshtein v1.2.1
 	github.com/apparentlymart/go-textseg/v15 v15.0.0
