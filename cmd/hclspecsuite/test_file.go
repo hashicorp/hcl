@@ -305,17 +305,20 @@ func (r *Runner) decodeRangeFromBody(body hcl.Body) (hcl.Range, hcl.Body, hcl.Di
 		return hcl.Range{}, nil, diags
 	}
 
-	var from, to hcl.Pos
+	var Range hcl.Range
 	for _, block := range rangeBody.Blocks {
 		switch block.Type {
+		// We intentionally omit Filename here, because the test spec doesn't
+		// need to specify that explicitly: we can infer it to be the file
+		// path we pass to hcldec.
 		case "from":
-			from, moreDiags = r.decodePosFromBody(block.Body)
+			Range.Start, moreDiags = r.decodePosFromBody(block.Body)
 			if moreDiags.HasErrors() {
 				diags = append(diags, moreDiags...)
 				return hcl.Range{}, nil, diags
 			}
 		case "to":
-			to, moreDiags = r.decodePosFromBody(block.Body)
+			Range.End, moreDiags = r.decodePosFromBody(block.Body)
 			if moreDiags.HasErrors() {
 				diags = append(diags, moreDiags...)
 				return hcl.Range{}, nil, diags
@@ -325,21 +328,7 @@ func (r *Runner) decodeRangeFromBody(body hcl.Body) (hcl.Range, hcl.Body, hcl.Di
 		}
 	}
 
-	return hcl.Range{
-		// We intentionally omit Filename here, because the test spec doesn't
-		// need to specify that explicitly: we can infer it to be the file
-		// path we pass to hcldec.
-		Start: hcl.Pos{
-			Line:   from.Line,
-			Column: from.Column,
-			Byte:   from.Byte,
-		},
-		End: hcl.Pos{
-			Line:   to.Line,
-			Column: to.Column,
-			Byte:   to.Byte,
-		},
-	}, remain, diags
+	return Range, remain, diags
 }
 
 var testFileSchema = &hcl.BodySchema{
