@@ -4207,10 +4207,14 @@ var _hcltok_eof_trans []int16 = []int16{
 	1513, 1513, 1513, 1513, 1513, 1513, 1513,
 }
 
+//nolint:unused
 const hcltok_start int = 1459
 const hcltok_first_final int = 1459
+
+//nolint:unused
 const hcltok_error int = 0
 
+//nolint:unused
 const hcltok_en_stringTemplate int = 1510
 const hcltok_en_heredocTemplate int = 1524
 const hcltok_en_bareTemplate int = 1535

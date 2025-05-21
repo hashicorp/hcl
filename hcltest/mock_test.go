@@ -13,8 +13,13 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
+//nolint:unused
 var mockBodyIsBody hcl.Body = mockBody{}
+
+//nolint:unused
 var mockExprLiteralIsExpr hcl.Expression = mockExprLiteral{}
+
+//nolint:unused
 var mockExprVariableIsExpr hcl.Expression = mockExprVariable("")
 
 func TestMockBodyPartialContent(t *testing.T) {

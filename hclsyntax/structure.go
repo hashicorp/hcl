@@ -42,6 +42,8 @@ type Body struct {
 }
 
 // Assert that *Body implements hcl.Body
+//
+//nolint:unused
 var assertBodyImplBody hcl.Body = &Body{}
 
 func (b *Body) walkChildNodes(w internalWalkFunc) {
