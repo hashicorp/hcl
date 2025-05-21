@@ -109,8 +109,11 @@ var _hclstrtok_eof_actions []byte = []byte{
 	3,
 }
 
+//nolint:unused
 const hclstrtok_start int = 4
 const hclstrtok_first_final int = 4
+
+//nolint:unused
 const hclstrtok_error int = 0
 
 const hclstrtok_en_quoted int = 10

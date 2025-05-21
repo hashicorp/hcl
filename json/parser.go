@@ -101,6 +101,7 @@ func parseValue(p *peeker) (node, hcl.Diagnostics) {
 	}
 }
 
+//nolint:unused
 func tokenCanStartValue(tok token) bool {
 	switch tok.Type {
 	case tokenBraceO, tokenBrackO, tokenNumber, tokenString, tokenKeyword:
