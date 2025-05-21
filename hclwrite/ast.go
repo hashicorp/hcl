@@ -54,7 +54,6 @@ func (f *File) Bytes() []byte {
 type comments struct {
 	leafNode
 
-	parent *node
 	tokens Tokens
 }
 
@@ -71,8 +70,7 @@ func (c *comments) BuildTokens(to Tokens) Tokens {
 type identifier struct {
 	leafNode
 
-	parent *node
-	token  *Token
+	token *Token
 }
 
 func newIdentifier(token *Token) *identifier {
@@ -92,8 +90,7 @@ func (i *identifier) hasName(name string) bool {
 type number struct {
 	leafNode
 
-	parent *node
-	token  *Token
+	token *Token
 }
 
 func newNumber(token *Token) *number {
@@ -109,7 +106,6 @@ func (n *number) BuildTokens(to Tokens) Tokens {
 type quoted struct {
 	leafNode
 
-	parent *node
 	tokens Tokens
 }
 
