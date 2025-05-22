@@ -692,7 +692,7 @@ func TestGetTypeDefaults(t *testing.T) {
 					"a": cty.StringVal("hello"),
 				},
 			},
-			"This default value is not compatible with the attribute's type constraint: number required.",
+			"This default value is not compatible with the attribute's type constraint: number required, but have bool.",
 		},
 
 		// Too many arguments
