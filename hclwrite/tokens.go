@@ -48,6 +48,7 @@ type Tokens []*Token
 
 func (ts Tokens) Bytes() []byte {
 	buf := &bytes.Buffer{}
+	//nolint:errcheck // FIXME: Propogate errors upward.
 	ts.WriteTo(buf)
 	return buf.Bytes()
 }

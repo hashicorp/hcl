@@ -88,7 +88,7 @@ func (wr *jsonDiagWriter) Flush() error {
 		return err
 	}
 	_, err = wr.w.Write(src)
-	wr.w.Write([]byte{'\n'})
+	_, err = wr.w.Write([]byte{'\n'})
 	return err
 }
 

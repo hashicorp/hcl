@@ -124,7 +124,10 @@ func processFile(fn string, in *os.File) error {
 
 	if *check {
 		_, diags := parser.ParseHCL(inSrc, fn)
-		diagWr.WriteDiagnostics(diags)
+		err = diagWr.WriteDiagnostics(diags)
+		if err != nil {
+			return fmt.Errorf("failed to write diagnostics: %w", err)
+		}
 		if diags.HasErrors() {
 			checkErrs = true
 			return nil

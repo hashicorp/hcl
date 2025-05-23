@@ -89,8 +89,15 @@ func realmain(args []string) error {
 	specContent, specDiags := loadSpecFile(*specFile)
 	diags = append(diags, specDiags...)
 	if specDiags.HasErrors() {
-		diagWr.WriteDiagnostics(diags)
-		flush(diagWr)
+		err := diagWr.WriteDiagnostics(diags)
+		if err != nil {
+			return fmt.Errorf("failed writing diagnostics: %w", err)
+		}
+
+		err = flush(diagWr)
+		if err != nil {
+			return fmt.Errorf("failed flushing diagnostics: %w", err)
+		}
 		os.Exit(2)
 	}
 
@@ -167,8 +174,15 @@ func realmain(args []string) error {
 	}
 
 	if diags.HasErrors() {
-		diagWr.WriteDiagnostics(diags)
-		flush(diagWr)
+		err := diagWr.WriteDiagnostics(diags)
+		if err != nil {
+			return fmt.Errorf("failed writing diagnostics: %w", err)
+		}
+
+		err = flush(diagWr)
+		if err != nil {
+			return fmt.Errorf("failed flushing diagnostics: %w", err)
+		}
 		os.Exit(2)
 	}
 
@@ -192,8 +206,15 @@ func realmain(args []string) error {
 	diags = append(diags, decDiags...)
 
 	if diags.HasErrors() {
-		diagWr.WriteDiagnostics(diags)
-		flush(diagWr)
+		err := diagWr.WriteDiagnostics(diags)
+		if err != nil {
+			return fmt.Errorf("failed writing diagnostics: %w", err)
+		}
+
+		err = flush(diagWr)
+		if err != nil {
+			return fmt.Errorf("failed flushing diagnostics: %w", err)
+		}
 		os.Exit(2)
 	}
 
@@ -224,7 +245,10 @@ func realmain(args []string) error {
 		}
 	}
 
-	fmt.Fprintf(target, "%s\n", out)
+	_, err = fmt.Fprintf(target, "%s\n", out)
+	if err != nil {
+		return fmt.Errorf("failed to write output: %s", err)
+	}
 
 	return nil
 }
@@ -332,7 +356,10 @@ func showVarRefsJSON(vars []hcl.Traversal, ctx *hcl.EvalContext) error {
 		}
 	}
 
-	fmt.Fprintf(target, "%s\n", out)
+	_, err = fmt.Fprintf(target, "%s\n", out)
+	if err != nil {
+		return fmt.Errorf("failed to write output: %s", err)
+	}
 
 	return nil
 }
