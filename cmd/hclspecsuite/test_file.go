@@ -8,10 +8,10 @@ import (
 
 	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-cty/cty/convert"
+	"github.com/zclconf/go-cty/cty/gocty"
 
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/ext/typeexpr"
-	"github.com/hashicorp/hcl/v2/gohcl"
 )
 
 type TestFile struct {
@@ -240,36 +240,92 @@ func (r *Runner) decodeDiagnosticsBlock(block *hcl.Block) ([]*TestFileExpectDiag
 	return ret, diags
 }
 
+func (r *Runner) decodePosFromBody(body hcl.Body) (hcl.Pos, hcl.Diagnostics) {
+	pos := hcl.Pos{}
+	var diags hcl.Diagnostics
+
+	posBody, moreDiags := body.Content(testFilePosSchema)
+	diags = append(diags, moreDiags...)
+
+	if attr, ok := posBody.Attributes["line"]; ok {
+		val, moreDiags := attr.Expr.Value(nil)
+		diags = append(diags, moreDiags...)
+
+		if !moreDiags.HasErrors() {
+			if err := gocty.FromCtyValue(val, &pos.Line); err != nil {
+				diags = diags.Append(&hcl.Diagnostic{
+					Severity: hcl.DiagError,
+					Summary:  "Invalid line number",
+					Detail:   fmt.Sprintf("The line number must be an integer: %s", err),
+					Subject:  posBody.Attributes["line"].Expr.Range().Ptr(),
+				})
+			}
+		}
+	}
+
+	if attr, ok := posBody.Attributes["column"]; ok {
+		val, moreDiags := attr.Expr.Value(nil)
+		diags = append(diags, moreDiags...)
+
+		if !moreDiags.HasErrors() {
+			if err := gocty.FromCtyValue(val, &pos.Column); err != nil {
+				diags = diags.Append(&hcl.Diagnostic{
+					Severity: hcl.DiagError,
+					Summary:  "Invalid column number",
+					Detail:   fmt.Sprintf("The column number must be an integer: %s", err),
+					Subject:  posBody.Attributes["column"].Expr.Range().Ptr(),
+				})
+			}
+		}
+	}
+
+	if attr, ok := posBody.Attributes["byte"]; ok {
+		val, moreDiags := attr.Expr.Value(nil)
+		diags = append(diags, moreDiags...)
+
+		if !moreDiags.HasErrors() {
+			if err := gocty.FromCtyValue(val, &pos.Byte); err != nil {
+				diags = diags.Append(&hcl.Diagnostic{
+					Severity: hcl.DiagError,
+					Summary:  "Invalid byte position",
+					Detail:   fmt.Sprintf("The byte position must be an integer: %s", err),
+					Subject:  posBody.Attributes["byte"].Expr.Range().Ptr(),
+				})
+			}
+		}
+	}
+
+	return pos, diags
+}
+
 func (r *Runner) decodeRangeFromBody(body hcl.Body) (hcl.Range, hcl.Body, hcl.Diagnostics) {
-	type RawPos struct {
-		Line   int `hcl:"line"`
-		Column int `hcl:"column"`
-		Byte   int `hcl:"byte"`
-	}
-	type RawRange struct {
-		From   RawPos   `hcl:"from,block"`
-		To     RawPos   `hcl:"to,block"`
-		Remain hcl.Body `hcl:",remain"`
+	var diags hcl.Diagnostics
+
+	rangeBody, remain, moreDiags := body.PartialContent(testFileRangeSchema)
+
+	diags = append(diags, moreDiags...)
+	if rangeBody == nil {
+		return hcl.Range{}, nil, diags
 	}
 
-	var raw RawRange
-	diags := gohcl.DecodeBody(body, nil, &raw)
-
-	return hcl.Range{
+	var Range hcl.Range
+	for _, block := range rangeBody.Blocks {
+		switch block.Type {
 		// We intentionally omit Filename here, because the test spec doesn't
 		// need to specify that explicitly: we can infer it to be the file
 		// path we pass to hcldec.
-		Start: hcl.Pos{
-			Line:   raw.From.Line,
-			Column: raw.From.Column,
-			Byte:   raw.From.Byte,
-		},
-		End: hcl.Pos{
-			Line:   raw.To.Line,
-			Column: raw.To.Column,
-			Byte:   raw.To.Byte,
-		},
-	}, raw.Remain, diags
+		case "from":
+			Range.Start, moreDiags = r.decodePosFromBody(block.Body)
+			diags = append(diags, moreDiags...)
+		case "to":
+			Range.End, moreDiags = r.decodePosFromBody(block.Body)
+			diags = append(diags, moreDiags...)
+		default:
+			panic(fmt.Sprintf("unsupported block type %q", block.Type))
+		}
+	}
+
+	return Range, remain, diags
 }
 
 var testFileSchema = &hcl.BodySchema{
