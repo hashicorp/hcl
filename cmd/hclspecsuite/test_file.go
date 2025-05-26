@@ -304,7 +304,7 @@ func (r *Runner) decodeRangeFromBody(body hcl.Body) (hcl.Range, hcl.Body, hcl.Di
 	rangeBody, remain, moreDiags := body.PartialContent(testFileRangeSchema)
 
 	diags = append(diags, moreDiags...)
-	if moreDiags.HasErrors() {
+	if rangeBody == nil {
 		return hcl.Range{}, nil, diags
 	}
 
