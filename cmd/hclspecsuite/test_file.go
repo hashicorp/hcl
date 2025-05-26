@@ -247,43 +247,52 @@ func (r *Runner) decodePosFromBody(body hcl.Body) (hcl.Pos, hcl.Diagnostics) {
 	posBody, moreDiags := body.Content(testFilePosSchema)
 	diags = append(diags, moreDiags...)
 
-	val, moreDiags := posBody.Attributes["line"].Expr.Value(nil)
-	diags = append(diags, moreDiags...)
+	if attr, ok := posBody.Attributes["line"]; ok {
+		val, moreDiags := attr.Expr.Value(nil)
+		diags = append(diags, moreDiags...)
 
-	err := gocty.FromCtyValue(val, &pos.Line)
-	if err != nil {
-		diags = diags.Append(&hcl.Diagnostic{
-			Severity: hcl.DiagError,
-			Summary:  "Invalid line number",
-			Detail:   fmt.Sprintf("The line number must be an integer: %s", err),
-			Subject:  posBody.Attributes["line"].Expr.Range().Ptr(),
-		})
+		if !moreDiags.HasErrors() {
+			if err := gocty.FromCtyValue(val, &pos.Line); err != nil {
+				diags = diags.Append(&hcl.Diagnostic{
+					Severity: hcl.DiagError,
+					Summary:  "Invalid line number",
+					Detail:   fmt.Sprintf("The line number must be an integer: %s", err),
+					Subject:  posBody.Attributes["line"].Expr.Range().Ptr(),
+				})
+			}
+		}
 	}
 
-	val, moreDiags = posBody.Attributes["column"].Expr.Value(nil)
-	diags = append(diags, moreDiags...)
+	if attr, ok := posBody.Attributes["column"]; ok {
+		val, moreDiags := attr.Expr.Value(nil)
+		diags = append(diags, moreDiags...)
 
-	err = gocty.FromCtyValue(val, &pos.Column)
-	if err != nil {
-		diags = diags.Append(&hcl.Diagnostic{
-			Severity: hcl.DiagError,
-			Summary:  "Invalid column number",
-			Detail:   fmt.Sprintf("The column number must be an integer: %s", err),
-			Subject:  posBody.Attributes["column"].Expr.Range().Ptr(),
-		})
+		if !moreDiags.HasErrors() {
+			if err := gocty.FromCtyValue(val, &pos.Column); err != nil {
+				diags = diags.Append(&hcl.Diagnostic{
+					Severity: hcl.DiagError,
+					Summary:  "Invalid column number",
+					Detail:   fmt.Sprintf("The column number must be an integer: %s", err),
+					Subject:  posBody.Attributes["column"].Expr.Range().Ptr(),
+				})
+			}
+		}
 	}
 
-	val, moreDiags = posBody.Attributes["byte"].Expr.Value(nil)
-	diags = append(diags, moreDiags...)
+	if attr, ok := posBody.Attributes["byte"]; ok {
+		val, moreDiags := attr.Expr.Value(nil)
+		diags = append(diags, moreDiags...)
 
-	err = gocty.FromCtyValue(val, &pos.Byte)
-	if err != nil {
-		diags = diags.Append(&hcl.Diagnostic{
-			Severity: hcl.DiagError,
-			Summary:  "Invalid byte position",
-			Detail:   fmt.Sprintf("The byte position must be an integer: %s", err),
-			Subject:  posBody.Attributes["byte"].Expr.Range().Ptr(),
-		})
+		if !moreDiags.HasErrors() {
+			if err := gocty.FromCtyValue(val, &pos.Byte); err != nil {
+				diags = diags.Append(&hcl.Diagnostic{
+					Severity: hcl.DiagError,
+					Summary:  "Invalid byte position",
+					Detail:   fmt.Sprintf("The byte position must be an integer: %s", err),
+					Subject:  posBody.Attributes["byte"].Expr.Range().Ptr(),
+				})
+			}
+		}
 	}
 
 	return pos, diags
