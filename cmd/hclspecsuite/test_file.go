@@ -245,14 +245,11 @@ func (r *Runner) decodePosFromBody(body hcl.Body) (hcl.Pos, hcl.Diagnostics) {
 	var diags hcl.Diagnostics
 
 	posBody, moreDiags := body.Content(testFilePosSchema)
-	if moreDiags.HasErrors() {
-		diags = append(diags, moreDiags...)
-	}
+	diags = append(diags, moreDiags...)
 
 	val, moreDiags := posBody.Attributes["line"].Expr.Value(nil)
-	if moreDiags.HasErrors() {
-		diags = append(diags, moreDiags...)
-	}
+	diags = append(diags, moreDiags...)
+
 	err := gocty.FromCtyValue(val, &pos.Line)
 	if err != nil {
 		diags = diags.Append(&hcl.Diagnostic{
@@ -264,9 +261,7 @@ func (r *Runner) decodePosFromBody(body hcl.Body) (hcl.Pos, hcl.Diagnostics) {
 	}
 
 	val, moreDiags = posBody.Attributes["column"].Expr.Value(nil)
-	if moreDiags.HasErrors() {
-		diags = append(diags, moreDiags...)
-	}
+	diags = append(diags, moreDiags...)
 
 	err = gocty.FromCtyValue(val, &pos.Column)
 	if err != nil {
@@ -279,9 +274,8 @@ func (r *Runner) decodePosFromBody(body hcl.Body) (hcl.Pos, hcl.Diagnostics) {
 	}
 
 	val, moreDiags = posBody.Attributes["byte"].Expr.Value(nil)
-	if moreDiags.HasErrors() {
-		diags = append(diags, moreDiags...)
-	}
+	diags = append(diags, moreDiags...)
+
 	err = gocty.FromCtyValue(val, &pos.Byte)
 	if err != nil {
 		diags = diags.Append(&hcl.Diagnostic{
@@ -300,8 +294,8 @@ func (r *Runner) decodeRangeFromBody(body hcl.Body) (hcl.Range, hcl.Body, hcl.Di
 
 	rangeBody, remain, moreDiags := body.PartialContent(testFileRangeSchema)
 
+	diags = append(diags, moreDiags...)
 	if moreDiags.HasErrors() {
-		diags = append(diags, moreDiags...)
 		return hcl.Range{}, nil, diags
 	}
 
@@ -313,16 +307,10 @@ func (r *Runner) decodeRangeFromBody(body hcl.Body) (hcl.Range, hcl.Body, hcl.Di
 		// path we pass to hcldec.
 		case "from":
 			Range.Start, moreDiags = r.decodePosFromBody(block.Body)
-			if moreDiags.HasErrors() {
-				diags = append(diags, moreDiags...)
-				return hcl.Range{}, nil, diags
-			}
+			diags = append(diags, moreDiags...)
 		case "to":
 			Range.End, moreDiags = r.decodePosFromBody(block.Body)
-			if moreDiags.HasErrors() {
-				diags = append(diags, moreDiags...)
-				return hcl.Range{}, nil, diags
-			}
+			diags = append(diags, moreDiags...)
 		default:
 			panic(fmt.Sprintf("unsupported block type %q", block.Type))
 		}
