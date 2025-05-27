@@ -42,6 +42,7 @@ func Format(src []byte) []byte {
 	tokens := lexConfig(src)
 	format(tokens)
 	buf := &bytes.Buffer{}
+	//nolint:errcheck // FIXME: Propogate errors upward.
 	tokens.WriteTo(buf)
 	return buf.Bytes()
 }
