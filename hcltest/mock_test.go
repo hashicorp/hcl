@@ -13,9 +13,10 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
-var mockBodyIsBody hcl.Body = mockBody{}
-var mockExprLiteralIsExpr hcl.Expression = mockExprLiteral{}
-var mockExprVariableIsExpr hcl.Expression = mockExprVariable("")
+// Assert mocks are compatible with the interfaces they implement.
+var _ hcl.Body = mockBody{}
+var _ hcl.Expression = mockExprLiteral{}
+var _ hcl.Expression = mockExprVariable("")
 
 func TestMockBodyPartialContent(t *testing.T) {
 	tests := map[string]struct {

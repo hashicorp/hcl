@@ -172,7 +172,10 @@ func scanStringLit(data []byte, quoted bool) [][]byte {
 			_lower := int(_keys)
 			var _mid int
 			_upper := int(_keys + _klen - 1)
-			for _upper >= _lower {
+			for {
+				if _upper < _lower {
+					break
+				}
 
 				_mid = _lower + ((_upper - _lower) >> 1)
 				switch {
@@ -194,7 +197,10 @@ func scanStringLit(data []byte, quoted bool) [][]byte {
 			_lower := int(_keys)
 			var _mid int
 			_upper := int(_keys + (_klen << 1) - 2)
-			for _upper >= _lower {
+			for {
+				if _upper < _lower {
+					break
+				}
 
 				_mid = _lower + (((_upper - _lower) >> 1) & ^1)
 				switch {
@@ -290,7 +296,7 @@ func scanStringLit(data []byte, quoted bool) [][]byte {
 	// be impossible (the scanner matches all bytes _somehow_) but we'll
 	// tolerate it and let the caller deal with it.
 	if cs < hclstrtok_first_final {
-		ret = append(ret, data[p:])
+		ret = append(ret, data[p:len(data)])
 	}
 
 	return ret
