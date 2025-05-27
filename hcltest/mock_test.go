@@ -13,14 +13,9 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
-//nolint:unused
-var mockBodyIsBody hcl.Body = mockBody{}
-
-//nolint:unused
-var mockExprLiteralIsExpr hcl.Expression = mockExprLiteral{}
-
-//nolint:unused
-var mockExprVariableIsExpr hcl.Expression = mockExprVariable("")
+var _ hcl.Body = mockBody{}
+var _ hcl.Expression = mockExprLiteral{}
+var _ hcl.Expression = mockExprVariable("")
 
 func TestMockBodyPartialContent(t *testing.T) {
 	tests := map[string]struct {

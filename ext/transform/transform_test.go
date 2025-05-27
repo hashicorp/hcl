@@ -14,9 +14,7 @@ import (
 )
 
 // Assert that deepWrapper implements Body
-//
-//nolint:unused
-var deepWrapperIsBody hcl.Body = deepWrapper{}
+var _ hcl.Body = deepWrapper{}
 
 func TestDeep(t *testing.T) {
 
