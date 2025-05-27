@@ -13,6 +13,7 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
+// Assert mocks are compatible with the interfaces they implement.
 var _ hcl.Body = mockBody{}
 var _ hcl.Expression = mockExprLiteral{}
 var _ hcl.Expression = mockExprVariable("")
