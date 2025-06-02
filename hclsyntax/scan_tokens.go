@@ -4323,7 +4323,10 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 			_lower := int(_keys)
 			var _mid int
 			_upper := int(_keys + _klen - 1)
-			for _upper >= _lower {
+			for {
+				if _upper < _lower {
+					break
+				}
 
 				_mid = _lower + ((_upper - _lower) >> 1)
 				switch {
@@ -4345,7 +4348,11 @@ func scanTokens(data []byte, filename string, start hcl.Pos, mode scanMode) []To
 			_lower := int(_keys)
 			var _mid int
 			_upper := int(_keys + (_klen << 1) - 2)
-			for _upper >= _lower {
+			for {
+				if _upper < _lower {
+					break
+				}
+
 				_mid = _lower + (((_upper - _lower) >> 1) & ^1)
 				switch {
 				case data[p] < _hcltok_trans_keys[_mid]:
