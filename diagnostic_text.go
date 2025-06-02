@@ -231,7 +231,9 @@ func (w *diagnosticTextWriter) WriteDiagnostic(diag *Diagnostic) error {
 			detail = wordwrap.WrapString(detail, w.width)
 		}
 		_, err = fmt.Fprintf(w.wr, "%s\n\n", detail)
-		return fmt.Errorf("write failed: %w", err)
+		if err != nil {
+			return fmt.Errorf("write failed: %w", err)
+		}
 	}
 
 	return nil
