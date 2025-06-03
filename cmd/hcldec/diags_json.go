@@ -5,6 +5,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 
 	"github.com/hashicorp/hcl/v2"
@@ -88,6 +89,9 @@ func (wr *jsonDiagWriter) Flush() error {
 		return err
 	}
 	_, err = wr.w.Write(src)
+	if err != nil {
+		return fmt.Errorf("failed to write diagnostics: %w", err)
+	}
 	_, err = wr.w.Write([]byte{'\n'})
 	return err
 }
