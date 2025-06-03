@@ -90,7 +90,7 @@ func (wr *jsonDiagWriter) Flush() error {
 	}
 	_, err = wr.w.Write(src)
 	if err != nil {
-		return fmt.Errorf("failed to write diagnostics: %w", err)
+		return err
 	}
 	_, err = wr.w.Write([]byte{'\n'})
 	return err
