@@ -47,6 +47,7 @@ func (f *File) WriteTo(wr io.Writer) (int64, error) {
 // the AST API, these will be reflected in the result.
 func (f *File) Bytes() []byte {
 	buf := &bytes.Buffer{}
+	//nolint:errcheck // FIXME: Propogate errors upward.
 	f.WriteTo(buf)
 	return buf.Bytes()
 }
