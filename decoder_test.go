@@ -35,6 +35,13 @@ func TestDecode_interface(t *testing.T) {
 			},
 		},
 		{
+			"basic_duplicates.hcl",
+			false,
+			map[string]interface{}{
+				"foo": "${file(\"bing/bong.txt\")}",
+			},
+		},
+		{
 			"empty.hcl",
 			false,
 			map[string]interface{}{
@@ -438,6 +445,49 @@ func TestDecode_interface(t *testing.T) {
 
 			var v interface{}
 			err = Unmarshal(d, &v)
+			if (err != nil) != tc.Err {
+				t.Fatalf("Input: %s\n\nError: %s", tc.File, err)
+			}
+
+			if !reflect.DeepEqual(v, tc.Out) {
+				t.Fatalf("Input: %s. Actual, Expected.\n\n%#v\n\n%#v", tc.File, out, tc.Out)
+			}
+		})
+	}
+}
+
+func TestDecodeErrorOnDuplicates_interface(t *testing.T) {
+	cases := []struct {
+		File string
+		Err  bool
+		Out  interface{}
+	}{
+		{
+			"basic_duplicates.hcl",
+			true,
+			nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.File, func(t *testing.T) {
+			d, err := ioutil.ReadFile(filepath.Join(fixtureDir, tc.File))
+			if err != nil {
+				t.Fatalf("err: %s", err)
+			}
+
+			var out interface{}
+			err = DecodeErrorOnDuplicates(&out, string(d))
+			if (err != nil) != tc.Err {
+				t.Fatalf("Input: %s\n\nError: %s", tc.File, err)
+			}
+
+			if !reflect.DeepEqual(out, tc.Out) {
+				t.Fatalf("Input: %s. Actual, Expected.\n\n%#v\n\n%#v", tc.File, out, tc.Out)
+			}
+
+			var v interface{}
+			err = UnmarshalErrorOnDuplicates(d, &v)
 			if (err != nil) != tc.Err {
 				t.Fatalf("Input: %s\n\nError: %s", tc.File, err)
 			}

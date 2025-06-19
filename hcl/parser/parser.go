@@ -27,22 +27,35 @@ type Parser struct {
 	enableTrace bool
 	indent      int
 	n           int // buffer size (max = 1)
+
+	errorOnDuplicateKeys bool
 }
 
-func newParser(src []byte) *Parser {
+func newParser(src []byte, errorOnDuplicateKeys bool) *Parser {
 	return &Parser{
-		sc: scanner.New(src),
+		sc:                   scanner.New(src),
+		errorOnDuplicateKeys: errorOnDuplicateKeys,
 	}
 }
 
 // Parse returns the fully parsed source and returns the abstract syntax tree.
 func Parse(src []byte) (*ast.File, error) {
+	return parse(src, true)
+}
+
+// Parse returns the fully parsed source and returns the abstract syntax tree.
+func ParseDontErrorOnDuplicateKeys(src []byte) (*ast.File, error) {
+	return parse(src, false)
+}
+
+// Parse returns the fully parsed source and returns the abstract syntax tree.
+func parse(src []byte, errorOnDuplicateKeys bool) (*ast.File, error) {
 	// normalize all line endings
 	// since the scanner and output only work with "\n" line endings, we may
 	// end up with dangling "\r" characters in the parsed data.
 	src = bytes.Replace(src, []byte("\r\n"), []byte("\n"), -1)
 
-	p := newParser(src)
+	p := newParser(src, errorOnDuplicateKeys)
 	return p.Parse()
 }
 
@@ -65,6 +78,7 @@ func (p *Parser) Parse() (*ast.File, error) {
 	}
 
 	f.Comments = p.comments
+
 	return f, nil
 }
 
