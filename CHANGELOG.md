@@ -7,6 +7,10 @@
 * Add support for decoding block and attribute source ranges when using `gohcl`. ([#703](https://github.com/hashicorp/hcl/pull/703))
 * hclsyntax: Detect and reject invalid nested splat result. ([#724](https://github.com/hashicorp/hcl/pull/724))
 
+### Bugs Fixed
+
+* Correct handling of unknown objects in Index function. ([#763](https://github.com/hashicorp/hcl/pull/763))
+
 ## v2.23.0 (November 15, 2024)
 
 ### Bugs Fixed
