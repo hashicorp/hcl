@@ -476,6 +476,21 @@ func TestIndex(t *testing.T) {
 			want: cty.DynamicVal,
 			err:  "Invalid index",
 		},
+		"unknown object": {
+			coll: cty.UnknownVal(cty.Object(map[string]cty.Type{
+				"foo": cty.String,
+			})),
+			key:  cty.StringVal("foo"),
+			want: cty.UnknownVal(cty.String),
+		},
+		"unknown object, invalid index": {
+			coll: cty.UnknownVal(cty.Object(map[string]cty.Type{
+				"foo": cty.String,
+			})),
+			key:  cty.NumberIntVal(0),
+			want: cty.DynamicVal,
+			err:  "Invalid index",
+		},
 	}
 
 	for name, tc := range tests {

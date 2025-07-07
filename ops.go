@@ -195,9 +195,6 @@ func Index(collection, key cty.Value, srcRange *Range) (cty.Value, Diagnostics) 
 				},
 			}
 		}
-		if !collection.IsKnown() {
-			return cty.DynamicVal.WithSameMarks(collection), nil
-		}
 		if !key.IsKnown() {
 			return cty.DynamicVal.WithSameMarks(collection), nil
 		}
@@ -223,6 +220,10 @@ func Index(collection, key cty.Value, srcRange *Range) (cty.Value, Diagnostics) 
 					Subject:  srcRange,
 				},
 			}
+		}
+
+		if !collection.IsKnown() {
+			return cty.UnknownVal(ty.AttributeType(attrName)).WithSameMarks(collection), nil
 		}
 
 		return collection.GetAttr(attrName), nil
