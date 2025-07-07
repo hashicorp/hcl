@@ -248,7 +248,21 @@ func (e *TemplateWrapExpr) walkChildNodes(w internalWalkFunc) {
 }
 
 func (e *TemplateWrapExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
-	return e.Wrapped.Value(ctx)
+	val, diags := e.Wrapped.Value(ctx)
+
+	// If the single interpolation result is null, we need to return the same
+	// error as we would for a TemplateExpr with a null part.
+	if val.IsNull() {
+		diags = append(diags, &hcl.Diagnostic{
+			Severity:    hcl.DiagError,
+			Summary:     "Invalid template interpolation value",
+			Detail:      "The expression result is null. Cannot include a null value in a string template.",
+			Subject:     e.Range().Ptr(),
+			Expression:  e.Wrapped,
+			EvalContext: ctx,
+		})
+	}
+	return val, diags
 }
 
 func (e *TemplateWrapExpr) Range() hcl.Range {
