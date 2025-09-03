@@ -96,6 +96,43 @@ func (b *Block) SetLabels(labels []string) {
 	b.labelsObj().Replace(labels)
 }
 
+// Comments returns the comments that annotate the block.
+//
+// The return value is an empty slice if the block has no lead comments, or a
+// slice of strings representing the raw text of the comments, including
+// leading and trailing comment markers.
+func (b *Block) Comments() []string {
+	tokens := b.leadComments.content.(*comments).tokens
+	blockComments := make([]string, len(tokens))
+	for i := range tokens {
+		blockComments[i] = string(tokens[i].Bytes)
+	}
+	return blockComments
+}
+
+// SetComments replaces the comments that annotate the block.
+//
+// Each item should contain any leading and trailing markers, i.e. single-
+// line comments should start with either “#” or “//” and end with a
+// newline character, and block comments should start with “/*” and end with
+// “*/”.
+func (b *Block) SetComments(blockComments []string) {
+	c := b.leadComments.content.(*comments)
+	c.tokens = make(Tokens, len(blockComments))
+
+	for i := range blockComments {
+		c.tokens[i] = &Token{
+			Type:  hclsyntax.TokenComment,
+			Bytes: []byte(blockComments[i]),
+		}
+	}
+}
+
+// Single-comment alternative to [SetComments]
+func (b *Block) SetComment(blockComment string) {
+	b.SetComments([]string{blockComment})
+}
+
 // labelsObj returns the internal node content representation of the block
 // labels. This is not part of the public API because we're intentionally
 // exposing only a limited API to get/set labels on the block itself in a
