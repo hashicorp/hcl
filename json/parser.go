@@ -235,7 +235,7 @@ Token:
 			recover(p.Read())
 			return nil, diags.Append(&hcl.Diagnostic{
 				Severity: hcl.DiagError,
-				Summary:  "Missing attribute seperator comma",
+				Summary:  "Missing attribute separator comma",
 				Detail:   "A comma must appear between each property definition in an object.",
 				Subject:  p.Peek().Range.Ptr(),
 			})
@@ -338,7 +338,7 @@ Token:
 			recover(p.Read())
 			return nil, diags.Append(&hcl.Diagnostic{
 				Severity: hcl.DiagError,
-				Summary:  "Missing attribute seperator comma",
+				Summary:  "Missing attribute separator comma",
 				Detail:   "A comma must appear between each value in an array.",
 				Subject:  p.Peek().Range.Ptr(),
 			})
