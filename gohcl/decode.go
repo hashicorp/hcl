@@ -392,14 +392,6 @@ func (d *Decoder) decodeBlockToValue(block *hcl.Block, ctx *hcl.EvalContext, v r
 
 	}
 
-	if blockTags.TypeRange != nil {
-		v.Field(*blockTags.TypeRange).Set(reflect.ValueOf(block.TypeRange))
-	}
-
-	if blockTags.DefRange != nil {
-		v.Field(*blockTags.DefRange).Set(reflect.ValueOf(block.DefRange))
-	}
-
 	return diags
 }
 
