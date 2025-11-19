@@ -8,7 +8,6 @@
 // to do its work.
 
 //go:build ignore
-// +build ignore
 
 package main
 
