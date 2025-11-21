@@ -1,4 +1,4 @@
-// Copyright (c) HashiCorp, Inc.
+// Copyright IBM Corp. 2014, 2025
 // SPDX-License-Identifier: MPL-2.0
 
 // This is a 'go generate'-oriented program for producing the "Variables"
@@ -86,7 +86,7 @@ func main() {
 
 }
 
-const outputPreamble = `// Copyright (c) HashiCorp, Inc.
+const outputPreamble = `// Copyright IBM Corp. 2014, 2025
 // SPDX-License-Identifier: MPL-2.0
 
 package hclsyntax
