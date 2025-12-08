@@ -807,7 +807,7 @@ func TestTokenGenerateConsistency(t *testing.T) {
 
 	// This test verifies that different ways of generating equivalent token
 	// sequences all generate identical tokens, to help us keep them all in
-	// sync under future maintanence.
+	// sync under future maintenance.
 
 	t.Run("tuple constructor", func(t *testing.T) {
 		tests := map[string]struct {
