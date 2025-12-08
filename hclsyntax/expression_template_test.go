@@ -403,6 +403,26 @@ trim`,
 			cty.UnknownVal(cty.String).Mark("sensitive").Refine().NotNull().StringPrefixFull("test_").NewValue(),
 			0,
 		},
+		{ // template with a single wrapped expr that is null
+			`${hello}`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"hello": cty.NullVal(cty.String),
+				},
+			},
+			cty.NullVal(cty.String),
+			1, // error about null value
+		},
+		{
+			`foo ${hello}`,
+			&hcl.EvalContext{
+				Variables: map[string]cty.Value{
+					"hello": cty.NullVal(cty.String),
+				},
+			},
+			cty.StringVal("foo "),
+			1, // error about null value
+		},
 	}
 
 	for _, test := range tests {
