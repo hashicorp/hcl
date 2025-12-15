@@ -157,6 +157,21 @@ Did you mean "pizzetta"?
 								Name: "boz",
 							},
 						},
+						{
+							TraverseRoot{
+								Name: "marked",
+							},
+						},
+						{
+							TraverseRoot{
+								Name: "null",
+							},
+						},
+						{
+							TraverseRoot{
+								Name: "unknown",
+							},
+						},
 					},
 				},
 				EvalContext: &EvalContext{
@@ -169,8 +184,11 @@ Did you mean "pizzetta"?
 						"bar": cty.ObjectVal(map[string]cty.Value{
 							"baz": cty.ListValEmpty(cty.String),
 						}),
-						"boz":    cty.NumberIntVal(5),
-						"unused": cty.True,
+						"boz":     cty.NumberIntVal(5),
+						"marked":  cty.StringVal("marked").Mark("x"),
+						"null":    cty.NullVal(cty.String),
+						"unknown": cty.UnknownVal(cty.String),
+						"unused":  cty.True,
 					},
 				},
 			},
@@ -181,7 +199,8 @@ Did you mean "pizzetta"?
 
 with bar.baz as empty list of string,
      boz as 5,
-     foo as "foo value".
+     foo as "foo value",
+     null set to null.
 
 This diagnostic includes an expression
 and an evalcontext.
