@@ -144,6 +144,10 @@ func (e mockExprLiteral) Variables() []hcl.Traversal {
 	return nil
 }
 
+func (e mockExprLiteral) Functions() []hcl.Traversal {
+	return nil
+}
+
 func (e mockExprLiteral) Range() hcl.Range {
 	return hcl.Range{
 		Filename: "MockExprLiteral",
@@ -225,6 +229,10 @@ func (e mockExprVariable) Variables() []hcl.Traversal {
 	}
 }
 
+func (e mockExprVariable) Functions() []hcl.Traversal {
+	return nil
+}
+
 func (e mockExprVariable) Range() hcl.Range {
 	return hcl.Range{
 		Filename: "MockExprVariable",
@@ -278,6 +286,10 @@ func (e mockExprTraversal) Variables() []hcl.Traversal {
 	return []hcl.Traversal{e.Traversal}
 }
 
+func (e mockExprTraversal) Functions() []hcl.Traversal {
+	return nil
+}
+
 func (e mockExprTraversal) Range() hcl.Range {
 	return e.Traversal.SourceRange()
 }
@@ -321,6 +333,16 @@ func (e mockExprList) Variables() []hcl.Traversal {
 	var traversals []hcl.Traversal
 	for _, expr := range e.Exprs {
 		traversals = append(traversals, expr.Variables()...)
+	}
+	return traversals
+}
+
+func (e mockExprList) Functions() []hcl.Traversal {
+	var traversals []hcl.Traversal
+	for _, expr := range e.Exprs {
+		if fexpr, ok := expr.(hcl.ExpressionWithFunctions); ok {
+			traversals = append(traversals, fexpr.Functions()...)
+		}
 	}
 	return traversals
 }
