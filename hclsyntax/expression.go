@@ -95,7 +95,7 @@ func (e *LiteralValueExpr) AsTraversal() hcl.Traversal {
 	if e.Val.IsNull() {
 		// In practice the parser only generates null values of the dynamic
 		// pseudo-type for literals, so we can safely assume that any null
-		// was orignally the keyword "null".
+		// was originally the keyword "null".
 		return hcl.Traversal{
 			hcl.TraverseRoot{
 				Name:     "null",
