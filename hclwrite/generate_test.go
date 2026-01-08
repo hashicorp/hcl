@@ -515,6 +515,7 @@ func TestTokensForTraversal(t *testing.T) {
 				hcl.TraverseRoot{Name: "root"},
 				hcl.TraverseAttr{Name: "attr"},
 				hcl.TraverseIndex{Key: cty.StringVal("index")},
+				hcl.TraverseSplat{},
 			},
 			Tokens{
 				{Type: hclsyntax.TokenIdent, Bytes: []byte("root")},
@@ -524,6 +525,9 @@ func TestTokensForTraversal(t *testing.T) {
 				{Type: hclsyntax.TokenOQuote, Bytes: []byte(`"`)},
 				{Type: hclsyntax.TokenQuotedLit, Bytes: []byte("index")},
 				{Type: hclsyntax.TokenCQuote, Bytes: []byte(`"`)},
+				{Type: hclsyntax.TokenCBrack, Bytes: []byte{']'}},
+				{Type: hclsyntax.TokenOBrack, Bytes: []byte{'['}},
+				{Type: hclsyntax.TokenStar, Bytes: []byte("*")},
 				{Type: hclsyntax.TokenCBrack, Bytes: []byte{']'}},
 			},
 		},

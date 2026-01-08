@@ -283,7 +283,6 @@ func (tn TraverseIndex) SourceRange() Range {
 // TraverseSplat applies the splat operation to its initial value.
 type TraverseSplat struct {
 	isTraverser
-	Each     Traversal
 	SrcRange Range
 }
 
