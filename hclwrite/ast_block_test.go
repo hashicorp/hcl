@@ -487,3 +487,182 @@ func TestBlockSetLabels(t *testing.T) {
 		})
 	}
 }
+
+func TestBlockComments(t *testing.T) {
+	tests := []struct {
+		src  string
+		want []string
+	}{
+		{
+			`
+block {
+}
+`,
+			[]string{},
+		},
+		{
+			`
+# Comment
+block {
+}
+`,
+			[]string{"# Comment\n"},
+		},
+		{
+			`
+# First line
+# Second line
+block {
+}
+`,
+			[]string{"# First line\n", "# Second line\n"},
+		},
+		{
+			`
+/* Comment */ block {
+}
+`,
+			[]string{"/* Comment */"},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%s", strings.Join(test.want, " ")), func(t *testing.T) {
+			f, diags := ParseConfig([]byte(test.src), "", hcl.Pos{Line: 1, Column: 1})
+			if len(diags) != 0 {
+				for _, diag := range diags {
+					t.Logf("- %s", diag.Error())
+				}
+				t.Fatalf("unexpected diagnostics")
+			}
+
+			block := f.Body().Blocks()[0]
+			got := block.Comments()
+			if !reflect.DeepEqual(got, test.want) {
+				t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.want)
+			}
+		})
+	}
+}
+
+func TestBlockSetComments(t *testing.T) {
+	tests := []struct {
+		src           string
+		typeName      string
+		blockComments []string
+		want          Tokens
+	}{
+		{
+			`block {}`,
+			"block",
+			[]string{"# Comment\n"},
+			Tokens{
+				{
+					Type:         hclsyntax.TokenComment,
+					Bytes:        []byte("# Comment\n"),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte(`block`),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenOBrace,
+					Bytes:        []byte{'{'},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenCBrace,
+					Bytes:        []byte{'}'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEOF,
+					Bytes:        []byte{},
+					SpacesBefore: 0,
+				},
+			},
+		},
+		{
+			"# Comment\nblock {}",
+			"block",
+			nil,
+			Tokens{
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte(`block`),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenOBrace,
+					Bytes:        []byte{'{'},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenCBrace,
+					Bytes:        []byte{'}'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEOF,
+					Bytes:        []byte{},
+					SpacesBefore: 0,
+				},
+			},
+		},
+		{
+			"# Old\nblock {}",
+			"block",
+			[]string{"# New\n"},
+			Tokens{
+				{
+					Type:         hclsyntax.TokenComment,
+					Bytes:        []byte("# New\n"),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte(`block`),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenOBrace,
+					Bytes:        []byte{'{'},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenCBrace,
+					Bytes:        []byte{'}'},
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEOF,
+					Bytes:        []byte{},
+					SpacesBefore: 0,
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%s %s in %s", test.typeName, test.blockComments, test.src), func(t *testing.T) {
+			f, diags := ParseConfig([]byte(test.src), "", hcl.Pos{Line: 1, Column: 1})
+			if len(diags) != 0 {
+				for _, diag := range diags {
+					t.Logf("- %s", diag.Error())
+				}
+				t.Fatalf("unexpected diagnostics")
+			}
+
+			b := f.Body().FirstMatchingBlock(test.typeName, nil)
+			b.SetComments(test.blockComments)
+			got := f.BuildTokens(nil)
+			format(got)
+			if !reflect.DeepEqual(got, test.want) {
+				diff := cmp.Diff(test.want, got)
+				t.Errorf("wrong result\ngot:  %s\nwant: %s\ndiff:\n%s", spew.Sdump(got), spew.Sdump(test.want), diff)
+			}
+		})
+	}
+}
