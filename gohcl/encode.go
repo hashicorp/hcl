@@ -148,13 +148,26 @@ func populateBody(rv reflect.Value, ty reflect.Type, tags *fieldTags, dst *hclwr
 		} else { // must be a block, then
 			elemTy := fieldTy
 			isSeq := false
-			if elemTy.Kind() == reflect.Slice || elemTy.Kind() == reflect.Array {
+
+			switch elemTy.Kind() {
+			case reflect.Slice, reflect.Array:
 				isSeq = true
 				elemTy = elemTy.Elem()
-			}
 
-			if bodyType.AssignableTo(elemTy) || attrsType.AssignableTo(elemTy) {
-				continue // ignore undecoded fields
+				if bodyType.AssignableTo(elemTy) || attrsType.AssignableTo(elemTy) {
+					// allow every value in the slice/array to be checked separately in case
+					// the field has type `[]interface{}` or `[n]interface{}`
+					if elemTy.Kind() != reflect.Interface {
+						continue
+					}
+				}
+			default:
+				if bodyType.AssignableTo(elemTy) || attrsType.AssignableTo(elemTy) {
+					// allow struct types to be passed as an interface{}
+					if !(elemTy.Kind() == reflect.Interface && fieldVal.Elem().Kind() == reflect.Struct) {
+						continue // ignore undecoded fields
+					}
+				}
 			}
 			prevWasBlock = false
 
