@@ -256,16 +256,27 @@ func decodeBodyToMap(body hcl.Body, ctx *hcl.EvalContext, v reflect.Value) hcl.D
 	mv := reflect.MakeMap(v.Type())
 
 	for k, attr := range attrs {
+		key := reflect.ValueOf(k)
+		var value reflect.Value
 		switch {
 		case attrType.AssignableTo(v.Type().Elem()):
-			mv.SetMapIndex(reflect.ValueOf(k), reflect.ValueOf(attr))
+			value = reflect.ValueOf(attr)
 		case exprType.AssignableTo(v.Type().Elem()):
-			mv.SetMapIndex(reflect.ValueOf(k), reflect.ValueOf(attr.Expr))
+			value = reflect.ValueOf(attr.Expr)
 		default:
 			ev := reflect.New(v.Type().Elem())
 			diags = append(diags, DecodeExpression(attr.Expr, ctx, ev.Interface())...)
-			mv.SetMapIndex(reflect.ValueOf(k), ev.Elem())
+			value = ev.Elem()
 		}
+		if mv.MapIndex(key).IsValid() {
+			diags = append(diags, &hcl.Diagnostic{
+				Severity: hcl.DiagWarning,
+				Summary:  "Duplicate map key",
+				Detail:   fmt.Sprintf("Key '%s' was defined twice in this map.", key),
+				// Subject:  ???
+			})
+		}
+		mv.SetMapIndex(key, value)
 	}
 
 	v.Set(mv)
