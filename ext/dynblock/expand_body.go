@@ -264,7 +264,9 @@ func (b *expandBody) JustAttributes() (hcl.Attributes, hcl.Diagnostics) {
 	// blocks aren't allowed in JustAttributes mode and this body can
 	// only produce blocks, so we'll just pass straight through to our
 	// underlying body here.
-	return b.original.JustAttributes()
+	attrs, diags := b.original.JustAttributes()
+	attrs = b.prepareAttributes(attrs)
+	return attrs, diags
 }
 
 func (b *expandBody) MissingItemRange() hcl.Range {
