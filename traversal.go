@@ -20,6 +20,13 @@ import (
 //
 // A traversal can be absolute (its first value is a symbol name) or relative
 // (starts from an existing value).
+//
+// This type is also sometimes used to represent "traversal patterns", which
+// contain wildcard steps represented as [TraverseSplat] values. Traversal
+// patterns cannot be evaluated but can be used for static analysis. Traversal
+// patterns are produced only by specialized functions that are documented as
+// doing so, so callers of functions not so documented can assume that the
+// result is never a traversal pattern.
 type Traversal []Traverser
 
 // TraversalJoin appends a relative traversal to an absolute traversal to
@@ -132,6 +139,24 @@ func (t Traversal) IsRelative() bool {
 	return true
 }
 
+// IsPattern returns true if the reciever is a traversal pattern rather than
+// a concrete traversal.
+//
+// In other words, this returns true if there are any [TraverseSplat] items in
+// the traversal, representing a placeholder for an arbitrary index that isn't
+// yet chosen.
+//
+// A traversal pattern is only useful for static analysis, and cannot be
+// evaluated to produce a value.
+func (t Traversal) IsPattern() bool {
+	for _, step := range t {
+		if _, ok := step.(TraverseSplat); ok {
+			return true
+		}
+	}
+	return false
+}
+
 // SimpleSplit returns a TraversalSplit where the name lookup is the absolute
 // part and the remainder is the relative part. Supported only for
 // absolute traversals, and will panic if applied to a relative traversal.
@@ -240,7 +265,7 @@ type TraverseRoot struct {
 	SrcRange Range
 }
 
-// TraversalStep on a TraverseName immediately panics, because absolute
+// TraversalStep on a TraverseRoot immediately panics, because absolute
 // traversals cannot be directly traversed.
 func (tn TraverseRoot) TraversalStep(cty.Value) (cty.Value, Diagnostics) {
 	panic("Cannot traverse an absolute traversal")
@@ -280,15 +305,39 @@ func (tn TraverseIndex) SourceRange() Range {
 	return tn.SrcRange
 }
 
-// TraverseSplat applies the splat operation to its initial value.
+// TraverseSplat acts as a placeholder for an arbitrary index in a traversal
+// pattern.
+//
+// Any [hcl.Traversal] containing at least one step of this type represents a
+// traversal pattern rather than a concrete traversal, and so it cannot be
+// evaluated but it can be used for static analysis.
+//
+// This type has a somewhat-confusing name because it originated as a leftover
+// mistake from an unreleased earlier version of HCL, which was retroactively
+// adopted to represent a "wildcard" in a traversal pattern just because in
+// the HCL native syntax the wildcard syntax is based on the splat expression
+// syntax.
 type TraverseSplat struct {
 	isTraverser
+	// Each is a historical mistake that is no longer used. The subsequent
+	// items in a traversal pattern are instead just flattened into the
+	// containing hcl.Traversal as additional elements.
 	Each     Traversal
 	SrcRange Range
 }
 
+// TraversalStep on a TraverseSplat always returns an error, because the
+// presence of a step of this type means that the container is a traversal
+// pattern rather than a concrete traversal.
 func (tn TraverseSplat) TraversalStep(val cty.Value) (cty.Value, Diagnostics) {
-	panic("TraverseSplat not yet implemented")
+	var diags Diagnostics
+	diags = diags.Append(&Diagnostic{
+		Severity: DiagError,
+		Summary:  "Cannot evaluate traversal pattern",
+		Detail:   "This is a pattern for matching against traversals rather than a concrete traversal, so it cannot be directly evaluated.",
+		Subject:  &tn.SrcRange,
+	})
+	return cty.DynamicVal, diags
 }
 
 func (tn TraverseSplat) SourceRange() Range {
