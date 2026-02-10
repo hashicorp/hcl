@@ -1968,6 +1968,88 @@ func (e *SplatExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	}
 }
 
+// AsTraversalPattern attempts to interpret the splat expression as a traversal
+// pattern for [hcl.AbsTraversalPatternForExpr].
+//
+// Only splat expressions whose Source also supports
+// [hcl.AbsTraversalPatternForExpr] can be interpreted as traversal patterns,
+// and then only if the "Item" expression can be treated as a series of
+// [SplatExpr] and [RelativeTraversalExpr] nodes.
+//
+// Only the modern [*] variant of splat expression is eligible for use in a
+// traversal pattern. The legacy "attribute-only" splat syntax .* is not
+// permitted in expressions that are to be interpreted as traversal patterns.
+func (e *SplatExpr) AsTraversalPattern() hcl.Traversal {
+	if e.AttrOnly {
+		return nil // attribute-only splats are never eligible
+	}
+	// If the "Source" cannot be interpreted as a traversal pattern then
+	// this is not eligible to be interpreted as a traversal pattern. Success
+	// here gives us a prefix of the traversal pattern we'll return.
+	prefix, diags := hcl.AbsTraversalPatternForExpr(e.Source)
+	if diags.HasErrors() {
+		return nil // not eligible
+	}
+	// We'll start with whatever prefix we just found, and then append from
+	// here as long as our item continues to produce valid traversal pattern
+	// fragments. We'll do early return with nil if we encounter anything that
+	// isn't eligible to be interpreted in this way.
+	// The parser uses the AnonSymbolExpr in e.Item to mark exactly where in
+	// e.Each the iterated items are supposed to be placed, and so we use
+	// comparisons with that here to confirm that any subsequent traversals
+	// or splat expressions are chained in the way we're expecting.
+	var ret hcl.Traversal
+	ret = append(ret, prefix...)
+	currentSplat := e
+	for {
+		if currentSplat.AttrOnly {
+			return nil // attribute-only splats are never eligible
+		}
+		// This TraverseSplat step represents the wildcard step implied by this
+		// splat expression.
+		ret = append(ret, hcl.TraverseSplat{
+			SrcRange: e.MarkerRange,
+		})
+		if currentSplat.Each == currentSplat.Item {
+			// A splat expression whose each is just its item directly means
+			// that there's no subsequent traversal steps, and so we're
+			// done with this and ready to return.
+			break
+		}
+		if rel, ok := currentSplat.Each.(*RelativeTraversalExpr); ok && rel.Source == currentSplat.Item {
+			// This is a relative traversal from each item matched by this splat,
+			// so we can assume this relative traversal represents the remainder
+			// of this traversal pattern.
+			ret = append(ret, rel.Traversal...)
+			break
+		}
+		if next, ok := currentSplat.Each.(*SplatExpr); ok {
+			// Splat expressions nested inside each other are eligible as long
+			// as the source of the next splat is the item of the previous one,
+			// and any intermediate expression is a relative traversal
+			// expression.
+			if rel, ok := next.Source.(*RelativeTraversalExpr); ok && rel.Source == currentSplat.Item {
+				// The steps from the relative traversal appear between this
+				// and the following splat.
+				ret = append(ret, rel.Traversal...)
+			} else if next.Source == currentSplat.Item {
+				// Suggests that the input was [*][*] and so there's no
+				// intermediate traversal to include but we should continue
+				// anyway.
+			} else {
+				return nil // anything else isn't eligible
+			}
+			// ...and then we'll continue with the next level of nesting.
+			currentSplat = next
+			continue
+		}
+		// If we get here then this isn't a shape of AST that is eligible
+		// to be interpreted as a traversal pattern, so we'll bail out now.
+		return nil
+	}
+	return ret
+}
+
 func (e *SplatExpr) walkChildNodes(w internalWalkFunc) {
 	w(e.Source)
 	w(e.Each)

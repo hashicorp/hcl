@@ -2919,6 +2919,156 @@ func TestExpressionAsTraversal(t *testing.T) {
 	}
 }
 
+func TestExpressionAsTraversalPattern(t *testing.T) {
+	cmpOpts := cmp.Options{
+		// Any cty values that appear in the results should be compared in
+		// the standard way.
+		ctydebug.CmpOptions,
+		// We don't care about specific source ranges in this test. We're
+		// focused only on the overall AST shape.
+		cmp.Comparer(func(_, _ hcl.Range) bool {
+			return true
+		}),
+		// The traverser types all contain an unexported sigil field that
+		// isn't significant to this test.
+		cmpopts.IgnoreUnexported(
+			hcl.TraverseRoot{},
+			hcl.TraverseAttr{},
+			hcl.TraverseIndex{},
+			hcl.TraverseSplat{},
+		),
+	}
+
+	tests := []struct {
+		src  string
+		want hcl.Traversal // nil for cases that should fail
+	}{
+		{
+			`foo`,
+			hcl.Traversal{
+				hcl.TraverseRoot{Name: "foo"},
+			},
+		},
+		{
+			`foo.bar`,
+			hcl.Traversal{
+				hcl.TraverseRoot{Name: "foo"},
+				hcl.TraverseAttr{Name: "bar"},
+			},
+		},
+		{
+			`foo[0]`,
+			hcl.Traversal{
+				hcl.TraverseRoot{Name: "foo"},
+				hcl.TraverseIndex{Key: cty.Zero},
+			},
+		},
+		{
+			`foo["bar"]`,
+			hcl.Traversal{
+				hcl.TraverseRoot{Name: "foo"},
+				hcl.TraverseIndex{Key: cty.StringVal("bar")},
+			},
+		},
+		{
+			`foo[true]`,
+			hcl.Traversal{
+				hcl.TraverseRoot{Name: "foo"},
+				hcl.TraverseIndex{Key: cty.True},
+			},
+		},
+		{
+			`foo[0].bar`,
+			hcl.Traversal{
+				hcl.TraverseRoot{Name: "foo"},
+				hcl.TraverseIndex{Key: cty.Zero},
+				hcl.TraverseAttr{Name: "bar"},
+			},
+		},
+		{
+			`foo[*]`,
+			hcl.Traversal{
+				hcl.TraverseRoot{Name: "foo"},
+				hcl.TraverseSplat{},
+			},
+		},
+		{
+			`foo[*].bar`,
+			hcl.Traversal{
+				hcl.TraverseRoot{Name: "foo"},
+				hcl.TraverseSplat{},
+				hcl.TraverseAttr{Name: "bar"},
+			},
+		},
+		{
+			`foo[*][0]`,
+			hcl.Traversal{
+				hcl.TraverseRoot{Name: "foo"},
+				hcl.TraverseSplat{},
+				hcl.TraverseIndex{Key: cty.Zero},
+			},
+		},
+		{
+			`foo[*].bar[*]`,
+			hcl.Traversal{
+				hcl.TraverseRoot{Name: "foo"},
+				hcl.TraverseSplat{},
+				hcl.TraverseAttr{Name: "bar"},
+				hcl.TraverseSplat{},
+			},
+		},
+		{
+			`foo[*].bar[*].baz`,
+			hcl.Traversal{
+				hcl.TraverseRoot{Name: "foo"},
+				hcl.TraverseSplat{},
+				hcl.TraverseAttr{Name: "bar"},
+				hcl.TraverseSplat{},
+				hcl.TraverseAttr{Name: "baz"},
+			},
+		},
+		{
+			`foo[*][*].bar`,
+			hcl.Traversal{
+				hcl.TraverseRoot{Name: "foo"},
+				hcl.TraverseSplat{},
+				hcl.TraverseSplat{},
+				hcl.TraverseAttr{Name: "bar"},
+			},
+		},
+		{
+			`foo.*`,
+			nil, // attribute-only splat is ineligible
+		},
+		{
+			`foo[*].bar.*.baz`,
+			nil, // attribute-only splat is ineligible
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.src, func(t *testing.T) {
+			expr, diags := ParseExpression([]byte(test.src), "", hcl.InitialPos)
+			if diags.HasErrors() {
+				// All of the input strings in this set of tests are expected
+				// to be valid syntax.
+				t.Fatalf("unexpected errors: %s", diags.Error())
+			}
+
+			got, diags := hcl.AbsTraversalPatternForExpr(expr)
+			if diags.HasErrors() {
+				// AbsTraversalPatternForExpr always returns the same hard-coded
+				// error, so we're only interested in whether it failed or not.
+				got = nil
+			}
+
+			if diff := cmp.Diff(test.want, got, cmpOpts); diff != "" {
+				t.Error("wrong result\n" + diff)
+			}
+		})
+	}
+}
+
 func TestStaticExpressionList(t *testing.T) {
 	expr, _ := ParseExpression([]byte("[0, a, true]"), "", hcl.Pos{})
 	exprs, diags := hcl.ExprList(expr)
