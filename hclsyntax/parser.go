@@ -801,9 +801,10 @@ Traversal:
 				}
 
 				ret = &SplatExpr{
-					Source: ret,
-					Each:   travExpr,
-					Item:   itemExpr,
+					Source:   ret,
+					Each:     travExpr,
+					Item:     itemExpr,
+					AttrOnly: true,
 
 					SrcRange:    hcl.RangeBetween(from.Range(), lastRange),
 					MarkerRange: hcl.RangeBetween(dot.Range, marker.Range),
