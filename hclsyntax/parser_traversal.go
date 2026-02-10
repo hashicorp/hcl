@@ -17,19 +17,20 @@ func (p *parser) ParseTraversalAbs() (hcl.Traversal, hcl.Diagnostics) {
 	return p.parseTraversal(false)
 }
 
-// ParseTraversalPartial parses an absolute traversal that is permitted
+// ParseTraversalAbsPattern parses an absolute traversal that is permitted
 // to contain splat ([*]) expressions. Only splat expressions within square
 // brackets are permitted ([*]); splat expressions within attribute names are
 // not permitted (.*).
 //
-// The meaning of partial here is that the traversal may be incomplete, in that
-// any splat expression indicates reference to a potentially unknown number of
-// elements.
+// The term "traversal pattern" means a traversal that contains at least one
+// wildcard element represented as [hcl.TraverseSplat], which represents an
+// arbitrary number of matching elements.
 //
-// Traversals that include splats cannot be automatically traversed by HCL using
+// Traversal patterns cannot be automatically traversed by HCL using
 // the TraversalAbs or TraversalRel methods. Instead, the caller must handle
-// the traversals manually.
-func (p *parser) ParseTraversalPartial() (hcl.Traversal, hcl.Diagnostics) {
+// the traversals manually, typically for static analysis rather than actual
+// evaluation.
+func (p *parser) ParseTraversalAbsPattern() (hcl.Traversal, hcl.Diagnostics) {
 	return p.parseTraversal(true)
 }
 

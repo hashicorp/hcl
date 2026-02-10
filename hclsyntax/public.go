@@ -118,16 +118,19 @@ func ParseTraversalAbs(src []byte, filename string, start hcl.Pos) (hcl.Traversa
 	return expr, diags
 }
 
-// ParseTraversalPartial matches the behavior of ParseTraversalAbs except
-// that it allows splat expressions ([*]) to appear in the traversal.
+// ParseTraversalAbsPattern matches the behavior of ParseTraversalAbs except
+// that it allows splat expressions ([*]) to appear in the traversal, and
+// so it can potentially return traversal patterns rather than just concrete
+// traversals.
 //
-// The returned traversals are "partial" in that the splat expression indicates
-// an unknown value for the index.
+// The returned traversals are "partial" in that the splat steps represent
+// a wildcard value for indexing.
 //
-// Traversals that include splats cannot be automatically traversed by HCL using
-// the TraversalAbs or TraversalRel methods. Instead, the caller must handle
-// the traversals manually.
-func ParseTraversalPartial(src []byte, filename string, start hcl.Pos) (hcl.Traversal, hcl.Diagnostics) {
+// Traversal patterns cannot be automatically traversed using the TraversalAbs
+// or TraversalRel methods. Instead, the caller must handle the traversals
+// manually. Use [hcl.Traversal.IsPattern] to distinguish traversal patterns
+// from concrete traversals.
+func ParseTraversalAbsPattern(src []byte, filename string, start hcl.Pos) (hcl.Traversal, hcl.Diagnostics) {
 	tokens, diags := LexExpression(src, filename, start)
 	peeker := newPeeker(tokens, false)
 	parser := &parser{peeker: peeker}
@@ -136,7 +139,7 @@ func ParseTraversalPartial(src []byte, filename string, start hcl.Pos) (hcl.Trav
 	// they were wrapped in parentheses.
 	parser.PushIncludeNewlines(false)
 
-	expr, parseDiags := parser.ParseTraversalPartial()
+	expr, parseDiags := parser.ParseTraversalAbsPattern()
 	diags = append(diags, parseDiags...)
 
 	parser.PopIncludeNewlines()
@@ -147,6 +150,15 @@ func ParseTraversalPartial(src []byte, filename string, start hcl.Pos) (hcl.Trav
 	peeker.AssertEmptyIncludeNewlinesStack()
 
 	return expr, diags
+}
+
+// ParseTraversalPartial is a legacy alias for [ParseTraversalAbsPattern], from
+// before the "traversal pattern" terminology was adopted.
+//
+// Deprecated: This is here only for backward-compatibility. Use
+// [ParseTraversalAbsPattern] instead in new code.
+func ParseTraversalPartial(src []byte, filename string, start hcl.Pos) (hcl.Traversal, hcl.Diagnostics) {
+	return ParseTraversalAbsPattern(src, filename, start)
 }
 
 // LexConfig performs lexical analysis on the given buffer, treating it as a
