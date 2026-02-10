@@ -45,6 +45,60 @@ func AbsTraversalForExpr(expr Expression) (Traversal, Diagnostics) {
 	}
 }
 
+// AbsTraversalPatternForExpr is an extension of [AbsTraversalForExpr] that
+// additionally allows "traversal patterns", which are allowed to contain
+// wildcard steps represented as [TraverseSplat] values.
+//
+// Unlike concrete traversals, traversal patterns cannot be evaluated to produce
+// a single value as a result. Instead, they are primarily intended for static
+// analysis, such as when using splat-expression-like syntax to describe a
+// set of zero or more traversals that are included in some collection.
+//
+// A particular Expression implementation can support this function by
+// offering a method called AsTraversalPattern that takes no arguments and
+// returns either a valid absolute traversal pattern or nil to indicate that
+// no traversal pattern is possible. Alternatively, an implementation can
+// support UnwrapExpression to delegate handling of this function to a wrapped
+// Expression object.
+//
+// The concept of traversal patterns was added quite some time after the
+// concept of concrete traversals, and so not all expressions which support
+// [AbsTraversalForExpr] necessarily support traversal patterns. If the given
+// expression object does not have a suitable AsTraversalPattern method then
+// this will attempt to fall back to [AbsTraversalForExpr] to at least support
+// the concrete subset of the traversal syntax.
+func AbsTraversalPatternForExpr(expr Expression) (Traversal, Diagnostics) {
+	type asTraversalPattern interface {
+		AsTraversalPattern() Traversal
+	}
+
+	physExpr := UnwrapExpressionUntil(expr, func(expr Expression) bool {
+		_, supported := expr.(asTraversalPattern)
+		return supported
+	})
+
+	if asT, supported := physExpr.(asTraversalPattern); supported {
+		if traversal := asT.AsTraversalPattern(); traversal != nil {
+			return traversal, nil
+		}
+	}
+	// If we weren't able to use AsTraversalPattern then we'll attempt to
+	// at least support the AsTraversal method to produce a concrete traversal,
+	// but we have a custom error message if it doesn't work.
+	concrete, diags := AbsTraversalForExpr(expr)
+	if diags.HasErrors() {
+		return nil, Diagnostics{
+			&Diagnostic{
+				Severity: DiagError,
+				Summary:  "Invalid expression",
+				Detail:   "A single static variable reference or wildcard pattern is required: only attribute access, indexing with constant keys, or wildcard steps using splat expression syntax. No calculations, function calls, template expressions, etc are allowed here.",
+				Subject:  expr.Range().Ptr(),
+			},
+		}
+	}
+	return concrete, nil
+}
+
 // RelTraversalForExpr is similar to AbsTraversalForExpr but it returns
 // a relative traversal instead. Due to the nature of HCL expressions, the
 // first element of the returned traversal is always a TraverseAttr, and
