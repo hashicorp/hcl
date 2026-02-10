@@ -1773,6 +1773,13 @@ type SplatExpr struct {
 	Source Expression
 	Each   Expression
 	Item   *AnonSymbolExpr
+	// AttrOnly is set when this expression is an "attribute-only" splat
+	// expression, using legacy the .* syntax instead of the modern [*]
+	// syntax, which has some different parsing rules that better match
+	// the splat syntax from HCL's predecessor "HIL". The parser sets this
+	// to indicate when it used the modified precedence rules implied by
+	// using that older syntax.
+	AttrOnly bool
 
 	SrcRange    hcl.Range
 	MarkerRange hcl.Range
