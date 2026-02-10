@@ -8,7 +8,9 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/hashicorp/hcl/v2"
+	"github.com/zclconf/go-cty-debug/ctydebug"
 	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-cty/cty/function"
 	"github.com/zclconf/go-cty/cty/function/stdlib"
@@ -2932,6 +2934,271 @@ func TestStaticExpressionList(t *testing.T) {
 	}
 	if !first.Val.RawEquals(cty.Zero) {
 		t.Fatalf("wrong first value %#v; want cty.Zero", first.Val)
+	}
+}
+
+func TestParseExpression_traversalsAndSplats(t *testing.T) {
+	// The implementations of the "AsTraversal" method used by
+	// [hcl.AbsTraversalForExpr] rely on absolute traversal, relative traversal,
+	// and splat expressions producing particular shapes of parse tree, and so
+	// the test cases here are intended to ensure we don't inadvertently change
+	// these parse tree shapes under future maintenence.
+
+	cmpOpts := cmp.Options{
+		// Any cty values that appear in the results should be compared in
+		// the standard way.
+		ctydebug.CmpOptions,
+		// We don't care about specific source ranges in this test. We're
+		// focused only on the overall AST shape.
+		cmp.Comparer(func(_, _ hcl.Range) bool {
+			return true
+		}),
+		cmpopts.IgnoreUnexported(
+			// The traverser types all contain an unexported sigil field that
+			// isn't significant to this test.
+			hcl.TraverseRoot{},
+			hcl.TraverseAttr{},
+			hcl.TraverseIndex{},
+			// We also ignore the temporary state fields of AnonSymbolExpr,
+			// and worry only about where this type appears in the AST.
+			AnonSymbolExpr{},
+		),
+	}
+
+	tests := []struct {
+		src  string
+		want hcl.Expression
+	}{
+		{
+			`foo`,
+			&ScopeTraversalExpr{
+				Traversal: hcl.Traversal{
+					hcl.TraverseRoot{
+						Name: "foo",
+					},
+				},
+			},
+		},
+		{
+			`foo.bar`,
+			&ScopeTraversalExpr{
+				Traversal: hcl.Traversal{
+					hcl.TraverseRoot{
+						Name: "foo",
+					},
+					hcl.TraverseAttr{
+						Name: "bar",
+					},
+				},
+			},
+		},
+		{
+			`foo[0]`,
+			&ScopeTraversalExpr{
+				Traversal: hcl.Traversal{
+					hcl.TraverseRoot{
+						Name: "foo",
+					},
+					hcl.TraverseIndex{
+						Key: cty.Zero,
+					},
+				},
+			},
+		},
+		{
+			`foo["bar"]`,
+			&ScopeTraversalExpr{
+				Traversal: hcl.Traversal{
+					hcl.TraverseRoot{
+						Name: "foo",
+					},
+					hcl.TraverseIndex{
+						Key: cty.StringVal("bar"),
+					},
+				},
+			},
+		},
+		{
+			`foo[true]`,
+			&ScopeTraversalExpr{
+				Traversal: hcl.Traversal{
+					hcl.TraverseRoot{
+						Name: "foo",
+					},
+					hcl.TraverseIndex{
+						Key: cty.True,
+					},
+				},
+			},
+		},
+		{
+			`foo[0].bar`,
+			&ScopeTraversalExpr{
+				Traversal: hcl.Traversal{
+					hcl.TraverseRoot{
+						Name: "foo",
+					},
+					hcl.TraverseIndex{
+						Key: cty.Zero,
+					},
+					hcl.TraverseAttr{
+						Name: "bar",
+					},
+				},
+			},
+		},
+		{
+			`foo[*]`,
+			&SplatExpr{
+				Source: &ScopeTraversalExpr{
+					Traversal: hcl.Traversal{
+						hcl.TraverseRoot{
+							Name: "foo",
+						},
+					},
+				},
+				Each: &AnonSymbolExpr{},
+				Item: &AnonSymbolExpr{},
+			},
+		},
+		{
+			`foo[*].bar`,
+			&SplatExpr{
+				Source: &ScopeTraversalExpr{
+					Traversal: hcl.Traversal{
+						hcl.TraverseRoot{
+							Name: "foo",
+						},
+					},
+				},
+				Each: &RelativeTraversalExpr{
+					Source: &AnonSymbolExpr{},
+					Traversal: hcl.Traversal{
+						hcl.TraverseAttr{
+							Name: "bar",
+						},
+					},
+				},
+				Item: &AnonSymbolExpr{},
+			},
+		},
+		{
+			`foo[*][0]`,
+			&SplatExpr{
+				Source: &ScopeTraversalExpr{
+					Traversal: hcl.Traversal{
+						hcl.TraverseRoot{
+							Name: "foo",
+						},
+					},
+				},
+				Each: &RelativeTraversalExpr{
+					Source: &AnonSymbolExpr{},
+					Traversal: hcl.Traversal{
+						hcl.TraverseIndex{
+							Key: cty.Zero,
+						},
+					},
+				},
+				Item: &AnonSymbolExpr{},
+			},
+		},
+		{
+			`foo[*].bar[*]`,
+			&SplatExpr{
+				Source: &ScopeTraversalExpr{
+					Traversal: hcl.Traversal{
+						hcl.TraverseRoot{
+							Name: "foo",
+						},
+					},
+				},
+				Each: &SplatExpr{
+					Source: &RelativeTraversalExpr{
+						Source: &AnonSymbolExpr{},
+						Traversal: hcl.Traversal{
+							hcl.TraverseAttr{
+								Name: "bar",
+							},
+						},
+					},
+					Each: &AnonSymbolExpr{},
+					Item: &AnonSymbolExpr{},
+				},
+				Item: &AnonSymbolExpr{},
+			},
+		},
+		{
+			`foo[*].bar[*].baz`,
+			&SplatExpr{
+				Source: &ScopeTraversalExpr{
+					Traversal: hcl.Traversal{
+						hcl.TraverseRoot{
+							Name: "foo",
+						},
+					},
+				},
+				Each: &SplatExpr{
+					Source: &RelativeTraversalExpr{
+						Source: &AnonSymbolExpr{},
+						Traversal: hcl.Traversal{
+							hcl.TraverseAttr{
+								Name: "bar",
+							},
+						},
+					},
+					Each: &RelativeTraversalExpr{
+						Source: &AnonSymbolExpr{},
+						Traversal: hcl.Traversal{
+							hcl.TraverseAttr{
+								Name: "baz",
+							},
+						},
+					},
+					Item: &AnonSymbolExpr{},
+				},
+				Item: &AnonSymbolExpr{},
+			},
+		},
+		{
+			`foo[*][*].bar`,
+			&SplatExpr{
+				Source: &ScopeTraversalExpr{
+					Traversal: hcl.Traversal{
+						hcl.TraverseRoot{
+							Name: "foo",
+						},
+					},
+				},
+				Each: &SplatExpr{
+					Source: &AnonSymbolExpr{},
+					Each: &RelativeTraversalExpr{
+						Source: &AnonSymbolExpr{},
+						Traversal: hcl.Traversal{
+							hcl.TraverseAttr{
+								Name: "bar",
+							},
+						},
+					},
+					Item: &AnonSymbolExpr{},
+				},
+				Item: &AnonSymbolExpr{},
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.src, func(t *testing.T) {
+			got, diags := ParseExpression([]byte(test.src), "", hcl.InitialPos)
+			if diags.HasErrors() {
+				// All of the input strings in this set of tests are expected
+				// to be valid syntax.
+				t.Fatalf("unexpected errors: %s", diags.Error())
+			}
+
+			if diff := cmp.Diff(test.want, got, cmpOpts); diff != "" {
+				t.Error("wrong result\n" + diff)
+			}
+		})
 	}
 }
 
