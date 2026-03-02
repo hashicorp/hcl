@@ -1441,7 +1441,7 @@ func (p *parser) parseObjectCons() (Expression, hcl.Diagnostics) {
 		}
 
 		// Wrapping parens are not explicitly represented in the AST, but
-		// we want to use them here to disambiguate intepreting a mapping
+		// we want to use them here to disambiguate interpreting a mapping
 		// key as a full expression rather than just a name, and so
 		// we'll remember this was present and use it to force the
 		// behavior of our final ObjectConsKeyExpr.
@@ -1521,29 +1521,18 @@ func (p *parser) parseObjectCons() (Expression, hcl.Diagnostics) {
 
 		value, valueDiags := p.ParseExpression()
 		diags = append(diags, valueDiags...)
+		items = append(items, ObjectConsItem{
+			KeyExpr:   key,
+			ValueExpr: value,
+		})
 
 		if p.recovery && valueDiags.HasErrors() {
-			// If the value is an ExprSyntaxError, we can add an item with it, even though we will recover afterwards
-			// This allows downstream consumers to still retrieve this first invalid item, even though following items
-			// won't be parsed. This is useful for supplying completions.
-			if exprSyntaxError, ok := value.(*ExprSyntaxError); ok {
-				items = append(items, ObjectConsItem{
-					KeyExpr:   key,
-					ValueExpr: exprSyntaxError,
-				})
-			}
-
 			// If expression parsing failed then we are probably in a strange
 			// place in the token stream, so we'll bail out and try to reset
 			// to after our closing brace to allow parsing to continue.
 			close = p.recover(TokenCBrace)
 			break
 		}
-
-		items = append(items, ObjectConsItem{
-			KeyExpr:   key,
-			ValueExpr: value,
-		})
 
 		next = p.Peek()
 		if next.Type == TokenCBrace {
