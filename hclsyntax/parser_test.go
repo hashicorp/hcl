@@ -428,8 +428,8 @@ block "valid" {}
 							End:   hcl.Pos{Line: 2, Column: 6, Byte: 6},
 						},
 						CloseBraceRange: hcl.Range{
-							Start: hcl.Pos{Line: 2, Column: 1, Byte: 1},
-							End:   hcl.Pos{Line: 2, Column: 6, Byte: 6},
+							Start: hcl.Pos{Line: 2, Column: 7, Byte: 7},
+							End:   hcl.Pos{Line: 2, Column: 16, Byte: 16},
 						},
 					},
 
@@ -2446,8 +2446,8 @@ block "valid" {}
 							End:   hcl.Pos{Line: 1, Column: 6, Byte: 5},
 						},
 						CloseBraceRange: hcl.Range{
-							Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
-							End:   hcl.Pos{Line: 1, Column: 6, Byte: 5},
+							Start: hcl.Pos{Line: 1, Column: 33, Byte: 32},
+							End:   hcl.Pos{Line: 1, Column: 37, Byte: 36},
 						},
 					},
 				},
