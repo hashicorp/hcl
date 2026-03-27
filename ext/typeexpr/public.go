@@ -109,7 +109,7 @@ func TypeString(ty cty.Type) string {
 				// type that has weird attribute names.
 				// Using Go-style quoting here isn't perfect, since it doesn't
 				// exactly match HCL syntax, but it's fine for an edge-case.
-				buf.WriteString(fmt.Sprintf("%q", name))
+				fmt.Fprintf(&buf, "%q", name)
 			} else {
 				buf.WriteString(name)
 			}
