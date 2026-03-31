@@ -234,7 +234,6 @@ func (p *parser) parseSingleAttrBody(end TokenType) (*Body, hcl.Diagnostics) {
 			End:      attr.SrcRange.End,
 		},
 	}, diags
-
 }
 
 func (p *parser) finishParsingBodyAttribute(ident Token, singleLine bool) (Node, hcl.Diagnostics) {
@@ -295,7 +294,7 @@ func (p *parser) finishParsingBodyAttribute(ident Token, singleLine bool) (Node,
 }
 
 func (p *parser) finishParsingBodyBlock(ident Token) (Node, hcl.Diagnostics) {
-	var blockType = string(ident.Bytes)
+	blockType := string(ident.Bytes)
 	var diags hcl.Diagnostics
 	var labels []string
 	var labelRanges []hcl.Range
@@ -359,6 +358,16 @@ Token:
 
 			p.recoverAfterBodyItem()
 
+			// Use the last label range as the CloseBraceRange placeholder so that
+			// Block.Range() covers the full block header including labels.
+			// Without this, the block range only spans the type keyword,
+			// causing position-based lookups like OutermostBlockAtPos to
+			// miss positions within the labels.
+			endRange := ident.Range
+			if len(labelRanges) > 0 {
+				endRange = labelRanges[len(labelRanges)-1]
+			}
+
 			return &Block{
 				Type:   blockType,
 				Labels: labels,
@@ -370,7 +379,7 @@ Token:
 				TypeRange:       ident.Range,
 				LabelRanges:     labelRanges,
 				OpenBraceRange:  ident.Range, // placeholder
-				CloseBraceRange: ident.Range, // placeholder
+				CloseBraceRange: endRange,    // placeholder
 			}, diags
 		}
 	}

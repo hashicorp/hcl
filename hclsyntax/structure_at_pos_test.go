@@ -122,6 +122,27 @@ func TestBlocksAtPos(t *testing.T) {
 			hcl.Pos{Byte: 16},
 			[]string{"foo", "bar"},
 		},
+		"no braces with label newline": {
+			// customblock "fi"\n
+			// Position inside the label "fi" should be inside the block range.
+			"customblock \"fi\"\n",
+			hcl.Pos{Byte: 13}, // inside "fi"
+			[]string{"customblock"},
+		},
+		"no braces two labels newline": {
+			// resource "aws_instance" "foo"\n
+			// Position inside the second label should be inside the block range.
+			"resource \"aws_instance\" \"foo\"\n",
+			hcl.Pos{Byte: 25}, // inside "foo"
+			[]string{"resource"},
+		},
+		"no braces two labels eof": {
+			// resource "aws_instance" "foo" (no newline, EOF)
+			// Position inside the second label should be inside the block range.
+			"resource \"aws_instance\" \"foo\"",
+			hcl.Pos{Byte: 25}, // inside "foo"
+			[]string{"resource"},
+		},
 	}
 
 	for name, test := range tests {
