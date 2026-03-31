@@ -2806,6 +2806,34 @@ attr2 = "foo"
 							Name: "object",
 							Args: []Expression{
 								&ObjectConsExpr{
+									Items: []ObjectConsItem{
+										{
+											KeyExpr: &ObjectConsKeyExpr{
+												Wrapped: &ScopeTraversalExpr{
+													Traversal: hcl.Traversal{
+														hcl.TraverseRoot{
+															Name: "foo",
+															SrcRange: hcl.Range{
+																Start: hcl.Pos{Line: 1, Column: 17, Byte: 16},
+																End:   hcl.Pos{Line: 1, Column: 20, Byte: 19},
+															},
+														},
+													},
+													SrcRange: hcl.Range{
+														Start: hcl.Pos{Line: 1, Column: 17, Byte: 16},
+														End:   hcl.Pos{Line: 1, Column: 20, Byte: 19},
+													},
+												},
+											},
+											ValueExpr: &LiteralValueExpr{
+												Val: cty.DynamicVal,
+												SrcRange: hcl.Range{
+													Start: hcl.Pos{Line: 1, Column: 23, Byte: 22},
+													End:   hcl.Pos{Line: 1, Column: 24, Byte: 23},
+												},
+											},
+										},
+									},
 									SrcRange: hcl.Range{
 										Start: hcl.Pos{Line: 1, Column: 15, Byte: 14},
 										End:   hcl.Pos{Line: 1, Column: 24, Byte: 23},
@@ -3175,6 +3203,34 @@ attr2 = "foo"
 										Name: "object",
 										Args: []Expression{
 											&ObjectConsExpr{
+												Items: []ObjectConsItem{
+													{
+														KeyExpr: &ObjectConsKeyExpr{
+															Wrapped: &ScopeTraversalExpr{
+																Traversal: hcl.Traversal{
+																	hcl.TraverseRoot{
+																		Name: "foo",
+																		SrcRange: hcl.Range{
+																			Start: hcl.Pos{Line: 2, Column: 19, Byte: 34},
+																			End:   hcl.Pos{Line: 2, Column: 22, Byte: 37},
+																		},
+																	},
+																},
+																SrcRange: hcl.Range{
+																	Start: hcl.Pos{Line: 2, Column: 19, Byte: 34},
+																	End:   hcl.Pos{Line: 2, Column: 22, Byte: 37},
+																},
+															},
+														},
+														ValueExpr: &LiteralValueExpr{
+															Val: cty.DynamicVal,
+															SrcRange: hcl.Range{
+																Start: hcl.Pos{Line: 2, Column: 24, Byte: 39},
+																End:   hcl.Pos{Line: 3, Column: 1, Byte: 40},
+															},
+														},
+													},
+												},
 												SrcRange: hcl.Range{
 													Start: hcl.Pos{Line: 2, Column: 17, Byte: 32},
 													End:   hcl.Pos{Line: 3, Column: 1, Byte: 40},
@@ -3267,6 +3323,34 @@ attr2 = "foo"
 										Name: "object",
 										Args: []Expression{
 											&ObjectConsExpr{
+												Items: []ObjectConsItem{
+													{
+														KeyExpr: &ObjectConsKeyExpr{
+															Wrapped: &ScopeTraversalExpr{
+																Traversal: hcl.Traversal{
+																	hcl.TraverseRoot{
+																		Name: "foo",
+																		SrcRange: hcl.Range{
+																			Start: hcl.Pos{Line: 2, Column: 19, Byte: 34},
+																			End:   hcl.Pos{Line: 2, Column: 22, Byte: 37},
+																		},
+																	},
+																},
+																SrcRange: hcl.Range{
+																	Start: hcl.Pos{Line: 2, Column: 19, Byte: 34},
+																	End:   hcl.Pos{Line: 2, Column: 22, Byte: 37},
+																},
+															},
+														},
+														ValueExpr: &LiteralValueExpr{
+															Val: cty.DynamicVal,
+															SrcRange: hcl.Range{
+																Start: hcl.Pos{Line: 2, Column: 25, Byte: 40},
+																End:   hcl.Pos{Line: 2, Column: 26, Byte: 41},
+															},
+														},
+													},
+												},
 												SrcRange: hcl.Range{
 													Start: hcl.Pos{Line: 2, Column: 17, Byte: 32},
 													End:   hcl.Pos{Line: 2, Column: 26, Byte: 41},
@@ -3359,6 +3443,34 @@ attr2 = "foo"
 										Name: "object",
 										Args: []Expression{
 											&ObjectConsExpr{
+												Items: []ObjectConsItem{
+													{
+														KeyExpr: &ObjectConsKeyExpr{
+															Wrapped: &ScopeTraversalExpr{
+																Traversal: hcl.Traversal{
+																	hcl.TraverseRoot{
+																		Name: "foo",
+																		SrcRange: hcl.Range{
+																			Start: hcl.Pos{Line: 2, Column: 19, Byte: 34},
+																			End:   hcl.Pos{Line: 2, Column: 22, Byte: 37},
+																		},
+																	},
+																},
+																SrcRange: hcl.Range{
+																	Start: hcl.Pos{Line: 2, Column: 19, Byte: 34},
+																	End:   hcl.Pos{Line: 2, Column: 22, Byte: 37},
+																},
+															},
+														},
+														ValueExpr: &LiteralValueExpr{
+															Val: cty.DynamicVal,
+															SrcRange: hcl.Range{
+																Start: hcl.Pos{Line: 2, Column: 25, Byte: 40},
+																End:   hcl.Pos{Line: 2, Column: 26, Byte: 41},
+															},
+														},
+													},
+												},
 												SrcRange: hcl.Range{
 													Start: hcl.Pos{Line: 2, Column: 17, Byte: 32},
 													End:   hcl.Pos{Line: 2, Column: 26, Byte: 41},
@@ -3456,6 +3568,34 @@ attr2 = "foo"
 										Name: "object",
 										Args: []Expression{
 											&ObjectConsExpr{
+												Items: []ObjectConsItem{
+													{
+														KeyExpr: &ObjectConsKeyExpr{
+															Wrapped: &ScopeTraversalExpr{
+																Traversal: hcl.Traversal{
+																	hcl.TraverseRoot{
+																		Name: "foo",
+																		SrcRange: hcl.Range{
+																			Start: hcl.Pos{Line: 3, Column: 5, Byte: 38},
+																			End:   hcl.Pos{Line: 3, Column: 8, Byte: 41},
+																		},
+																	},
+																},
+																SrcRange: hcl.Range{
+																	Start: hcl.Pos{Line: 3, Column: 5, Byte: 38},
+																	End:   hcl.Pos{Line: 3, Column: 8, Byte: 41},
+																},
+															},
+														},
+														ValueExpr: &LiteralValueExpr{
+															Val: cty.DynamicVal,
+															SrcRange: hcl.Range{
+																Start: hcl.Pos{Line: 3, Column: 10, Byte: 43},
+																End:   hcl.Pos{Line: 4, Column: 1, Byte: 44},
+															},
+														},
+													},
+												},
 												SrcRange: hcl.Range{
 													Start: hcl.Pos{Line: 2, Column: 17, Byte: 32},
 													End:   hcl.Pos{Line: 5, Column: 1, Byte: 45},
@@ -3553,6 +3693,34 @@ another_block {
 										Name: "object",
 										Args: []Expression{
 											&ObjectConsExpr{
+												Items: []ObjectConsItem{
+													{
+														KeyExpr: &ObjectConsKeyExpr{
+															Wrapped: &ScopeTraversalExpr{
+																Traversal: hcl.Traversal{
+																	hcl.TraverseRoot{
+																		Name: "foo",
+																		SrcRange: hcl.Range{
+																			Start: hcl.Pos{Line: 3, Column: 5, Byte: 38},
+																			End:   hcl.Pos{Line: 3, Column: 8, Byte: 41},
+																		},
+																	},
+																},
+																SrcRange: hcl.Range{
+																	Start: hcl.Pos{Line: 3, Column: 5, Byte: 38},
+																	End:   hcl.Pos{Line: 3, Column: 8, Byte: 41},
+																},
+															},
+														},
+														ValueExpr: &LiteralValueExpr{
+															Val: cty.DynamicVal,
+															SrcRange: hcl.Range{
+																Start: hcl.Pos{Line: 3, Column: 10, Byte: 43},
+																End:   hcl.Pos{Line: 4, Column: 1, Byte: 44},
+															},
+														},
+													},
+												},
 												SrcRange: hcl.Range{
 													Start: hcl.Pos{Line: 2, Column: 17, Byte: 32},
 													End:   hcl.Pos{Line: 8, Column: 1, Byte: 64},
@@ -3647,6 +3815,34 @@ another_block {
 										Name: "object",
 										Args: []Expression{
 											&ObjectConsExpr{
+												Items: []ObjectConsItem{
+													{
+														KeyExpr: &ObjectConsKeyExpr{
+															Wrapped: &ScopeTraversalExpr{
+																Traversal: hcl.Traversal{
+																	hcl.TraverseRoot{
+																		Name: "foo",
+																		SrcRange: hcl.Range{
+																			Start: hcl.Pos{Line: 3, Column: 5, Byte: 38},
+																			End:   hcl.Pos{Line: 3, Column: 8, Byte: 41},
+																		},
+																	},
+																},
+																SrcRange: hcl.Range{
+																	Start: hcl.Pos{Line: 3, Column: 5, Byte: 38},
+																	End:   hcl.Pos{Line: 3, Column: 8, Byte: 41},
+																},
+															},
+														},
+														ValueExpr: &LiteralValueExpr{
+															Val: cty.DynamicVal,
+															SrcRange: hcl.Range{
+																Start: hcl.Pos{Line: 3, Column: 10, Byte: 43},
+																End:   hcl.Pos{Line: 4, Column: 1, Byte: 44},
+															},
+														},
+													},
+												},
 												SrcRange: hcl.Range{
 													Start: hcl.Pos{Line: 2, Column: 17, Byte: 32},
 													End:   hcl.Pos{Line: 4, Column: 4, Byte: 47},
@@ -3741,6 +3937,34 @@ another_block {
 										Name: "object",
 										Args: []Expression{
 											&ObjectConsExpr{
+												Items: []ObjectConsItem{
+													{
+														KeyExpr: &ObjectConsKeyExpr{
+															Wrapped: &ScopeTraversalExpr{
+																Traversal: hcl.Traversal{
+																	hcl.TraverseRoot{
+																		Name: "foo",
+																		SrcRange: hcl.Range{
+																			Start: hcl.Pos{Line: 3, Column: 5, Byte: 38},
+																			End:   hcl.Pos{Line: 3, Column: 8, Byte: 41},
+																		},
+																	},
+																},
+																SrcRange: hcl.Range{
+																	Start: hcl.Pos{Line: 3, Column: 5, Byte: 38},
+																	End:   hcl.Pos{Line: 3, Column: 8, Byte: 41},
+																},
+															},
+														},
+														ValueExpr: &LiteralValueExpr{
+															Val: cty.DynamicVal,
+															SrcRange: hcl.Range{
+																Start: hcl.Pos{Line: 3, Column: 10, Byte: 43},
+																End:   hcl.Pos{Line: 4, Column: 1, Byte: 44},
+															},
+														},
+													},
+												},
 												SrcRange: hcl.Range{
 													Start: hcl.Pos{Line: 2, Column: 17, Byte: 32},
 													End:   hcl.Pos{Line: 4, Column: 4, Byte: 47},
@@ -3823,6 +4047,7 @@ another_block {
 		cmpopts.IgnoreUnexported(FunctionCallExpr{}),
 		cmpopts.IgnoreUnexported(Body{}),
 		cmpopts.IgnoreUnexported(cty.Value{}),
+		cmpopts.IgnoreUnexported(hcl.TraverseRoot{}),
 	}
 	for i, test := range tests {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
