@@ -582,6 +582,23 @@ func (e *expression) AsTraversal() hcl.Traversal {
 	}
 }
 
+// Implementation for hcl.AbsTraversalPatternForExpr.
+func (e *expression) AsTraversalPattern() hcl.Traversal {
+	// In JSON-based syntax a traversal pattern is given as a string containing
+	// traversal syntax as defined by hclsyntax.ParseTraversalAbsPattern.
+
+	switch v := e.src.(type) {
+	case *stringVal:
+		traversal, diags := hclsyntax.ParseTraversalAbsPattern([]byte(v.Value), v.SrcRange.Filename, v.SrcRange.Start)
+		if diags.HasErrors() {
+			return nil
+		}
+		return traversal
+	default:
+		return nil
+	}
+}
+
 // Implementation for hcl.ExprCall.
 func (e *expression) ExprCall() *hcl.StaticCall {
 	// In JSON-based syntax a static call is given as a string containing
