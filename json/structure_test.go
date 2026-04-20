@@ -11,6 +11,7 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/go-test/deep"
+	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/zclconf/go-cty/cty"
 )
@@ -1335,6 +1336,62 @@ func TestExpressionAsTraversal(t *testing.T) {
 	traversal := e.AsTraversal()
 	if len(traversal) != 3 {
 		t.Fatalf("incorrect traversal %#v; want length 3", traversal)
+	}
+}
+
+func TestExpressionAsTraversalPattern(t *testing.T) {
+	e := &expression{
+		src: &stringVal{
+			Value: "foo.bar[*]",
+			SrcRange: hcl.Range{
+				Filename: "test.hcl.json",
+				Start: hcl.Pos{
+					Line:   1,
+					Column: 1,
+					Byte:   0,
+				},
+				End: hcl.Pos{
+					Line:   1,
+					Column: 11,
+					Byte:   10,
+				},
+			},
+		},
+	}
+	// AbsTraversalPatternForExpr relies on [expression.AsTraversalPattern],
+	// so that's actually the main thing we're testing here.
+	got, diags := hcl.AbsTraversalPatternForExpr(e)
+	if diags.HasErrors() {
+		t.Fatalf("unexpected errors: %s", diags.Error())
+	}
+	want := hcl.Traversal{
+		hcl.TraverseRoot{
+			Name: "foo",
+			SrcRange: hcl.Range{
+				Filename: "test.hcl.json",
+				Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+				End:      hcl.Pos{Line: 1, Column: 4, Byte: 3},
+			},
+		},
+		hcl.TraverseAttr{
+			Name: "bar",
+			SrcRange: hcl.Range{
+				Filename: "test.hcl.json",
+				Start:    hcl.Pos{Line: 1, Column: 4, Byte: 3},
+				End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+			},
+		},
+		hcl.TraverseSplat{
+			SrcRange: hcl.Range{
+				Filename: "test.hcl.json",
+				Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+				End:      hcl.Pos{Line: 1, Column: 11, Byte: 10},
+			},
+		},
+	}
+	cmpOpts := cmp.AllowUnexported(hcl.TraverseRoot{}, hcl.TraverseAttr{}, hcl.TraverseSplat{})
+	if diff := cmp.Diff(want, got, cmpOpts); diff != "" {
+		t.Error("wrong result\n" + diff)
 	}
 }
 
