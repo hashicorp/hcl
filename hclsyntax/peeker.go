@@ -64,6 +64,13 @@ func (p *peeker) NextRange() hcl.Range {
 
 func (p *peeker) PrevRange() hcl.Range {
 	if p.NextIndex == 0 {
+		// Nothing has been read yet. Return the range of the very first token
+		// in the stream (which may be a comment) so that callers like
+		// ParseBody get a start position that includes any leading comments,
+		// rather than the first non-comment token returned by NextRange/Peek.
+		if len(p.Tokens) > 0 {
+			return p.Tokens[0].Range
+		}
 		return p.NextRange()
 	}
 

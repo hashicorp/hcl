@@ -2753,6 +2753,49 @@ block "valid" {}
 				},
 			},
 		},
+
+		// Regression: a file starting with a multiline comment had its body
+		// SrcRange start set to the position after the comment rather than
+		// the beginning of the file.
+		{
+			"/* comment */\na = 1\n",
+			0,
+			&Body{
+				Attributes: Attributes{
+					"a": {
+						Name: "a",
+						Expr: &LiteralValueExpr{
+							Val: cty.NumberIntVal(1),
+							SrcRange: hcl.Range{
+								Start: hcl.Pos{Line: 2, Column: 5, Byte: 18},
+								End:   hcl.Pos{Line: 2, Column: 6, Byte: 19},
+							},
+						},
+						SrcRange: hcl.Range{
+							Start: hcl.Pos{Line: 2, Column: 1, Byte: 14},
+							End:   hcl.Pos{Line: 2, Column: 6, Byte: 19},
+						},
+						NameRange: hcl.Range{
+							Start: hcl.Pos{Line: 2, Column: 1, Byte: 14},
+							End:   hcl.Pos{Line: 2, Column: 2, Byte: 15},
+						},
+						EqualsRange: hcl.Range{
+							Start: hcl.Pos{Line: 2, Column: 3, Byte: 16},
+							End:   hcl.Pos{Line: 2, Column: 4, Byte: 17},
+						},
+					},
+				},
+				Blocks: Blocks{},
+				SrcRange: hcl.Range{
+					Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:   hcl.Pos{Line: 3, Column: 1, Byte: 20},
+				},
+				EndRange: hcl.Range{
+					Start: hcl.Pos{Line: 3, Column: 1, Byte: 20},
+					End:   hcl.Pos{Line: 3, Column: 1, Byte: 20},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
