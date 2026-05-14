@@ -149,25 +149,31 @@ func (e *Expression) Variables() []*Traversal {
 //
 // The search and replacement traversals must be the same length, or this
 // method will panic. Only attribute access operations can be matched and
-// replaced. Index steps never match the prefix.
+// replaced. Index steps in the existing expression will be skipped and kept.
 func (e *Expression) RenameVariablePrefix(search, replacement []string) {
 	if len(search) != len(replacement) {
 		panic(fmt.Sprintf("search and replacement length mismatch (%d and %d)", len(search), len(replacement)))
 	}
 Traversals:
-	for node := range e.absTraversals {
-		traversal := node.content.(*Traversal)
-		if len(traversal.steps) < len(search) {
+	for traversalNode := range e.absTraversals {
+		traversal := traversalNode.content.(*Traversal)
+		stepNodes := traversal.steps.List()
+		var stepAttrNodes []*node
+
+		for _, node := range stepNodes {
+			if _, isName := node.content.(*TraverseName); !isName {
+				continue // only name nodes can match
+			}
+			stepAttrNodes = append(stepAttrNodes, node)
+		}
+
+		if len(stepAttrNodes) < len(search) {
 			// If it's shorter then it can't have our prefix
 			continue
 		}
 
-		stepNodes := traversal.steps.List()
 		for i, name := range search {
-			step, isName := stepNodes[i].content.(*TraverseName)
-			if !isName {
-				continue Traversals // only name nodes can match
-			}
+			step:= stepAttrNodes[i].content.(*TraverseName)
 			foundNameBytes := step.name.content.(*identifier).token.Bytes
 			if len(foundNameBytes) != len(name) {
 				continue Traversals
@@ -180,7 +186,7 @@ Traversals:
 		// If we get here then the prefix matched, so now we'll swap in
 		// the replacement strings.
 		for i, name := range replacement {
-			step := stepNodes[i].content.(*TraverseName)
+			step := stepAttrNodes[i].content.(*TraverseName)
 			token := step.name.content.(*identifier).token
 			token.Bytes = []byte(name)
 		}
