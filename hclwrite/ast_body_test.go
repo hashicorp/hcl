@@ -769,6 +769,374 @@ func TestBodySetAttributeTraversal(t *testing.T) {
 	}
 }
 
+func TestBodyAttributeLeadComments(t *testing.T) {
+	tests := []struct {
+		src  string
+		name string
+		want []string
+	}{
+		{
+			"",
+			"a",
+			nil,
+		},
+		{
+			"a = 1",
+			"a",
+			[]string{},
+		},
+		{
+			"# Comment\na = 1",
+			"a",
+			[]string{"# Comment\n"},
+		},
+		{
+			"// Comment\na = 1",
+			"a",
+			[]string{"// Comment\n"},
+		},
+		{
+			"/* Comment */ a = 1",
+			"a",
+			[]string{"/* Comment */"},
+		},
+		{
+			"# First line\n# Second line\na = 1",
+			"a",
+			[]string{"# First line\n", "# Second line\n"},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%s in %s", test.name, test.src), func(t *testing.T) {
+			f, diags := ParseConfig([]byte(test.src), "", hcl.Pos{Line: 1, Column: 1})
+			if len(diags) != 0 {
+				for _, diag := range diags {
+					t.Logf("- %s", diag.Error())
+				}
+				t.Fatalf("unexpected diagnostics")
+			}
+
+			got := f.Body().AttributeLeadComments(test.name)
+			if !reflect.DeepEqual(got, test.want) {
+				diff := cmp.Diff(test.want, got)
+				t.Errorf("wrong result\ngot:  %s\nwant: %s\ndiff:\n%s", spew.Sdump(got), spew.Sdump(test.want), diff)
+			}
+		})
+	}
+}
+
+func TestBodySetAttributeLeadComments(t *testing.T) {
+	tests := []struct {
+		src          string
+		name         string
+		leadComments []string
+		want         Tokens
+	}{
+		{
+			"",
+			"a",
+			[]string{"# Comment\n"},
+			Tokens{{Type: hclsyntax.TokenEOF, Bytes: []byte{}}},
+		},
+		{
+			"a = 1",
+			"a",
+			[]string{"# Comment\n"},
+			Tokens{
+				{
+					Type:         hclsyntax.TokenComment,
+					Bytes:        []byte("# Comment\n"),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte(`a`),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte{'='},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenNumberLit,
+					Bytes:        []byte{'1'},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenEOF,
+					Bytes:        []byte{},
+					SpacesBefore: 0,
+				},
+			},
+		},
+		{
+			"# Old\na = 1",
+			"a",
+			nil,
+			Tokens{
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte(`a`),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte{'='},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenNumberLit,
+					Bytes:        []byte{'1'},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenEOF,
+					Bytes:        []byte{},
+					SpacesBefore: 0,
+				},
+			},
+		},
+		{
+			"# Old\na = 1",
+			"a",
+			[]string{"# New\n"},
+			Tokens{
+				{
+					Type:         hclsyntax.TokenComment,
+					Bytes:        []byte("# New\n"),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte(`a`),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte{'='},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenNumberLit,
+					Bytes:        []byte{'1'},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenEOF,
+					Bytes:        []byte{},
+					SpacesBefore: 0,
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%s in %s", test.name, test.src), func(t *testing.T) {
+			f, diags := ParseConfig([]byte(test.src), "", hcl.Pos{Line: 1, Column: 1})
+			if len(diags) != 0 {
+				for _, diag := range diags {
+					t.Logf("- %s", diag.Error())
+				}
+				t.Fatalf("unexpected diagnostics")
+			}
+
+			f.Body().SetAttributeLeadComments(test.name, test.leadComments)
+			got := f.BuildTokens(nil)
+			format(got)
+			if !reflect.DeepEqual(got, test.want) {
+				diff := cmp.Diff(test.want, got)
+				t.Errorf("wrong result\ngot:  %s\nwant: %s\ndiff:\n%s", spew.Sdump(got), spew.Sdump(test.want), diff)
+			}
+		})
+	}
+}
+
+func TestBodyAttributeLineComments(t *testing.T) {
+	tests := []struct {
+		src  string
+		name string
+		want []string
+	}{
+		{
+			"",
+			"a",
+			nil,
+		},
+		{
+			"a = 1",
+			"a",
+			[]string{},
+		},
+		{
+			"a = 1 # Comment\n",
+			"a",
+			[]string{"# Comment\n"},
+		},
+		{
+			"a = 1 // Comment\n",
+			"a",
+			[]string{"// Comment\n"},
+		},
+		{
+			"a = 1 /* Comment */",
+			"a",
+			[]string{"/* Comment */"},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%s in %s", test.name, test.src), func(t *testing.T) {
+			f, diags := ParseConfig([]byte(test.src), "", hcl.Pos{Line: 1, Column: 1})
+			if len(diags) != 0 {
+				for _, diag := range diags {
+					t.Logf("- %s", diag.Error())
+				}
+				t.Fatalf("unexpected diagnostics")
+			}
+
+			got := f.Body().AttributeLineComments(test.name)
+			if !reflect.DeepEqual(got, test.want) {
+				diff := cmp.Diff(test.want, got)
+				t.Errorf("wrong result\ngot:  %s\nwant: %s\ndiff:\n%s", spew.Sdump(got), spew.Sdump(test.want), diff)
+			}
+		})
+	}
+}
+
+func TestBodySetAttributeLineComments(t *testing.T) {
+	tests := []struct {
+		src          string
+		name         string
+		lineComments []string
+		want         Tokens
+	}{
+		{
+			"",
+			"a",
+			[]string{"# Comment\n"},
+			Tokens{
+				{
+					Type:         hclsyntax.TokenEOF,
+					Bytes:        []byte{},
+					SpacesBefore: 0,
+				}},
+		},
+		{
+			"a = 1",
+			"a",
+			[]string{"# Comment\n"},
+			Tokens{
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte(`a`),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte{'='},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenNumberLit,
+					Bytes:        []byte{'1'},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenComment,
+					Bytes:        []byte("# Comment\n"),
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenEOF,
+					Bytes:        []byte{},
+					SpacesBefore: 0,
+				},
+			},
+		},
+		{
+			"a = 1 # Old",
+			"a",
+			nil,
+			Tokens{
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte(`a`),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte{'='},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenNumberLit,
+					Bytes:        []byte{'1'},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenEOF,
+					Bytes:        []byte{},
+					SpacesBefore: 0,
+				},
+			},
+		},
+		{
+			"a = 1 # Old\n",
+			"a",
+			[]string{"# New\n"},
+			Tokens{
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte(`a`),
+					SpacesBefore: 0,
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte{'='},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenNumberLit,
+					Bytes:        []byte{'1'},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenComment,
+					Bytes:        []byte("# New\n"),
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenEOF,
+					Bytes:        []byte{},
+					SpacesBefore: 0,
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%s in %s", test.name, test.src), func(t *testing.T) {
+			f, diags := ParseConfig([]byte(test.src), "", hcl.Pos{Line: 1, Column: 1})
+			if len(diags) != 0 {
+				for _, diag := range diags {
+					t.Logf("- %s", diag.Error())
+				}
+				t.Fatalf("unexpected diagnostics")
+			}
+
+			f.Body().SetAttributeLineComments(test.name, test.lineComments)
+			got := f.BuildTokens(nil)
+			format(got)
+			if !reflect.DeepEqual(got, test.want) {
+				diff := cmp.Diff(test.want, got)
+				t.Errorf("wrong result\ngot:  %s\nwant: %s\ndiff:\n%s", spew.Sdump(got), spew.Sdump(test.want), diff)
+			}
+		})
+	}
+}
+
 func TestBodySetAttributeRaw(t *testing.T) {
 	tests := []struct {
 		src    string
