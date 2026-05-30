@@ -46,6 +46,10 @@ func (a *Attribute) init(name string, expr *Expression) {
 	})
 }
 
+func (a *Attribute) LeadComments() Tokens {
+	return a.leadComments.content.BuildTokens(nil)
+}
+
 func (a *Attribute) Expr() *Expression {
 	return a.expr.content.(*Expression)
 }
