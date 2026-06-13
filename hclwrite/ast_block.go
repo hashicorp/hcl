@@ -71,6 +71,10 @@ func (b *Block) Body() *Body {
 	return b.body.content.(*Body)
 }
 
+func (a *Block) LeadComments() Tokens {
+	return a.leadComments.content.BuildTokens(nil)
+}
+
 // Type returns the type name of the block.
 func (b *Block) Type() string {
 	typeNameObj := b.typeName.content.(*identifier)
