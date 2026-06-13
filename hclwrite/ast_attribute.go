@@ -50,6 +50,10 @@ func (a *Attribute) LeadComments() Tokens {
 	return a.leadComments.content.BuildTokens(nil)
 }
 
+func (a *Attribute) LineComments() Tokens {
+	return a.lineComments.content.BuildTokens(nil)
+}
+
 func (a *Attribute) Expr() *Expression {
 	return a.expr.content.(*Expression)
 }
