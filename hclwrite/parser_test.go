@@ -1200,6 +1200,280 @@ func TestParse(t *testing.T) {
 				},
 			},
 		},
+		{
+			`a = {
+				hat = "derby", (cat) = "calico" }`,
+			TestTreeNode{
+				Type: "Body",
+				Children: []TestTreeNode{
+					{
+						Type: "Attribute",
+						Children: []TestTreeNode{
+							{
+								Type: "comments",
+							},
+							{
+								Type: "identifier",
+								Val:  "a",
+							},
+							{
+								Type: "Tokens",
+								Val:  " =",
+							},
+							{
+								Type: "Expression",
+								Children: []TestTreeNode{
+									{
+										Type: "ObjectConsExpr",
+										Children: []TestTreeNode{
+											{
+												Type: "Tokens",
+												Val:  " {",
+											},
+											{
+												Type: "ObjectConsItem",
+												Children: []TestTreeNode{
+													{
+														Type: "ObjectConsKey",
+														Children: []TestTreeNode{
+															{
+																Type: "Tokens",
+																Val:  "\n",
+															},
+															{
+																Type: "identifier",
+																Val:  "    hat",
+															},
+														},
+													},
+													{
+														Type: "ObjectConsValue",
+														Children: []TestTreeNode{
+															{
+																Type: "Tokens",
+																Val:  " =",
+															},
+															{
+																Type: "Expression",
+																Children: []TestTreeNode{
+																	{
+																		Type: "Tokens",
+																		Val:  ` "derby"`,
+																	},
+																},
+															},
+														},
+													},
+												},
+											},
+											{
+												Type: "ObjectConsItem",
+												Children: []TestTreeNode{
+													{
+														Type: "ObjectConsKey",
+														Children: []TestTreeNode{
+															{
+																Type: "Tokens",
+																Val:  ",",
+															},
+															{
+																Type: "Expression",
+																Children: []TestTreeNode{
+																	{
+																		Type: "Tokens",
+																		Val:  " (",
+																	},
+																	{
+																		Type: "Traversal",
+																		Children: []TestTreeNode{
+																			{
+																				Type:     "TraverseName",
+																				Children: []TestTreeNode{{Type: "identifier", Val: "cat"}},
+																			},
+																		},
+																	},
+																	{
+																		Type: "Tokens",
+																		Val:  ")",
+																	},
+																},
+															},
+														},
+													},
+													{
+														Type: "ObjectConsValue",
+														Children: []TestTreeNode{
+															{
+																Type: "Tokens",
+																Val:  " =",
+															},
+															{
+																Type: "Expression",
+																Children: []TestTreeNode{
+																	{
+																		Type: "Tokens",
+																		Val:  ` "calico"`,
+																	},
+																},
+															},
+														},
+													},
+												},
+											},
+											{
+												Type: "Tokens",
+												Val:  " }",
+											},
+										},
+									},
+								},
+							},
+							{
+								Type: "comments",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			`a = {
+				hat = "derby" // a fancy hat
+		   	    (cat) = "calico"
+			}`,
+			TestTreeNode{
+				Type: "Body",
+				Children: []TestTreeNode{
+					{
+						Type: "Attribute",
+						Children: []TestTreeNode{
+							{
+								Type: "comments",
+							},
+							{
+								Type: "identifier",
+								Val:  "a",
+							},
+							{
+								Type: "Tokens",
+								Val:  " =",
+							},
+							{
+								Type: "Expression",
+								Children: []TestTreeNode{
+									{
+										Type: "ObjectConsExpr",
+										Children: []TestTreeNode{
+											{
+												Type: "Tokens",
+												Val:  " {",
+											},
+											{
+												Type: "ObjectConsItem",
+												Children: []TestTreeNode{
+													{
+														Type: "ObjectConsKey",
+														Children: []TestTreeNode{
+															{
+																Type: "Tokens",
+																Val:  "\n",
+															},
+															{
+																Type: "identifier",
+																Val:  "    hat",
+															},
+														},
+													},
+													{
+														Type: "ObjectConsValue",
+														Children: []TestTreeNode{
+															{
+																Type: "Tokens",
+																Val:  " =",
+															},
+															{
+																Type: "Expression",
+																Children: []TestTreeNode{
+																	{
+																		Type: "Tokens",
+																		Val:  ` "derby"`,
+																	},
+																},
+															},
+														},
+													},
+												},
+											},
+											{
+												Type: "ObjectConsItem",
+												Children: []TestTreeNode{
+													{
+														Type: "ObjectConsKey",
+														Children: []TestTreeNode{
+															{
+																Type: "Tokens",
+																Val:  " // a fancy hat\n",
+															},
+															{
+																Type: "Expression",
+																Children: []TestTreeNode{
+																	{
+																		Type: "Tokens",
+																		Val:  "          (",
+																	},
+																	{
+																		Type: "Traversal",
+																		Children: []TestTreeNode{
+																			{
+																				Type:     "TraverseName",
+																				Children: []TestTreeNode{{Type: "identifier", Val: "cat"}},
+																			},
+																		},
+																	},
+																	{
+																		Type: "Tokens",
+																		Val:  ")",
+																	},
+																},
+															},
+														},
+													},
+													{
+														Type: "ObjectConsValue",
+														Children: []TestTreeNode{
+															{
+																Type: "Tokens",
+																Val:  " =",
+															},
+															{
+																Type: "Expression",
+																Children: []TestTreeNode{
+																	{
+																		Type: "Tokens",
+																		Val:  ` "calico"`,
+																	},
+																},
+															},
+														},
+													},
+												},
+											},
+											{
+												Type: "Tokens",
+												Val:  "\n   }",
+											},
+										},
+									},
+								},
+							},
+							{
+								Type: "comments",
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {

@@ -187,6 +187,18 @@ Traversals:
 	}
 }
 
+func (e *Expression) AsObjectConsExpr() *ObjectConsExpr {
+	var found *ObjectConsExpr
+	e.walkChildNodes(func(n *node) {
+		if o, ok := n.content.(*ObjectConsExpr); ok {
+			found = o
+			return
+		}
+	})
+
+	return found
+}
+
 // Traversal represents a sequence of variable, attribute, and/or index
 // operations.
 type Traversal struct {
