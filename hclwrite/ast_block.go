@@ -85,7 +85,7 @@ func (b *Block) Type() string {
 func (b *Block) SetType(typeName string) {
 	nameTok := newIdentToken(typeName)
 	nameObj := newIdentifier(nameTok)
-	b.typeName.ReplaceWith(nameObj)
+	b.typeName = b.typeName.ReplaceWith(nameObj)
 }
 
 // Labels returns the labels of the block.
