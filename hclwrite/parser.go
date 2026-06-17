@@ -466,13 +466,45 @@ func parseObjectConsExpr(nativeExpr *hclsyntax.ObjectConsExpr, from inputTokens)
 // An object key is an Identifier or an Expression. In this context, a quoted
 // literal is functionally equivalent to an Identifier.
 func parseObjectConsKeyExpr(nativeExpr *hclsyntax.ObjectConsKeyExpr, from inputTokens) *node {
-	expr := parseExpression(nativeExpr.Wrapped, from)
-	if len(nativeExpr.Variables()) == 0 {
-		expr.content.(*Expression).absTraversals.Clear()
-	}
-	wrapExpr := newObjectConsKeyExpr(expr)
+	var objectConsKeyExpr *ObjectConsKeyExpr
 
-	return newNode(wrapExpr)
+	switch wrapped := nativeExpr.Wrapped.(type) {
+
+	// a = {
+	//        hat = "derby" }
+	// appends ObjectConsKeyExpr => identifier
+	case *hclsyntax.ScopeTraversalExpr:
+		expr := newNode(newIdentifier(from.writerTokens[0]))
+		objectConsKeyExpr = newObjectConsKeyExpr(expr)
+
+	// a = {
+	//        (var.hat) = "derby" }
+	// => appends ObjectConsKeyExpr => Expression
+	case *hclsyntax.ParenthesesExpr:
+		expr := parseAnyExpression(wrapped, from)
+		objectConsKeyExpr = newObjectConsKeyExpr(expr)
+
+	// a = {
+	//        "a hat" = "derby" }
+	// => appends ObjectConsKeyExpr => Expression => quoted
+	case *hclsyntax.TemplateExpr:
+		expr := parseTemplateExpr(wrapped, from)
+		objectConsKeyExpr = newObjectConsKeyExpr(expr)
+
+	default:
+		expr := parseAnyExpression(wrapped, from)
+		objectConsKeyExpr = newObjectConsKeyExpr(expr)
+	}
+
+	// A key that hclsyntax interprets as a literal name contributes no
+	// variables, even if it was parsed as an expression.
+	if len(nativeExpr.Variables()) == 0 {
+		if expr, ok := objectConsKeyExpr.wrapped.content.(*Expression); ok {
+			expr.absTraversals.Clear()
+		}
+	}
+
+	return newNode(objectConsKeyExpr)
 }
 
 // parseTemplateExpr is specifically interested in string literal expressions
