@@ -376,6 +376,76 @@ func parseBlockLabels(nativeBlock *hclsyntax.Block, from inputTokens) (inputToke
 }
 
 func parseExpression(nativeExpr hclsyntax.Expression, from inputTokens) *node {
+	switch tNativeExpr := nativeExpr.(type) {
+
+	// Object-construct expression
+	case *hclsyntax.ObjectConsExpr:
+		return parseObjectConsExpr(tNativeExpr, from)
+
+	default:
+		return parseAnyExpression(nativeExpr, from)
+	}
+}
+
+// parseObjectConsExpr parses an object-construct expression, defined as:
+//
+//	object = "{" (
+//	    (objectelem (( "," | Newline) objectelem)* ","?)?
+//	) "}";
+//	objectelem = (Identifier | Expression) ("=" | ":") Expression;
+//
+// It leaves any lead comments and line comments as unstructed tokens.
+//
+// It returns *Expression. The returned *Expression has a child *ObjectConsExpr
+// that can be unwrapped via Expression.AsObjectConsExpr().
+func parseObjectConsExpr(nativeExpr *hclsyntax.ObjectConsExpr, from inputTokens) *node {
+	expr := newObjectConsExpr()
+	children := expr.children
+
+	var before, open, keyTokens, valueTokens inputTokens
+
+	before, open, from = from.Partition(nativeExpr.StartRange())
+	children.AppendUnstructuredTokens(before.writerTokens)
+	children.AppendUnstructuredTokens(open.writerTokens)
+
+	for _, nativeItem := range nativeExpr.Items {
+		item := newObjectConsItem()
+		key, value := item.kv()
+
+		nativeKeyExpr := nativeItem.KeyExpr.(*hclsyntax.ObjectConsKeyExpr)
+		key.literal = !nativeKeyExpr.ForceNonLiteral
+
+		if key.literal {
+			var keyToken *Token
+			before, keyToken, from = from.PartitionTypeSingle(hclsyntax.TokenIdent)
+
+			key.children.AppendUnstructuredTokens(before.writerTokens)
+			key.name = key.children.Append(newIdentifier(keyToken))
+		} else {
+			before, keyTokens, from = from.Partition(nativeKeyExpr.Range())
+
+			key.children.AppendUnstructuredTokens(before.writerTokens)
+			key.children.AppendNode(parseExpression(nativeKeyExpr, keyTokens))
+		}
+
+		before, valueTokens, from = from.Partition(nativeItem.ValueExpr.Range())
+		value.children.AppendUnstructuredTokens(before.writerTokens)
+		value.expr = parseExpression(nativeItem.ValueExpr, valueTokens)
+		value.children.AppendNode(value.expr)
+
+		children.Append(item)
+	}
+
+	_, from, _ = from.Partition(nativeExpr.Range())
+	children.AppendUnstructuredTokens(from.writerTokens)
+
+	// Wrap in an Expression
+	wrapExpr := newExpression()
+	wrapExpr.children.Append(expr)
+	return newNode(wrapExpr)
+}
+
+func parseAnyExpression(nativeExpr hclsyntax.Expression, from inputTokens) *node {
 	expr := newExpression()
 	children := expr.children
 
