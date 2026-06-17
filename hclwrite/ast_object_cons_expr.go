@@ -3,19 +3,78 @@
 
 package hclwrite
 
+import (
+	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/zclconf/go-cty/cty"
+)
+
 type ObjectConsExpr struct {
 	inTree
+
+	items nodeSet
 }
 
 func newObjectConsExpr() *ObjectConsExpr {
 	return &ObjectConsExpr{
 		inTree: newInTree(),
+		items:  newNodeSet(),
 	}
 }
 
-func (o *ObjectConsExpr) ValueFor(key string) *ObjectConsValue {
-	var found *ObjectConsValue
-	o.walkChildNodes(func(n *node) {
+func (object *ObjectConsExpr) firstItemNode() *node {
+	return object.items.List()[0]
+}
+
+// SetItemRaw either replaces the expression of an existing item of the given
+// name or adds a new item definition to the end of the object, using the given
+// tokens verbatim as the expression.
+//
+// The same caveats apply to this function as for NewExpressionRaw on which it
+// is based. If possible, prefer to use SetItemValue or SetItemTraversal.
+func (object *ObjectConsExpr) SetItemRaw(key string, tokens Tokens) (*ObjectConsKey, *ObjectConsValue) {
+	item := object.ItemFor(key)
+	expr := NewExpressionRaw(tokens)
+	if item != nil {
+		item.valueObj().expr.Detach()
+		item.valueObj().expr = item.valueObj().children.Append(expr)
+	} else {
+		item = newObjectConsItem()
+		item.init(key, expr)
+		if firstItemNode := object.firstItemNode(); firstItemNode == nil {
+			return nil, nil
+		} else {
+			object.items.Add(object.children.Insert(firstItemNode, item))
+		}
+	}
+	return item.kv()
+}
+
+// SetItemValue either replaces the expression of an existing item of the given
+// name or adds a new item definition to the end of the object.
+//
+// The value is given as a cty.Value, and must therefore be a literal. To set a
+// variable reference or other traversal, use SetItemTraversal.
+//
+// The return value is the item that was either modified in-place or created.
+func (object *ObjectConsExpr) SetItemValue(name string, val cty.Value) (*ObjectConsKey, *ObjectConsValue) {
+	return nil, nil
+}
+
+// SetItemTraversal either replaces the expression of an existing item of the
+// given name or adds a new item definition to the end of the object.
+//
+// The new expression is given as a hcl.Traversal, which must be an absolute
+// traversal. To set a literal value, use SetItemValue.
+//
+// The return value is the item that was either modified in-place or created.
+func (object *ObjectConsExpr) SetItemTraversal(name string, traversal hcl.Traversal) (*ObjectConsKey, *ObjectConsValue) {
+	return nil, nil
+}
+
+func (object *ObjectConsExpr) ItemFor(key string) *ObjectConsItem {
+	var found *ObjectConsItem
+	object.walkChildNodes(func(n *node) {
 		if item, ok := n.content.(*ObjectConsItem); ok {
 			k := item.key.content.(*ObjectConsKey)
 			name := k.name.content.(*Expression)
@@ -28,12 +87,20 @@ func (o *ObjectConsExpr) ValueFor(key string) *ObjectConsValue {
 			}
 
 			if k.literal && (maybeKey == key || maybeKey == `"`+key+`"`) {
-				found = item.value.content.(*ObjectConsValue)
+				found = item
 				return
 			}
 		}
 	})
 	return found
+}
+
+func (object *ObjectConsExpr) ValueFor(key string) *ObjectConsValue {
+	if item := object.ItemFor(key); item == nil {
+		return nil
+	} else {
+		return item.value.content.(*ObjectConsValue)
+	}
 }
 
 type ObjectConsItem struct {
@@ -48,8 +115,42 @@ func newObjectConsItem() *ObjectConsItem {
 	}
 }
 
+func (item *ObjectConsItem) keyObj() *ObjectConsKey {
+	return item.key.content.(*ObjectConsKey)
+}
+
+func (item *ObjectConsItem) valueObj() *ObjectConsValue {
+	return item.value.content.(*ObjectConsValue)
+}
+
+func (item *ObjectConsItem) init(key string, value *Expression) {
+	value.assertUnattached()
+
+	item.children.AppendUnstructuredTokens(Tokens{
+		{
+			Type:  hclsyntax.TokenNewline,
+			Bytes: []byte{'\n'},
+		},
+	})
+	item.key = item.children.Append(newObjectConsKey())
+	item.keyObj().children.Append(newIdentifier(newIdentToken(key)))
+
+	item.children.AppendUnstructuredTokens(Tokens{
+		{
+			Type:  hclsyntax.TokenEqual,
+			Bytes: []byte{'='},
+		},
+	})
+
+	item.value = item.children.Append(newObjectConsValue())
+	item.valueObj().children.Append(value)
+}
+
 func (item *ObjectConsItem) kv() (*ObjectConsKey, *ObjectConsValue) {
-	return item.key.content.(*ObjectConsKey), item.value.content.(*ObjectConsValue)
+	key := item.key.content.(*ObjectConsKey)
+	value := item.value.content.(*ObjectConsValue)
+
+	return key, value
 }
 
 type ObjectConsKey struct {
