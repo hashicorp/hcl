@@ -6,6 +6,7 @@ package hclwrite
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
@@ -402,7 +403,9 @@ func parseExpression(nativeExpr hclsyntax.Expression, from inputTokens) *node {
 	}
 }
 
-// parseObjectConsExpr parses an object-construct key expression
+// parseObjectConsExpr parses an object-construct key expression.
+// An object key is an Identifier or an Expression. In this context, a quoted
+// literal is functionally equivalent to an Identifier.
 func parseObjectConsKeyExpr(nativeExpr *hclsyntax.ObjectConsKeyExpr, from inputTokens) *node {
 	wrapExpr := newObjectConsKey()
 
@@ -413,10 +416,23 @@ func parseObjectConsKeyExpr(nativeExpr *hclsyntax.ObjectConsKeyExpr, from inputT
 		wrapExpr.children.AppendNode(expr)
 
 	} else {
-		quoted := newQuoted(from.writerTokens)
+		if templateExpr, ok := nativeExpr.Wrapped.(*hclsyntax.TemplateExpr); ok && templateExpr.IsStringLiteral() {
+			literalValueExpr := templateExpr.Parts[0].(*hclsyntax.LiteralValueExpr)
 
-		wrapExpr.literal = true
-		wrapExpr.name = wrapExpr.children.Append(quoted)
+			quoted := newQuoted(from.writerTokens)
+			_, literal, _ := from.Partition(literalValueExpr.Range())
+
+			var b strings.Builder
+			literal.writerTokens.WriteTo(&b)
+			wrapExpr.literalName = b.String()
+			wrapExpr.children.Append(quoted)
+		} else if scopeTraversalExpr, ok := nativeExpr.Wrapped.(*hclsyntax.ScopeTraversalExpr); ok {
+			traversal := scopeTraversalExpr.AsTraversal()
+			expr := NewExpressionAbsTraversal(traversal)
+
+			wrapExpr.literalName = traversal.RootName()
+			wrapExpr.children.Append(expr)
+		}
 	}
 
 	return newNode(wrapExpr)
@@ -459,6 +475,7 @@ func parseObjectConsExpr(nativeExpr *hclsyntax.ObjectConsExpr, from inputTokens)
 		value.expr = parseExpression(nativeItem.ValueExpr, valueTokens)
 		value.children.AppendNode(value.expr)
 		item.value = item.children.Append(value)
+		item.literalKey = item.key.content.(*ObjectConsKey).literalName
 
 		expr.children.Append(item)
 	}

@@ -18,16 +18,9 @@ func (o *ObjectConsExpr) ValueFor(key string) *ObjectConsValue {
 	o.walkChildNodes(func(n *node) {
 		if item, ok := n.content.(*ObjectConsItem); ok {
 			k := item.key.content.(*ObjectConsKey)
-			name := k.name.content.(*Expression)
 
-			// A temporary workaround for parsing expressions as names at ...
-			// parse-time
-			maybeKey := ""
-			for _, token := range name.BuildTokens(nil) {
-				maybeKey += string(token.Bytes) // no spaces before
-			}
-
-			if k.literal && (maybeKey == key || maybeKey == `"`+key+`"`) {
+			maybeKey := k.literalName
+			if maybeKey == key || maybeKey == `"`+key+`"` {
 				found = item.value.content.(*ObjectConsValue)
 				return
 			}
@@ -38,8 +31,9 @@ func (o *ObjectConsExpr) ValueFor(key string) *ObjectConsValue {
 
 type ObjectConsItem struct {
 	inTree
-	key   *node
-	value *node
+	key        *node
+	value      *node
+	literalKey string
 }
 
 func newObjectConsItem() *ObjectConsItem {
@@ -51,9 +45,8 @@ func newObjectConsItem() *ObjectConsItem {
 type ObjectConsKey struct {
 	inTree
 
-	literal bool
-	name    *node
-	expr    *node
+	literalName string
+	expr        *node
 }
 
 func newObjectConsKey() *ObjectConsKey {
