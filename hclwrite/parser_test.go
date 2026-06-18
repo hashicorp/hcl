@@ -1241,8 +1241,10 @@ func TestParse(t *testing.T) {
 																Val:  "\n",
 															},
 															{
-																Type: "identifier",
-																Val:  "    hat",
+																Type: "Expression",
+																Children: []TestTreeNode{{
+																	Type: "Tokens", Val: "    hat",
+																}},
 															},
 														},
 													},
@@ -1379,8 +1381,10 @@ func TestParse(t *testing.T) {
 																Val:  "\n",
 															},
 															{
-																Type: "identifier",
-																Val:  "    hat",
+																Type: "Expression",
+																Children: []TestTreeNode{{
+																	Type: "Tokens", Val: "    hat",
+																}},
 															},
 														},
 													},
