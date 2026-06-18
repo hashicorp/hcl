@@ -427,7 +427,7 @@ func parseObjectConsExpr(nativeExpr *hclsyntax.ObjectConsExpr, from inputTokens)
 		value.children.AppendNode(value.expr)
 		item.value = item.children.Append(value)
 
-		expr.items.Add(children.Append(item))
+		expr.children.Append(item)
 	}
 
 	_, from, _ = from.Partition(nativeExpr.Range())

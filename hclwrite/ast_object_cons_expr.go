@@ -48,10 +48,6 @@ func newObjectConsItem() *ObjectConsItem {
 	}
 }
 
-func (item *ObjectConsItem) kv() (*ObjectConsKey, *ObjectConsValue) {
-	return item.key.content.(*ObjectConsKey), item.value.content.(*ObjectConsValue)
-}
-
 type ObjectConsKey struct {
 	inTree
 
