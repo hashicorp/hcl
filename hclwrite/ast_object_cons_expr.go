@@ -18,8 +18,16 @@ func (o *ObjectConsExpr) ValueFor(key string) *ObjectConsValue {
 	o.walkChildNodes(func(n *node) {
 		if item, ok := n.content.(*ObjectConsItem); ok {
 			k := item.key.content.(*ObjectConsKey)
-			name := k.name.content.(*identifier)
-			if k.literal && string(name.token.Bytes) == key {
+			name := k.name.content.(*Expression)
+
+			// A temporary workaround for parsing expressions as names at ...
+			// parse-time
+			maybeKey := ""
+			for _, token := range name.BuildTokens(nil) {
+				maybeKey += string(token.Bytes) // no spaces before
+			}
+
+			if k.literal && (maybeKey == key || maybeKey == `"`+key+`"`) {
 				found = item.value.content.(*ObjectConsValue)
 				return
 			}

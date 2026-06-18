@@ -415,18 +415,10 @@ func parseObjectConsExpr(nativeExpr *hclsyntax.ObjectConsExpr, from inputTokens)
 		nativeKeyExpr := nativeItem.KeyExpr.(*hclsyntax.ObjectConsKeyExpr)
 		key.literal = !nativeKeyExpr.ForceNonLiteral
 
-		if key.literal {
-			var keyToken *Token
-			before, keyToken, from = from.PartitionTypeSingle(hclsyntax.TokenIdent)
-
-			key.children.AppendUnstructuredTokens(before.writerTokens)
-			key.name = key.children.Append(newIdentifier(keyToken))
-		} else {
-			before, keyTokens, from = from.Partition(nativeKeyExpr.Range())
-
-			key.children.AppendUnstructuredTokens(before.writerTokens)
-			key.children.AppendNode(parseExpression(nativeKeyExpr, keyTokens))
-		}
+		before, keyTokens, from = from.Partition(nativeKeyExpr.Range())
+		key.children.AppendUnstructuredTokens(before.writerTokens)
+		key.name = parseExpression(nativeKeyExpr, keyTokens)
+		key.children.AppendNode(key.name)
 
 		before, valueTokens, from = from.Partition(nativeItem.ValueExpr.Range())
 		value.children.AppendUnstructuredTokens(before.writerTokens)
