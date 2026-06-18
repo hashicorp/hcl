@@ -53,6 +53,7 @@ type ObjectConsKey struct {
 
 	literal bool
 	name    *node
+	expr    *node
 }
 
 func newObjectConsKey() *ObjectConsKey {

@@ -382,9 +382,44 @@ func parseExpression(nativeExpr hclsyntax.Expression, from inputTokens) *node {
 	case *hclsyntax.ObjectConsExpr:
 		return parseObjectConsExpr(tNativeExpr, from)
 
+	case *hclsyntax.ObjectConsKeyExpr:
+		return parseObjectConsKeyExpr(tNativeExpr, from)
+
+	case *hclsyntax.TemplateExpr:
+		if tNativeExpr.IsStringLiteral() {
+			quoted := newQuoted(from.writerTokens)
+
+			// Wrap in an Expression
+			wrapExpr := newExpression()
+			wrapExpr.children.Append(quoted)
+			return newNode(wrapExpr)
+		} else {
+			return parseAnyExpression(nativeExpr, from)
+		}
+
 	default:
 		return parseAnyExpression(nativeExpr, from)
 	}
+}
+
+// parseObjectConsExpr parses an object-construct key expression
+func parseObjectConsKeyExpr(nativeExpr *hclsyntax.ObjectConsKeyExpr, from inputTokens) *node {
+	wrapExpr := newObjectConsKey()
+
+	if nativeExpr.ForceNonLiteral {
+		expr := parseExpression(nativeExpr.Wrapped, from)
+
+		wrapExpr.expr = expr
+		wrapExpr.children.AppendNode(expr)
+
+	} else {
+		quoted := newQuoted(from.writerTokens)
+
+		wrapExpr.literal = true
+		wrapExpr.name = wrapExpr.children.Append(quoted)
+	}
+
+	return newNode(wrapExpr)
 }
 
 // parseObjectConsExpr parses an object-construct expression, defined as:
@@ -410,16 +445,14 @@ func parseObjectConsExpr(nativeExpr *hclsyntax.ObjectConsExpr, from inputTokens)
 
 	for _, nativeItem := range nativeExpr.Items {
 		item := newObjectConsItem()
-		key, value := newObjectConsKey(), newObjectConsValue()
+		value := newObjectConsValue()
 
 		nativeKeyExpr := nativeItem.KeyExpr.(*hclsyntax.ObjectConsKeyExpr)
-		key.literal = !nativeKeyExpr.ForceNonLiteral
 
 		before, keyTokens, from = from.Partition(nativeKeyExpr.Range())
 		item.children.AppendUnstructuredTokens(before.writerTokens)
-		key.name = parseExpression(nativeKeyExpr, keyTokens)
-		key.children.AppendNode(key.name)
-		item.key = item.children.Append(key)
+		item.key = parseObjectConsKeyExpr(nativeKeyExpr, keyTokens)
+		item.children.AppendNode(item.key)
 
 		before, valueTokens, from = from.Partition(nativeItem.ValueExpr.Range())
 		item.children.AppendUnstructuredTokens(before.writerTokens)
