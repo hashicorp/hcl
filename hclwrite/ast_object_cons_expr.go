@@ -43,15 +43,9 @@ type ObjectConsItem struct {
 }
 
 func newObjectConsItem() *ObjectConsItem {
-	item := &ObjectConsItem{
+	return &ObjectConsItem{
 		inTree: newInTree(),
-		key:    newNode(newObjectConsKey()),
-		value:  newNode(newObjectConsValue()),
 	}
-	item.children.AppendNode(item.key)
-	item.children.AppendNode(item.value)
-
-	return item
 }
 
 func (item *ObjectConsItem) kv() (*ObjectConsKey, *ObjectConsValue) {
