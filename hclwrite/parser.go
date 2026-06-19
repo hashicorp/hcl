@@ -475,6 +475,8 @@ func parseObjectConsKeyExpr(nativeExpr *hclsyntax.ObjectConsKeyExpr, from inputT
 	return newNode(wrapExpr)
 }
 
+// parseObjectConsExpr is specifically interested in string literal expressions
+// at this time.
 func parseTemplateExpr(nativeExpr *hclsyntax.TemplateExpr, from inputTokens) *node {
 	if nativeExpr.IsStringLiteral() {
 		quoted := newQuoted(from.writerTokens)
