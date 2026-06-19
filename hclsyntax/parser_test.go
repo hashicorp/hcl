@@ -4,6 +4,7 @@
 package hclsyntax
 
 import (
+	"strings"
 	"fmt"
 	"sync"
 	"testing"
@@ -4327,5 +4328,17 @@ func TestParseConfigDiagnostics(t *testing.T) {
 				t.Errorf("wrong diagnostics\n%s", diff)
 			}
 		})
+	}
+}
+
+func TestParseExpression_nestedParenthesesRecursionGuard(t *testing.T) {
+	src := []byte(strings.Repeat("(", 1001) + "1" + strings.Repeat(")", 1001))
+	_, diags := ParseExpression(src, "test.hcl", hcl.InitialPos)
+	if !diags.HasErrors() {
+		t.Fatal("expected a parser nesting depth error, but got no errors")
+	}
+	expectedSummary := "Expression nesting limit exceeded"
+	if diags[0].Summary != expectedSummary {
+		t.Errorf("expected error summary %q, got %q", expectedSummary, diags[0].Summary)
 	}
 }

@@ -22,6 +22,7 @@ type parser struct {
 	// in recovery mode, assuming that the recovery heuristics have failed
 	// in this case and left the peeker in a wrong place.
 	recovery bool
+	recursionDepth int
 }
 
 func (p *parser) ParseBody(end TokenType) (*Body, hcl.Diagnostics) {
@@ -548,11 +549,23 @@ func (p *parser) parseTernaryConditional() (Expression, hcl.Diagnostics) {
 		SrcRange: hcl.RangeBetween(startRange, falseExpr.Range()),
 	}, diags
 }
-
+const maxHCLParsingDepth = 1000
 // parseBinaryOps calls itself recursively to work through all of the
 // operator precedence groups, and then eventually calls parseExpressionTerm
 // for each operand.
 func (p *parser) parseBinaryOps(ops []map[TokenType]*Operation) (Expression, hcl.Diagnostics) {
+	p.recursionDepth++
+	if p.recursionDepth > maxHCLParsingDepth {
+		var diags hcl.Diagnostics
+		diags = append(diags, &hcl.Diagnostic{
+			Severity: hcl.DiagError,
+			Summary:  "Expression nesting limit exceeded",
+			Detail:   "The expression contains too many nested layers of parentheses or operations, causing a parser safety cutoff.",
+		})
+		p.recursionDepth--
+		return &LiteralValueExpr{Val: cty.DynamicVal, SrcRange: p.Peek().Range}, diags
+	}
+	defer func() { p.recursionDepth-- }()
 	if len(ops) == 0 {
 		// We've run out of operators, so now we'll just try to parse a term.
 		return p.parseExpressionWithTraversals()
