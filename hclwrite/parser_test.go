@@ -1238,7 +1238,7 @@ func TestParse(t *testing.T) {
 														Val:  "\n",
 													},
 													{
-														Type: "ObjectConsKey",
+														Type: "ObjectConsKeyExpr",
 														Children: []TestTreeNode{
 															{
 																Type: "Expression",
@@ -1252,7 +1252,7 @@ func TestParse(t *testing.T) {
 																				Children: []TestTreeNode{
 																					{
 																						Type: "identifier",
-																						Val:  "hat",
+																						Val:  "    hat",
 																					},
 																				},
 																			},
@@ -1290,7 +1290,7 @@ func TestParse(t *testing.T) {
 														Val:  ",",
 													},
 													{
-														Type: "ObjectConsKey",
+														Type: "ObjectConsKeyExpr",
 														Children: []TestTreeNode{
 															{
 																Type: "Expression",
@@ -1303,8 +1303,13 @@ func TestParse(t *testing.T) {
 																		Type: "Traversal",
 																		Children: []TestTreeNode{
 																			{
-																				Type:     "TraverseName",
-																				Children: []TestTreeNode{{Type: "identifier", Val: "cat"}},
+																				Type: "TraverseName",
+																				Children: []TestTreeNode{
+																					{
+																						Type: "identifier",
+																						Val:  "cat",
+																					},
+																				},
 																			},
 																		},
 																	},
@@ -1392,7 +1397,7 @@ func TestParse(t *testing.T) {
 														Val:  "\n",
 													},
 													{
-														Type: "ObjectConsKey",
+														Type: "ObjectConsKeyExpr",
 														Children: []TestTreeNode{
 															{
 																Type: "Expression",
@@ -1406,7 +1411,7 @@ func TestParse(t *testing.T) {
 																				Children: []TestTreeNode{
 																					{
 																						Type: "identifier",
-																						Val:  "hat",
+																						Val:  "    hat",
 																					},
 																				},
 																			},
@@ -1444,7 +1449,7 @@ func TestParse(t *testing.T) {
 														Val:  " // a fancy hat\n",
 													},
 													{
-														Type: "ObjectConsKey",
+														Type: "ObjectConsKeyExpr",
 														Children: []TestTreeNode{
 															{
 																Type: "Expression",
@@ -1544,10 +1549,16 @@ func TestParse(t *testing.T) {
 														Val:  "\n",
 													},
 													{
-														Type: "ObjectConsKey",
+														Type: "ObjectConsKeyExpr",
 														Children: []TestTreeNode{
 															{
-																Type: "quoted", Val: `    "hat"`,
+																Type: "Expression",
+																Children: []TestTreeNode{
+																	{
+																		Type: "quoted",
+																		Val:  `    "hat"`,
+																	},
+																},
 															},
 														},
 													},
