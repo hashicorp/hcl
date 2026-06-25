@@ -23,6 +23,19 @@ func newObjectConsExpr() *ObjectConsExpr {
 	}
 }
 
+// Items returns the content of all items in the object-construct expression.
+func (o *ObjectConsExpr) Items() []*ObjectConsItem {
+	list := o.items.List()
+	items := make([]*ObjectConsItem, 0, len(list))
+
+	for _, n := range list {
+		items = append(items, n.content.(*ObjectConsItem))
+	}
+
+	return items
+}
+
+
 // ItemFor finds an item that matches the given key and returns the item.
 //
 // This is limited to items that have an identifier key. Items with a name
