@@ -47,8 +47,8 @@ func (object *ObjectConsExpr) SetItemRaw(key string, tokens Tokens) (*ObjectCons
 	item := object.ItemFor(key)
 	expr := NewExpressionRaw(tokens)
 	if item != nil {
-		item.valueObj().expr.Detach()
-		item.valueObj().expr = item.valueObj().children.Append(expr)
+		item.ValueObj().expr.Detach()
+		item.ValueObj().expr = item.ValueObj().children.Append(expr)
 	} else {
 		item = newObjectConsItem()
 		item.init(key, expr)
@@ -126,11 +126,11 @@ func newObjectConsItem() *ObjectConsItem {
 	}
 }
 
-func (item *ObjectConsItem) keyObj() *ObjectConsKey {
+func (item *ObjectConsItem) KeyObj() *ObjectConsKey {
 	return item.key.content.(*ObjectConsKey)
 }
 
-func (item *ObjectConsItem) valueObj() *ObjectConsValue {
+func (item *ObjectConsItem) ValueObj() *ObjectConsValue {
 	return item.value.content.(*ObjectConsValue)
 }
 
@@ -144,7 +144,7 @@ func (item *ObjectConsItem) init(key string, value *Expression) {
 		},
 	})
 	item.key = item.children.Append(newObjectConsKey())
-	item.keyObj().children.Append(newIdentifier(newIdentToken(key)))
+	item.KeyObj().children.Append(newIdentifier(newIdentToken(key)))
 
 	item.children.AppendUnstructuredTokens(Tokens{
 		{
@@ -154,7 +154,7 @@ func (item *ObjectConsItem) init(key string, value *Expression) {
 	})
 
 	item.value = item.children.Append(newObjectConsValue())
-	item.valueObj().children.Append(value)
+	item.ValueObj().children.Append(value)
 }
 
 func (item *ObjectConsItem) kv() (*ObjectConsKey, *ObjectConsValue) {
