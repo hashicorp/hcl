@@ -6,6 +6,10 @@ package hclwrite
 import (
 	"reflect"
 	"strings"
+
+	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/zclconf/go-cty/cty"
 )
 
 // ObjectConsExpr represents the content of  an object-construct expression
@@ -34,7 +38,6 @@ func (o *ObjectConsExpr) Items() []*ObjectConsItem {
 
 	return items
 }
-
 
 // ItemFor finds an item that matches the given key and returns the item.
 //
@@ -83,33 +86,63 @@ func (o *ObjectConsExpr) ValueFor(key string) *ObjectConsValue {
 //
 // The same caveats apply to this function as for NewExpressionRaw on which it
 // is based. If possible, prefer to use SetItemValue or SetItemTraversal.
-func (o *ObjectConsExpr) SetItemRaw(key string, tokens Tokens) (k *ObjectConsKeyExpr, v *ObjectConsValue) {
-	item := o.ItemFor(key)
+func (object *ObjectConsExpr) SetItemRaw(key string, tokens Tokens) (*ObjectConsKeyExpr, *ObjectConsValue) {
+	item := object.ItemFor(key)
 	expr := NewExpressionRaw(tokens)
 	if item != nil {
-		k = item.key.content.(*ObjectConsKeyExpr)
-		v = item.value.content.(*ObjectConsValue)
-
-		v.expr.list.Clear()
-		v.expr = v.expr.ReplaceWith(expr)
-		v.children.AppendNode(v.expr)
-
+		item.ValueObj().expr.Detach()
+		item.ValueObj().expr = item.ValueObj().children.Append(expr)
 	} else {
 		item = newObjectConsItem()
-
-		ident := newIdentifier(TokensForIdentifier(key)[0])
-		k = newObjectConsKeyExpr(newNode(ident))
-		item.key = item.children.Append(k)
-
-		v = newObjectConsValue() // TODO: expr in constructor
-		v.expr = v.children.Append(expr)
-		item.value = item.children.Append(v)
-
-		node := newNode(item)
-		o.children.AppendNode(node)
-		o.items.Add(node)
+		item.init(key, expr)
+		if firstItemNode := object.firstItemNode(); firstItemNode == nil {
+			return nil, nil
+		} else {
+			object.items.Add(object.children.Insert(firstItemNode, item))
+		}
 	}
-	return
+	return item.kv()
+}
+
+// SetItemValue either replaces the expression of an existing item of the given
+// name or adds a new item definition to the end of the object.
+//
+// The value is given as a cty.Value, and must therefore be a literal. To set a
+// variable reference or other traversal, use SetItemTraversal.
+//
+// The return value is the item that was either modified in-place or created.
+func (object *ObjectConsExpr) SetItemValue(key string, val cty.Value) (*ObjectConsKeyExpr, *ObjectConsValue) {
+	item := object.ItemFor(key)
+	expr := NewExpressionLiteral(val)
+	if item != nil {
+		item.ValueObj().expr.Detach()
+		item.ValueObj().expr = item.ValueObj().children.Append(expr)
+	} else {
+		item = newObjectConsItem()
+		item.init(key, expr)
+		if firstItemNode := object.firstItemNode(); firstItemNode == nil {
+			return nil, nil
+		} else {
+			object.items.Add(object.children.Insert(firstItemNode, item))
+		}
+	}
+	return item.kv()
+
+}
+
+// SetItemTraversal either replaces the expression of an existing item of the
+// given name or adds a new item definition to the end of the object.
+//
+// The new expression is given as a hcl.Traversal, which must be an absolute
+// traversal. To set a literal value, use SetItemValue.
+//
+// The return value is the item that was either modified in-place or created.
+func (object *ObjectConsExpr) SetItemTraversal(name string, traversal hcl.Traversal) (*ObjectConsKeyExpr, *ObjectConsValue) {
+	return nil, nil
+}
+
+func (object *ObjectConsExpr) firstItemNode() *node {
+	return object.items.List()[0]
 }
 
 // ObjectConsItem represents the content of a single item in an object-construct expression.
@@ -123,6 +156,46 @@ func newObjectConsItem() *ObjectConsItem {
 	return &ObjectConsItem{
 		inTree: newInTree(),
 	}
+}
+
+func (item *ObjectConsItem) KeyObj() *ObjectConsKeyExpr {
+	return item.key.content.(*ObjectConsKeyExpr)
+}
+
+func (item *ObjectConsItem) ValueObj() *ObjectConsValue {
+	return item.value.content.(*ObjectConsValue)
+}
+
+func (item *ObjectConsItem) init(key string, value *Expression) {
+	value.assertUnattached()
+
+	item.children.AppendUnstructuredTokens(Tokens{
+		{
+			Type:  hclsyntax.TokenNewline,
+			Bytes: []byte{'\n'},
+		},
+	})
+	identifier := newIdentifier(newIdentToken(key))
+	keyExpr := newObjectConsKeyExpr(newNode(identifier))
+	item.key = item.children.Append(keyExpr)
+	// item.KeyObj().children.Append(newIdentifier(newIdentToken(key)))
+
+	item.children.AppendUnstructuredTokens(Tokens{
+		{
+			Type:  hclsyntax.TokenEqual,
+			Bytes: []byte{'='},
+		},
+	})
+
+	item.value = item.children.Append(newObjectConsValue())
+	item.ValueObj().children.Append(value)
+}
+
+func (item *ObjectConsItem) kv() (*ObjectConsKeyExpr, *ObjectConsValue) {
+	key := item.key.content.(*ObjectConsKeyExpr)
+	value := item.value.content.(*ObjectConsValue)
+
+	return key, value
 }
 
 // ObjectConsKeyExpr represents the content that defines the name of an
