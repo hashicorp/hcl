@@ -26,6 +26,17 @@ func (object *ObjectConsExpr) firstItemNode() *node {
 	return object.items.List()[0]
 }
 
+func (object *ObjectConsExpr) Items() []*ObjectConsItem {
+	list := object.items.List()
+	items := make([]*ObjectConsItem, 0, len(list))
+
+	for _, n := range list {
+		items = append(items, n.content.(*ObjectConsItem))
+	}
+
+	return items
+}
+
 // SetItemRaw either replaces the expression of an existing item of the given
 // name or adds a new item definition to the end of the object, using the given
 // tokens verbatim as the expression.
