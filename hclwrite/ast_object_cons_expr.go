@@ -68,8 +68,23 @@ func (object *ObjectConsExpr) SetItemRaw(key string, tokens Tokens) (*ObjectCons
 // variable reference or other traversal, use SetItemTraversal.
 //
 // The return value is the item that was either modified in-place or created.
-func (object *ObjectConsExpr) SetItemValue(name string, val cty.Value) (*ObjectConsKey, *ObjectConsValue) {
-	return nil, nil
+func (object *ObjectConsExpr) SetItemValue(key string, val cty.Value) (*ObjectConsKey, *ObjectConsValue) {
+	item := object.ItemFor(key)
+	expr := NewExpressionLiteral(val)
+	if item != nil {
+		item.ValueObj().expr.Detach()
+		item.ValueObj().expr = item.ValueObj().children.Append(expr)
+	} else {
+		item = newObjectConsItem()
+		item.init(key, expr)
+		if firstItemNode := object.firstItemNode(); firstItemNode == nil {
+			return nil, nil
+		} else {
+			object.items.Add(object.children.Insert(firstItemNode, item))
+		}
+	}
+	return item.kv()
+
 }
 
 // SetItemTraversal either replaces the expression of an existing item of the
