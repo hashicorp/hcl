@@ -120,6 +120,28 @@ func (object *ObjectConsExpr) SetItemRaw(key string, tokens Tokens) (*ObjectCons
 	return item.kv()
 }
 
+// SetItemTraversal either replaces the expression of an existing item of the given
+// name or adds a new item definition to the end of the object.
+//
+// The return value is the item that was either modified in-place or created.
+func (object *ObjectConsExpr) SetItemTraversal(key string, traversal hcl.Traversal) (*ObjectConsKeyExpr, *ObjectConsValue) {
+	item := object.ItemFor(key)
+	expr := NewExpressionAbsTraversal(traversal)
+	if item != nil {
+		item.ValueObj().expr.Detach()
+		item.ValueObj().expr = item.ValueObj().children.Append(expr)
+	} else {
+		item = newObjectConsItem()
+		item.init(key, expr)
+		if firstItemNode := object.firstItemNode(); firstItemNode == nil {
+			return nil, nil
+		} else {
+			object.items.Add(object.children.Insert(firstItemNode, item))
+		}
+	}
+	return item.kv()
+}
+
 // SetItemValue either replaces the expression of an existing item of the given
 // name or adds a new item definition to the end of the object.
 //
@@ -143,18 +165,6 @@ func (object *ObjectConsExpr) SetItemValue(key string, val cty.Value) (*ObjectCo
 		}
 	}
 	return item.kv()
-
-}
-
-// SetItemTraversal either replaces the expression of an existing item of the
-// given name or adds a new item definition to the end of the object.
-//
-// The new expression is given as a hcl.Traversal, which must be an absolute
-// traversal. To set a literal value, use SetItemValue.
-//
-// The return value is the item that was either modified in-place or created.
-func (object *ObjectConsExpr) SetItemTraversal(name string, traversal hcl.Traversal) (*ObjectConsKeyExpr, *ObjectConsValue) {
-	return nil, nil
 }
 
 func (object *ObjectConsExpr) firstItemNode() *node {
