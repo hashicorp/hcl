@@ -202,6 +202,18 @@ Traversals:
 	}
 }
 
+func (e *Expression) AsFunctionCallExpr() *FunctionCallExpr {
+	var found *FunctionCallExpr
+	e.walkChildNodes(func(n *node) {
+		if o, ok := n.content.(*FunctionCallExpr); ok {
+			found = o
+			return
+		}
+	})
+
+	return found
+}
+
 // AsObjectConsExpr returns the wrapped object-construct expression. It returns
 // nil if this expression does not parse as an object-construct expression.
 func (e *Expression) AsObjectConsExpr() *ObjectConsExpr {
@@ -234,6 +246,18 @@ func (e *Expression) AsQuotedLiteral() Tokens {
 	} else {
 		return quoted.tokens
 	}
+}
+
+func (e *Expression) AsTupleConsExpr() *TupleConsExpr {
+	var found *TupleConsExpr
+	e.walkChildNodes(func(n *node) {
+		if o, ok := n.content.(*TupleConsExpr); ok {
+			found = o
+			return
+		}
+	})
+
+	return found
 }
 
 // Traversal represents a sequence of variable, attribute, and/or index
