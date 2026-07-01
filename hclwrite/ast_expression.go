@@ -187,10 +187,34 @@ Traversals:
 	}
 }
 
+func (e *Expression) AsFunctionCallExpr() *FunctionCallExpr {
+	var found *FunctionCallExpr
+	e.walkChildNodes(func(n *node) {
+		if o, ok := n.content.(*FunctionCallExpr); ok {
+			found = o
+			return
+		}
+	})
+
+	return found
+}
+
 func (e *Expression) AsObjectConsExpr() *ObjectConsExpr {
 	var found *ObjectConsExpr
 	e.walkChildNodes(func(n *node) {
 		if o, ok := n.content.(*ObjectConsExpr); ok {
+			found = o
+			return
+		}
+	})
+
+	return found
+}
+
+func (e *Expression) AsTupleConsExpr() *TupleConsExpr {
+	var found *TupleConsExpr
+	e.walkChildNodes(func(n *node) {
+		if o, ok := n.content.(*TupleConsExpr); ok {
 			found = o
 			return
 		}
