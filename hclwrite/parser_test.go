@@ -1698,6 +1698,105 @@ func TestParse(t *testing.T) {
 				},
 			},
 		},
+		{
+			`hats = join(" ", ["fedora", "fez"])`,
+			TestTreeNode{
+				Type: "Body",
+				Children: []TestTreeNode{
+					{
+						Type: "Attribute",
+						Children: []TestTreeNode{
+							{
+								Type: "comments",
+							},
+							{
+								Type: "identifier",
+								Val:  "hats",
+							},
+							{
+								Type: "Tokens",
+								Val:  " =",
+							},
+							{
+								Type: "Expression",
+								Children: []TestTreeNode{
+									{
+										Type: "FunctionCallExpr",
+										Children: []TestTreeNode{
+											{
+												Type: "Tokens",
+												Val:  ` join(`,
+											},
+											{
+												Type: "Expression",
+												Children: []TestTreeNode{
+													{
+														Type: "quoted",
+														Val:  `" "`,
+													},
+												},
+											},
+											{
+												Type: "Tokens",
+												Val:  `,`,
+											},
+											{
+												Type: "Expression",
+												Children: []TestTreeNode{
+													{
+														Type: "TupleConsExpr",
+														Children: []TestTreeNode{
+															{
+																Type: "Tokens",
+																Val:  ` [`,
+															},
+															{
+																Type: "Expression",
+																Children: []TestTreeNode{
+																	{
+																		Type: "quoted",
+																		Val:  `"fedora"`,
+																	},
+																},
+															},
+															{
+																Type: "Tokens",
+																Val:  `,`,
+															},
+															{
+																Type: "Expression",
+																Children: []TestTreeNode{
+
+																	{
+																		Type: "quoted",
+																		Val:  ` "fez"`,
+																	},
+																},
+															},
+															{
+																Type: "Tokens",
+																Val:  `]`,
+															},
+														},
+													},
+												},
+											},
+											{
+												Type: "Tokens",
+												Val:  `)`,
+											},
+										},
+									},
+								},
+							},
+							{
+								Type: "comments",
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
