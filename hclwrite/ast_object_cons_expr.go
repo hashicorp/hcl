@@ -51,7 +51,7 @@ func (o *ObjectConsExpr) Items() []*ObjectConsItem {
 func (o *ObjectConsExpr) ItemFor(key string) *ObjectConsItem {
 	for _, n := range o.items.List() {
 		if item, ok := n.content.(*ObjectConsItem); ok {
-			k := item.KeyObj() 
+			k := item.KeyObj()
 
 			maybeKey := k.String()
 			if maybeKey == key {
@@ -78,6 +78,17 @@ func (o *ObjectConsExpr) ValueFor(key string) *ObjectConsValue {
 	} else {
 		return item.ValueObj()
 	}
+}
+
+func (object *ObjectConsExpr) RemoveItem(key string) bool {
+	node := object.nodeFor(key)
+	if node == nil {
+		return false
+	}
+
+	node.Detach()
+	object.items.Remove(node)
+	return true
 }
 
 // SetItemRaw either replaces the expression of an existing item of the given
@@ -153,6 +164,21 @@ func (object *ObjectConsExpr) SetItemValue(key string, val cty.Value) (*ObjectCo
 
 func (object *ObjectConsExpr) firstItemNode() *node {
 	return object.items.List()[0]
+}
+
+func (object *ObjectConsExpr) nodeFor(key string) *node {
+	for _, n := range object.items.List() {
+		if item, ok := n.content.(*ObjectConsItem); ok {
+			k := item.KeyObj()
+
+			maybeKey := k.String()
+			if maybeKey == key {
+				return n
+			}
+		}
+	}
+
+	return nil
 }
 
 // ObjectConsItem represents the content of a single item in an object-construct expression.
