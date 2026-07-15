@@ -37,6 +37,17 @@ func (object *ObjectConsExpr) Items() []*ObjectConsItem {
 	return items
 }
 
+func (object *ObjectConsExpr) RemoveItem(key string) bool {
+	node := object.nodeFor(key)
+	if node == nil {
+		return false
+	}
+
+	node.Detach()
+	object.items.Remove(node)
+	return true
+}
+
 // SetItemRaw either replaces the expression of an existing item of the given
 // name or adds a new item definition to the end of the object, using the given
 // tokens verbatim as the expression.
@@ -131,6 +142,28 @@ func (object *ObjectConsExpr) ItemFor(key string) *ObjectConsItem {
 	return found
 }
 
+func (object *ObjectConsExpr) nodeFor(key string) *node {
+	var found *node
+	object.walkChildNodes(func(n *node) {
+		if item, ok := n.content.(*ObjectConsItem); ok {
+			k := item.key.content.(*ObjectConsKey)
+			name := k.name.content.(*Expression)
+
+			// A temporary workaround for parsing expressions as names at ...
+			// parse-time
+			maybeKey := ""
+			for _, token := range name.BuildTokens(nil) {
+				maybeKey += string(token.Bytes) // no spaces before
+			}
+
+			if k.literal && (maybeKey == key || maybeKey == `"`+key+`"`) {
+				found = n
+				return
+			}
+		}
+	})
+	return found
+}
 func (object *ObjectConsExpr) ValueFor(key string) *ObjectConsValue {
 	if item := object.ItemFor(key); item == nil {
 		return nil
