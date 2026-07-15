@@ -82,6 +82,17 @@ func (o *ObjectConsExpr) ValueExprFor(key string) *ObjectConsValue {
 	}
 }
 
+func (object *ObjectConsExpr) RemoveItem(key string) bool {
+	node := object.nodeFor(key)
+	if node == nil {
+		return false
+	}
+
+	node.Detach()
+	object.items.Remove(node)
+	return true
+}
+
 // SetItem either replaces the expression of an existing item of the given
 // name or adds a new item definition to the end of the object, using the given
 // expression.
@@ -132,6 +143,21 @@ func (object *ObjectConsExpr) SetItemTraversal(key string, traversal hcl.Travers
 func (object *ObjectConsExpr) SetItemValue(key string, val cty.Value) (*ObjectConsKeyExpr, *ObjectConsValue) {
 	expr := NewExpressionLiteral(val)
 	return object.SetItem(key, expr)
+}
+
+func (object *ObjectConsExpr) nodeFor(key string) *node {
+	for _, n := range object.items.List() {
+		if item, ok := n.content.(*ObjectConsItem); ok {
+			k := item.KeyObj()
+
+			maybeKey := k.String()
+			if maybeKey == key {
+				return n
+			}
+		}
+	}
+
+	return nil
 }
 
 // ObjectConsItem represents the content of a single item in an object-construct expression.
