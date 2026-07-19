@@ -145,13 +145,26 @@ func (object *ObjectConsExpr) SetItemValue(key string, val cty.Value) (*ObjectCo
 	return object.SetItem(key, expr)
 }
 
-func (object *ObjectConsExpr) nodeFor(key string) *node {
-	for _, n := range object.items.List() {
+// nodeFor finds a node for an object item that matches the given key and returns the node.
+//
+// This is limited to items that have an identifier key. Items with a name
+// taken from a variable will not be found.
+//
+// Example: { hat = "derby", (cat) = "calico" }
+//
+// nodeFor("hat") returns the tree node for the item `hat = "derby"`;
+// however, nodeFor cannot locate the cat.
+func (o *ObjectConsExpr) nodeFor(key string) *node {
+	for _, n := range o.items.List() {
 		if item, ok := n.content.(*ObjectConsItem); ok {
-			k := item.KeyObj()
+			k := item.KeyExpr()
+			unwrapped := unwrapUntilType[*identifier](k.wrapped)
+			if unwrapped == nil {
+				continue
+			}
 
-			maybeKey := k.String()
-			if maybeKey == key {
+			identifier := unwrapped.content.(*identifier)
+			if identifier.hasName(key) {
 				return n
 			}
 		}
