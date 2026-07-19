@@ -244,7 +244,7 @@ func (b *Body) AppendNewBlock(typeName string, labels []string) *Block {
 	return block
 }
 
-// AppendNewline appends a newline token to th end of the receiving body,
+// AppendNewline appends a newline token to the end of the receiving body,
 // which generally serves as a separator between different sets of body
 // contents.
 func (b *Body) AppendNewline() {
@@ -254,4 +254,24 @@ func (b *Body) AppendNewline() {
 			Bytes: []byte{'\n'},
 		},
 	})
+}
+
+// AppendNewlineOnce appends a newline token to the end of the receiving body
+// if it does not have an ending newline.
+func (b *Body) AppendNewlineOnce() {
+	last := b.children.last
+	if last == nil {
+		b.AppendNewline()
+		return
+	}
+
+	tokens := last.BuildTokens(nil)
+	if len(tokens) == 0 {
+		b.AppendNewline()
+		return
+	}
+
+	if tokens[len(tokens)-1].Type != hclsyntax.TokenNewline {
+		b.AppendNewline()
+	}
 }
