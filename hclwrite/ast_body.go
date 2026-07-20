@@ -144,6 +144,20 @@ func (b *Body) FirstMatchingBlock(typeName string, labels []string) *Block {
 func (b *Body) RemoveBlock(block *Block) bool {
 	for n := range b.items {
 		if n.content == block {
+			if n.before != nil {
+				if tokens, ok := n.before.content.(Tokens); ok {
+					if tokens[0].Type == hclsyntax.TokenNewline {
+						if n.before.before != nil {
+							if tokens, ok := n.before.before.content.(Tokens); ok {
+								if tokens[0].Type == hclsyntax.TokenNewline {
+									n.before.Detach()
+								}
+							}
+						}
+					}
+				}
+			}
+
 			n.Detach()
 			b.items.Remove(n)
 			return true
