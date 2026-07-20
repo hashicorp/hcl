@@ -284,6 +284,10 @@ func (b *Body) MissingItemRange() hcl.Range {
 	}
 }
 
+func (b *Body) AsSimpleBody() (*SimpleBody, hcl.Diagnostics) {
+	return parseSimpleBody(b)
+}
+
 // Attributes is the collection of attribute definitions within a body.
 type Attributes map[string]*Attribute
 
