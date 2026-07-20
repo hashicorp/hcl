@@ -147,13 +147,7 @@ func (b *Body) RemoveBlock(block *Block) bool {
 			if n.before != nil {
 				if tokens, ok := n.before.content.(Tokens); ok {
 					if tokens[0].Type == hclsyntax.TokenNewline {
-						if n.before.before != nil {
-							if tokens, ok := n.before.before.content.(Tokens); ok {
-								if tokens[0].Type == hclsyntax.TokenNewline {
-									n.before.Detach()
-								}
-							}
-						}
+						n.before.Detach()
 					}
 				}
 			}
