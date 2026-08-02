@@ -5,6 +5,7 @@ package hclsyntax
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 	"testing"
 
@@ -4325,6 +4326,49 @@ func TestParseConfigDiagnostics(t *testing.T) {
 
 			if diff := cmp.Diff(test.want, diags); diff != "" {
 				t.Errorf("wrong diagnostics\n%s", diff)
+			}
+		})
+	}
+}
+
+// TestParseExpression_deeplyNested is a regression test for a stack
+// overflow (an unrecoverable Go fatal error, not a panic) that used to
+// occur when parsing an expression with many levels of nesting, since
+// ParseExpression recurses back into itself with no depth limit for every
+// level of parentheses, array/object construction, or function call
+// arguments.
+func TestParseExpression_deeplyNested(t *testing.T) {
+	tests := []struct {
+		name  string
+		open  string
+		close string
+	}{
+		{"parentheses", "(", ")"},
+		{"arrays", "[", "]"},
+		{"function calls", "foo(", ")"},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			const depth = maxExpressionDepth + 100
+			src := strings.Repeat(test.open, depth) + "1" + strings.Repeat(test.close, depth)
+
+			expr, diags := ParseExpression([]byte(src), "test.hcl", hcl.InitialPos)
+
+			if expr == nil {
+				t.Fatal("ParseExpression returned a nil expression")
+			}
+			if !diags.HasErrors() {
+				t.Fatal("expected a 'too deeply nested' diagnostic, but ParseExpression succeeded")
+			}
+			found := false
+			for _, diag := range diags {
+				if diag.Summary == "Expression is too deeply nested" {
+					found = true
+				}
+			}
+			if !found {
+				t.Fatalf("expected a 'too deeply nested' diagnostic, got: %s", diags)
 			}
 		})
 	}
