@@ -3,37 +3,34 @@
 
 package hclwrite
 
+import "strings"
+
 type ObjectConsExpr struct {
 	inTree
+
+	items nodeSet
 }
 
 func newObjectConsExpr() *ObjectConsExpr {
 	return &ObjectConsExpr{
 		inTree: newInTree(),
+		items:  newNodeSet(),
 	}
 }
 
 func (o *ObjectConsExpr) ValueFor(key string) *ObjectConsValue {
-	var found *ObjectConsValue
-	o.walkChildNodes(func(n *node) {
+	for _, n := range o.items.List() {
 		if item, ok := n.content.(*ObjectConsItem); ok {
-			k := item.key.content.(*ObjectConsKey)
-			name := k.name.content.(*Expression)
+			k := item.key.content.(*ObjectConsKeyExpr)
 
-			// A temporary workaround for parsing expressions as names at ...
-			// parse-time
-			maybeKey := ""
-			for _, token := range name.BuildTokens(nil) {
-				maybeKey += string(token.Bytes) // no spaces before
-			}
-
-			if k.literal && (maybeKey == key || maybeKey == `"`+key+`"`) {
-				found = item.value.content.(*ObjectConsValue)
-				return
+			maybeKey := k.String()
+			if maybeKey == key {
+				return item.value.content.(*ObjectConsValue)
 			}
 		}
-	})
-	return found
+	}
+
+	return nil
 }
 
 type ObjectConsItem struct {
@@ -48,17 +45,37 @@ func newObjectConsItem() *ObjectConsItem {
 	}
 }
 
-type ObjectConsKey struct {
+type ObjectConsKeyExpr struct {
 	inTree
 
-	literal bool
-	name    *node
+	literalName string
+	wrapped     *node
 }
 
-func newObjectConsKey() *ObjectConsKey {
-	return &ObjectConsKey{
-		inTree: newInTree(),
+func newObjectConsKeyExpr(wrapped *node) *ObjectConsKeyExpr {
+	expr := &ObjectConsKeyExpr{
+		inTree:  newInTree(),
+		wrapped: wrapped,
 	}
+	expr.children.AppendNode(wrapped)
+
+	return expr
+}
+
+func (k *ObjectConsKeyExpr) String() string {
+	if k.wrapped == nil {
+		return ""
+	}
+
+	if t, ok := k.wrapped.content.(*Traversal); ok && len(t.steps.List()) > 0 {
+		var b strings.Builder
+		tok := t.steps.List()[0].BuildTokens(nil)
+		tok.WriteTo(&b)
+
+		return b.String()
+	}
+
+	return ""
 }
 
 type ObjectConsValue struct {

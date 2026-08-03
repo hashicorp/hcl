@@ -382,9 +382,36 @@ func parseExpression(nativeExpr hclsyntax.Expression, from inputTokens) *node {
 	case *hclsyntax.ObjectConsExpr:
 		return parseObjectConsExpr(tNativeExpr, from)
 
+	case *hclsyntax.ObjectConsKeyExpr:
+		return parseObjectConsKeyExpr(tNativeExpr, from)
+
+	case *hclsyntax.TemplateExpr:
+		return parseTemplateExpr(tNativeExpr, from)
+
 	default:
 		return parseAnyExpression(nativeExpr, from)
 	}
+}
+
+func parseAnyExpression(nativeExpr hclsyntax.Expression, from inputTokens) *node {
+	expr := newExpression()
+	children := expr.children
+
+	nativeVars := nativeExpr.Variables()
+
+	for _, nativeTraversal := range nativeVars {
+		before, traversal, after := parseTraversal(nativeTraversal, from)
+		children.AppendUnstructuredTokens(before.Tokens())
+		children.AppendNode(traversal)
+		expr.absTraversals.Add(traversal)
+		from = after
+	}
+	// Attach any stragglers that don't belong to a traversal to the expression
+	// itself. In an expression with no traversals at all, this is just the
+	// entirety of "from".
+	children.AppendUnstructuredTokens(from.Tokens())
+
+	return newNode(expr)
 }
 
 // parseObjectConsExpr parses an object-construct expression, defined as:
@@ -410,16 +437,14 @@ func parseObjectConsExpr(nativeExpr *hclsyntax.ObjectConsExpr, from inputTokens)
 
 	for _, nativeItem := range nativeExpr.Items {
 		item := newObjectConsItem()
-		key, value := newObjectConsKey(), newObjectConsValue()
+		value := newObjectConsValue()
 
 		nativeKeyExpr := nativeItem.KeyExpr.(*hclsyntax.ObjectConsKeyExpr)
-		key.literal = !nativeKeyExpr.ForceNonLiteral
 
 		before, keyTokens, from = from.Partition(nativeKeyExpr.Range())
 		item.children.AppendUnstructuredTokens(before.writerTokens)
-		key.name = parseExpression(nativeKeyExpr, keyTokens)
-		key.children.AppendNode(key.name)
-		item.key = item.children.Append(key)
+		item.key = parseObjectConsKeyExpr(nativeKeyExpr, keyTokens)
+		item.children.AppendNode(item.key)
 
 		before, valueTokens, from = from.Partition(nativeItem.ValueExpr.Range())
 		item.children.AppendUnstructuredTokens(before.writerTokens)
@@ -427,7 +452,8 @@ func parseObjectConsExpr(nativeExpr *hclsyntax.ObjectConsExpr, from inputTokens)
 		value.children.AppendNode(value.expr)
 		item.value = item.children.Append(value)
 
-		expr.children.Append(item)
+		node := expr.children.Append(item)
+		expr.items.Add(node)
 	}
 
 	_, from, _ = from.Partition(nativeExpr.Range())
@@ -435,29 +461,32 @@ func parseObjectConsExpr(nativeExpr *hclsyntax.ObjectConsExpr, from inputTokens)
 
 	// Wrap in an Expression
 	wrapExpr := newExpression()
-	wrapExpr.children.Append(expr)
+	wrapExpr.wrap(expr)
 	return newNode(wrapExpr)
 }
 
-func parseAnyExpression(nativeExpr hclsyntax.Expression, from inputTokens) *node {
-	expr := newExpression()
-	children := expr.children
+// parseObjectConsExpr parses an object-construct key expression.
+// An object key is an Identifier or an Expression. In this context, a quoted
+// literal is functionally equivalent to an Identifier.
+func parseObjectConsKeyExpr(nativeExpr *hclsyntax.ObjectConsKeyExpr, from inputTokens) *node {
+	expr := parseExpression(nativeExpr.Wrapped, from)
+	wrapExpr := newObjectConsKeyExpr(expr)
 
-	nativeVars := nativeExpr.Variables()
+	return newNode(wrapExpr)
+}
 
-	for _, nativeTraversal := range nativeVars {
-		before, traversal, after := parseTraversal(nativeTraversal, from)
-		children.AppendUnstructuredTokens(before.Tokens())
-		children.AppendNode(traversal)
-		expr.absTraversals.Add(traversal)
-		from = after
+// parseObjectConsExpr is specifically interested in string literal expressions
+// at this time.
+func parseTemplateExpr(nativeExpr *hclsyntax.TemplateExpr, from inputTokens) *node {
+	if nativeExpr.IsStringLiteral() {
+		quoted := newQuoted(from.writerTokens)
+
+		expr := newExpression()
+		expr.wrapped = expr.children.Append(quoted)
+		return newNode(expr)
+	} else {
+		return parseAnyExpression(nativeExpr, from)
 	}
-	// Attach any stragglers that don't belong to a traversal to the expression
-	// itself. In an expression with no traversals at all, this is just the
-	// entirety of "from".
-	children.AppendUnstructuredTokens(from.Tokens())
-
-	return newNode(expr)
 }
 
 func parseTraversal(nativeTraversal hcl.Traversal, from inputTokens) (before inputTokens, n *node, after inputTokens) {
