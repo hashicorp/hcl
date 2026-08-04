@@ -422,9 +422,6 @@ func parseAnyExpression(nativeExpr hclsyntax.Expression, from inputTokens) *node
 //	objectelem = (Identifier | Expression) ("=" | ":") Expression;
 //
 // It leaves any lead comments and line comments as unstructed tokens.
-//
-// It returns *Expression. The returned *Expression has a child *ObjectConsExpr
-// that can be unwrapped via Expression.AsObjectConsExpr().
 func parseObjectConsExpr(nativeExpr *hclsyntax.ObjectConsExpr, from inputTokens) *node {
 	expr := newObjectConsExpr()
 	children := expr.children
