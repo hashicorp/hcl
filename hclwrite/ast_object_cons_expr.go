@@ -48,8 +48,7 @@ func newObjectConsItem() *ObjectConsItem {
 type ObjectConsKeyExpr struct {
 	inTree
 
-	literalName string
-	wrapped     *node
+	wrapped *node
 }
 
 func newObjectConsKeyExpr(wrapped *node) *ObjectConsKeyExpr {
@@ -70,6 +69,8 @@ func (k *ObjectConsKeyExpr) String() string {
 	if t, ok := k.wrapped.content.(*Traversal); ok && len(t.steps.List()) > 0 {
 		var b strings.Builder
 		tok := t.steps.List()[0].BuildTokens(nil)
+
+		//nolint:errcheck // strings.Builder returns no error
 		tok.WriteTo(&b)
 
 		return b.String()
