@@ -51,7 +51,7 @@ func (o *ObjectConsExpr) Items() []*ObjectConsItem {
 func (o *ObjectConsExpr) ItemFor(key string) *ObjectConsItem {
 	for _, n := range o.items.List() {
 		if item, ok := n.content.(*ObjectConsItem); ok {
-			k := item.KeyObj()
+			k := item.key.content.(*ObjectConsKeyExpr)
 
 			maybeKey := k.String()
 			if maybeKey == key {
@@ -76,7 +76,7 @@ func (o *ObjectConsExpr) ValueFor(key string) *ObjectConsValue {
 	if item := o.ItemFor(key); item == nil {
 		return nil
 	} else {
-		return item.ValueObj()
+		return item.value.content.(*ObjectConsValue)
 	}
 }
 
@@ -202,7 +202,10 @@ func (item *ObjectConsItem) init(key string, value *Expression) {
 }
 
 func (item *ObjectConsItem) kv() (*ObjectConsKeyExpr, *ObjectConsValue) {
-	return item.KeyObj(), item.ValueObj()
+	key := item.key.content.(*ObjectConsKeyExpr)
+	value := item.value.content.(*ObjectConsValue)
+
+	return key, value
 }
 
 // ObjectConsKeyExpr represents the content that defines the name of an
