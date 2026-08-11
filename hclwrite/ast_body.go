@@ -137,6 +137,52 @@ func (b *Body) FirstMatchingBlock(typeName string, labels []string) *Block {
 	return nil
 }
 
+// RemoveNewlineBeforeBlock makes a best effort to remove one newline of
+// vertical separation before a block.
+//
+// It will not remove the trailing newline of a preceding structural element,
+// such as an attribute or a block.
+
+// The pair of RemoveNewlineBeforeBlock + RemoveBlock is an "undo" move for the
+// pair of AppendNewline + AppendNewBlock.
+func (b *Body) RemoveNewlineBeforeBlock(block *Block) bool {
+	for n := range b.items {
+		if n.content != block {
+			continue
+		}
+		if n.before == nil {
+			return false
+		}
+
+		// Detect "unstructured token"-only nodes. Structured content, such as
+		// an attribute, includes its trailing newline, so we will not remove
+		// that.
+		if tokens, ok := n.before.content.(Tokens); ok {
+			count := len(tokens)
+			switch count {
+			case 0:
+				break
+
+			case 1:
+				// It seems unlikely for this to be anything other than a
+				// newline. And yet, we verify.
+				if tokens[0].Type == hclsyntax.TokenNewline {
+					b.items.Remove(n.before)
+					n.before.Detach()
+					return true
+				}
+
+			default:
+				// It seems unlikely for this case to occur. Until we can
+				// characterize it with an example, we will pass.
+
+				break
+			}
+		}
+	}
+	return false
+}
+
 // RemoveBlock removes the given block from the body, if it's in that body.
 // If it isn't present, this is a no-op.
 //
@@ -247,7 +293,7 @@ func (b *Body) AppendNewBlock(typeName string, labels []string) *Block {
 	return block
 }
 
-// AppendNewline appends a newline token to th end of the receiving body,
+// AppendNewline appends a newline token to the end of the receiving body,
 // which generally serves as a separator between different sets of body
 // contents.
 func (b *Body) AppendNewline() {

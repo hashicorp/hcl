@@ -1857,6 +1857,325 @@ bar {}
 
 }
 
+func TestBodyRemoveNewlineBeforeBlock(t *testing.T) {
+	tests := []struct {
+		src             string
+		blockType       string
+		wantReturnValue bool
+		want            Tokens
+	}{
+		{
+			src: `
+a = 1
+
+cat {
+}
+`,
+			blockType:       `cat`,
+			wantReturnValue: true,
+			want: Tokens{
+				{
+					Type:  hclsyntax.TokenIdent,
+					Bytes: []byte(`a`),
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte(`=`),
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenNumberLit,
+					Bytes:        []byte(`1`),
+					SpacesBefore: 1,
+				},
+				{
+					Type:  hclsyntax.TokenNewline,
+					Bytes: []byte("\n"),
+				},
+				// One newline removed.
+				{
+					Type:  hclsyntax.TokenIdent,
+					Bytes: []byte(`cat`),
+				},
+				{
+					Type:         hclsyntax.TokenOBrace,
+					Bytes:        []byte(`{`),
+					SpacesBefore: 1,
+				},
+				{
+					Type:  hclsyntax.TokenNewline,
+					Bytes: []byte("\n"),
+				},
+				{
+					Type:  hclsyntax.TokenCBrace,
+					Bytes: []byte(`}`),
+				},
+				{
+					Type:  hclsyntax.TokenEOF,
+					Bytes: []byte{},
+				},
+			},
+		},
+		{
+			src: `
+a = 1
+
+
+cat {
+}
+`,
+			blockType:       `cat`,
+			wantReturnValue: true,
+			want: Tokens{
+				{
+					Type:  hclsyntax.TokenIdent,
+					Bytes: []byte(`a`),
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte(`=`),
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenNumberLit,
+					Bytes:        []byte(`1`),
+					SpacesBefore: 1,
+				},
+				{
+					Type:  hclsyntax.TokenNewline,
+					Bytes: []byte("\n"),
+				},
+				{
+					Type:  hclsyntax.TokenNewline,
+					Bytes: []byte("\n"),
+				},
+				// One newline removed.
+				{
+					Type:  hclsyntax.TokenIdent,
+					Bytes: []byte(`cat`),
+				},
+				{
+					Type:         hclsyntax.TokenOBrace,
+					Bytes:        []byte(`{`),
+					SpacesBefore: 1,
+				},
+				{
+					Type:  hclsyntax.TokenNewline,
+					Bytes: []byte("\n"),
+				},
+				{
+					Type:  hclsyntax.TokenCBrace,
+					Bytes: []byte(`}`),
+				},
+				{
+					Type:  hclsyntax.TokenEOF,
+					Bytes: []byte{},
+				},
+			},
+		},
+		{
+			src: `
+a = 1
+
+// bat
+// hat
+cat {
+}
+`,
+			blockType:       `cat`,
+			wantReturnValue: true,
+			want: Tokens{
+				{
+					Type:  hclsyntax.TokenIdent,
+					Bytes: []byte(`a`),
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte(`=`),
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenNumberLit,
+					Bytes:        []byte(`1`),
+					SpacesBefore: 1,
+				},
+				{
+					Type:  hclsyntax.TokenNewline,
+					Bytes: []byte("\n"),
+				},
+				// One newline removed.
+				{
+					Type:  hclsyntax.TokenComment,
+					Bytes: []byte(`// bat` + "\n"),
+				},
+				{
+					Type:  hclsyntax.TokenComment,
+					Bytes: []byte(`// hat` + "\n"),
+				},
+				{
+					Type:  hclsyntax.TokenIdent,
+					Bytes: []byte(`cat`),
+				},
+				{
+					Type:         hclsyntax.TokenOBrace,
+					Bytes:        []byte(`{`),
+					SpacesBefore: 1,
+				},
+				{
+					Type:  hclsyntax.TokenNewline,
+					Bytes: []byte("\n"),
+				},
+				{
+					Type:  hclsyntax.TokenCBrace,
+					Bytes: []byte(`}`),
+				},
+				{
+					Type:  hclsyntax.TokenEOF,
+					Bytes: []byte{},
+				},
+			},
+		},
+		{
+			src: `
+a = 1
+
+# bat
+# hat
+cat {
+}
+`,
+			blockType:       `cat`,
+			wantReturnValue: true,
+			want: Tokens{
+				{
+					Type:  hclsyntax.TokenIdent,
+					Bytes: []byte(`a`),
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte(`=`),
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenNumberLit,
+					Bytes:        []byte(`1`),
+					SpacesBefore: 1,
+				},
+				{
+					Type:  hclsyntax.TokenNewline,
+					Bytes: []byte("\n"),
+				},
+				// One newline removed.
+				{
+					Type:  hclsyntax.TokenComment,
+					Bytes: []byte(`# bat` + "\n"),
+				},
+				{
+					Type:  hclsyntax.TokenComment,
+					Bytes: []byte(`# hat` + "\n"),
+				},
+				{
+					Type:  hclsyntax.TokenIdent,
+					Bytes: []byte(`cat`),
+				},
+				{
+					Type:         hclsyntax.TokenOBrace,
+					Bytes:        []byte(`{`),
+					SpacesBefore: 1,
+				},
+				{
+					Type:  hclsyntax.TokenNewline,
+					Bytes: []byte("\n"),
+				},
+				{
+					Type:  hclsyntax.TokenCBrace,
+					Bytes: []byte(`}`),
+				},
+				{
+					Type:  hclsyntax.TokenEOF,
+					Bytes: []byte{},
+				},
+			},
+		},
+		{
+			src: `
+a = 1
+cat {
+}
+`,
+			blockType:       `cat`,
+			wantReturnValue: false,
+			want: Tokens{
+				{
+					Type:  hclsyntax.TokenIdent,
+					Bytes: []byte(`a`),
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte(`=`),
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenNumberLit,
+					Bytes:        []byte(`1`),
+					SpacesBefore: 1,
+				},
+				{
+					Type:  hclsyntax.TokenNewline,
+					Bytes: []byte("\n"),
+				},
+				{
+					Type:  hclsyntax.TokenIdent,
+					Bytes: []byte(`cat`),
+				},
+				{
+					Type:         hclsyntax.TokenOBrace,
+					Bytes:        []byte(`{`),
+					SpacesBefore: 1,
+				},
+				{
+					Type:  hclsyntax.TokenNewline,
+					Bytes: []byte("\n"),
+				},
+				{
+					Type:  hclsyntax.TokenCBrace,
+					Bytes: []byte(`}`),
+				},
+				{
+					Type:  hclsyntax.TokenEOF,
+					Bytes: []byte{},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		f, diags := ParseConfig([]byte(strings.TrimSpace(test.src)), "", hcl.InitialPos)
+		if diags.HasErrors() {
+			for _, diag := range diags {
+				t.Logf("- %s", diag.Error())
+			}
+			t.Fatalf("unexpected diagnostics")
+		}
+
+		block := f.Body().FirstMatchingBlock(test.blockType, nil)
+		removed := f.Body().RemoveNewlineBeforeBlock(block)
+
+		t.Log(makeTestTree(f.body))
+
+		if removed != test.wantReturnValue {
+			t.Errorf("expected RemoveNewlineBeforeBlock to return %v; got %v", test.wantReturnValue, removed)
+		}
+
+		got := f.BuildTokens(nil)
+		format(got)
+		if !reflect.DeepEqual(got, test.want) {
+			diff := cmp.Diff(test.want, got)
+			t.Errorf("wrong result\ndiff:\n%s", diff)
+		}
+	}
+}
+
 // testFn is a convenience function that wraps a function call that returns a
 // value and diagnostics.
 //
