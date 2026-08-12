@@ -2161,8 +2161,6 @@ cat {
 		block := f.Body().FirstMatchingBlock(test.blockType, nil)
 		removed := f.Body().RemoveNewlineBeforeBlock(block)
 
-		t.Log(makeTestTree(f.body))
-
 		if removed != test.wantReturnValue {
 			t.Errorf("expected RemoveNewlineBeforeBlock to return %v; got %v", test.wantReturnValue, removed)
 		}

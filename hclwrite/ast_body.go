@@ -173,10 +173,9 @@ func (b *Body) RemoveNewlineBeforeBlock(block *Block) bool {
 				}
 
 			default:
-				// It seems unlikely for this case to occur. Until we can
-				// characterize it with an example, we will pass.
-
-				break
+				newTokens := tokens[:count-1]
+				n.before.ReplaceWith(newTokens)
+				return true
 			}
 		}
 	}
