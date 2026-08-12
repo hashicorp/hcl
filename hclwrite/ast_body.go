@@ -173,9 +173,13 @@ func (b *Body) RemoveNewlineBeforeBlock(block *Block) bool {
 				}
 
 			default:
-				newTokens := tokens[:count-1]
-				n.before.ReplaceWith(newTokens)
-				return true
+				// It seems unlikely for this to be anything other than a
+				// newline. And yet, we verify.
+				if tokens[count-1].Type == hclsyntax.TokenNewline {
+					newTokens := tokens[:count-1]
+					n.before.ReplaceWith(newTokens)
+					return true
+				}
 			}
 		}
 	}
