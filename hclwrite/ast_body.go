@@ -144,15 +144,6 @@ func (b *Body) FirstMatchingBlock(typeName string, labels []string) *Block {
 func (b *Body) RemoveBlock(block *Block) bool {
 	for n := range b.items {
 		if n.content == block {
-			if n.before != nil {
-				if tokens, ok := n.before.content.(Tokens); ok {
-					if tokens[len(tokens)-1].Type == hclsyntax.TokenNewline {
-						newTokens := tokens[:len(tokens)-1]
-						n.before.ReplaceWith(newTokens)
-					}
-				}
-			}
-
 			n.Detach()
 			b.items.Remove(n)
 			return true
@@ -263,24 +254,4 @@ func (b *Body) AppendNewline() {
 			Bytes: []byte{'\n'},
 		},
 	})
-}
-
-// AppendNewlineOnce appends a newline token to the end of the receiving body
-// if it does not have an ending newline.
-func (b *Body) AppendNewlineOnce() {
-	last := b.children.last
-	if last == nil {
-		b.AppendNewline()
-		return
-	}
-
-	tokens := last.BuildTokens(nil)
-	if len(tokens) == 0 {
-		b.AppendNewline()
-		return
-	}
-
-	if tokens[len(tokens)-1].Type != hclsyntax.TokenNewline {
-		b.AppendNewline()
-	}
 }
