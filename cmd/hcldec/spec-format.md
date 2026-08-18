@@ -453,6 +453,174 @@ the _input_. Functions can be exposed into the input file using
 [Custom Functions](#custom-functions) within the spec, which may in turn
 refer to these spec definition functions.
 
+## Worked examples
+
+The snippets above show each spec block in isolation. The following complete
+pairs show a full `.hcldec` spec, a matching input file, and the JSON
+`hcldec` produces. They are useful when wiring a new block type for the first
+time.
+
+### `object` + `attr`
+
+**spec (`app.hcldec`):**
+
+```hcl
+object {
+  attr "name" {
+    type     = string
+    required = true
+  }
+  attr "port" {
+    type = number
+  }
+}
+```
+
+**input (`app.hcl`):**
+
+```hcl
+name = "api"
+port = 8080
+```
+
+**output:**
+
+```json
+{"name":"api","port":8080}
+```
+
+### `block` and `block_list`
+
+**spec:**
+
+```hcl
+object {
+  block "proxy" {
+    object {
+      attr "host" {
+        type     = string
+        required = true
+      }
+    }
+  }
+  block_list "backend" {
+    object {
+      attr "address" {
+        type     = string
+        required = true
+      }
+    }
+  }
+}
+```
+
+**input:**
+
+```hcl
+proxy {
+  host = "127.0.0.1"
+}
+
+backend {
+  address = "10.0.0.1"
+}
+backend {
+  address = "10.0.0.2"
+}
+```
+
+**output:**
+
+```json
+{
+  "proxy": {"host": "127.0.0.1"},
+  "backend": [
+    {"address": "10.0.0.1"},
+    {"address": "10.0.0.2"}
+  ]
+}
+```
+
+### `block_map`
+
+**spec:**
+
+```hcl
+object {
+  block_map "server" {
+    labels = ["name"]
+    object {
+      attr "listen" {
+        type     = string
+        required = true
+      }
+    }
+  }
+}
+```
+
+**input:**
+
+```hcl
+server "web" {
+  listen = ":80"
+}
+server "admin" {
+  listen = ":8080"
+}
+```
+
+**output:**
+
+```json
+{
+  "server": {
+    "web": {"listen": ":80"},
+    "admin": {"listen": ":8080"}
+  }
+}
+```
+
+### `default` + `literal` + `transform`
+
+**spec:**
+
+```hcl
+object {
+  default "enabled" {
+    attr {
+      name = "enabled"
+      type = bool
+    }
+    literal {
+      value = true
+    }
+  }
+  transform "size_bytes" {
+    attr {
+      name = "size_mb"
+      type = number
+    }
+    result = nested * 1024 * 1024
+  }
+}
+```
+
+**input:**
+
+```hcl
+size_mb = 2
+```
+
+**output:**
+
+```json
+{"enabled":true,"size_bytes":2097152}
+```
+
+For larger real-world specs, see the examples under
+[`examples/`](examples/) (`npm-package` and `sh-config-file`).
+
 ## Type Expressions
 
 Type expressions are used to describe the expected type of an attribute, as
