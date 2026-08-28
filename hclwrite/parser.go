@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2014, 2025
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
 
 package hclwrite
@@ -376,6 +376,24 @@ func parseBlockLabels(nativeBlock *hclsyntax.Block, from inputTokens) (inputToke
 }
 
 func parseExpression(nativeExpr hclsyntax.Expression, from inputTokens) *node {
+	switch tNativeExpr := nativeExpr.(type) {
+
+	// Object-construct expression
+	case *hclsyntax.ObjectConsExpr:
+		return parseObjectConsExpr(tNativeExpr, from)
+
+	case *hclsyntax.ObjectConsKeyExpr:
+		return parseObjectConsKeyExpr(tNativeExpr, from)
+
+	case *hclsyntax.TemplateExpr:
+		return parseTemplateExpr(tNativeExpr, from)
+
+	default:
+		return parseAnyExpression(nativeExpr, from)
+	}
+}
+
+func parseAnyExpression(nativeExpr hclsyntax.Expression, from inputTokens) *node {
 	expr := newExpression()
 	children := expr.children
 
@@ -394,6 +412,78 @@ func parseExpression(nativeExpr hclsyntax.Expression, from inputTokens) *node {
 	children.AppendUnstructuredTokens(from.Tokens())
 
 	return newNode(expr)
+}
+
+// parseObjectConsExpr parses an object-construct expression, defined as:
+//
+//	object = "{" (
+//	    (objectelem (( "," | Newline) objectelem)* ","?)?
+//	) "}";
+//	objectelem = (Identifier | Expression) ("=" | ":") Expression;
+//
+// It leaves any lead comments and line comments as unstructured tokens.
+func parseObjectConsExpr(nativeExpr *hclsyntax.ObjectConsExpr, from inputTokens) *node {
+	expr := newObjectConsExpr()
+	children := expr.children
+
+	var before, open, keyTokens, valueTokens inputTokens
+
+	before, open, from = from.Partition(nativeExpr.StartRange())
+	children.AppendUnstructuredTokens(before.writerTokens)
+	children.AppendUnstructuredTokens(open.writerTokens)
+
+	for _, nativeItem := range nativeExpr.Items {
+		item := newObjectConsItem()
+		value := newObjectConsValue()
+
+		nativeKeyExpr := nativeItem.KeyExpr.(*hclsyntax.ObjectConsKeyExpr)
+
+		before, keyTokens, from = from.Partition(nativeKeyExpr.Range())
+		item.children.AppendUnstructuredTokens(before.writerTokens)
+		item.key = parseObjectConsKeyExpr(nativeKeyExpr, keyTokens)
+		item.children.AppendNode(item.key)
+
+		before, valueTokens, from = from.Partition(nativeItem.ValueExpr.Range())
+		item.children.AppendUnstructuredTokens(before.writerTokens)
+		value.expr = parseExpression(nativeItem.ValueExpr, valueTokens)
+		value.children.AppendNode(value.expr)
+		item.value = item.children.Append(value)
+
+		node := expr.children.Append(item)
+		expr.items.Add(node)
+	}
+
+	_, from, _ = from.Partition(nativeExpr.Range())
+	children.AppendUnstructuredTokens(from.writerTokens)
+
+	// Wrap in an Expression
+	wrapExpr := newExpression()
+	wrapExpr.wrap(expr)
+	return newNode(wrapExpr)
+}
+
+// parseObjectConsExpr parses an object-construct key expression.
+// An object key is an Identifier or an Expression. In this context, a quoted
+// literal is functionally equivalent to an Identifier.
+func parseObjectConsKeyExpr(nativeExpr *hclsyntax.ObjectConsKeyExpr, from inputTokens) *node {
+	expr := parseExpression(nativeExpr.Wrapped, from)
+	wrapExpr := newObjectConsKeyExpr(expr)
+
+	return newNode(wrapExpr)
+}
+
+// parseObjectConsExpr is specifically interested in string literal expressions
+// at this time.
+func parseTemplateExpr(nativeExpr *hclsyntax.TemplateExpr, from inputTokens) *node {
+	if nativeExpr.IsStringLiteral() {
+		quoted := newQuoted(from.writerTokens)
+
+		expr := newExpression()
+		expr.wrapped = expr.children.Append(quoted)
+		return newNode(expr)
+	} else {
+		return parseAnyExpression(nativeExpr, from)
+	}
 }
 
 func parseTraversal(nativeTraversal hcl.Traversal, from inputTokens) (before inputTokens, n *node, after inputTokens) {
