@@ -249,14 +249,17 @@ func (b *Body) JustAttributes() (hcl.Attributes, hcl.Diagnostics) {
 	attrs := make(hcl.Attributes)
 	var diags hcl.Diagnostics
 
-	if len(b.Blocks) > 0 {
-		example := b.Blocks[0]
+	for _, block := range b.Blocks {
+		if _, hidden := b.hiddenBlocks[block.Type]; hidden {
+			continue
+		}
 		diags = append(diags, &hcl.Diagnostic{
 			Severity: hcl.DiagError,
-			Summary:  fmt.Sprintf("Unexpected %q block", example.Type),
+			Summary:  fmt.Sprintf("Unexpected %q block", block.Type),
 			Detail:   "Blocks are not allowed here.",
-			Subject:  &example.TypeRange,
+			Subject:  &block.TypeRange,
 		})
+		break
 		// we will continue processing anyway, and return the attributes
 		// we are able to find so that certain analyses can still be done
 		// in the face of errors.
