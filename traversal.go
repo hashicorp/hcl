@@ -73,7 +73,12 @@ func (t Traversal) TraverseAbs(ctx *EvalContext) (cty.Value, Diagnostics) {
 
 	thisCtx := ctx
 	hasNonNil := false
+	var undefinedHandler func(Traversal) (cty.Value, Diagnostics)
 	for thisCtx != nil {
+		if undefinedHandler == nil && thisCtx.UndefinedVariable != nil {
+			undefinedHandler = thisCtx.UndefinedVariable
+		}
+
 		if thisCtx.Variables == nil {
 			thisCtx = thisCtx.parent
 			continue
@@ -84,6 +89,11 @@ func (t Traversal) TraverseAbs(ctx *EvalContext) (cty.Value, Diagnostics) {
 			return split.Rel.TraverseRel(val)
 		}
 		thisCtx = thisCtx.parent
+	}
+
+	if undefinedHandler != nil {
+		v, diags := undefinedHandler(t)
+		return v, diags
 	}
 
 	if !hasNonNil {
