@@ -535,7 +535,7 @@ func TestBodySetAttributeValue(t *testing.T) {
 
 			f.Body().SetAttributeValue(test.name, test.val)
 			got := f.BuildTokens(nil)
-			format(got)
+			got = format(got)
 			if !reflect.DeepEqual(got, test.want) {
 				diff := cmp.Diff(test.want, got)
 				t.Errorf("wrong result\ngot:  %s\nwant: %s\ndiff:\n%s", spew.Sdump(got), spew.Sdump(test.want), diff)
@@ -761,7 +761,7 @@ func TestBodySetAttributeTraversal(t *testing.T) {
 
 			f.Body().SetAttributeTraversal(test.name, traversal)
 			got := f.BuildTokens(nil)
-			format(got)
+			got = format(got)
 			if !reflect.DeepEqual(got, test.want) {
 				diff := cmp.Diff(test.want, got)
 				t.Errorf("wrong result\ngot:  %s\nwant: %s\ndiff:\n%s", spew.Sdump(got), spew.Sdump(test.want), diff)
@@ -963,7 +963,7 @@ func TestBodySetAttributeRaw(t *testing.T) {
 
 			f.Body().SetAttributeRaw(test.name, test.tokens)
 			got := f.BuildTokens(nil)
-			format(got)
+			got = format(got)
 			if !reflect.DeepEqual(got, test.want) {
 				diff := cmp.Diff(test.want, got)
 				t.Errorf("wrong result\ngot:  %s\nwant: %s\ndiff:\n%s", spew.Sdump(got), spew.Sdump(test.want), diff)
@@ -1074,7 +1074,7 @@ func TestBodySetAttributeValueInBlock(t *testing.T) {
 			b := f.Body().FirstMatchingBlock(test.typeName, test.labels)
 			b.Body().SetAttributeValue(test.attr, test.val)
 			tokens := f.BuildTokens(nil)
-			format(tokens)
+			tokens = format(tokens)
 			got := string(tokens.Bytes())
 			if got != test.want {
 				t.Errorf("wrong result\ngot:  %s\nwant: %s\n", got, test.want)
@@ -1129,7 +1129,7 @@ func TestBodySetAttributeValueInNestedBlock(t *testing.T) {
 			child := parent.Body().FirstMatchingBlock(test.childTypeName, []string{})
 			child.Body().SetAttributeValue(test.attr, test.val)
 			tokens := f.BuildTokens(nil)
-			format(tokens)
+			tokens = format(tokens)
 			got := string(tokens.Bytes())
 			if got != test.want {
 				t.Errorf("wrong result\ngot:  %s\nwant: %s\n", got, test.want)
@@ -1242,7 +1242,7 @@ func TestBodyRemoveAttribute(t *testing.T) {
 
 			f.Body().RemoveAttribute(test.name)
 			got := f.BuildTokens(nil)
-			format(got)
+			got = format(got)
 			if !reflect.DeepEqual(got, test.want) {
 				diff := cmp.Diff(test.want, got)
 				t.Errorf("wrong result\ngot:  %s\nwant: %s\ndiff:\n%s", spew.Sdump(got), spew.Sdump(test.want), diff)
@@ -1403,7 +1403,7 @@ func TestBodyRenameAttribute(t *testing.T) {
 			success := f.Body().RenameAttribute(test.oldName, test.newName)
 
 			got := f.BuildTokens(nil)
-			format(got)
+			got = format(got)
 			if !reflect.DeepEqual(got, test.want) {
 				diff := cmp.Diff(test.want, got)
 				t.Errorf("wrong result\ngot:  %s\nwant: %s\ndiff:\n%s", spew.Sdump(got), spew.Sdump(test.want), diff)
@@ -1649,12 +1649,41 @@ func TestBodyAppendBlock(t *testing.T) {
 
 			f.Body().AppendNewBlock(test.blockType, test.labels)
 			got := f.BuildTokens(nil)
-			format(got)
+			got = format(got)
 			if !reflect.DeepEqual(got, test.want) {
 				diff := cmp.Diff(test.want, got)
 				t.Errorf("wrong result\ngot:  %s\nwant: %s\ndiff:\n%s", spew.Sdump(got), spew.Sdump(test.want), diff)
 			}
 		})
+	}
+}
+
+func TestBodyAppendNewBlockToSingleLineParent(t *testing.T) {
+	// github.com/hashicorp/hcl/issues/687
+	// Appending a nested block into a single-line empty parent used to emit
+	// `atlas { cloud { ... } }`, which the parser rejects. Format must emit
+	// multi-line form so the result round-trips.
+	f, diags := ParseConfig([]byte("atlas {}"), "atlas.hcl", hcl.InitialPos)
+	if diags.HasErrors() {
+		t.Fatalf("initial parse failed: %s", diags)
+	}
+
+	parent := f.Body().FirstMatchingBlock("atlas", nil)
+	if parent == nil {
+		t.Fatal("missing atlas block")
+	}
+	parent.Body().AppendNewBlock("cloud", nil)
+
+	out := Format(f.Bytes())
+	got := string(out)
+	want := "atlas {\n  cloud {\n  }\n}"
+	if got != want {
+		t.Errorf("wrong formatted result\ngot:\n%s\nwant:\n%s", got, want)
+	}
+
+	_, diags = ParseConfig(out, "atlas.hcl", hcl.InitialPos)
+	if diags.HasErrors() {
+		t.Errorf("formatted output did not reparse: %s", diags)
 	}
 }
 
@@ -1784,7 +1813,7 @@ bar {}
 			SpacesBefore: 0,
 		},
 	}
-	format(got)
+	got = format(got)
 	if !reflect.DeepEqual(got, want) {
 		diff := cmp.Diff(want, got)
 		t.Errorf("wrong result\ngot:  %s\nwant: %s\ndiff:\n%s", spew.Sdump(got), spew.Sdump(want), diff)
@@ -1849,7 +1878,7 @@ bar {}
 			SpacesBefore: 0,
 		},
 	}
-	format(got)
+	got = format(got)
 	if !reflect.DeepEqual(got, want) {
 		diff := cmp.Diff(want, got)
 		t.Errorf("wrong result\ngot:  %s\nwant: %s\ndiff:\n%s", spew.Sdump(got), spew.Sdump(want), diff)
