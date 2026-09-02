@@ -340,6 +340,21 @@ func appendTokensForTraversalStep(step hcl.Traverser, toks Tokens) Tokens {
 			Type:  hclsyntax.TokenCBrack,
 			Bytes: []byte{']'},
 		})
+	case hcl.TraverseSplat:
+		toks = append(toks,
+			&Token{
+				Type:  hclsyntax.TokenOBrack,
+				Bytes: []byte{'['},
+			},
+			&Token{
+				Type:  hclsyntax.TokenStar,
+				Bytes: []byte{'*'},
+			},
+			&Token{
+				Type:  hclsyntax.TokenCBrack,
+				Bytes: []byte{']'},
+			},
+		)
 	default:
 		panic(fmt.Sprintf("unsupported traversal step type %T", step))
 	}
