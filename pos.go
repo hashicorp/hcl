@@ -72,7 +72,7 @@ func RangeBetween(start, end Range) Range {
 // If either range is empty then it is ignored. The result is empty if both
 // given ranges are empty.
 //
-// The result is meaningless if the two ranges to not belong to the same
+// The result is meaningless if the two ranges do not belong to the same
 // source file.
 func RangeOver(a, b Range) Range {
 	if a.Empty() {
@@ -249,14 +249,14 @@ func (r Range) Overlap(other Range) Range {
 }
 
 // PartitionAround finds the portion of the given range that overlaps with
-// the reciever and returns three ranges: the portion of the reciever that
+// the receiver and returns three ranges: the portion of the receiver that
 // precedes the overlap, the overlap itself, and then the portion of the
-// reciever that comes after the overlap.
+// receiver that comes after the overlap.
 //
 // If the two ranges do not overlap then all three returned ranges are empty.
 //
 // If the given range aligns with or extends beyond either extent of the
-// reciever then the corresponding outer range will be empty.
+// receiver then the corresponding outer range will be empty.
 func (r Range) PartitionAround(other Range) (before, overlap, after Range) {
 	overlap = r.Overlap(other)
 	if overlap.Empty() {

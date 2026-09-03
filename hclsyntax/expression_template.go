@@ -147,7 +147,7 @@ func (e *TemplateExpr) IsStringLiteral() bool {
 
 // TemplateJoinExpr is used to convert tuples of strings produced by template
 // constructs (i.e. for loops) into flat strings, by converting the values
-// tos strings and joining them. This AST node is not used directly; it's
+// to strings and joining them. This AST node is not used directly; it's
 // produced as part of the AST of a "for" loop in a template.
 type TemplateJoinExpr struct {
 	Tuple Expression

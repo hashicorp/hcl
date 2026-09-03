@@ -16,7 +16,7 @@ import (
 // may freely type-assert this to get access to the full hclsyntax API in
 // situations where detailed access is required. However, most common use-cases
 // should be served using the hcl.Body interface to ensure compatibility with
-// other configurationg syntaxes, such as JSON.
+// other configuration syntaxes, such as JSON.
 func ParseConfig(src []byte, filename string, start hcl.Pos) (*hcl.File, hcl.Diagnostics) {
 	tokens, diags := LexConfig(src, filename, start)
 	peeker := newPeeker(tokens, false)
@@ -92,8 +92,8 @@ func ParseTemplate(src []byte, filename string, start hcl.Pos) (Expression, hcl.
 
 // ParseTraversalAbs parses the given buffer as a standalone absolute traversal.
 //
-// Parsing as a traversal is more limited than parsing as an expession since
-// it allows only attribute and indexing operations on variables. Traverals
+// Parsing as a traversal is more limited than parsing as an expression since
+// it allows only attribute and indexing operations on variables. Traversals
 // are useful as a syntax for referring to objects without necessarily
 // evaluating them.
 func ParseTraversalAbs(src []byte, filename string, start hcl.Pos) (hcl.Traversal, hcl.Diagnostics) {
@@ -101,7 +101,7 @@ func ParseTraversalAbs(src []byte, filename string, start hcl.Pos) (hcl.Traversa
 	peeker := newPeeker(tokens, false)
 	parser := &parser{peeker: peeker}
 
-	// Bare traverals are always parsed in  "ignore newlines" mode, as if
+	// Bare traversals are always parsed in  "ignore newlines" mode, as if
 	// they were wrapped in parentheses.
 	parser.PushIncludeNewlines(false)
 
@@ -132,7 +132,7 @@ func ParseTraversalPartial(src []byte, filename string, start hcl.Pos) (hcl.Trav
 	peeker := newPeeker(tokens, false)
 	parser := &parser{peeker: peeker}
 
-	// Bare traverals are always parsed in  "ignore newlines" mode, as if
+	// Bare traversals are always parsed in  "ignore newlines" mode, as if
 	// they were wrapped in parentheses.
 	parser.PushIncludeNewlines(false)
 
