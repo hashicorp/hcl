@@ -222,12 +222,12 @@ Token:
 		case tokenBrackC:
 			// Consume the bracket anyway, so that we don't return with the peeker
 			// at a strange place.
-			p.Read()
+			tok := p.Read()
 			return nil, diags.Append(&hcl.Diagnostic{
 				Severity: hcl.DiagError,
 				Summary:  "Mismatched braces",
 				Detail:   "A JSON object must be closed with a brace, not a bracket.",
-				Subject:  p.Peek().Range.Ptr(),
+				Subject:  &tok.Range,
 			})
 		case tokenBraceC:
 			break Token
@@ -325,12 +325,13 @@ Token:
 				Subject:  &open.Range,
 			})
 		case tokenBraceC:
-			recover(p.Read())
+			tok := p.Read()
+			recover(tok)
 			return nil, diags.Append(&hcl.Diagnostic{
 				Severity: hcl.DiagError,
 				Summary:  "Mismatched brackets",
 				Detail:   "A JSON array must be closed with a bracket, not a brace.",
-				Subject:  p.Peek().Range.Ptr(),
+				Subject:  &tok.Range,
 			})
 		case tokenBrackC:
 			break Token

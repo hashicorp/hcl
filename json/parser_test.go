@@ -619,6 +619,51 @@ func TestParse(t *testing.T) {
 	}
 }
 
+func TestMismatchedDelimiterDiagnostics(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		summary string
+		offset  int
+	}{
+		{
+			name:    "array closed with brace",
+			input:   `[1}`,
+			summary: "Mismatched brackets",
+			offset:  2,
+		},
+		{
+			name:    "object closed with bracket",
+			input:   `{"a": 1]`,
+			summary: "Mismatched braces",
+			offset:  7,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			_, diags := parseFileContent([]byte(test.input), "", hcl.Pos{Byte: 0, Line: 1, Column: 1})
+			if len(diags) != 1 {
+				t.Fatalf("got %d diagnostics; want 1: %s", len(diags), diags.Error())
+			}
+
+			diag := diags[0]
+			if diag.Summary != test.summary {
+				t.Errorf("got summary %q; want %q", diag.Summary, test.summary)
+			}
+			if diag.Subject == nil {
+				t.Fatal("diagnostic has no subject")
+			}
+			if got, want := diag.Subject.Start.Byte, test.offset; got != want {
+				t.Errorf("subject starts at byte %d; want %d", got, want)
+			}
+			if got, want := diag.Subject.End.Byte, test.offset+1; got != want {
+				t.Errorf("subject ends at byte %d; want %d", got, want)
+			}
+		})
+	}
+}
+
 func TestParseWithPos(t *testing.T) {
 	tests := []struct {
 		Input     string
