@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2014, 2025
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
 
 package hclsyntax
@@ -7,8 +7,8 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/apparentlymart/go-textseg/v15/textseg"
 	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/internal/unicodeutil"
 )
 
 // Token represents a sequence of bytes from some HCL code that has been
@@ -140,7 +140,7 @@ func (f *tokenAccum) emitToken(ty TokenType, startOfs, endOfs int) {
 	end.Byte = endOfs + f.StartByte
 	b := f.Bytes[startOfs:endOfs]
 	for len(b) > 0 {
-		advance, seq, _ := textseg.ScanGraphemeClusters(b, true)
+		advance, seq, _ := unicodeutil.ScanGraphemeClusters(b, true)
 		if (len(seq) == 1 && seq[0] == '\n') || (len(seq) == 2 && seq[0] == '\r' && seq[1] == '\n') {
 			end.Line++
 			end.Column = 1
