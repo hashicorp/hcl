@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2014, 2025
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
 
 package hclwrite
@@ -633,12 +633,36 @@ module "x" {
 			`attr = provider::+example()`,
 			`attr = provider:: + example()`,
 		},
+		{
+			// Nested block inside a single-line parent must be rewritten as
+			// multi-line; the parser rejects nested blocks in single-line form.
+			`atlas { cloud {
+}
+}`,
+			`atlas {
+  cloud {
+  }
+}`,
+		},
+		{
+			`atlas { cloud {} }`,
+			`atlas {
+  cloud {}
+}`,
+		},
+		{
+			`atlas { foo = 1 cloud {} }`,
+			`atlas {
+  foo = 1
+  cloud {}
+}`,
+		},
 	}
 
 	for i, test := range tests {
 		t.Run(fmt.Sprintf("%02d", i), func(t *testing.T) {
 			tokens := lexConfig([]byte(test.input))
-			format(tokens)
+			tokens = format(tokens)
 			t.Logf("tokens %s\n", spew.Sdump(tokens))
 			got := string(tokens.Bytes())
 
