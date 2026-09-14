@@ -1,0 +1,65 @@
+name: Consistency
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - ready_for_review
+      - reopened
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  consistency-test:
+    name: "Consistency Test on ${{ matrix.runs-on }}"
+    strategy:
+      matrix:
+        # Exclude other OS for now (where Ragel has non-deterministic output)
+        runs-on: [ubuntu-latest]
+      fail-fast: false
+    runs-on: "${{ matrix.runs-on }}"
+
+    steps:
+      - name: "Fetch source code"
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install Go
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version-file: go.mod
+
+      - name: Install Ruby
+        uses: ruby/setup-ruby@95ef2b042f9d7a56d8268cba8559e2842e2ad01b # v1.321.0
+        with:
+          working-directory: ./hclsyntax
+
+      - name: Install Ragel
+        uses: ./.github/actions/setup-ragel
+
+      - name: Re-generate code
+        shell: bash
+        run: |
+          go generate ./...
+
+      - name: Check for changes
+        shell: bash
+        run: |
+          CHANGED="$(git status --porcelain)"
+          if [[ -n "$CHANGED" ]]; then
+            git diff
+            echo >&2 "ERROR: Generated files are inconsistent. Inspect the difference and consider git apply-ing the patch from the next step."
+            echo >&2 $'Affected files:\n'"$CHANGED"
+            git diff > go-generate.patch
+            exit 1
+          fi
+
+      - name: Upload patch
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          path: go-generate.patch
+          name: patches-${{ runner.os }}-${{ runner.arch }}
