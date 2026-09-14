@@ -494,6 +494,33 @@ func TestBodyJustAttributes(t *testing.T) {
 						},
 					},
 				},
+				Blocks: Blocks{
+					{
+						Type: "foo",
+					},
+				},
+				hiddenBlocks: map[string]struct{}{"foo": {}},
+			},
+			hcl.Attributes{
+				"foo": &hcl.Attribute{
+					Name: "foo",
+					Expr: &LiteralValueExpr{
+						Val: cty.StringVal("bar"),
+					},
+				},
+			},
+			0, // hidden blocks are ignored, so no error
+		},
+		{
+			&Body{
+				Attributes: Attributes{
+					"foo": &Attribute{
+						Name: "foo",
+						Expr: &LiteralValueExpr{
+							Val: cty.StringVal("bar"),
+						},
+					},
+				},
 				hiddenAttrs: map[string]struct{}{
 					"foo": {},
 				},
