@@ -95,11 +95,7 @@ func (object *ObjectConsExpr) SetItemRaw(key string, tokens Tokens) (*ObjectCons
 	} else {
 		item = newObjectConsItem()
 		item.init(key, expr)
-		if firstItemNode := object.firstItemNode(); firstItemNode == nil {
-			return nil, nil
-		} else {
-			object.items.Add(object.children.Insert(firstItemNode, item))
-		}
+		object.items.Add(object.children.Append(item))
 	}
 	return item.kv()
 }
@@ -117,11 +113,7 @@ func (object *ObjectConsExpr) SetItemTraversal(key string, traversal hcl.Travers
 	} else {
 		item = newObjectConsItem()
 		item.init(key, expr)
-		if firstItemNode := object.firstItemNode(); firstItemNode == nil {
-			return nil, nil
-		} else {
-			object.items.Add(object.children.Insert(firstItemNode, item))
-		}
+		object.items.Add(object.children.Append(item))
 	}
 	return item.kv()
 }
@@ -142,21 +134,9 @@ func (object *ObjectConsExpr) SetItemValue(key string, val cty.Value) (*ObjectCo
 	} else {
 		item = newObjectConsItem()
 		item.init(key, expr)
-		if firstItemNode := object.firstItemNode(); firstItemNode == nil {
-			return nil, nil
-		} else {
-			object.items.Add(object.children.Insert(firstItemNode, item))
-		}
+		object.items.Add(object.children.Append(item))
 	}
 	return item.kv()
-}
-
-func (object *ObjectConsExpr) firstItemNode() *node {
-	list := object.items.List()
-	if len(list) == 0 {
-		return nil
-	}
-	return list[0]
 }
 
 // ObjectConsItem represents the content of a single item in an object-construct expression.
