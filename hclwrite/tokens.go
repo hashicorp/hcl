@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2014, 2025
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
 
 package hclwrite
@@ -7,9 +7,9 @@ import (
 	"bytes"
 	"io"
 
-	"github.com/apparentlymart/go-textseg/v15/textseg"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/hashicorp/hcl/v2/internal/unicodeutil"
 )
 
 // Token is a single sequence of bytes annotated with a type. It is similar
@@ -64,7 +64,7 @@ func (ts Tokens) Columns() int {
 	ret := 0
 	for _, token := range ts {
 		ret += token.SpacesBefore // spaces are always worth one column each
-		ct, _ := textseg.TokenCount(token.Bytes, textseg.ScanGraphemeClusters)
+		ct, _ := unicodeutil.GraphemeCount(token.Bytes)
 		ret += ct
 	}
 	return ret
