@@ -1,0 +1,27 @@
+# Copyright IBM Corp. 2014, 2026
+# SPDX-License-Identifier: MPL-2.0
+
+name: 'Setup Ragel'
+description: 'Install Ragel'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install Ragel (Linux)
+      shell: bash
+      if: ${{ runner.os == 'Linux' }}
+      run: sudo apt install ragel
+
+    - name: Install Ragel (macOS)
+      shell: bash
+      if: ${{ runner.os == 'macOS' }}
+      run: brew install ragel
+
+    - name: Install Ragel (Windows)
+      if: ${{ runner.os == 'Windows' }}
+      shell: pwsh
+      run: winget install -e --accept-source-agreements --id PolarGoose.Ragel
+
+    - name: Ragel version
+      shell: ${{ case(runner.os == 'Windows', 'pwsh', 'bash') }}
+      run: ragel --version

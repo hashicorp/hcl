@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2014, 2025
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
 
 package hclsyntax
@@ -8,8 +8,8 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/apparentlymart/go-textseg/v15/textseg"
 	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/internal/unicodeutil"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -721,7 +721,7 @@ func flushHeredocTemplateParts(parts *templateParts) {
 					spaces = maxInt
 				} else {
 					spaceBytes := len(lit.Val) - len(trimmed)
-					spaces, _ = textseg.TokenCount([]byte(orig[:spaceBytes]), textseg.ScanGraphemeClusters)
+					spaces, _ = unicodeutil.GraphemeCount([]byte(orig[:spaceBytes]))
 					adjust = append(adjust, lit)
 				}
 			} else if _, ok := ttok.(*templateEndToken); ok {
@@ -745,7 +745,7 @@ func flushHeredocTemplateParts(parts *templateParts) {
 		valBytes := []byte(lit.Val)
 		spaceByteCount := 0
 		for i := 0; i < minSpaces; i++ {
-			adv, _, _ := textseg.ScanGraphemeClusters(valBytes, true)
+			adv, _, _ := unicodeutil.ScanGraphemeClusters(valBytes, true)
 			spaceByteCount += adv
 			valBytes = valBytes[adv:]
 		}

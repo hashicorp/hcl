@@ -1,9 +1,10 @@
-// Copyright IBM Corp. 2014, 2025
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
 
 package hclwrite
 
 import (
+	"bytes"
 	"fmt"
 	"reflect"
 	"strings"
@@ -769,6 +770,44 @@ func TestBodySetAttributeTraversal(t *testing.T) {
 	}
 }
 
+func TestBodySetAttributeTraversal_ReturnsTheAttribute(t *testing.T) {
+	tests := map[string]struct {
+		config string
+		want   string
+	}{
+		"attribute `one` is already set to a value": {
+			config: `one = 1`,
+			want:   `one =the.loneliest.number`,
+		},
+		"attribute `one` is not set to a value": {
+			config: `two = 2`,
+			want:   `one=the.loneliest.number` + "\n",
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			f := testFn[*File](t)(ParseConfig([]byte(test.config), "", hcl.Pos{Line: 1, Column: 1}))
+
+			traversal := hcl.Traversal{
+				hcl.TraverseRoot{Name: "the"},
+				hcl.TraverseAttr{Name: "loneliest"},
+				hcl.TraverseAttr{Name: "number"},
+			}
+
+			attr := f.Body().SetAttributeTraversal(`one`, traversal)
+			if attr == nil {
+				t.Fatalf("got: nil\nwant: %s", test.want)
+			}
+
+			got := attr.BuildTokens(nil).Bytes()
+			if !bytes.Equal(got, []byte(test.want)) {
+				t.Errorf("got: %s\nwant: %s", got, test.want)
+			}
+		})
+	}
+}
+
 func TestBodySetAttributeRaw(t *testing.T) {
 	tests := []struct {
 		src    string
@@ -928,6 +967,69 @@ func TestBodySetAttributeRaw(t *testing.T) {
 			if !reflect.DeepEqual(got, test.want) {
 				diff := cmp.Diff(test.want, got)
 				t.Errorf("wrong result\ngot:  %s\nwant: %s\ndiff:\n%s", spew.Sdump(got), spew.Sdump(test.want), diff)
+			}
+		})
+	}
+}
+
+func TestBodySetAttributeRaw_ReturnsTheAttribute(t *testing.T) {
+	tests := map[string]struct {
+		config string
+		want   string
+	}{
+		"attribute `one` is already set to a value": {
+			config: `one = 1`,
+			want:   `one ="the loneliest number"`,
+		},
+		"attribute `one` is not set to a value": {
+			config: `two = 2`,
+			want:   `one="the loneliest number"` + "\n",
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			f := testFn[*File](t)(ParseConfig([]byte(test.config), "", hcl.Pos{Line: 1, Column: 1}))
+
+			attr := f.Body().SetAttributeRaw(`one`, TokensForValue(cty.StringVal("the loneliest number")))
+			if attr == nil {
+				t.Fatalf("got: nil\nwant: %s", test.want)
+			}
+
+			got := attr.BuildTokens(nil).Bytes()
+			if !bytes.Equal(got, []byte(test.want)) {
+				t.Errorf("got: %s\nwant: %s", got, test.want)
+			}
+		})
+	}
+}
+func TestBodySetAttributeValue_ReturnsTheAttribute(t *testing.T) {
+	tests := map[string]struct {
+		config string
+		want   string
+	}{
+		"attribute `one` is already set to a value": {
+			config: `one = 1`,
+			want:   `one ="the loneliest number"`,
+		},
+		"attribute `one` is not set to a value": {
+			config: `two = 2`,
+			want:   `one="the loneliest number"` + "\n",
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			f := testFn[*File](t)(ParseConfig([]byte(test.config), "", hcl.Pos{Line: 1, Column: 1}))
+
+			attr := f.Body().SetAttributeValue(`one`, cty.StringVal("the loneliest number"))
+			if attr == nil {
+				t.Fatalf("got: nil\nwant: %s", test.want)
+			}
+
+			got := attr.BuildTokens(nil).Bytes()
+			if !bytes.Equal(got, []byte(test.want)) {
+				t.Errorf("got: %s\nwant: %s", got, test.want)
 			}
 		})
 	}
@@ -1753,4 +1855,24 @@ bar {}
 		t.Errorf("wrong result\ngot:  %s\nwant: %s\ndiff:\n%s", spew.Sdump(got), spew.Sdump(want), diff)
 	}
 
+}
+
+// testFn is a convenience function that wraps a function call that returns a
+// value and diagnostics.
+//
+// If there are no diagnostics, returns the value.
+// If there are diagnostics, fails the test.
+func testFn[E any](t *testing.T) func(value E, diags hcl.Diagnostics) E {
+	t.Helper()
+
+	return func(value E, diags hcl.Diagnostics) E {
+		if len(diags) != 0 {
+			for _, diag := range diags {
+				t.Logf("- %s", diag.Error())
+			}
+			t.Fatalf("unexpected diagnostics")
+		}
+
+		return value
+	}
 }

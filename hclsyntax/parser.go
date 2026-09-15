@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"unicode/utf8"
 
-	"github.com/apparentlymart/go-textseg/v15/textseg"
 	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/internal/unicodeutil"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -1936,7 +1936,7 @@ Slices:
 		// Advance the end of our range to after our token.
 		b := slice
 		for len(b) > 0 {
-			adv, ch, _ := textseg.ScanGraphemeClusters(b, true)
+			adv, ch, _ := unicodeutil.ScanGraphemeClusters(b, true)
 			rng.End.Byte += adv
 			switch ch[0] {
 			case '\r', '\n':

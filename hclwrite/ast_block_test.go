@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2014, 2025
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
 
 package hclwrite
@@ -138,7 +138,7 @@ blank "" {
 	}
 }
 
-func TestBlockSetType(t *testing.T) {
+func TestBlockSetType_buildTokens(t *testing.T) {
 	tests := []struct {
 		src         string
 		oldTypeName string
@@ -195,6 +195,27 @@ func TestBlockSetType(t *testing.T) {
 				t.Errorf("wrong result\ngot:  %s\nwant: %s\ndiff:\n%s", spew.Sdump(got), spew.Sdump(test.want), diff)
 			}
 		})
+	}
+}
+
+func TestBlockSetType(t *testing.T) {
+	tests := []struct {
+		oldTypeName string
+		newTypeName string
+	}{
+		{
+			"foo",
+			"bar",
+		},
+	}
+
+	for _, test := range tests {
+		b := NewBlock(test.oldTypeName, nil)
+		b.SetType(test.newTypeName)
+
+		if b.Type() != test.newTypeName {
+			t.Errorf("wrong result\ngot: %s\nwant: %s\n", b.Type(), test.newTypeName)
+		}
 	}
 }
 
@@ -486,4 +507,73 @@ func TestBlockSetLabels(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestBlockLeadComments(t *testing.T) {
+	tests := []struct {
+		src         string
+		wantComment string
+	}{
+		{
+			`# block comment
+block "test" {}
+`,
+			"# block comment\n",
+		},
+		{
+			`// block comment
+block "test" {}
+`,
+			"// block comment\n",
+		},
+		{
+			`// block comment
+// that goes on a bit
+// for fun
+block "test" {}
+`,
+			"// block comment\n// that goes on a bit\n// for fun\n",
+		},
+		// Terraform accepts multi-line go-style comments, but hclwrite does not consistently support this style comment.
+		{
+			`/* multiline
+comment
+*/
+block "test" {}
+`,
+			"", // unsupported
+		}, {
+			`/* multiline
+comment
+*/
+block "test" {}
+`,
+			"", // unsupported
+		},
+		{
+			`/* multiline comment, single line */
+block "test" {}
+`,
+			"", // unsupported
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.wantComment, func(t *testing.T) {
+			f := mustParseConfig(test.src)
+			b := f.Body().FirstMatchingBlock("block", []string{"test"})
+			got := string(b.LeadComments().Bytes())
+			if got != test.wantComment {
+				t.Errorf("wrong result\ngot:  %s\nwant: %s", got, test.wantComment)
+			}
+		})
+	}
+}
+
+func mustParseConfig(src string) *File {
+	f, diags := ParseConfig([]byte(src), "", hcl.Pos{Line: 1, Column: 1})
+	if len(diags) != 0 {
+		panic(diags.Error)
+	}
+	return f
 }

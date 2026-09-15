@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2014, 2025
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
 
 package hclwrite
@@ -71,6 +71,10 @@ func (b *Block) Body() *Body {
 	return b.body.content.(*Body)
 }
 
+func (b *Block) LeadComments() Tokens {
+	return b.leadComments.content.BuildTokens(nil)
+}
+
 // Type returns the type name of the block.
 func (b *Block) Type() string {
 	typeNameObj := b.typeName.content.(*identifier)
@@ -81,7 +85,7 @@ func (b *Block) Type() string {
 func (b *Block) SetType(typeName string) {
 	nameTok := newIdentToken(typeName)
 	nameObj := newIdentifier(nameTok)
-	b.typeName.ReplaceWith(nameObj)
+	b.typeName = b.typeName.ReplaceWith(nameObj)
 }
 
 // Labels returns the labels of the block.

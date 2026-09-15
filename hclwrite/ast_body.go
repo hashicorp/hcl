@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2014, 2025
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
 
 package hclwrite
@@ -159,13 +159,16 @@ func (b *Body) RemoveBlock(block *Block) bool {
 // The same caveats apply to this function as for NewExpressionRaw on which
 // it is based. If possible, prefer to use SetAttributeValue or
 // SetAttributeTraversal.
+//
+// The return value is the attribute that was either modified in-place or
+// created.
 func (b *Body) SetAttributeRaw(name string, tokens Tokens) *Attribute {
 	attr := b.GetAttribute(name)
 	expr := NewExpressionRaw(tokens)
 	if attr != nil {
 		attr.expr = attr.expr.ReplaceWith(expr)
 	} else {
-		attr := newAttribute()
+		attr = newAttribute()
 		attr.init(name, expr)
 		b.appendItem(attr)
 	}
@@ -186,7 +189,7 @@ func (b *Body) SetAttributeValue(name string, val cty.Value) *Attribute {
 	if attr != nil {
 		attr.expr = attr.expr.ReplaceWith(expr)
 	} else {
-		attr := newAttribute()
+		attr = newAttribute()
 		attr.init(name, expr)
 		b.appendItem(attr)
 	}
@@ -207,7 +210,7 @@ func (b *Body) SetAttributeTraversal(name string, traversal hcl.Traversal) *Attr
 	if attr != nil {
 		attr.expr = attr.expr.ReplaceWith(expr)
 	} else {
-		attr := newAttribute()
+		attr = newAttribute()
 		attr.init(name, expr)
 		b.appendItem(attr)
 	}

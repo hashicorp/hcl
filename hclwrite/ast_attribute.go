@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2014, 2025
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
 
 package hclwrite
@@ -44,6 +44,14 @@ func (a *Attribute) init(name string, expr *Expression) {
 			Bytes: []byte{'\n'},
 		},
 	})
+}
+
+func (a *Attribute) LeadComments() Tokens {
+	return a.leadComments.content.BuildTokens(nil)
+}
+
+func (a *Attribute) LineComments() Tokens {
+	return a.lineComments.content.BuildTokens(nil)
 }
 
 func (a *Attribute) Expr() *Expression {
