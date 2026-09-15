@@ -462,7 +462,7 @@ func parseObjectConsExpr(nativeExpr *hclsyntax.ObjectConsExpr, from inputTokens)
 	return newNode(wrapExpr)
 }
 
-// parseObjectConsExpr parses an object-construct key expression.
+// parseObjectConsKeyExpr parses an object-construct key expression.
 // An object key is an Identifier or an Expression. In this context, a quoted
 // literal is functionally equivalent to an Identifier.
 func parseObjectConsKeyExpr(nativeExpr *hclsyntax.ObjectConsKeyExpr, from inputTokens) *node {
