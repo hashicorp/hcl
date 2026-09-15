@@ -152,7 +152,11 @@ func (object *ObjectConsExpr) SetItemValue(key string, val cty.Value) (*ObjectCo
 }
 
 func (object *ObjectConsExpr) firstItemNode() *node {
-	return object.items.List()[0]
+	list := object.items.List()
+	if len(list) == 0 {
+		return nil
+	}
+	return list[0]
 }
 
 // ObjectConsItem represents the content of a single item in an object-construct expression.
