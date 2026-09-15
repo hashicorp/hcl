@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2014, 2025
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
 
 package hclwrite
@@ -15,6 +15,7 @@ type Expression struct {
 	inTree
 
 	absTraversals nodeSet
+	wrapped       *node
 }
 
 func newExpression() *Expression {
@@ -22,6 +23,15 @@ func newExpression() *Expression {
 		inTree:        newInTree(),
 		absTraversals: newNodeSet(),
 	}
+}
+
+func (e *Expression) wrap(c nodeContent) {
+	if e.wrapped != nil {
+		panic("this is a problem")
+	}
+
+	e.wrapped = newNode(c)
+	e.children.AppendNode(e.wrapped)
 }
 
 // NewExpressionRaw constructs an expression containing the given raw tokens.
@@ -184,6 +194,38 @@ Traversals:
 			token := step.name.content.(*identifier).token
 			token.Bytes = []byte(name)
 		}
+	}
+}
+
+func (e *Expression) AsObjectConsExpr() *ObjectConsExpr {
+	if e.wrapped == nil {
+		return nil
+	}
+
+	if object, ok := e.wrapped.content.(*ObjectConsExpr); ok {
+		return object
+	}
+
+	return nil
+}
+
+func (e *Expression) asQuoted() *quoted {
+	if e.wrapped == nil {
+		return nil
+	}
+
+	if quoted, ok := e.wrapped.content.(*quoted); ok {
+		return quoted
+	}
+
+	return nil
+}
+
+func (e *Expression) AsQuotedLiteral() Tokens {
+	if quoted := e.asQuoted(); quoted == nil {
+		return Tokens{}
+	} else {
+		return quoted.tokens
 	}
 }
 
