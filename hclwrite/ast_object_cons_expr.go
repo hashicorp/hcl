@@ -174,7 +174,7 @@ func (item *ObjectConsItem) init(key string, value *Expression) {
 	})
 
 	item.value = item.children.Append(newObjectConsValue())
-	item.ValueObj().children.Append(value)
+	item.ValueObj().expr = item.ValueObj().children.Append(value)
 }
 
 func (item *ObjectConsItem) kv() (*ObjectConsKeyExpr, *ObjectConsValue) {
