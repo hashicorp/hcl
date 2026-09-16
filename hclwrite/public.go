@@ -30,6 +30,12 @@ func ParseConfig(src []byte, filename string, start hcl.Pos) (*File, hcl.Diagnos
 	return parse(src, filename, start)
 }
 
+// ParseExpression attempts to parse the given buffer as a HCL expression,
+// returning the resulting syntax element if successful.
+func ParseExpression(src []byte, filename string, start hcl.Pos) (*Expression, hcl.Diagnostics) {
+	return parseExpr(src, filename, start)
+}
+
 // Format takes source code and performs simple whitespace changes to transform
 // it to a canonical layout style.
 //
