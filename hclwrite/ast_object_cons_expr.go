@@ -86,9 +86,8 @@ func (o *ObjectConsExpr) ValueFor(key string) *ObjectConsValue {
 //
 // The same caveats apply to this function as for NewExpressionRaw on which it
 // is based. If possible, prefer to use SetItemValue or SetItemTraversal.
-func (object *ObjectConsExpr) SetItemRaw(key string, tokens Tokens) (*ObjectConsKeyExpr, *ObjectConsValue) {
+func (object *ObjectConsExpr) SetItem(key string, expr *Expression) (*ObjectConsKeyExpr, *ObjectConsValue) {
 	item := object.ItemFor(key)
-	expr := NewExpressionRaw(tokens)
 	if item != nil {
 		item.ValueObj().expr.Detach()
 		item.ValueObj().expr = item.ValueObj().children.Append(expr)
@@ -100,22 +99,24 @@ func (object *ObjectConsExpr) SetItemRaw(key string, tokens Tokens) (*ObjectCons
 	return item.kv()
 }
 
+// SetItemRaw either replaces the expression of an existing item of the given
+// name or adds a new item definition to the end of the object, using the given
+// tokens verbatim as the expression.
+//
+// The same caveats apply to this function as for NewExpressionRaw on which it
+// is based. If possible, prefer to use SetItemValue or SetItemTraversal.
+func (object *ObjectConsExpr) SetItemRaw(key string, tokens Tokens) (*ObjectConsKeyExpr, *ObjectConsValue) {
+	expr := NewExpressionRaw(tokens)
+	return object.SetItem(key, expr)
+}
+
 // SetItemTraversal either replaces the expression of an existing item of the given
 // name or adds a new item definition to the end of the object.
 //
 // The return value is the item that was either modified in-place or created.
 func (object *ObjectConsExpr) SetItemTraversal(key string, traversal hcl.Traversal) (*ObjectConsKeyExpr, *ObjectConsValue) {
-	item := object.ItemFor(key)
 	expr := NewExpressionAbsTraversal(traversal)
-	if item != nil {
-		item.ValueObj().expr.Detach()
-		item.ValueObj().expr = item.ValueObj().children.Append(expr)
-	} else {
-		item = newObjectConsItem()
-		item.init(key, expr)
-		object.items.Add(object.children.Append(item))
-	}
-	return item.kv()
+	return object.SetItem(key, expr)
 }
 
 // SetItemValue either replaces the expression of an existing item of the given
@@ -126,17 +127,8 @@ func (object *ObjectConsExpr) SetItemTraversal(key string, traversal hcl.Travers
 //
 // The return value is the item that was either modified in-place or created.
 func (object *ObjectConsExpr) SetItemValue(key string, val cty.Value) (*ObjectConsKeyExpr, *ObjectConsValue) {
-	item := object.ItemFor(key)
 	expr := NewExpressionLiteral(val)
-	if item != nil {
-		item.ValueObj().expr.Detach()
-		item.ValueObj().expr = item.ValueObj().children.Append(expr)
-	} else {
-		item = newObjectConsItem()
-		item.init(key, expr)
-		object.items.Add(object.children.Append(item))
-	}
-	return item.kv()
+	return object.SetItem(key, expr)
 }
 
 // ObjectConsItem represents the content of a single item in an object-construct expression.
