@@ -95,7 +95,7 @@ func (object *ObjectConsExpr) SetItemRaw(key string, tokens Tokens) (*ObjectCons
 	} else {
 		item = newObjectConsItem()
 		item.init(key, expr)
-		object.items.Add(object.children.Append(item))
+		object.items.Add(object.children.Insert(object.children.last, item))
 	}
 	return item.kv()
 }
