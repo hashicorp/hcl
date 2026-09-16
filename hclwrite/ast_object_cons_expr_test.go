@@ -50,6 +50,7 @@ func TestObjectConsExprSetItemRaw(t *testing.T) {
 		want     Tokens
 	}{
 		{
+			// Set the content of an existing item.
 			`a = {
 				hat = "derby", (cat) = "calico" }` + "\n",
 			"a",
@@ -140,6 +141,147 @@ func TestObjectConsExprSetItemRaw(t *testing.T) {
 				{
 					Type:  hclsyntax.TokenQuotedLit,
 					Bytes: []byte("calico"),
+				},
+				{
+					Type:  hclsyntax.TokenCQuote,
+					Bytes: []byte{'"'},
+				},
+				{
+					Type:         hclsyntax.TokenCBrace,
+					Bytes:        []byte{'}'},
+					SpacesBefore: 1,
+				},
+				{
+					Type:  hclsyntax.TokenNewline,
+					Bytes: []byte("\n"),
+				},
+				{
+					Type:         hclsyntax.TokenEOF,
+					Bytes:        []byte{},
+					SpacesBefore: 0,
+				},
+			},
+		},
+		{
+
+			// Set the content of new item.
+			`a = {
+				hat = "derby", (cat) = "calico" }` + "\n",
+			"a",
+			"bat",
+			Tokens{
+				{
+					Type:         hclsyntax.TokenOQuote,
+					Bytes:        []byte(`"`),
+					SpacesBefore: 1,
+				},
+				{
+					Type:  hclsyntax.TokenQuotedLit,
+					Bytes: []byte(`fruit bat`),
+				},
+				{
+					Type:  hclsyntax.TokenCQuote,
+					Bytes: []byte(`"`),
+				},
+			},
+			Tokens{
+				{
+					Type:  hclsyntax.TokenIdent,
+					Bytes: []byte{'a'},
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte{'='},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenOBrace,
+					Bytes:        []byte{'{'},
+					SpacesBefore: 1,
+				},
+				{
+					Type:  hclsyntax.TokenNewline,
+					Bytes: []byte("\n"),
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte("hat"),
+					SpacesBefore: 2, // TODO: y?
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte{'='},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenOQuote,
+					Bytes:        []byte{'"'},
+					SpacesBefore: 1,
+				},
+				{
+					Type:  hclsyntax.TokenQuotedLit,
+					Bytes: []byte(`derby`),
+				},
+				{
+					Type:  hclsyntax.TokenCQuote,
+					Bytes: []byte{'"'},
+				},
+				{
+					Type:  hclsyntax.TokenComma,
+					Bytes: []byte{','},
+				},
+				{
+					Type:         hclsyntax.TokenOParen,
+					Bytes:        []byte{'('},
+					SpacesBefore: 1,
+				},
+				{
+					Type:  hclsyntax.TokenIdent,
+					Bytes: []byte("cat"),
+				},
+				{
+					Type:  hclsyntax.TokenCParen,
+					Bytes: []byte{')'},
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte{'='},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenOQuote,
+					Bytes:        []byte{'"'},
+					SpacesBefore: 1,
+				},
+				{
+					Type:  hclsyntax.TokenQuotedLit,
+					Bytes: []byte("calico"),
+				},
+				{
+					Type:  hclsyntax.TokenCQuote,
+					Bytes: []byte{'"'},
+				},
+				{
+					Type:  hclsyntax.TokenNewline,
+					Bytes: []byte("\n"),
+				},
+				{
+					Type:  hclsyntax.TokenIdent,
+					Bytes: []byte("bat"),
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte{'='},
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenOQuote,
+					Bytes:        []byte{'"'},
+					SpacesBefore: 1,
+				},
+				{
+					Type:  hclsyntax.TokenQuotedLit,
+					Bytes: []byte(`fruit bat`),
 				},
 				{
 					Type:  hclsyntax.TokenCQuote,
