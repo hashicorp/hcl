@@ -27,7 +27,7 @@ func newExpression() *Expression {
 
 func (e *Expression) wrap(c nodeContent) {
 	if e.wrapped != nil {
-		panic("this is a problem")
+		panic("wrap called on already-wrapped Expression")
 	}
 
 	e.wrapped = newNode(c)
