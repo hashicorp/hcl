@@ -126,6 +126,11 @@ type Expression interface {
 	StartRange() Range
 }
 
+type ExpressionWithFunctions interface {
+	Expression
+	Functions() []Traversal
+}
+
 // OfType filters the receiving block sequence by block type name,
 // returning a new block sequence including only the blocks of the
 // requested type.

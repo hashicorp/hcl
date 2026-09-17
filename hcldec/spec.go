@@ -67,6 +67,12 @@ type specNeedingVariables interface {
 	variablesNeeded(content *hcl.BodyContent) []hcl.Traversal
 }
 
+// specNeedingFunctions is implemented by specs that can use functions
+// from the EvalContext, to declare which functions they need.
+type specNeedingFunctions interface {
+	functionsNeeded(content *hcl.BodyContent) []hcl.Traversal
+}
+
 // UnknownBody can be optionally implemented by an hcl.Body instance which may
 // be entirely unknown.
 type UnknownBody interface {
@@ -182,6 +188,19 @@ func (s *AttrSpec) variablesNeeded(content *hcl.BodyContent) []hcl.Traversal {
 	return attr.Expr.Variables()
 }
 
+// specNeedingFunctions implementation
+func (s *AttrSpec) functionsNeeded(content *hcl.BodyContent) []hcl.Traversal {
+	attr, exists := content.Attributes[s.Name]
+	if !exists {
+		return nil
+	}
+
+	if fexpr, ok := attr.Expr.(hcl.ExpressionWithFunctions); ok {
+		return fexpr.Functions()
+	}
+	return nil
+}
+
 // attrSpec implementation
 func (s *AttrSpec) attrSchemata() []hcl.AttributeSchema {
 	return []hcl.AttributeSchema{
@@ -288,6 +307,14 @@ func (s *ExprSpec) variablesNeeded(content *hcl.BodyContent) []hcl.Traversal {
 	return s.Expr.Variables()
 }
 
+// specNeedingFunctions implementation
+func (s *ExprSpec) functionsNeeded(content *hcl.BodyContent) []hcl.Traversal {
+	if fexpr, ok := s.Expr.(hcl.ExpressionWithFunctions); ok {
+		return fexpr.Functions()
+	}
+	return nil
+}
+
 func (s *ExprSpec) decode(content *hcl.BodyContent, blockLabels []blockLabel, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	return s.Expr.Value(ctx)
 }
@@ -349,6 +376,25 @@ func (s *BlockSpec) variablesNeeded(content *hcl.BodyContent) []hcl.Traversal {
 	}
 
 	return Variables(childBlock.Body, s.Nested)
+}
+
+// specNeedingFunctions implementation
+func (s *BlockSpec) functionsNeeded(content *hcl.BodyContent) []hcl.Traversal {
+	var childBlock *hcl.Block
+	for _, candidate := range content.Blocks {
+		if candidate.Type != s.TypeName {
+			continue
+		}
+
+		childBlock = candidate
+		break
+	}
+
+	if childBlock == nil {
+		return nil
+	}
+
+	return Functions(childBlock.Body, s.Nested)
 }
 
 func (s *BlockSpec) decode(content *hcl.BodyContent, blockLabels []blockLabel, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
@@ -458,6 +504,21 @@ func (s *BlockListSpec) variablesNeeded(content *hcl.BodyContent) []hcl.Traversa
 		}
 
 		ret = append(ret, Variables(childBlock.Body, s.Nested)...)
+	}
+
+	return ret
+}
+
+// specNeedingFunctions implementation
+func (s *BlockListSpec) functionsNeeded(content *hcl.BodyContent) []hcl.Traversal {
+	var ret []hcl.Traversal
+
+	for _, childBlock := range content.Blocks {
+		if childBlock.Type != s.TypeName {
+			continue
+		}
+
+		ret = append(ret, Functions(childBlock.Body, s.Nested)...)
 	}
 
 	return ret
@@ -626,6 +687,21 @@ func (s *BlockTupleSpec) variablesNeeded(content *hcl.BodyContent) []hcl.Travers
 	return ret
 }
 
+// specNeedingFunctions implementation
+func (s *BlockTupleSpec) functionsNeeded(content *hcl.BodyContent) []hcl.Traversal {
+	var ret []hcl.Traversal
+
+	for _, childBlock := range content.Blocks {
+		if childBlock.Type != s.TypeName {
+			continue
+		}
+
+		ret = append(ret, Functions(childBlock.Body, s.Nested)...)
+	}
+
+	return ret
+}
+
 func (s *BlockTupleSpec) decode(content *hcl.BodyContent, blockLabels []blockLabel, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	var diags hcl.Diagnostics
 
@@ -744,6 +820,21 @@ func (s *BlockSetSpec) variablesNeeded(content *hcl.BodyContent) []hcl.Traversal
 		}
 
 		ret = append(ret, Variables(childBlock.Body, s.Nested)...)
+	}
+
+	return ret
+}
+
+// specNeedingFunctions implementation
+func (s *BlockSetSpec) functionsNeeded(content *hcl.BodyContent) []hcl.Traversal {
+	var ret []hcl.Traversal
+
+	for _, childBlock := range content.Blocks {
+		if childBlock.Type != s.TypeName {
+			continue
+		}
+
+		ret = append(ret, Functions(childBlock.Body, s.Nested)...)
 	}
 
 	return ret
@@ -911,6 +1002,21 @@ func (s *BlockMapSpec) variablesNeeded(content *hcl.BodyContent) []hcl.Traversal
 	return ret
 }
 
+// specNeedingFunctions implementation
+func (s *BlockMapSpec) functionsNeeded(content *hcl.BodyContent) []hcl.Traversal {
+	var ret []hcl.Traversal
+
+	for _, childBlock := range content.Blocks {
+		if childBlock.Type != s.TypeName {
+			continue
+		}
+
+		ret = append(ret, Functions(childBlock.Body, s.Nested)...)
+	}
+
+	return ret
+}
+
 func (s *BlockMapSpec) decode(content *hcl.BodyContent, blockLabels []blockLabel, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	var diags hcl.Diagnostics
 
@@ -1064,6 +1170,21 @@ func (s *BlockObjectSpec) variablesNeeded(content *hcl.BodyContent) []hcl.Traver
 		}
 
 		ret = append(ret, Variables(childBlock.Body, s.Nested)...)
+	}
+
+	return ret
+}
+
+// specNeedingFunctions implementation
+func (s *BlockObjectSpec) functionsNeeded(content *hcl.BodyContent) []hcl.Traversal {
+	var ret []hcl.Traversal
+
+	for _, childBlock := range content.Blocks {
+		if childBlock.Type != s.TypeName {
+			continue
+		}
+
+		ret = append(ret, Functions(childBlock.Body, s.Nested)...)
 	}
 
 	return ret
@@ -1244,6 +1365,36 @@ func (s *BlockAttrsSpec) variablesNeeded(content *hcl.BodyContent) []hcl.Travers
 	})
 
 	return vars
+}
+
+// specNeedingFunctions implementation
+func (s *BlockAttrsSpec) functionsNeeded(content *hcl.BodyContent) []hcl.Traversal {
+
+	block, _ := s.findBlock(content)
+	if block == nil {
+		return nil
+	}
+
+	var funcs []hcl.Traversal
+
+	attrs, diags := block.Body.JustAttributes()
+	if diags.HasErrors() {
+		return nil
+	}
+
+	for _, attr := range attrs {
+		if fexpr, ok := attr.Expr.(hcl.ExpressionWithFunctions); ok {
+			funcs = append(funcs, fexpr.Functions()...)
+		}
+	}
+
+	// We'll return the functions references in source order so that any
+	// error messages that result are also in source order.
+	sort.Slice(funcs, func(i, j int) bool {
+		return funcs[i].SourceRange().Start.Byte < funcs[j].SourceRange().Start.Byte
+	})
+
+	return funcs
 }
 
 func (s *BlockAttrsSpec) decode(content *hcl.BodyContent, blockLabels []blockLabel, ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
