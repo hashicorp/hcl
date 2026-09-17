@@ -378,7 +378,9 @@ func parseBlockLabels(nativeBlock *hclsyntax.Block, from inputTokens) (inputToke
 func parseExpression(nativeExpr hclsyntax.Expression, from inputTokens) *node {
 	switch tNativeExpr := nativeExpr.(type) {
 
-	// Object-construct expression
+	case *hclsyntax.FunctionCallExpr:
+		return parseFunctionCallExpr(tNativeExpr, from)
+
 	case *hclsyntax.ObjectConsExpr:
 		return parseObjectConsExpr(tNativeExpr, from)
 
@@ -388,30 +390,65 @@ func parseExpression(nativeExpr hclsyntax.Expression, from inputTokens) *node {
 	case *hclsyntax.TemplateExpr:
 		return parseTemplateExpr(tNativeExpr, from)
 
+	case *hclsyntax.TupleConsExpr:
+		return parseTupleConsExpr(tNativeExpr, from)
+
 	default:
 		return parseAnyExpression(nativeExpr, from)
 	}
 }
 
-func parseAnyExpression(nativeExpr hclsyntax.Expression, from inputTokens) *node {
-	expr := newExpression()
+// parseFunctionCallExpr parses an function call expression, defined as:
+//
+//	 FunctionCall = Identifier "(" arguments ")";
+//
+//		Arguments = (
+//		    () ||
+//		    (Expression ("," Expression)* ("," | "...")?)
+//		);
+//
+// It leaves any lead comments and line comments as unstructured tokens.
+func parseFunctionCallExpr(nativeExpr *hclsyntax.FunctionCallExpr, from inputTokens) *node {
+	expr := newFunctionCallExpr(nativeExpr.Name)
 	children := expr.children
 
-	nativeVars := nativeExpr.Variables()
-
-	for _, nativeTraversal := range nativeVars {
-		before, traversal, after := parseTraversal(nativeTraversal, from)
-		children.AppendUnstructuredTokens(before.Tokens())
-		children.AppendNode(traversal)
-		expr.absTraversals.Add(traversal)
-		from = after
+	if nativeExpr.ExpandFinal {
+		expr.expandFinal = true
 	}
-	// Attach any stragglers that don't belong to a traversal to the expression
-	// itself. In an expression with no traversals at all, this is just the
-	// entirety of "from".
-	children.AppendUnstructuredTokens(from.Tokens())
 
-	return newNode(expr)
+	// Wrap in an Expression
+	wrapExpr := newExpression()
+
+	var before, start, argTokens inputTokens
+
+	before, start, from = from.Partition(nativeExpr.StartRange())
+	children.AppendUnstructuredTokens(before.writerTokens)
+	children.AppendUnstructuredTokens(start.writerTokens)
+
+	for _, nativeArg := range nativeExpr.Args {
+		before, argTokens, from = from.Partition(nativeArg.Range())
+		children.AppendUnstructuredTokens(before.writerTokens)
+
+		arg := parseExpression(nativeArg, argTokens)
+		children.AppendNode(arg)
+		expr.args.Add(arg)
+
+		for t := range arg.content.(*Expression).absTraversals {
+			// hclwrite operations on expressions work opaquely --
+			// they do not recurse into nested expressions.
+			//
+			// So: collect nested traversals into the wrapping
+			// expression.
+			wrapExpr.absTraversals.Add(t)
+		}
+	}
+
+	// Closing tokens
+	_, from, _ = from.Partition(nativeExpr.Range())
+	children.AppendUnstructuredTokens(from.writerTokens)
+
+	wrapExpr.children.Append(expr)
+	return newNode(wrapExpr)
 }
 
 // parseObjectConsExpr parses an object-construct expression, defined as:
@@ -511,6 +548,74 @@ func parseTemplateExpr(nativeExpr *hclsyntax.TemplateExpr, from inputTokens) *no
 	} else {
 		return parseAnyExpression(nativeExpr, from)
 	}
+}
+
+// parseTupleConsExpr() parses a tuple-construct expression, defined as:
+//
+//	tuple = "[" (
+//	   (Expression (("," | Newline) Expression)* ","?)?
+//	) "]";
+//
+// It leaves any lead comments and line comments as unstructured tokens.
+func parseTupleConsExpr(nativeExpr *hclsyntax.TupleConsExpr, from inputTokens) *node {
+	tuple := newTupleConsExpr()
+	children := tuple.children
+
+	// Wrap in an Expression
+	wrapExpr := newExpression()
+
+	var before, start, argTokens inputTokens
+
+	before, start, from = from.Partition(nativeExpr.StartRange())
+	children.AppendUnstructuredTokens(before.writerTokens)
+	children.AppendUnstructuredTokens(start.writerTokens)
+
+	for _, nativeExpr := range nativeExpr.Exprs {
+		before, argTokens, from = from.Partition(nativeExpr.Range())
+		children.AppendUnstructuredTokens(before.writerTokens)
+
+		arg := parseExpression(nativeExpr, argTokens)
+		children.AppendNode(arg)
+		tuple.exprs.Add(arg)
+
+		for t := range arg.content.(*Expression).absTraversals {
+			// hclwrite operations on expressions work opaquely --
+			// they do not recurse into nested expressions.
+			//
+			// So: collect nested traversals into the wrapping
+			// expression.
+			wrapExpr.absTraversals.Add(t)
+		}
+	}
+
+	// Closing tokens
+	_, from, _ = from.Partition(nativeExpr.Range())
+	children.AppendUnstructuredTokens(from.writerTokens)
+
+	wrapExpr.children.Append(tuple)
+	return newNode(wrapExpr)
+}
+
+func parseAnyExpression(nativeExpr hclsyntax.Expression, from inputTokens) *node {
+	expr := newExpression()
+	children := expr.children
+
+	nativeVars := nativeExpr.Variables()
+
+	for _, nativeTraversal := range nativeVars {
+		before, traversal, after := parseTraversal(nativeTraversal, from)
+		children.AppendUnstructuredTokens(before.Tokens())
+		children.AppendNode(traversal)
+		expr.absTraversals.Add(traversal)
+		from = after
+	}
+
+	// Attach any stragglers that don't belong to a traversal to the expression
+	// itself. In an expression with no traversals at all, this is just the
+	// entirety of "from".
+	children.AppendUnstructuredTokens(from.Tokens())
+
+	return newNode(expr)
 }
 
 func parseTraversal(nativeTraversal hcl.Traversal, from inputTokens) (before inputTokens, n *node, after inputTokens) {
