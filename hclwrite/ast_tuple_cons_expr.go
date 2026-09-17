@@ -15,3 +15,14 @@ type TupleConsExpr struct {
 
 	exprs nodeSet
 }
+
+func (tuple *TupleConsExpr) Items() []*Expression {
+	list := tuple.exprs.List()
+	items := make([]*Expression, 0, len(list))
+
+	for _, n := range list {
+		items = append(items, n.content.(*Expression))
+	}
+
+	return items
+}
