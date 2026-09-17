@@ -22,7 +22,24 @@ type parser struct {
 	// in recovery mode, assuming that the recovery heuristics have failed
 	// in this case and left the peeker in a wrong place.
 	recovery bool
+
+	// exprDepth tracks how many nested calls to ParseExpression are
+	// currently on the Go call stack, so that deeply-nested expressions
+	// (parentheses, arrays, objects, function calls, etc. are all
+	// mutually recursive through ParseExpression) can be rejected with a
+	// normal diagnostic instead of exhausting the goroutine stack, which
+	// would abort the whole process with an unrecoverable fatal error.
+	exprDepth int
 }
+
+// maxExpressionDepth is the maximum nesting depth ParseExpression will
+// recurse to before giving up and returning an error. It's set far higher
+// than any reasonable hand-written expression would ever reach, while
+// still comfortably avoiding a stack overflow: each level of nesting here
+// corresponds to several stack frames (ParseExpression itself calls through
+// parseTernaryConditional, a chain of parseBinaryOps precedence levels, and
+// parseExpressionTerm before it can recurse again).
+const maxExpressionDepth = 200
 
 func (p *parser) ParseBody(end TokenType) (*Body, hcl.Diagnostics) {
 	attrs := Attributes{}
@@ -485,6 +502,31 @@ Token:
 }
 
 func (p *parser) ParseExpression() (Expression, hcl.Diagnostics) {
+	p.exprDepth++
+	defer func() { p.exprDepth-- }()
+
+	if p.exprDepth > maxExpressionDepth {
+		// Expressions recurse back into ParseExpression at every level of
+		// nesting (parentheses, arrays, objects, function call arguments,
+		// etc.), so without this check a sufficiently deeply-nested
+		// expression would exhaust the goroutine stack and crash the whole
+		// process with an unrecoverable fatal error rather than a normal,
+		// recoverable diagnostic.
+		start := p.NextRange()
+		p.setRecovery()
+		return &LiteralValueExpr{
+				Val:      cty.DynamicVal,
+				SrcRange: start,
+			}, hcl.Diagnostics{
+				&hcl.Diagnostic{
+					Severity: hcl.DiagError,
+					Summary:  "Expression is too deeply nested",
+					Detail:   fmt.Sprintf("This expression is nested more than %d levels deep, which is not supported.", maxExpressionDepth),
+					Subject:  &start,
+				},
+			}
+	}
+
 	return p.parseTernaryConditional()
 }
 
