@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2014, 2025
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
 
 package json
@@ -573,6 +573,23 @@ func (e *expression) AsTraversal() hcl.Traversal {
 	switch v := e.src.(type) {
 	case *stringVal:
 		traversal, diags := hclsyntax.ParseTraversalAbs([]byte(v.Value), v.SrcRange.Filename, v.SrcRange.Start)
+		if diags.HasErrors() {
+			return nil
+		}
+		return traversal
+	default:
+		return nil
+	}
+}
+
+// Implementation for hcl.AbsTraversalPatternForExpr.
+func (e *expression) AsTraversalPattern() hcl.Traversal {
+	// In JSON-based syntax a traversal pattern is given as a string containing
+	// traversal syntax as defined by hclsyntax.ParseTraversalAbsPattern.
+
+	switch v := e.src.(type) {
+	case *stringVal:
+		traversal, diags := hclsyntax.ParseTraversalAbsPattern([]byte(v.Value), v.SrcRange.Filename, v.SrcRange.Start)
 		if diags.HasErrors() {
 			return nil
 		}
