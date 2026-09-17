@@ -125,16 +125,20 @@ func TestTokensForValue(t *testing.T) {
 			cty.StringVal("hello\nworld\n"),
 			Tokens{
 				{
-					Type:  hclsyntax.TokenOQuote,
-					Bytes: []byte(`"`),
+					Type:  hclsyntax.TokenOHeredoc,
+					Bytes: []byte("<<EOH\n"),
 				},
 				{
 					Type:  hclsyntax.TokenQuotedLit,
-					Bytes: []byte(`hello\nworld\n`),
+					Bytes: []byte("hello\nworld\n"),
 				},
 				{
-					Type:  hclsyntax.TokenCQuote,
-					Bytes: []byte(`"`),
+					Type:  hclsyntax.TokenOHeredoc,
+					Bytes: []byte("EOH"),
+				},
+				{
+					Type:  hclsyntax.TokenNewline,
+					Bytes: []byte("\n"),
 				},
 			},
 		},
@@ -142,16 +146,20 @@ func TestTokensForValue(t *testing.T) {
 			cty.StringVal("hello\r\nworld\r\n"),
 			Tokens{
 				{
-					Type:  hclsyntax.TokenOQuote,
-					Bytes: []byte(`"`),
+					Type:  hclsyntax.TokenOHeredoc,
+					Bytes: []byte("<<EOH\n"),
 				},
 				{
 					Type:  hclsyntax.TokenQuotedLit,
-					Bytes: []byte(`hello\r\nworld\r\n`),
+					Bytes: []byte("hello\r\nworld\r\n"),
 				},
 				{
-					Type:  hclsyntax.TokenCQuote,
-					Bytes: []byte(`"`),
+					Type:  hclsyntax.TokenOHeredoc,
+					Bytes: []byte("EOH"),
+				},
+				{
+					Type:  hclsyntax.TokenNewline,
+					Bytes: []byte("\n"),
 				},
 			},
 		},

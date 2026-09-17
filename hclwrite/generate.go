@@ -5,6 +5,7 @@ package hclwrite
 
 import (
 	"fmt"
+	"strings"
 	"unicode"
 	"unicode/utf8"
 
@@ -215,23 +216,40 @@ func appendTokensForValue(val cty.Value, toks Tokens) Tokens {
 		})
 
 	case val.Type() == cty.String:
-		// TODO: If it's a multi-line string ending in a newline, format
-		// it as a HEREDOC instead.
-		src := escapeQuotedStringLit(val.AsString())
-		toks = append(toks, &Token{
-			Type:  hclsyntax.TokenOQuote,
-			Bytes: []byte{'"'},
-		})
-		if len(src) > 0 {
+		if strings.HasSuffix(val.AsString(), "\n") {
+			toks = append(toks, &Token{
+				Type:  hclsyntax.TokenOHeredoc,
+				Bytes: []byte("<<EOH\n"),
+			})
 			toks = append(toks, &Token{
 				Type:  hclsyntax.TokenQuotedLit,
-				Bytes: src,
+				Bytes: []byte(val.AsString()),
+			})
+			toks = append(toks, &Token{
+				Type:  hclsyntax.TokenOHeredoc,
+				Bytes: []byte("EOH"),
+			})
+			toks = append(toks, &Token{
+				Type:  hclsyntax.TokenNewline,
+				Bytes: []byte{'\n'},
+			})
+		} else {
+			src := escapeQuotedStringLit(val.AsString())
+			toks = append(toks, &Token{
+				Type:  hclsyntax.TokenOQuote,
+				Bytes: []byte{'"'},
+			})
+			if len(src) > 0 {
+				toks = append(toks, &Token{
+					Type:  hclsyntax.TokenQuotedLit,
+					Bytes: src,
+				})
+			}
+			toks = append(toks, &Token{
+				Type:  hclsyntax.TokenCQuote,
+				Bytes: []byte{'"'},
 			})
 		}
-		toks = append(toks, &Token{
-			Type:  hclsyntax.TokenCQuote,
-			Bytes: []byte{'"'},
-		})
 
 	case val.Type().IsListType() || val.Type().IsSetType() || val.Type().IsTupleType():
 		toks = append(toks, &Token{
