@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2014, 2025
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
 
 package hclwrite
@@ -28,6 +28,12 @@ func NewFile() *File {
 // before turning it back into bytes again.
 func ParseConfig(src []byte, filename string, start hcl.Pos) (*File, hcl.Diagnostics) {
 	return parse(src, filename, start)
+}
+
+// ParseExpression attempts to parse the given buffer as a HCL expression,
+// returning the resulting syntax element if successful.
+func ParseExpression(src []byte, filename string, start hcl.Pos) (*Expression, hcl.Diagnostics) {
+	return parseExpr(src, filename, start)
 }
 
 // Format takes source code and performs simple whitespace changes to transform
