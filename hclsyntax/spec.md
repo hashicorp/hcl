@@ -817,7 +817,7 @@ expression sub-language), converts the result to a string value, and
 replaces itself with the resulting string.
 
 ```ebnf
-TemplateInterpolation = ("${" | "${~") Expression ("}" | "~}";
+TemplateInterpolation = ("${" | "${~") Expression ("}" | "~})";
 ```
 
 If the expression result cannot be converted to a string, an error is
