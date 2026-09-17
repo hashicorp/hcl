@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2014, 2025
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
 
 package hclwrite
@@ -25,7 +25,7 @@ import (
 // no unknown values are present before calling TokensForValue.
 func TokensForValue(val cty.Value) Tokens {
 	toks := appendTokensForValue(val, nil)
-	format(toks) // fiddle with the SpacesBefore field to get canonical spacing
+	toks = format(toks) // fiddle with the SpacesBefore field to get canonical spacing
 	return toks
 }
 
@@ -38,7 +38,7 @@ func TokensForValue(val cty.Value) Tokens {
 // represented expression.
 func TokensForTraversal(traversal hcl.Traversal) Tokens {
 	toks := appendTokensForTraversal(traversal, nil)
-	format(toks) // fiddle with the SpacesBefore field to get canonical spacing
+	toks = format(toks) // fiddle with the SpacesBefore field to get canonical spacing
 	return toks
 }
 
@@ -89,7 +89,7 @@ func TokensForTuple(elems []Tokens) Tokens {
 		Bytes: []byte{']'},
 	})
 
-	format(toks) // fiddle with the SpacesBefore field to get canonical spacing
+	toks = format(toks) // fiddle with the SpacesBefore field to get canonical spacing
 	return toks
 }
 
@@ -138,7 +138,7 @@ func TokensForObject(attrs []ObjectAttrTokens) Tokens {
 		Bytes: []byte{'}'},
 	})
 
-	format(toks) // fiddle with the SpacesBefore field to get canonical spacing
+	toks = format(toks) // fiddle with the SpacesBefore field to get canonical spacing
 	return toks
 }
 
@@ -178,7 +178,7 @@ func TokensForFunctionCall(funcName string, args ...Tokens) Tokens {
 		Bytes: []byte{')'},
 	})
 
-	format(toks) // fiddle with the SpacesBefore field to get canonical spacing
+	toks = format(toks) // fiddle with the SpacesBefore field to get canonical spacing
 	return toks
 }
 
