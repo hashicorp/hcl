@@ -4,7 +4,6 @@
 package hclwrite
 
 import (
-	"reflect"
 	"strings"
 
 	"github.com/hashicorp/hcl/v2"
@@ -208,7 +207,7 @@ func (k *ObjectConsKeyExpr) String() string {
 		return ""
 	}
 
-	unwrapped := unwrapUntilType(k.wrapped, reflect.TypeFor[*identifier]())
+	unwrapped := unwrapUntilType[*identifier](k.wrapped)
 	if unwrapped == nil {
 		return ""
 	}
