@@ -472,10 +472,19 @@ func parseObjectConsKeyExpr(nativeExpr *hclsyntax.ObjectConsKeyExpr, from inputT
 
 	// a = {
 	//        hat = "derby" }
-	// appends ObjectConsKeyExpr => identifier
+	// => appends ObjectConsKeyExpr => identifier
+	//
+	// a = {
+	//        bat.hat = "derby" }
+	// => appends ObjectConsKeyExpr => Expression
 	case *hclsyntax.ScopeTraversalExpr:
-		expr := newNode(newIdentifier(from.writerTokens[0]))
-		objectConsKeyExpr = newObjectConsKeyExpr(expr)
+		if len(from.writerTokens) == 1 {
+			expr := newNode(newIdentifier(from.writerTokens[0]))
+			objectConsKeyExpr = newObjectConsKeyExpr(expr)
+		} else {
+			expr := parseAnyExpression(wrapped, from)
+			objectConsKeyExpr = newObjectConsKeyExpr(expr)
+		}
 
 	// a = {
 	//        (var.hat) = "derby" }
