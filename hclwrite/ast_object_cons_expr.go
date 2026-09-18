@@ -162,7 +162,6 @@ func (item *ObjectConsItem) init(key string, value *Expression) {
 	identifier := newIdentifier(newIdentToken(key))
 	keyExpr := newObjectConsKeyExpr(newNode(identifier))
 	item.key = item.children.Append(keyExpr)
-	// item.KeyObj().children.Append(newIdentifier(newIdentToken(key)))
 
 	item.children.AppendUnstructuredTokens(Tokens{
 		{
