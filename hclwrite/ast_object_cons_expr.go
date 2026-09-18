@@ -4,8 +4,6 @@
 package hclwrite
 
 import (
-	"strings"
-
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/zclconf/go-cty/cty"
@@ -51,9 +49,13 @@ func (o *ObjectConsExpr) ItemFor(key string) *ObjectConsItem {
 	for _, n := range o.items.List() {
 		if item, ok := n.content.(*ObjectConsItem); ok {
 			k := item.KeyObj()
+			unwrapped := unwrapUntilType[*identifier](k.wrapped)
+			if unwrapped == nil {
+				continue
+			}
 
-			maybeKey := k.String()
-			if maybeKey == key {
+			identifier := unwrapped.content.(*identifier)
+			if identifier.hasName(key) {
 				return item
 			}
 		}
@@ -200,30 +202,19 @@ func newObjectConsKeyExpr(wrapped *node) *ObjectConsKeyExpr {
 	return expr
 }
 
-// String returns the name of the object item key, if it is specified by
+// AsIdentifier returns the name of the object item key, if it is specified by
 // an identifier. Otherwise, it returns an empty string.
-func (k *ObjectConsKeyExpr) String() string {
+func (k *ObjectConsKeyExpr) asIdentifier() *identifier {
 	if k.wrapped == nil {
-		return ""
+		return nil
 	}
 
 	unwrapped := unwrapUntilType[*identifier](k.wrapped)
 	if unwrapped == nil {
-		return ""
+		return nil
 	}
 
-	if ident, ok := unwrapped.content.(*identifier); ok {
-		var b strings.Builder
-		tok := ident.BuildTokens(nil)
-		format(tok) // removes any SpacesBefore
-
-		//nolint:errcheck // strings.Builder returns no error
-		tok.WriteTo(&b)
-
-		return b.String()
-	}
-
-	return ""
+	return unwrapped.content.(*identifier)
 }
 
 // ObjectConsValue represents the expression that is assigned to an
