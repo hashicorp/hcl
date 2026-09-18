@@ -63,15 +63,15 @@ func (o *ObjectConsExpr) ItemFor(key string) *ObjectConsItem {
 	return nil
 }
 
-// ItemFor finds an item that matches the given key and returns the value.
+// ValueFor finds an item that matches the given key and returns its value.
 //
 // This is limited to items that have an identifier key. Items with a name
 // taken from a variable will not be found.
 //
 // Example: { hat = "derby", (cat) = "calico" }
 //
-// ItemFor("hat") returns an object that represents the value `"derby"`;
-// however, ItemFor cannot locate the cat.
+// ValueFor("hat") returns an object that represents the value `"derby"`;
+// however, ValueFor cannot locate the cat.
 func (o *ObjectConsExpr) ValueFor(key string) *ObjectConsValue {
 	if item := o.ItemFor(key); item == nil {
 		return nil
@@ -80,12 +80,9 @@ func (o *ObjectConsExpr) ValueFor(key string) *ObjectConsValue {
 	}
 }
 
-// SetItemRaw either replaces the expression of an existing item of the given
+// SetItem either replaces the expression of an existing item of the given
 // name or adds a new item definition to the end of the object, using the given
-// tokens verbatim as the expression.
-//
-// The same caveats apply to this function as for NewExpressionRaw on which it
-// is based. If possible, prefer to use SetItemValue or SetItemTraversal.
+// expression.
 func (object *ObjectConsExpr) SetItem(key string, expr *Expression) (*ObjectConsKeyExpr, *ObjectConsValue) {
 	item := object.ItemFor(key)
 	if item != nil {
