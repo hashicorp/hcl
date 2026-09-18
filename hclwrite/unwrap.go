@@ -3,16 +3,18 @@
 
 package hclwrite
 
-import "reflect"
-
 type unwrapNode interface {
 	unwrap() *node
 }
 
 // cross-reference: hcl.UnwrapExpressionUntil
-func unwrapUntilType(n *node, typ reflect.Type) *node {
+func unwrapUntilType[T nodeContent](n *node) *node {
 TEST:
-	if n == nil || reflect.TypeOf(n.content) == typ {
+	if n == nil {
+		return n
+	}
+
+	if _, ok := n.content.(T); ok {
 		return n
 	}
 
