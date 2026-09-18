@@ -29,7 +29,14 @@ func (p *parser) ParseBody(end TokenType) (*Body, hcl.Diagnostics) {
 	blocks := Blocks{}
 	var diags hcl.Diagnostics
 
+	// At the start of a token stream (top-level body), include any leading
+	// comment tokens that the peeker would otherwise skip when computing
+	// PrevRange/Peek. Nested bodies start after an already-consumed opener,
+	// so PrevRange correctly points at that opener.
 	startRange := p.PrevRange()
+	if p.NextIndex == 0 && len(p.Tokens) > 0 {
+		startRange = p.Tokens[0].Range
+	}
 	var endRange hcl.Range
 
 Token:
