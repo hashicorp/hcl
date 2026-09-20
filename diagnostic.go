@@ -99,6 +99,11 @@ type Diagnostics []*Diagnostic
 // This presents only minimal context about the error, for compatibility
 // with usual expectations about how errors will present as strings.
 func (d *Diagnostic) Error() string {
+	// Some diagnostics have no source range (for example, a missing config
+	// file). Avoid printing a literal "<nil>" for a nil Subject.
+	if d.Subject == nil {
+		return fmt.Sprintf("%s; %s", d.Summary, d.Detail)
+	}
 	return fmt.Sprintf("%s: %s; %s", d.Subject, d.Summary, d.Detail)
 }
 
