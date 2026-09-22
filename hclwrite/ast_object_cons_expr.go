@@ -48,7 +48,7 @@ func (o *ObjectConsExpr) Items() []*ObjectConsItem {
 func (o *ObjectConsExpr) ItemFor(key string) *ObjectConsItem {
 	for _, n := range o.items.List() {
 		if item, ok := n.content.(*ObjectConsItem); ok {
-			k := item.KeyObj()
+			k := item.KeyExpr()
 			unwrapped := unwrapUntilType[*identifier](k.wrapped)
 			if unwrapped == nil {
 				continue
@@ -64,20 +64,21 @@ func (o *ObjectConsExpr) ItemFor(key string) *ObjectConsItem {
 	return nil
 }
 
-// ValueFor finds an item that matches the given key and returns its value.
+// ValueExprFor finds an item that matches the given key and returns the
+// expression assigned to that key.
 //
 // This is limited to items that have an identifier key. Items with a name
 // taken from a variable will not be found.
 //
 // Example: { hat = "derby", (cat) = "calico" }
 //
-// ValueFor("hat") returns an object that represents the value `"derby"`;
-// however, ValueFor cannot locate the cat.
-func (o *ObjectConsExpr) ValueFor(key string) *ObjectConsValue {
+// ValueExprFor("hat") returns an object that represents the value `"derby"`;
+// however, ValueExprFor cannot locate the cat.
+func (o *ObjectConsExpr) ValueExprFor(key string) *ObjectConsValue {
 	if item := o.ItemFor(key); item == nil {
 		return nil
 	} else {
-		return item.ValueObj()
+		return item.ValueExpr()
 	}
 }
 
@@ -87,8 +88,8 @@ func (o *ObjectConsExpr) ValueFor(key string) *ObjectConsValue {
 func (object *ObjectConsExpr) SetItem(key string, expr *Expression) (*ObjectConsKeyExpr, *ObjectConsValue) {
 	item := object.ItemFor(key)
 	if item != nil {
-		item.ValueObj().expr.Detach()
-		item.ValueObj().expr = item.ValueObj().children.Append(expr)
+		item.ValueExpr().expr.Detach()
+		item.ValueExpr().expr = item.ValueExpr().children.Append(expr)
 	} else {
 		item = newObjectConsItem()
 		item.init(key, expr)
@@ -142,11 +143,11 @@ func newObjectConsItem() *ObjectConsItem {
 	}
 }
 
-func (item *ObjectConsItem) KeyObj() *ObjectConsKeyExpr {
+func (item *ObjectConsItem) KeyExpr() *ObjectConsKeyExpr {
 	return item.key.content.(*ObjectConsKeyExpr)
 }
 
-func (item *ObjectConsItem) ValueObj() *ObjectConsValue {
+func (item *ObjectConsItem) ValueExpr() *ObjectConsValue {
 	return item.value.content.(*ObjectConsValue)
 }
 
@@ -171,11 +172,11 @@ func (item *ObjectConsItem) init(key string, value *Expression) {
 	})
 
 	item.value = item.children.Append(newObjectConsValue())
-	item.ValueObj().expr = item.ValueObj().children.Append(value)
+	item.ValueExpr().expr = item.ValueExpr().children.Append(value)
 }
 
 func (item *ObjectConsItem) kv() (*ObjectConsKeyExpr, *ObjectConsValue) {
-	return item.KeyObj(), item.ValueObj()
+	return item.KeyExpr(), item.ValueExpr()
 }
 
 // ObjectConsKeyExpr represents the content that defines the name of an
