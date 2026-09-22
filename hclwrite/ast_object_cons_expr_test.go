@@ -34,7 +34,7 @@ func TestObjectConsExprValueFor(t *testing.T) {
 	var actual strings.Builder
 
 	//nolint:errcheck
-	object.ValueFor("hat").expr.BuildTokens(nil).WriteTo(&actual)
+	object.ValueExprFor("hat").expr.BuildTokens(nil).WriteTo(&actual)
 	expected := `"fez"`
 	if diff := cmp.Diff(actual.String(), expected); len(diff) > 0 {
 		t.Error(diff)
