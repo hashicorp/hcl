@@ -202,21 +202,6 @@ func newObjectConsKeyExpr(wrapped *node) *ObjectConsKeyExpr {
 	return expr
 }
 
-// AsIdentifier returns the name of the object item key, if it is specified by
-// an identifier. Otherwise, it returns an empty string.
-func (k *ObjectConsKeyExpr) asIdentifier() *identifier {
-	if k.wrapped == nil {
-		return nil
-	}
-
-	unwrapped := unwrapUntilType[*identifier](k.wrapped)
-	if unwrapped == nil {
-		return nil
-	}
-
-	return unwrapped.content.(*identifier)
-}
-
 // ObjectConsValue represents the expression that is assigned to an
 // object-construct item.
 type ObjectConsValue struct {
