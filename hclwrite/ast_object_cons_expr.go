@@ -85,7 +85,11 @@ func (o *ObjectConsExpr) ValueExprFor(key string) *ObjectConsValue {
 // SetItem either replaces the expression of an existing item of the given
 // name or adds a new item definition to the end of the object, using the given
 // expression.
+//
+// It asserts that the expression is not already attached to a node, and it
+// panics otherwise.
 func (object *ObjectConsExpr) SetItem(key string, expr *Expression) (*ObjectConsKeyExpr, *ObjectConsValue) {
+	expr.assertUnattached()
 	item := object.ItemFor(key)
 	if item != nil {
 		item.ValueExpr().expr.Detach()
