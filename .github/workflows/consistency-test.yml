@@ -38,6 +38,9 @@ jobs:
 
       - name: Install Ragel
         uses: ./.github/actions/setup-ragel
+        with:
+          build_from_source: true
+          ref: fix/colm-high-byte-keys
 
       - name: Re-generate code
         shell: bash
