@@ -4,21 +4,47 @@
 name: 'Setup Ragel'
 description: 'Install Ragel'
 
+inputs:
+  build_from_source:
+    description: 'Whether to build Ragel from source'
+    type: boolean
+    default: false
+  ref:
+    description: 'Ref/version to build'
+    type: string
+    default: main
+
 runs:
   using: "composite"
   steps:
+    - name: Checkout Ragel source code
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      if: ${{ inputs.build_from_source }}
+      with:
+        repository: adrian-thurston/colm-suite
+        ref: ${{ inputs.ref }}
+
+    - name: Build Ragel
+      shell: bash
+      if: ${{ inputs.build_from_source }}
+      run: |
+        ./autogen.sh
+        ./configure
+        make
+        make install
+      
     - name: Install Ragel (Linux)
       shell: bash
-      if: ${{ runner.os == 'Linux' }}
+      if: ${{ runner.os == 'Linux' && !inputs.build_from_source }}
       run: sudo apt install ragel
 
     - name: Install Ragel (macOS)
       shell: bash
-      if: ${{ runner.os == 'macOS' }}
+      if: ${{ runner.os == 'macOS' && !inputs.build_from_source }}
       run: brew install ragel
 
     - name: Install Ragel (Windows)
-      if: ${{ runner.os == 'Windows' }}
+      if: ${{ runner.os == 'Windows' && !inputs.build_from_source }}
       shell: pwsh
       run: winget install -e --accept-source-agreements --id PolarGoose.Ragel
 
