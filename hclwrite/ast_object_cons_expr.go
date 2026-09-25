@@ -33,6 +33,22 @@ func (o *ObjectConsExpr) ValueFor(key string) *ObjectConsValue {
 	return nil
 }
 
+func (o *ObjectConsExpr) variables() []*Traversal {
+	var ret []*Traversal
+	for _, n := range o.items.List() {
+		item, ok := n.content.(*ObjectConsItem)
+		if !ok {
+			continue
+		}
+		key := item.key.content.(*ObjectConsKeyExpr)
+		if expr, ok := key.wrapped.content.(*Expression); ok {
+			ret = append(ret, expr.Variables()...)
+		}
+		ret = append(ret, item.value.content.(*ObjectConsValue).Expr().Variables()...)
+	}
+	return ret
+}
+
 type ObjectConsItem struct {
 	inTree
 	key   *node
