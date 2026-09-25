@@ -18,6 +18,11 @@ type Expression struct {
 	wrapped       *node
 }
 
+// unwrap implements the unwrapNode interface.
+func (e *Expression) unwrap() *node {
+	return e.wrapped
+}
+
 func newExpression() *Expression {
 	return &Expression{
 		inTree:        newInTree(),
@@ -197,6 +202,8 @@ Traversals:
 	}
 }
 
+// AsObjectConsExpr returns the wrapped object-construct expression. It returns
+// nil if this expression does not parse as an object-construct expression.
 func (e *Expression) AsObjectConsExpr() *ObjectConsExpr {
 	if e.wrapped == nil {
 		return nil
