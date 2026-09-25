@@ -140,6 +140,9 @@ func NewExpressionAbsTraversal(traversal hcl.Traversal) *Expression {
 // Variables returns the absolute traversals that exist within the receiving
 // expression.
 func (e *Expression) Variables() []*Traversal {
+	if object := e.AsObjectConsExpr(); object != nil {
+		return object.variables()
+	}
 	nodes := e.absTraversals.List()
 	ret := make([]*Traversal, len(nodes))
 	for i, node := range nodes {
@@ -165,8 +168,7 @@ func (e *Expression) RenameVariablePrefix(search, replacement []string) {
 		panic(fmt.Sprintf("search and replacement length mismatch (%d and %d)", len(search), len(replacement)))
 	}
 Traversals:
-	for node := range e.absTraversals {
-		traversal := node.content.(*Traversal)
+	for _, traversal := range e.Variables() {
 		if len(traversal.steps) < len(search) {
 			// If it's shorter then it can't have our prefix
 			continue
