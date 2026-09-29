@@ -40,6 +40,7 @@ func (b *Body) appendItemNode(nn *node) *node {
 // Clear removes all of the items from the body, making it empty.
 func (b *Body) Clear() {
 	b.children.Clear()
+	b.items.Clear()
 }
 
 func (b *Body) AppendUnstructuredTokens(ts Tokens) {

@@ -1003,6 +1003,77 @@ func TestBodySetAttributeRaw_ReturnsTheAttribute(t *testing.T) {
 		})
 	}
 }
+
+func TestBodyClearThenSetAttributeRaw(t *testing.T) {
+	// Regression for https://github.com/hashicorp/hcl/issues/623:
+	// Body.Clear dropped the token list but left the attribute index, so a
+	// later SetAttributeRaw of the same name updated a detached node and
+	// Bytes() omitted the attribute even though Attributes() still listed it.
+	src := "a = 1\n"
+	want := "a = 1\n"
+
+	f, diags := ParseConfig([]byte(src), "", hcl.InitialPos)
+	if diags.HasErrors() {
+		t.Fatalf("unexpected diagnostics: %s", diags.Error())
+	}
+
+	attrs := f.Body().Attributes()
+	if _, ok := attrs["a"]; !ok {
+		t.Fatal("missing attribute a before Clear")
+	}
+
+	f.Body().Clear()
+	if remaining := f.Body().Attributes(); len(remaining) != 0 {
+		t.Fatalf("Attributes after Clear: got %d, want 0", len(remaining))
+	}
+	if got := string(bytes.TrimSpace(f.Bytes())); got != "" {
+		t.Fatalf("Bytes after Clear: got %q, want empty", got)
+	}
+
+	f.Body().SetAttributeRaw("a", attrs["a"].Expr().BuildTokens(nil))
+	if f.Body().GetAttribute("a") == nil {
+		t.Fatal("missing attribute a after SetAttributeRaw")
+	}
+
+	got := string(f.Bytes())
+	if got != want {
+		t.Errorf("wrong result\ngot:  %q\nwant: %q", got, want)
+	}
+}
+
+func TestBodyClearThenSetAttributeRawInBlock(t *testing.T) {
+	// Nested-block form of #623: Attributes() reported the restored
+	// attribute while File.Bytes omitted it.
+	src := `build {
+  sources = ["source.azure-arm.build_vhd"]
+}
+`
+
+	f, diags := ParseConfig([]byte(src), "", hcl.InitialPos)
+	if diags.HasErrors() {
+		t.Fatalf("unexpected diagnostics: %s", diags.Error())
+	}
+
+	build := f.Body().FirstMatchingBlock("build", nil)
+	if build == nil {
+		t.Fatal("missing build block")
+	}
+
+	attrs := build.Body().Attributes()
+	build.Body().Clear()
+	for name, attr := range attrs {
+		build.Body().SetAttributeRaw(name, attr.Expr().BuildTokens(nil))
+	}
+
+	if build.Body().GetAttribute("sources") == nil {
+		t.Fatal("missing sources after SetAttributeRaw")
+	}
+	got := string(f.Bytes())
+	if !bytes.Contains([]byte(got), []byte(`sources = ["source.azure-arm.build_vhd"]`)) {
+		t.Errorf("Bytes omitted restored attribute\ngot: %s", got)
+	}
+}
+
 func TestBodySetAttributeValue_ReturnsTheAttribute(t *testing.T) {
 	tests := map[string]struct {
 		config string
