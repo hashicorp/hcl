@@ -179,7 +179,7 @@ func decodeBodyToStruct(body hcl.Body, ctx *hcl.EvalContext, val reflect.Value) 
 				if val.Field(fieldIdx).IsNil() {
 					val.Field(fieldIdx).Set(reflect.Zero(field.Type))
 				}
-			} else {
+			} else if optional, ok := tags.Optional[typeName]; !(optional && ok) {
 				diags = append(diags, &hcl.Diagnostic{
 					Severity: hcl.DiagError,
 					Summary:  fmt.Sprintf("Missing %s block", typeName),
