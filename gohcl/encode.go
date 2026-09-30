@@ -12,6 +12,18 @@ import (
 	"github.com/zclconf/go-cty/cty/gocty"
 )
 
+// ExpressionMarshaler defines an interface for marshaling a field type as an HCL expression.
+type ExpressionMarshaler interface {
+	MarshalExpression() (*hclwrite.Expression, error)
+}
+
+// BlockMarshaler defines an interface for marshalling a type to an *hclwrite.Block
+// It can be used to implement custom hcl block writing for structs and types, including
+// when used as fields with the block tag
+type BlockMarshaler interface {
+	MarshalBlock(blockType string) *hclwrite.Block
+}
+
 // EncodeIntoBody replaces the contents of the given hclwrite Body with
 // attributes and blocks derived from the given value, which must be a
 // struct value or a pointer to a struct value with the struct tags defined
@@ -62,6 +74,9 @@ func EncodeIntoBody(val interface{}, dst *hclwrite.Body) {
 // if they are violated.
 func EncodeAsBlock(val interface{}, blockType string) *hclwrite.Block {
 	rv := reflect.ValueOf(val)
+	if blockMarshaler, ok := rv.Interface().(BlockMarshaler); ok {
+		return blockMarshaler.MarshalBlock(blockType)
+	}
 	ty := rv.Type()
 	if ty.Kind() == reflect.Ptr {
 		rv = rv.Elem()
@@ -131,19 +146,32 @@ func populateBody(rv reflect.Value, ty reflect.Type, tags *fieldTags, dst *hclwr
 				prevWasBlock = false
 			}
 
-			valTy, err := gocty.ImpliedType(fieldVal.Interface())
-			if err != nil {
-				panic(fmt.Sprintf("cannot encode %T as HCL expression: %s", fieldVal.Interface(), err))
-			}
+			// Check if type is an ExpressionMarshaler and use its interface method
+			exprMarshaler, ok := fieldVal.Interface().(ExpressionMarshaler)
+			if ok {
+				val, err := exprMarshaler.MarshalExpression()
+				if err != nil {
+					panic(fmt.Sprintf("cannot encode %T as HCL expression: %s", fieldVal.Interface(), err))
+				}
+				var valTokens hclwrite.Tokens
+				valTokens = val.BuildTokens(valTokens)
+				dst.SetAttributeRaw(name, valTokens)
+			} else {
+				// use go-cty implied types and values
+				valTy, err := gocty.ImpliedType(fieldVal.Interface())
+				if err != nil {
+					panic(fmt.Sprintf("cannot encode %T as HCL expression: %s", fieldVal.Interface(), err))
+				}
 
-			val, err := gocty.ToCtyValue(fieldVal.Interface(), valTy)
-			if err != nil {
-				// This should never happen, since we should always be able
-				// to decode into the implied type.
-				panic(fmt.Sprintf("failed to encode %T as %#v: %s", fieldVal.Interface(), valTy, err))
-			}
+				val, err := gocty.ToCtyValue(fieldVal.Interface(), valTy)
+				if err != nil {
+					// This should never happen, since we should always be able
+					// to decode into the implied type.
+					panic(fmt.Sprintf("failed to encode %T as %#v: %s", fieldVal.Interface(), valTy, err))
+				}
 
-			dst.SetAttributeValue(name, val)
+				dst.SetAttributeValue(name, val)
+			}
 
 		} else { // must be a block, then
 			elemTy := fieldTy
