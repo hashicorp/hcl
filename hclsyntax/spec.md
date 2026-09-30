@@ -95,7 +95,7 @@ their syntax is defined in terms of the `ID_Start` and `ID_Continue`
 character properties as follows:
 
 ```ebnf
-Identifier = ID_Start (ID_Continue | '-')*;
+Identifier = (ID_Start | '_') (ID_Continue | '-')*;
 ```
 
 The Unicode specification provides the normative requirements for identifier
@@ -107,6 +107,9 @@ The dash character `-` is additionally allowed in identifiers, even though
 that is not part of the unicode `ID_Continue` definition. This is to allow
 attribute names and block type names to contain dashes, although underscores
 as word separators are considered the idiomatic usage.
+
+The underscore character `_` is additionally allowed at the beginning, even though
+that is not part of the unicode `ID_Start` definition.
 
 [uax31]: http://unicode.org/reports/tr31/ "Unicode Identifier and Pattern Syntax"
 
