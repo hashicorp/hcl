@@ -26,10 +26,11 @@ type RangeScanner struct {
 	b        []byte
 	cb       bufio.SplitFunc
 
-	pos Pos    // position of next byte to process in b
-	cur Range  // latest range
-	tok []byte // slice of b that is covered by cur
-	err error  // error from last scan, if any
+	start Pos    // position of first byte
+	pos   Pos    // position of next byte to process
+	cur   Range  // latest range
+	tok   []byte // slice of b that is covered by cur
+	err   error  // error from last scan, if any
 }
 
 // NewRangeScanner creates a new RangeScanner for the given buffer, producing
@@ -55,11 +56,14 @@ func NewRangeScannerFragment(b []byte, filename string, start Pos, cb bufio.Spli
 		b:        b,
 		cb:       cb,
 		pos:      start,
+		start:    start,
 	}
 }
 
 func (sc *RangeScanner) Scan() bool {
-	if sc.pos.Byte >= len(sc.b) || sc.err != nil {
+	currentByte := sc.pos.Byte - sc.start.Byte
+
+	if currentByte >= len(sc.b) || sc.err != nil {
 		// All done
 		return false
 	}
@@ -67,7 +71,7 @@ func (sc *RangeScanner) Scan() bool {
 	// Since we're operating on an in-memory buffer, we always pass the whole
 	// remainder of the buffer to our SplitFunc and set isEOF to let it know
 	// that it has the whole thing.
-	advance, token, err := sc.cb(sc.b[sc.pos.Byte:], true)
+	advance, token, err := sc.cb(sc.b[currentByte:], true)
 
 	// Since we are setting isEOF to true this should never happen, but
 	// if it does we will just abort and assume the SplitFunc is misbehaving.
@@ -95,7 +99,7 @@ func (sc *RangeScanner) Scan() bool {
 	// we're being asked to skip over by the SplitFunc.
 	// adv is a slice covering any additional bytes we are skipping over, based
 	// on what the SplitFunc told us to do with advance.
-	adv := sc.b[sc.pos.Byte : sc.pos.Byte+advance]
+	adv := sc.b[currentByte : currentByte+advance]
 
 	// We now need to scan over our token to count the grapheme clusters
 	// so we can correctly advance Column, and count the newlines so we
