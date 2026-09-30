@@ -467,6 +467,9 @@ func parseObjectConsExpr(nativeExpr *hclsyntax.ObjectConsExpr, from inputTokens)
 // literal is functionally equivalent to an Identifier.
 func parseObjectConsKeyExpr(nativeExpr *hclsyntax.ObjectConsKeyExpr, from inputTokens) *node {
 	expr := parseExpression(nativeExpr.Wrapped, from)
+	if len(nativeExpr.Variables()) == 0 {
+		expr.content.(*Expression).absTraversals.Clear()
+	}
 	wrapExpr := newObjectConsKeyExpr(expr)
 
 	return newNode(wrapExpr)
