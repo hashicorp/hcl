@@ -249,8 +249,14 @@ func (b *Body) JustAttributes() (hcl.Attributes, hcl.Diagnostics) {
 	attrs := make(hcl.Attributes)
 	var diags hcl.Diagnostics
 
-	if len(b.Blocks) > 0 {
-		example := b.Blocks[0]
+	var example *Block
+	for _, block := range b.Blocks {
+		if _, isHidden := b.hiddenBlocks[block.Type]; !isHidden {
+			example = block
+			break
+		}
+	}
+	if example != nil {
 		diags = append(diags, &hcl.Diagnostic{
 			Severity: hcl.DiagError,
 			Summary:  fmt.Sprintf("Unexpected %q block", example.Type),
