@@ -40,6 +40,8 @@ jobs:
 
       - name: Install Ragel
         uses: ./.github/actions/setup-ragel
+        with:
+          ref: ragel-6.10
 
       - name: Re-generate code
         shell: bash

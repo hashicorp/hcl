@@ -4,23 +4,72 @@
 name: 'Setup Ragel'
 description: 'Install Ragel'
 
+inputs:
+  ref:
+    description: 'Ref (revision, tag or branch) to build'
+    type: string
+    required: true
+
 runs:
   using: "composite"
   steps:
-    - name: Install Ragel (Linux)
+    - name: Clone Ragel source code
       shell: bash
-      if: ${{ runner.os == 'Linux' }}
-      run: sudo apt install ragel
+      run: |
+        git clone \
+          -c core.autocrlf=false \
+          --depth 1 \
+          --branch ${{ inputs.ref }} \
+          https://github.com/adrian-thurston/colm-suite.git \
+          '${{ runner.temp }}/ragel'
 
-    - name: Install Ragel (macOS)
+    - name: Prepare Build Environment (macOS)
       shell: bash
-      if: ${{ runner.os == 'macOS' }}
-      run: brew install ragel
+      if: runner.os == 'macOS'
+      run: brew install autoconf automake libtool
 
-    - name: Install Ragel (Windows)
-      if: ${{ runner.os == 'Windows' }}
-      shell: pwsh
-      run: winget install -e --accept-source-agreements --id PolarGoose.Ragel
+    - name: Build Ragel (Unix)
+      shell: bash
+      working-directory: ${{ runner.temp }}/ragel
+      if: runner.os != 'Windows'
+      run: |
+        ./autogen.sh
+        ./configure
+        make -j
+        sudo make install
+        if [ "$RUNNER_OS" = "Linux" ]; then sudo ldconfig; fi
+
+    - name: Prepare Build Environment (Windows)
+      if: runner.os == 'Windows'
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: MSYS
+        install: >-
+          gcc
+          make
+          cmake
+          ninja
+          autoconf
+          automake
+          libtool
+
+    - name: Build Ragel (Windows)
+      shell: msys2 {0}
+      working-directory: ${{ runner.temp }}/ragel
+      if: runner.os == 'Windows'
+      run: |
+        if [ -f CMakeLists.txt ]; then
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build build
+          cmake --install build
+        else
+          ./autogen.sh
+          ./configure
+          make -j
+          make install
+        fi
+        cygpath -w /usr/local/bin >> "$GITHUB_PATH"
+        cygpath -w /usr/bin >> "$GITHUB_PATH"
 
     - name: Ragel version
       shell: ${{ case(runner.os == 'Windows', 'pwsh', 'bash') }}
