@@ -5,6 +5,7 @@ package hclsyntax
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 	"testing"
 
@@ -4327,5 +4328,31 @@ func TestParseConfigDiagnostics(t *testing.T) {
 				t.Errorf("wrong diagnostics\n%s", diff)
 			}
 		})
+	}
+}
+
+func TestParseExpression_DeeplyNestedParens(t *testing.T) {
+	depth := 2000
+	src := strings.Repeat("(", depth) + "1" + strings.Repeat(")", depth)
+
+	_, diags := ParseExpression([]byte(src), "test.hcl", hcl.InitialPos)
+	if !diags.HasErrors() {
+		t.Fatalf("expected error for deeply nested parentheses, got none")
+	}
+
+	found := false
+	for _, diag := range diags {
+		if diag.Summary == "Expression nesting limit exceeded" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("expected 'Expression nesting limit exceeded' diagnostic, got: %s", diags.Error())
+	}
+
+	_, cfgDiags := ParseConfig([]byte("foo = "+src), "test.hcl", hcl.InitialPos)
+	if !cfgDiags.HasErrors() {
+		t.Fatalf("expected error for deeply nested parentheses in ParseConfig, got none")
 	}
 }

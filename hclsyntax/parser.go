@@ -14,6 +14,8 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
+const maxParenDepth = 500
+
 type parser struct {
 	*peeker
 
@@ -22,6 +24,8 @@ type parser struct {
 	// in recovery mode, assuming that the recovery heuristics have failed
 	// in this case and left the peeker in a wrong place.
 	recovery bool
+
+	parenDepth int
 }
 
 func (p *parser) ParseBody(end TokenType) (*Body, hcl.Diagnostics) {
@@ -966,7 +970,23 @@ func (p *parser) parseExpressionTerm() (Expression, hcl.Diagnostics) {
 
 		p.PushIncludeNewlines(false)
 
-		expr, diags := p.ParseExpression()
+		var diags hcl.Diagnostics
+		if p.parenDepth >= maxParenDepth {
+			diags = append(diags, &hcl.Diagnostic{
+				Severity: hcl.DiagError,
+				Summary:  "Expression nesting limit exceeded",
+				Detail:   fmt.Sprintf("Parentheses nesting depth exceeded maximum supported depth of %d.", maxParenDepth),
+				Subject:  &oParen.Range,
+			})
+			p.recover(TokenCParen)
+			p.PopIncludeNewlines()
+			return nil, diags
+		}
+		p.parenDepth++
+		defer func() { p.parenDepth-- }()
+
+		var expr Expression
+		expr, diags = p.ParseExpression()
 		if diags.HasErrors() {
 			// attempt to place the peeker after our closing paren
 			// before we return, so that the next parser has some
