@@ -501,6 +501,35 @@ func TestBodyJustAttributes(t *testing.T) {
 			hcl.Attributes{},
 			0,
 		},
+		{
+			&Body{
+				Attributes: Attributes{
+					"foo": &Attribute{
+						Name: "foo",
+						Expr: &LiteralValueExpr{
+							Val: cty.StringVal("bar"),
+						},
+					},
+				},
+				Blocks: Blocks{
+					{
+						Type: "foo",
+					},
+				},
+				hiddenBlocks: map[string]struct{}{
+					"foo": {},
+				},
+			},
+			hcl.Attributes{
+				"foo": &hcl.Attribute{
+					Name: "foo",
+					Expr: &LiteralValueExpr{
+						Val: cty.StringVal("bar"),
+					},
+				},
+			},
+			0,
+		},
 	}
 
 	for i, test := range tests {
@@ -526,5 +555,64 @@ func TestBodyJustAttributes(t *testing.T) {
 				)
 			}
 		})
+	}
+}
+
+func TestBody_JustAttributes_PartialContentRemain(t *testing.T) {
+	src := `
+block {
+  nested {}
+  attr = 10
+}
+`
+	file, diags := ParseConfig([]byte(src), "test.hcl", hcl.InitialPos)
+	if diags.HasErrors() {
+		t.Fatalf("unexpected diagnostics: %s", diags.Error())
+	}
+
+	content, diags := file.Body.Content(&hcl.BodySchema{
+		Blocks: []hcl.BlockHeaderSchema{
+			{
+				Type: "block",
+			},
+		},
+	})
+	if diags.HasErrors() {
+		t.Fatalf("unexpected diagnostics: %s", diags.Error())
+	}
+
+	if len(content.Blocks) != 1 {
+		t.Fatalf("expected 1 block, got %d", len(content.Blocks))
+	}
+
+	schemaWithNested := &hcl.BodySchema{
+		Blocks: []hcl.BlockHeaderSchema{
+			{
+				Type: "nested",
+			},
+		},
+	}
+
+	_, remain, diags := content.Blocks[0].Body.PartialContent(schemaWithNested)
+	if diags.HasErrors() {
+		t.Fatalf("unexpected diagnostics from PartialContent: %s", diags.Error())
+	}
+
+	attrs, diags := remain.JustAttributes()
+	if diags.HasErrors() {
+		t.Fatalf("unexpected diagnostics from JustAttributes: %s", diags.Error())
+	}
+
+	attr, ok := attrs["attr"]
+	if !ok {
+		t.Fatalf("expected attribute 'attr' to be present")
+	}
+
+	val, valDiags := attr.Expr.Value(nil)
+	if valDiags.HasErrors() {
+		t.Fatalf("unexpected diagnostics evaluating attr: %s", valDiags.Error())
+	}
+	if got, want := val, cty.NumberIntVal(10); !got.RawEquals(want) {
+		t.Errorf("wrong attribute value %s; want %s", spew.Sdump(got), spew.Sdump(want))
 	}
 }
