@@ -5,6 +5,7 @@ package hclwrite
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 
 	"github.com/hashicorp/hcl/v2"
@@ -128,7 +129,27 @@ type ObjectAttrTokens struct {
 	Value Tokens
 }
 
+// newIdentToken wraps name as a single TokenIdent.
+//
+// name must be a syntactically valid HCL identifier. Every public API in
+// this package that takes a caller-supplied name destined to become an
+// identifier (block type names, attribute names, TokensForIdentifier)
+// routes through here, so this is the one place to catch a name that
+// isn't one. Without the check, a string containing braces, newlines or
+// quotes is emitted verbatim into the token stream and the package
+// silently produces a document that doesn't match what the caller asked
+// for - a caller setting a block type of "a\nb" gets two lines of output
+// rather than an error.
+//
+// Passing a non-identifier here is a programmer error of the same kind as
+// the other invariant violations this package already panics on (see e.g.
+// ast_expression.go, generate.go), not a recoverable runtime condition,
+// so we panic rather than threading an error return through every caller
+// of this low-level helper.
 func newIdentToken(name string) *Token {
+	if !hclsyntax.ValidIdentifier(name) {
+		panic(fmt.Sprintf("newIdentToken called with invalid HCL identifier %q", name))
+	}
 	return &Token{
 		Type:  hclsyntax.TokenIdent,
 		Bytes: []byte(name),
