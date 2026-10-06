@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2014, 2025
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
 
 package hclsyntax
@@ -494,12 +494,43 @@ func TestBodyJustAttributes(t *testing.T) {
 						},
 					},
 				},
+				// Simulate a call to PartialContent
 				hiddenAttrs: map[string]struct{}{
 					"foo": {},
 				},
 			},
 			hcl.Attributes{},
 			0,
+		},
+		{
+			&Body{
+				Attributes: Attributes{
+					"foo": &Attribute{
+						Name: "foo",
+						Expr: &LiteralValueExpr{
+							Val: cty.StringVal("bar"),
+						},
+					},
+				},
+				Blocks: Blocks{
+					{
+						Type: "foo",
+					},
+				},
+				// Simulate a call to PartialContent
+				hiddenBlocks: map[string]struct{}{
+					"foo": {},
+				},
+			},
+			hcl.Attributes{
+				"foo": &hcl.Attribute{
+					Name: "foo",
+					Expr: &LiteralValueExpr{
+						Val: cty.StringVal("bar"),
+					},
+				},
+			},
+			0, // hiddenBlocks from PartialContent's remain cause block foo to be ignored
 		},
 	}
 
