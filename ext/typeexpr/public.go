@@ -114,7 +114,17 @@ func TypeString(ty cty.Type) string {
 				buf.WriteString(name)
 			}
 			buf.WriteByte('=')
-			buf.WriteString(TypeString(aty))
+			if ty.AttributeOptional(name) {
+				// Optional attributes are rendered with the optional(...)
+				// modifier so that the result round-trips through
+				// TypeConstraint. The default value, if any, is tracked
+				// separately from the type and so cannot be included here.
+				buf.WriteString("optional(")
+				buf.WriteString(TypeString(aty))
+				buf.WriteByte(')')
+			} else {
+				buf.WriteString(TypeString(aty))
+			}
 			first = false
 		}
 		buf.WriteString("})")
