@@ -5,6 +5,7 @@ package hclwrite
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 
 	"github.com/hashicorp/hcl/v2"
@@ -128,7 +129,15 @@ type ObjectAttrTokens struct {
 	Value Tokens
 }
 
+// newIdentToken wraps name as a single TokenIdent.
+//
+// name must be a syntactically valid HCL identifier. Passing a non-identifier
+// is a programmer error and causes a panic, preventing invalid token streams
+// from being generated.
 func newIdentToken(name string) *Token {
+	if !hclsyntax.ValidIdentifier(name) {
+		panic(fmt.Sprintf("newIdentToken called with invalid HCL identifier %q", name))
+	}
 	return &Token{
 		Type:  hclsyntax.TokenIdent,
 		Bytes: []byte(name),
