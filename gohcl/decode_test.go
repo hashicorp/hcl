@@ -13,6 +13,7 @@ import (
 	"github.com/zclconf/go-cty/cty"
 
 	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/hclsyntax"
 	hclJSON "github.com/hashicorp/hcl/v2/json"
 )
 
@@ -487,6 +488,68 @@ func TestDecodeBody(t *testing.T) {
 		{
 			map[string]interface{}{
 				"noodle": map[string]interface{}{
+					"foo_foo": map[string]interface{}{},
+					"bar_baz": map[string]interface{}{},
+				},
+			},
+			makeInstantiateType(struct {
+				Noodles map[string]struct {
+					Name string `hcl:"name,label"`
+				} `hcl:"noodle,block"`
+			}{}),
+			func(gotI interface{}) bool {
+				noodles := gotI.(struct {
+					Noodles map[string]struct {
+						Name string `hcl:"name,label"`
+					} `hcl:"noodle,block"`
+				}).Noodles
+				if len(noodles) != 2 {
+					return false
+				}
+				if _, ok := noodles["foo_foo"]; !ok {
+					return false
+				}
+				if _, ok := noodles["bar_baz"]; !ok {
+					return false
+				}
+				return true
+			},
+			0,
+		},
+		{
+			map[string]interface{}{
+				"noodle": map[string]interface{}{
+					"foo_foo": map[string]interface{}{},
+					"bar_baz": map[string]interface{}{},
+				},
+			},
+			makeInstantiateType(struct {
+				Noodles map[string]*struct {
+					Name string `hcl:"name,label"`
+				} `hcl:"noodle,block"`
+			}{}),
+			func(gotI interface{}) bool {
+				noodles := gotI.(struct {
+					Noodles map[string]*struct {
+						Name string `hcl:"name,label"`
+					} `hcl:"noodle,block"`
+				}).Noodles
+				if len(noodles) != 2 {
+					return false
+				}
+				if _, ok := noodles["foo_foo"]; !ok {
+					return false
+				}
+				if _, ok := noodles["bar_baz"]; !ok {
+					return false
+				}
+				return true
+			},
+			0,
+		},
+		{
+			map[string]interface{}{
+				"noodle": map[string]interface{}{
 					"foo_foo": map[string]interface{}{
 						"type": "rice",
 					},
@@ -777,6 +840,91 @@ func TestDecodeBody(t *testing.T) {
 		})
 	}
 
+}
+
+func TestDecodeBody_HCL(t *testing.T) {
+	tests := []struct {
+		Body      string
+		Target    func() interface{}
+		Check     func(v interface{}) bool
+		DiagCount int
+	}{
+		{
+			`noodle "foo_foo" {}
+noodle "bar_baz" {}`,
+			makeInstantiateType(struct {
+				Noodles []struct {
+					Name string `hcl:"name,label"`
+				} `hcl:"noodle,block"`
+			}{}),
+			func(gotI interface{}) bool {
+				noodles := gotI.(struct {
+					Noodles []struct {
+						Name string `hcl:"name,label"`
+					} `hcl:"noodle,block"`
+				}).Noodles
+				return len(noodles) == 2 && (noodles[0].Name == "foo_foo" || noodles[0].Name == "bar_baz") && (noodles[1].Name == "foo_foo" || noodles[1].Name == "bar_baz") && noodles[0].Name != noodles[1].Name
+			},
+			0,
+		},
+		{
+			// duplicate blocks with slices
+			`noodle "foo_foo" {}
+noodle "foo_foo" {}`,
+			makeInstantiateType(struct {
+				Noodles []struct {
+					Name string `hcl:"name,label"`
+				} `hcl:"noodle,block"`
+			}{}),
+			func(gotI interface{}) bool {
+				noodles := gotI.(struct {
+					Noodles []struct {
+						Name string `hcl:"name,label"`
+					} `hcl:"noodle,block"`
+				}).Noodles
+				return len(noodles) == 2 && noodles[0].Name == "foo_foo" && noodles[1].Name == "foo_foo"
+			},
+			0,
+		},
+		{
+			// duplicate blocks with maps
+			`noodle "foo_foo" {}
+noodle "foo_foo" {}`,
+			makeInstantiateType(struct {
+				Noodles map[string]struct {
+					Name string `hcl:"name,label"`
+				} `hcl:"noodle,block"`
+			}{}),
+			func(gotI interface{}) bool {
+				// Checking diagnostics is sufficient
+				return true
+			},
+			1,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Body, func(t *testing.T) {
+			file, diags := hclsyntax.ParseConfig([]byte(test.Body), "test.hcl", hcl.Pos{})
+			if len(diags) != 0 {
+				t.Fatalf("diagnostics while parsing: %s", diags.Error())
+			}
+
+			targetVal := reflect.ValueOf(test.Target())
+
+			diags = DecodeBody(file.Body, nil, targetVal.Interface())
+			if len(diags) != test.DiagCount {
+				t.Errorf("wrong number of diagnostics %d; want %d", len(diags), test.DiagCount)
+				for _, diag := range diags {
+					t.Logf(" - %s", diag.Error())
+				}
+			}
+			got := targetVal.Elem().Interface()
+			if !test.Check(got) {
+				t.Errorf("wrong result\ngot:  %s", spew.Sdump(got))
+			}
+		})
+	}
 }
 
 func TestDecodeExpression(t *testing.T) {
