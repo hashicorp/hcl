@@ -4,6 +4,8 @@
 package hclwrite
 
 import (
+	"bytes"
+
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/zclconf/go-cty/cty"
@@ -97,7 +99,10 @@ func (o *ObjectConsExpr) ValueExprFor(key string) *ObjectConsValue {
 // expression.
 //
 // When adding a new item, the key is written as an identifier if it is a valid
-// identifier, or as a quoted string literal otherwise.
+// identifier, or as a quoted string literal otherwise. The new item follows
+// the existing layout: in an object written on a single line it is added on
+// the same line after a comma, and otherwise it is added on its own line
+// before the closing brace.
 //
 // It asserts that the expression is not already attached to a node, and it
 // panics otherwise.
@@ -110,9 +115,80 @@ func (object *ObjectConsExpr) SetItem(key string, expr *Expression) (*ObjectCons
 	} else {
 		item = newObjectConsItem()
 		item.init(key, expr)
-		object.items.Add(object.children.Insert(object.children.last, item))
+		object.items.Add(object.appendItem(item))
 	}
 	return item.kv()
+}
+
+// appendItem inserts a new item at the end of the object, adding whatever
+// separator the object's existing layout calls for, and returns the new node.
+//
+// Separators and comments that follow the last existing item on its line, such
+// as a trailing comma or a line comment, stay with that item. In a multi-line
+// object, anything on the following lines, such as a comment before the
+// closing brace, stays with the closing brace.
+func (object *ObjectConsExpr) appendItem(item *ObjectConsItem) *node {
+	tail := object.children.last
+	toks, ok := tail.content.(Tokens)
+	if !ok || len(toks) == 0 || toks[len(toks)-1].Type != hclsyntax.TokenCBrace {
+		// Not the shape the parser produces, so make no layout decisions.
+		return object.children.Insert(tail, item)
+	}
+
+	// Split the tokens after the last item into those that stay with it and
+	// those that stay with the closing brace, so the new item can go between.
+	head, brace := toks[:len(toks)-1], toks[len(toks)-1:]
+
+	if object.isSingleLine() {
+		prev := head
+		if len(prev) == 0 {
+			prev = tail.before.content.BuildTokens(nil)
+		}
+		if len(object.items) > 0 && !endsWith(prev, hclsyntax.TokenComma) {
+			head = withToken(head, &Token{Type: hclsyntax.TokenComma, Bytes: []byte{','}})
+		}
+	} else {
+		if endsLine(tail.before.content.BuildTokens(nil)) {
+			// Already at the start of a line, such as after an item added
+			// earlier, so everything remaining belongs to the closing brace.
+			head, brace = nil, toks
+		} else if i := firstLineBreak(head); i >= 0 {
+			head, brace = toks[:i+1], toks[i+1:]
+		} else {
+			// The closing brace shares a line with the last item or the
+			// opening brace, so the new item needs a line of its own.
+			head = withToken(head, newlineToken())
+		}
+		item.children.AppendUnstructuredTokens(Tokens{newlineToken()})
+	}
+
+	braceNode := tail
+	if len(head) > 0 {
+		tail.content = head
+		braceNode = object.children.Append(brace)
+	}
+	return object.children.Insert(braceNode, item)
+}
+
+// isSingleLine returns true if none of the separators directly within the
+// object's braces break the line. Line breaks within item keys and values,
+// such as in a nested multi-line object, don't count.
+func (object *ObjectConsExpr) isSingleLine() bool {
+	for n := object.children.first; n != nil; n = n.after {
+		switch c := n.content.(type) {
+		case Tokens:
+			if hasLineBreak(c) {
+				return false
+			}
+		case *ObjectConsItem:
+			for in := c.children.first; in != nil; in = in.after {
+				if lead, ok := in.content.(Tokens); ok && hasLineBreak(lead) {
+					return false
+				}
+			}
+		}
+	}
+	return true
 }
 
 // SetItemRaw either replaces the expression of an existing item of the given
@@ -171,12 +247,6 @@ func (item *ObjectConsItem) ValueExpr() *ObjectConsValue {
 func (item *ObjectConsItem) init(key string, value *Expression) {
 	value.assertUnattached()
 
-	item.children.AppendUnstructuredTokens(Tokens{
-		{
-			Type:  hclsyntax.TokenNewline,
-			Bytes: []byte{'\n'},
-		},
-	})
 	keyExpr := newObjectConsKeyExpr(newObjectConsKeyNode(key))
 	item.key = item.children.Append(keyExpr)
 
@@ -189,6 +259,56 @@ func (item *ObjectConsItem) init(key string, value *Expression) {
 
 	item.value = item.children.Append(newObjectConsValue())
 	item.ValueExpr().expr = item.ValueExpr().children.Append(value)
+}
+
+func newlineToken() *Token {
+	return &Token{
+		Type:  hclsyntax.TokenNewline,
+		Bytes: []byte{'\n'},
+	}
+}
+
+// withToken returns a copy of ts with tok appended. It copies because parsed
+// token slices may share a backing array with neighboring nodes.
+func withToken(ts Tokens, tok *Token) Tokens {
+	ret := make(Tokens, len(ts), len(ts)+1)
+	copy(ret, ts)
+	return append(ret, tok)
+}
+
+func endsWith(ts Tokens, ty hclsyntax.TokenType) bool {
+	return len(ts) > 0 && ts[len(ts)-1].Type == ty
+}
+
+// isLineBreak returns true if the token ends a line. Line comments include
+// their terminating newline.
+func isLineBreak(tok *Token) bool {
+	switch tok.Type {
+	case hclsyntax.TokenNewline:
+		return true
+	case hclsyntax.TokenComment:
+		return bytes.HasSuffix(tok.Bytes, []byte{'\n'})
+	}
+	return false
+}
+
+func endsLine(ts Tokens) bool {
+	return len(ts) > 0 && isLineBreak(ts[len(ts)-1])
+}
+
+func hasLineBreak(ts Tokens) bool {
+	return firstLineBreak(ts) >= 0
+}
+
+// firstLineBreak returns the index of the first token that ends a line, or -1
+// if there is none.
+func firstLineBreak(ts Tokens) int {
+	for i, tok := range ts {
+		if isLineBreak(tok) {
+			return i
+		}
+	}
+	return -1
 }
 
 func (item *ObjectConsItem) kv() (*ObjectConsKeyExpr, *ObjectConsValue) {
