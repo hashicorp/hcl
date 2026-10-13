@@ -41,7 +41,30 @@ func parseExpression(buf []byte, filename string, start hcl.Pos) (node, hcl.Diag
 	return node, diags
 }
 
+// maxNestingDepth bounds how deeply parseValue will recurse into nested JSON
+// arrays/objects. Without it, deeply nested input (e.g. "[[[...]]]") exhausts
+// the goroutine stack and crashes the process with an unrecoverable
+// "fatal error: stack overflow". 10000 far exceeds any legitimate configuration.
+const maxNestingDepth = 10000
+
 func parseValue(p *peeker) (node, hcl.Diagnostics) {
+	// Guard against stack exhaustion from maliciously-nested input. parseValue is
+	// the single recursion point (parseObject/parseArray call back into it), so
+	// bounding depth here bounds the whole recursion.
+	p.depth++
+	defer func() { p.depth-- }()
+	if p.depth > maxNestingDepth {
+		tok := p.Peek()
+		return invalidVal{tok.Range}, hcl.Diagnostics{
+			{
+				Severity: hcl.DiagError,
+				Summary:  "Excessive JSON nesting depth",
+				Detail:   fmt.Sprintf("This JSON document is nested more than %d levels deep, which exceeds the maximum allowed. This limit protects against stack exhaustion from maliciously-nested input.", maxNestingDepth),
+				Subject:  &tok.Range,
+			},
+		}
+	}
+
 	tok := p.Peek()
 
 	wrapInvalid := func(n node, diags hcl.Diagnostics) (node, hcl.Diagnostics) {

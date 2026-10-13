@@ -6,6 +6,7 @@ package json
 type peeker struct {
 	tokens []token
 	pos    int
+	depth  int
 }
 
 func newPeeker(tokens []token) *peeker {
