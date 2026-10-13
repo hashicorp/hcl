@@ -594,3 +594,33 @@ func TestObjectConsExprSetItemTraversal(t *testing.T) {
 		})
 	}
 }
+
+// assertPanics fails the test if fn returns without panicking.
+func assertPanics(t *testing.T, fn func()) {
+	t.Helper()
+	defer func() {
+		if recover() == nil {
+			t.Error("expected a panic, but there was none")
+		}
+	}()
+	fn()
+}
+
+// The doc comment on SetItem says it panics if the expression is already
+// attached, because otherwise one node ends up in two places in the tree.
+func TestObjectConsExprSetItem_attachedExprPanics(t *testing.T) {
+	t.Run("expression attached by the parser", func(t *testing.T) {
+		_, o := parseObjectA(t, "a = { hat = \"derby\", cat = \"calico\" }\n")
+		attached := o.ValueExprFor("hat").Expr()
+
+		assertPanics(t, func() { o.SetItem("cat", attached) })
+	})
+
+	t.Run("new expression attached by a previous SetItem", func(t *testing.T) {
+		_, o := parseObjectA(t, "a = { hat = \"derby\", cat = \"calico\" }\n")
+		expr := NewExpressionLiteral(cty.StringVal("bowler"))
+		o.SetItem("hat", expr)
+
+		assertPanics(t, func() { o.SetItem("cat", expr) })
+	})
+}
