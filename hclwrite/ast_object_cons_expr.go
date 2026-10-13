@@ -96,6 +96,9 @@ func (o *ObjectConsExpr) ValueExprFor(key string) *ObjectConsValue {
 // name or adds a new item definition to the end of the object, using the given
 // expression.
 //
+// When adding a new item, the key is written as an identifier if it is a valid
+// identifier, or as a quoted string literal otherwise.
+//
 // It asserts that the expression is not already attached to a node, and it
 // panics otherwise.
 func (object *ObjectConsExpr) SetItem(key string, expr *Expression) (*ObjectConsKeyExpr, *ObjectConsValue) {
@@ -174,8 +177,7 @@ func (item *ObjectConsItem) init(key string, value *Expression) {
 			Bytes: []byte{'\n'},
 		},
 	})
-	identifier := newIdentifier(newIdentToken(key))
-	keyExpr := newObjectConsKeyExpr(newNode(identifier))
+	keyExpr := newObjectConsKeyExpr(newObjectConsKeyNode(key))
 	item.key = item.children.Append(keyExpr)
 
 	item.children.AppendUnstructuredTokens(Tokens{
@@ -226,6 +228,19 @@ func newObjectConsKeyExpr(wrapped *node) *ObjectConsKeyExpr {
 	expr.children.AppendNode(wrapped)
 
 	return expr
+}
+
+// newObjectConsKeyNode returns the node for a new item's key, which is written
+// as an identifier when the key is a valid identifier, or as a quoted string
+// literal otherwise, matching how the parser represents each form.
+func newObjectConsKeyNode(key string) *node {
+	if hclsyntax.ValidIdentifier(key) {
+		return newNode(newIdentifier(newIdentToken(key)))
+	}
+
+	expr := newExpression()
+	expr.wrap(newQuoted(TokensForValue(cty.StringVal(key))))
+	return newNode(expr)
 }
 
 // ObjectConsValue represents the expression that is assigned to an

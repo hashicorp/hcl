@@ -75,6 +75,55 @@ func TestObjectConsExprItemFor(t *testing.T) {
 	}
 }
 
+// New items with keys that need escaping must produce valid HCL whose key
+// evaluates back to the original string, and must be findable again.
+func TestObjectConsExprSetItem_escapedKey(t *testing.T) {
+	tests := map[string]struct {
+		key     string
+		wantKey string
+	}{
+		"double quote":  {`say "hi"`, `"say \"hi\""`},
+		"backslash":     {`a\b`, `"a\\b"`},
+		"interpolation": {`${hat}`, `"$${hat}"`},
+		"directive":     {`%{hat}`, `"%%{hat}"`},
+		"empty":         {``, `""`},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			f, diags := ParseConfig([]byte("a = {}\n"), "", hcl.InitialPos)
+			if diags.HasErrors() {
+				t.Fatalf("unexpected parse errors: %s", diags)
+			}
+			obj := f.Body().GetAttribute("a").Expr().AsObjectConsExpr()
+			obj.SetItemValue(tc.key, cty.StringVal("bowler"))
+
+			if obj.ItemFor(tc.key) == nil {
+				t.Errorf("ItemFor(%q) did not find the item just set", tc.key)
+			}
+
+			got := f.Bytes()
+			if !strings.Contains(string(got), tc.wantKey+" = ") {
+				t.Errorf("key not written as %s:\n%s", tc.wantKey, got)
+			}
+
+			native, diags := hclsyntax.ParseConfig(got, "", hcl.InitialPos)
+			if diags.HasErrors() {
+				t.Fatalf("result is not valid HCL: %s\n%s", diags, got)
+			}
+			attrs, _ := native.Body.JustAttributes()
+			val, diags := attrs["a"].Expr.Value(nil)
+			if diags.HasErrors() {
+				t.Fatalf("unexpected errors evaluating result: %s", diags)
+			}
+			want := cty.ObjectVal(map[string]cty.Value{tc.key: cty.StringVal("bowler")})
+			if !val.RawEquals(want) {
+				t.Errorf("wrong value\ngot:  %#v\nwant: %#v", val, want)
+			}
+		})
+	}
+}
+
 func TestObjectConsExprSetItemRaw(t *testing.T) {
 	tests := []struct {
 		src      string
