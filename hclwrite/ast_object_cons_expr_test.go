@@ -41,6 +41,40 @@ func TestObjectConsExprValueFor(t *testing.T) {
 	}
 }
 
+func TestObjectConsExprItemFor(t *testing.T) {
+	tests := map[string]struct {
+		src  string
+		key  string
+		want bool
+	}{
+		"identifier":         {`a = { hat = "derby" }`, "hat", true},
+		"quoted":             {`a = { "hat" = "derby" }`, "hat", true},
+		"quoted with escape": {`a = { "h\u0061t" = "derby" }`, "hat", true},
+		"quoted with space":  {`a = { "a hat" = "derby" }`, "a hat", true},
+		"quoted no match":    {`a = { "hat" = "derby" }`, "cat", false},
+		"interpolated":       {`a = { "${hat}" = "derby" }`, "hat", false},
+		"escaped template":   {`a = { "$${hat}" = "derby" }`, "${hat}", true},
+		"parenthesized":      {`a = { (hat) = "derby" }`, "hat", false},
+		"traversal":          {`a = { hat.band = "derby" }`, "hat", false},
+		"later quoted item":  {`a = { cat = "calico", "hat" = "derby" }`, "hat", true},
+		"missing key":        {`a = { cat = "calico" }`, "hat", false},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			f, diags := ParseConfig([]byte(tc.src+"\n"), "", hcl.InitialPos)
+			if diags.HasErrors() {
+				t.Fatalf("unexpected parse errors: %s", diags)
+			}
+			obj := f.Body().GetAttribute("a").Expr().AsObjectConsExpr()
+
+			if got := obj.ItemFor(tc.key) != nil; got != tc.want {
+				t.Errorf("ItemFor(%q) found = %t, want %t", tc.key, got, tc.want)
+			}
+		})
+	}
+}
+
 func TestObjectConsExprSetItemRaw(t *testing.T) {
 	tests := []struct {
 		src      string
@@ -623,4 +657,33 @@ func TestObjectConsExprSetItem_attachedExprPanics(t *testing.T) {
 
 		assertPanics(t, func() { o.SetItem("cat", expr) })
 	})
+}
+
+// Quoted string-literal keys are equivalent to identifier keys, so they should
+// be found and replaced rather than duplicated.
+func TestObjectConsExprSetItem_quotedKey(t *testing.T) {
+	tests := map[string]struct {
+		src  string
+		want string
+	}{
+		"single-line": {
+			src:  `a = { "hat" = "derby" }` + "\n",
+			want: `a = { "hat" = "bowler" }` + "\n",
+		},
+		"multi-line": {
+			src:  "a = {\n  \"hat\" = \"derby\"\n  cat = \"calico\"\n}\n",
+			want: "a = {\n  \"hat\" = \"bowler\"\n  cat   = \"calico\"\n}\n",
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			got := setObjectItem(t, tc.src, func(o *ObjectConsExpr) {
+				o.SetItemValue("hat", cty.StringVal("bowler"))
+			})
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("wrong result (-want +got):\n%s", diff)
+			}
+		})
+	}
 }

@@ -38,24 +38,19 @@ func (o *ObjectConsExpr) Items() []*ObjectConsItem {
 
 // ItemFor finds an item that matches the given key and returns the item.
 //
-// This is limited to items that have an identifier key. Items with a name
-// taken from a variable will not be found.
+// This is limited to items that have an identifier key or a quoted string
+// literal key, which are equivalent. Items with a name taken from a variable
+// or other expression will not be found.
 //
-// Example: { hat = "derby", (cat) = "calico" }
+// Example: { hat = "derby", "bat" = "cricket", (cat) = "calico" }
 //
-// ItemFor("hat") returns an object that represents the item `hat = "derby"`;
-// however, ItemFor cannot locate the cat.
+// ItemFor("hat") returns an object that represents the item `hat = "derby"`,
+// and ItemFor("bat") returns the item `"bat" = "cricket"`; however, ItemFor
+// cannot locate the cat.
 func (o *ObjectConsExpr) ItemFor(key string) *ObjectConsItem {
 	for _, n := range o.items.List() {
 		if item, ok := n.content.(*ObjectConsItem); ok {
-			k := item.KeyExpr()
-			unwrapped := unwrapUntilType[*identifier](k.wrapped)
-			if unwrapped == nil {
-				continue
-			}
-
-			identifier := unwrapped.content.(*identifier)
-			if identifier.hasName(key) {
+			if item.KeyExpr().hasName(key) {
 				return item
 			}
 		}
@@ -83,8 +78,7 @@ func (o *ObjectConsExpr) variables() []*Traversal {
 // ValueExprFor finds an item that matches the given key and returns the
 // expression assigned to that key.
 //
-// This is limited to items that have an identifier key. Items with a name
-// taken from a variable will not be found.
+// The same restrictions on keys apply as for ItemFor.
 //
 // Example: { hat = "derby", (cat) = "calico" }
 //
@@ -210,6 +204,18 @@ type ObjectConsKeyExpr struct {
 // unwrap implements the unwrapNode interface.
 func (k *ObjectConsKeyExpr) unwrap() *node {
 	return k.wrapped
+}
+
+// hasName returns true if the key is an identifier or a quoted string literal
+// with the given name.
+func (k *ObjectConsKeyExpr) hasName(name string) bool {
+	if n := unwrapUntilType[*identifier](k.wrapped); n != nil {
+		return n.content.(*identifier).hasName(name)
+	}
+	if n := unwrapUntilType[*quoted](k.wrapped); n != nil {
+		return n.content.(*quoted).hasValue(name)
+	}
+	return false
 }
 
 func newObjectConsKeyExpr(wrapped *node) *ObjectConsKeyExpr {
