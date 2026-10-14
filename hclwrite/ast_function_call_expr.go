@@ -22,3 +22,15 @@ type FunctionCallExpr struct {
 func (call *FunctionCallExpr) Name() string {
 	return call.name
 }
+
+func (call *FunctionCallExpr) variables() []*Traversal {
+	var ret []*Traversal
+	for _, n := range call.args.List() {
+		expr, ok := n.content.(*Expression)
+		if !ok {
+			continue
+		}
+		ret = append(ret, expr.Variables()...)
+	}
+	return ret
+}

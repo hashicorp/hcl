@@ -432,15 +432,6 @@ func parseFunctionCallExpr(nativeExpr *hclsyntax.FunctionCallExpr, from inputTok
 		arg := parseExpression(nativeArg, argTokens)
 		children.AppendNode(arg)
 		expr.args.Add(arg)
-
-		for t := range arg.content.(*Expression).absTraversals {
-			// hclwrite operations on expressions work opaquely --
-			// they do not recurse into nested expressions.
-			//
-			// So: collect nested traversals into the wrapping
-			// expression.
-			wrapExpr.absTraversals.Add(t)
-		}
 	}
 
 	// Closing tokens
@@ -594,15 +585,6 @@ func parseTupleConsExpr(nativeExpr *hclsyntax.TupleConsExpr, from inputTokens) *
 		arg := parseExpression(nativeExpr, argTokens)
 		children.AppendNode(arg)
 		tuple.exprs.Add(arg)
-
-		for t := range arg.content.(*Expression).absTraversals {
-			// hclwrite operations on expressions work opaquely --
-			// they do not recurse into nested expressions.
-			//
-			// So: collect nested traversals into the wrapping
-			// expression.
-			wrapExpr.absTraversals.Add(t)
-		}
 	}
 
 	// Closing tokens

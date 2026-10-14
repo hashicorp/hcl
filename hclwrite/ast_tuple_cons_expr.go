@@ -15,3 +15,15 @@ type TupleConsExpr struct {
 
 	exprs nodeSet
 }
+
+func (tuple *TupleConsExpr) variables() []*Traversal {
+	var ret []*Traversal
+	for _, n := range tuple.exprs.List() {
+		expr, ok := n.content.(*Expression)
+		if !ok {
+			continue
+		}
+		ret = append(ret, expr.Variables()...)
+	}
+	return ret
+}

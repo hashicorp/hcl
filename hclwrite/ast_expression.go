@@ -142,12 +142,19 @@ func NewExpressionAbsTraversal(traversal hcl.Traversal) *Expression {
 	return expr
 }
 
+type hasVariables interface {
+	variables() []*Traversal
+}
+
 // Variables returns the absolute traversals that exist within the receiving
 // expression.
 func (e *Expression) Variables() []*Traversal {
-	if object := e.AsObjectConsExpr(); object != nil {
-		return object.variables()
+	if unwrapped := e.unwrap(); unwrapped != nil {
+		if variableSource, ok := unwrapped.content.(hasVariables); ok {
+			return variableSource.variables()
+		}
 	}
+
 	nodes := e.absTraversals.List()
 	ret := make([]*Traversal, len(nodes))
 	for i, node := range nodes {
