@@ -55,6 +55,14 @@ func TestTypeString(t *testing.T) {
 			"object({bar=string,foo=bool})",
 		},
 		{
+			cty.ObjectWithOptionalAttrs(map[string]cty.Type{"foo": cty.Bool}, []string{"foo"}),
+			"object({foo=optional(bool)})",
+		},
+		{
+			cty.ObjectWithOptionalAttrs(map[string]cty.Type{"foo": cty.Bool, "bar": cty.String}, []string{"bar"}),
+			"object({bar=optional(string),foo=bool})",
+		},
+		{
 			cty.EmptyTuple,
 			"tuple([])",
 		},
