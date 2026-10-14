@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2014, 2025
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
 
 package hclwrite
@@ -7,27 +7,157 @@ import (
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 )
 
-// format rewrites tokens within the given sequence, in-place, to adjust the
-// whitespace around their content to achieve canonical formatting.
-func format(tokens Tokens) {
+// format rewrites tokens within the given sequence to adjust the whitespace
+// around their content to achieve canonical formatting.
+//
+// The SpacesBefore mutations happen in-place on the given tokens. format may
+// also insert newline tokens so that a block containing a nested block is
+// emitted in multi-line form; a single-line block may contain only one
+// argument, so a nested block cannot share a line with its parent's opening
+// brace. Callers must use the returned slice, which is the original slice
+// when no newlines were inserted.
+func format(tokens Tokens) Tokens {
 	// Formatting is a multi-pass process. More details on the passes below,
 	// but this is the overview:
+	// - insert newlines to force multi-line form when a block contains a
+	//   nested block on the same line as its opening brace
 	// - adjust the leading space on each line to create appropriate
 	//   indentation
 	// - adjust spaces between tokens in a single cell using a set of rules
 	// - adjust the leading space in the "assign" and "comment" cells on each
 	//   line to vertically align with neighboring lines.
-	// All of these steps operate in-place on the given tokens, so a caller
-	// may collect a flat sequence of all of the tokens underlying an AST
-	// and pass it here and we will then indirectly modify the AST itself.
-	// Formatting must change only whitespace. Specifically, that means
-	// changing the SpacesBefore attribute on a token while leaving the
-	// other token attributes unchanged.
+	// All of these steps operate in-place on the given tokens (aside from
+	// possible newline insertion), so a caller may collect a flat sequence
+	// of all of the tokens underlying an AST and pass it here and we will
+	// then indirectly modify the AST itself.
 
+	tokens = formatExpandSingleLineNestedBlocks(tokens)
 	lines := linesForFormat(tokens)
 	formatIndent(lines)
 	formatSpaces(lines)
 	formatCells(lines)
+	return tokens
+}
+
+// formatExpandSingleLineNestedBlocks inserts newlines so that any block which
+// contains a nested block on the same line as its opening brace is rewritten
+// into multi-line form. The native parser rejects nested blocks in single-line
+// block syntax ("A single-line block definition can contain only a single
+// argument").
+func formatExpandSingleLineNestedBlocks(tokens Tokens) Tokens {
+	if len(tokens) == 0 {
+		return tokens
+	}
+
+	insertBefore := map[int]struct{}{}
+
+	for i, tok := range tokens {
+		if tok.Type != hclsyntax.TokenOBrace || !isBlockOpenBrace(tokens, i) {
+			continue
+		}
+		closeIdx := matchingCloseBrace(tokens, i)
+		if closeIdx < 0 {
+			continue
+		}
+
+		var nestedTypeIdxs []int
+		for j := i + 1; j < closeIdx; j++ {
+			if tokenIsNewline(tokens[j]) {
+				// Already multi-line; leave the interior of this block alone.
+				break
+			}
+			if tokens[j].Type == hclsyntax.TokenOBrace && isBlockOpenBrace(tokens, j) {
+				if typeIdx := nestedBlockTypeIndex(tokens, j); typeIdx >= 0 {
+					nestedTypeIdxs = append(nestedTypeIdxs, typeIdx)
+				}
+			}
+		}
+		if len(nestedTypeIdxs) == 0 {
+			continue
+		}
+
+		if i+1 < len(tokens) && !tokenIsNewline(tokens[i+1]) {
+			insertBefore[i+1] = struct{}{}
+		}
+		for _, typeIdx := range nestedTypeIdxs {
+			if typeIdx > 0 && !tokenIsNewline(tokens[typeIdx-1]) {
+				insertBefore[typeIdx] = struct{}{}
+			}
+		}
+		if closeIdx > 0 && !tokenIsNewline(tokens[closeIdx-1]) {
+			insertBefore[closeIdx] = struct{}{}
+		}
+	}
+
+	if len(insertBefore) == 0 {
+		return tokens
+	}
+
+	out := make(Tokens, 0, len(tokens)+len(insertBefore))
+	for i, tok := range tokens {
+		if _, ok := insertBefore[i]; ok {
+			out = append(out, &Token{
+				Type:  hclsyntax.TokenNewline,
+				Bytes: []byte{'\n'},
+			})
+		}
+		out = append(out, tok)
+	}
+	return out
+}
+
+// isBlockOpenBrace reports whether the brace at openIdx is the opening brace
+// of a block (as opposed to an object constructor). Block braces are preceded
+// by a type name or a block label.
+func isBlockOpenBrace(tokens Tokens, openIdx int) bool {
+	for i := openIdx - 1; i >= 0; i-- {
+		tok := tokens[i]
+		if tokenIsNewline(tok) || tok.Type == hclsyntax.TokenComment {
+			continue
+		}
+		switch tok.Type {
+		case hclsyntax.TokenIdent, hclsyntax.TokenCQuote:
+			return true
+		default:
+			return false
+		}
+	}
+	return false
+}
+
+func matchingCloseBrace(tokens Tokens, openIdx int) int {
+	depth := 0
+	for i := openIdx; i < len(tokens); i++ {
+		switch tokens[i].Type {
+		case hclsyntax.TokenOBrace:
+			depth++
+		case hclsyntax.TokenCBrace:
+			depth--
+			if depth == 0 {
+				return i
+			}
+		}
+	}
+	return -1
+}
+
+// nestedBlockTypeIndex returns the index of the type-name token of the block
+// whose opening brace is at nestedOpen, walking back over any labels.
+func nestedBlockTypeIndex(tokens Tokens, nestedOpen int) int {
+	typeIdx := -1
+	for i := nestedOpen - 1; i >= 0; i-- {
+		switch tokens[i].Type {
+		case hclsyntax.TokenIdent:
+			typeIdx = i
+		case hclsyntax.TokenCQuote, hclsyntax.TokenQuotedLit, hclsyntax.TokenOQuote:
+			// quoted label; keep walking back to the type name
+		case hclsyntax.TokenComment:
+			// ignore
+		default:
+			return typeIdx
+		}
+	}
+	return typeIdx
 }
 
 func formatIndent(lines []formatLine) {
