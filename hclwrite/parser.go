@@ -447,7 +447,7 @@ func parseFunctionCallExpr(nativeExpr *hclsyntax.FunctionCallExpr, from inputTok
 	_, from, _ = from.Partition(nativeExpr.Range())
 	children.AppendUnstructuredTokens(from.writerTokens)
 
-	wrapExpr.children.Append(expr)
+	wrapExpr.wrap(expr)
 	return newNode(wrapExpr)
 }
 
@@ -609,7 +609,7 @@ func parseTupleConsExpr(nativeExpr *hclsyntax.TupleConsExpr, from inputTokens) *
 	_, from, _ = from.Partition(nativeExpr.Range())
 	children.AppendUnstructuredTokens(from.writerTokens)
 
-	wrapExpr.children.Append(tuple)
+	wrapExpr.wrap(tuple)
 	return newNode(wrapExpr)
 }
 
