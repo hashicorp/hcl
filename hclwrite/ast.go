@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2014, 2025
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
 
 package hclwrite
@@ -6,6 +6,10 @@ package hclwrite
 import (
 	"bytes"
 	"io"
+
+	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/zclconf/go-cty/cty"
 )
 
 type File struct {
@@ -118,4 +122,18 @@ func newQuoted(tokens Tokens) *quoted {
 
 func (q *quoted) BuildTokens(to Tokens) Tokens {
 	return q.tokens.BuildTokens(to)
+}
+
+// hasValue returns true if the quoted string literal, with any escape
+// sequences decoded, is equal to the given string.
+func (q *quoted) hasValue(s string) bool {
+	expr, diags := hclsyntax.ParseExpression(q.tokens.Bytes(), "", hcl.InitialPos)
+	if diags.HasErrors() {
+		return false
+	}
+	val, diags := expr.Value(nil)
+	if diags.HasErrors() || !val.Type().Equals(cty.String) || !val.IsKnown() || val.IsNull() {
+		return false
+	}
+	return val.AsString() == s
 }

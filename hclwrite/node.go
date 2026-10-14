@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2014, 2025
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
 
 package hclwrite
@@ -49,9 +49,22 @@ func (n *node) Detach() {
 	if n.list.last == n {
 		n.list.last = n.before
 	}
-	n.list = nil
+	n.setList(nil)
 	n.before = nil
 	n.after = nil
+}
+
+// setList records the list the node belongs to, and keeps the parent record
+// of any inTree content in sync so that inTree.assertUnattached works.
+func (n *node) setList(ns *nodes) {
+	n.list = ns
+	if c, ok := n.content.(interface{ setParent(*node) }); ok {
+		if ns == nil {
+			c.setParent(nil)
+		} else {
+			c.setParent(n)
+		}
+	}
 }
 
 // ReplaceWith removes the receiver from the list it currently belongs to and
@@ -68,12 +81,13 @@ func (n *node) ReplaceWith(c nodeContent) *node {
 	before := n.before
 	after := n.after
 	list := n.list
-	n.before, n.after, n.list = nil, nil, nil
+	n.before, n.after = nil, nil
+	n.setList(nil)
 
 	nn := newNode(c)
 	nn.before = before
 	nn.after = after
-	nn.list = list
+	nn.setList(list)
 	if before != nil {
 		before.after = nn
 	}
@@ -108,6 +122,9 @@ func (ns *nodes) BuildTokens(to Tokens) Tokens {
 }
 
 func (ns *nodes) Clear() {
+	for n := ns.first; n != nil; n = n.after {
+		n.setList(nil)
+	}
 	ns.first = nil
 	ns.last = nil
 }
@@ -126,7 +143,7 @@ func (ns *nodes) AppendNode(n *node) {
 		n.before = ns.last
 		ns.last.after = n
 	}
-	n.list = ns
+	n.setList(ns)
 	ns.last = n
 	if ns.first == nil {
 		ns.first = n
@@ -160,7 +177,7 @@ func (ns *nodes) InsertNode(pos *node, n *node) {
 		n.after = pos
 	}
 
-	n.list = ns
+	n.setList(ns)
 }
 
 func (ns *nodes) AppendUnstructuredTokens(tokens Tokens) *node {
@@ -259,7 +276,7 @@ type internalWalkFunc func(*node)
 
 // inTree can be embedded into a content struct that has child nodes to get
 // a standard implementation of the NodeContent interface and a record of
-// a potential parent node.
+// the node that currently holds it in the tree, if any.
 type inTree struct {
 	parent   *node
 	children *nodes
@@ -271,9 +288,13 @@ func newInTree() inTree {
 	}
 }
 
+func (it *inTree) setParent(n *node) {
+	it.parent = n
+}
+
 func (it *inTree) assertUnattached() {
 	if it.parent != nil {
-		panic(fmt.Sprintf("node is already attached to %T", it.parent.content))
+		panic(fmt.Sprintf("%T is already attached to the tree", it.parent.content))
 	}
 }
 

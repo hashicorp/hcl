@@ -1241,24 +1241,8 @@ func TestParse(t *testing.T) {
 														Type: "ObjectConsKeyExpr",
 														Children: []TestTreeNode{
 															{
-																Type: "Expression",
-																Children: []TestTreeNode{
-
-																	{
-																		Type: "Traversal",
-																		Children: []TestTreeNode{
-																			{
-																				Type: "TraverseName",
-																				Children: []TestTreeNode{
-																					{
-																						Type: "identifier",
-																						Val:  "    hat",
-																					},
-																				},
-																			},
-																		},
-																	},
-																},
+																Type: "identifier",
+																Val:  "    hat",
 															},
 														},
 													},
@@ -1400,24 +1384,8 @@ func TestParse(t *testing.T) {
 														Type: "ObjectConsKeyExpr",
 														Children: []TestTreeNode{
 															{
-																Type: "Expression",
-																Children: []TestTreeNode{
-
-																	{
-																		Type: "Traversal",
-																		Children: []TestTreeNode{
-																			{
-																				Type: "TraverseName",
-																				Children: []TestTreeNode{
-																					{
-																						Type: "identifier",
-																						Val:  "    hat",
-																					},
-																				},
-																			},
-																		},
-																	},
-																},
+																Type: "identifier",
+																Val:  "    hat",
 															},
 														},
 													},
@@ -1540,16 +1508,8 @@ func TestParse(t *testing.T) {
 											{
 												Type: "ObjectConsKeyExpr",
 												Children: []TestTreeNode{{
-													Type: "Expression",
-													Children: []TestTreeNode{{
-														Type: "Traversal",
-														Children: []TestTreeNode{
-															{
-																Type:     "TraverseName",
-																Children: []TestTreeNode{{Type: "identifier", Val: "  hat"}},
-															},
-														},
-													}},
+													Type: "identifier",
+													Val:  "  hat",
 												}},
 											},
 											{Type: "Tokens", Val: " ="},
@@ -1568,22 +1528,7 @@ func TestParse(t *testing.T) {
 																	{
 																		Type: "ObjectConsKeyExpr",
 																		Children: []TestTreeNode{
-																			{
-																				Type: "Expression",
-																				Children: []TestTreeNode{
-																					{
-																						Type: "Traversal",
-																						Children: []TestTreeNode{
-																							{
-																								Type: "TraverseName",
-																								Children: []TestTreeNode{
-																									{Type: "identifier", Val: " style"},
-																								},
-																							},
-																						},
-																					},
-																				},
-																			},
+																			{Type: "identifier", Val: " style"},
 																		},
 																	},
 																	{Type: "Tokens", Val: " ="},
@@ -1605,13 +1550,7 @@ func TestParse(t *testing.T) {
 																	{
 																		Type: "ObjectConsKeyExpr",
 																		Children: []TestTreeNode{{
-																			Type: "Expression",
-																			Children: []TestTreeNode{{
-																				Type: "Traversal", Children: []TestTreeNode{{
-																					Type:     "TraverseName",
-																					Children: []TestTreeNode{{Type: "identifier", Val: " color"}},
-																				}},
-																			}},
+																			Type: "identifier", Val: " color",
 																		}},
 																	},
 																	{Type: "Tokens", Val: " ="},
@@ -1648,18 +1587,7 @@ func TestParse(t *testing.T) {
 											{
 												Type: "ObjectConsKeyExpr",
 												Children: []TestTreeNode{{
-													Type: "Expression",
-													Children: []TestTreeNode{
-														{
-															Type: "Traversal",
-															Children: []TestTreeNode{{
-																Type: "TraverseName",
-																Children: []TestTreeNode{
-																	{Type: "identifier", Val: "  cat"},
-																},
-															}},
-														},
-													},
+													Type: "identifier", Val: "  cat",
 												}},
 											},
 											{Type: "Tokens", Val: " ="},
@@ -1747,6 +1675,175 @@ func TestParse(t *testing.T) {
 																	{
 																		Type: "quoted",
 																		Val:  ` "derby"`,
+																	},
+																},
+															},
+														},
+													},
+												},
+											},
+											{
+												Type: "Tokens",
+												Val:  " }",
+											},
+										},
+									},
+								},
+							},
+							{
+								Type: "comments",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			`a = {
+				hat.bat = "derby", (cat) = "calico" }`,
+			TestTreeNode{
+				Type: "Body",
+				Children: []TestTreeNode{
+					{
+						Type: "Attribute",
+						Children: []TestTreeNode{
+							{
+								Type: "comments",
+							},
+							{
+								Type: "identifier",
+								Val:  "a",
+							},
+							{
+								Type: "Tokens",
+								Val:  " =",
+							},
+							{
+								Type: "Expression",
+								Children: []TestTreeNode{
+									{
+										Type: "ObjectConsExpr",
+										Children: []TestTreeNode{
+											{
+												Type: "Tokens",
+												Val:  " {",
+											},
+											{
+												Type: "ObjectConsItem",
+												Children: []TestTreeNode{
+													{
+														Type: "Tokens",
+														Val:  "\n",
+													},
+													{
+														Type: "ObjectConsKeyExpr",
+														Children: []TestTreeNode{
+															{
+																Type: "Expression",
+																Children: []TestTreeNode{
+																	{
+																		Type: "Traversal",
+																		Children: []TestTreeNode{
+																			{
+																				Type: "TraverseName",
+																				Children: []TestTreeNode{
+																					{
+																						Type: "identifier",
+																						Val:  "    hat",
+																					},
+																				},
+																			},
+																			{
+																				Type: "TraverseName",
+																				Children: []TestTreeNode{
+																					{
+																						Type: "Tokens",
+																						Val:  ".",
+																					},
+																					{
+																						Type: "identifier",
+																						Val:  "bat",
+																					},
+																				},
+																			},
+																		},
+																	},
+																},
+															},
+														},
+													},
+													{
+														Type: "Tokens",
+														Val:  " =",
+													},
+													{
+														Type: "ObjectConsValue",
+														Children: []TestTreeNode{
+															{
+																Type: "Expression",
+																Children: []TestTreeNode{
+																	{
+																		Type: "quoted",
+																		Val:  ` "derby"`,
+																	},
+																},
+															},
+														},
+													},
+												},
+											},
+											{
+												Type: "ObjectConsItem",
+												Children: []TestTreeNode{
+													{
+														Type: "Tokens",
+														Val:  ",",
+													},
+													{
+														Type: "ObjectConsKeyExpr",
+														Children: []TestTreeNode{
+															{
+																Type: "Expression",
+																Children: []TestTreeNode{
+																	{
+																		Type: "Tokens",
+																		Val:  " (",
+																	},
+																	{
+																		Type: "Traversal",
+																		Children: []TestTreeNode{
+																			{
+																				Type: "TraverseName",
+																				Children: []TestTreeNode{
+																					{
+																						Type: "identifier",
+																						Val:  "cat",
+																					},
+																				},
+																			},
+																		},
+																	},
+																	{
+																		Type: "Tokens",
+																		Val:  ")",
+																	},
+																},
+															},
+														},
+													},
+													{
+														Type: "Tokens",
+														Val:  " =",
+													},
+													{
+														Type: "ObjectConsValue",
+														Children: []TestTreeNode{
+															{
+																Type: "Expression",
+																Children: []TestTreeNode{
+																	{
+																		Type: "quoted",
+																		Val:  ` "calico"`,
 																	},
 																},
 															},
