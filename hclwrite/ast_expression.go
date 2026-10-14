@@ -204,6 +204,8 @@ Traversals:
 	}
 }
 
+// AsFunctionCallExpr returns the wrapped function call expression. It returns
+// nil if this expression does not parse as an function call expression.
 func (e *Expression) AsFunctionCallExpr() *FunctionCallExpr {
 	var found *FunctionCallExpr
 	e.walkChildNodes(func(n *node) {
@@ -250,6 +252,8 @@ func (e *Expression) AsQuotedLiteral() Tokens {
 	}
 }
 
+// AsTupleConsExpr returns the wrapped tuple-construct expression. It returns
+// nil if this expression does not parse as a tuple-construct expression.
 func (e *Expression) AsTupleConsExpr() *TupleConsExpr {
 	var found *TupleConsExpr
 	e.walkChildNodes(func(n *node) {
