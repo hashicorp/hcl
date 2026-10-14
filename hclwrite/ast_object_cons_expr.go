@@ -94,10 +94,41 @@ func (o *ObjectConsExpr) ValueExprFor(key string) *ObjectConsValue {
 	}
 }
 
+// RemoveItem removes the object item for the given key. The given key will
+// only be matched against item keys that are identifiers. Items with a name
+// taken from a variable will not be found.
+//
+// It returns true if an item is removed; else, it returns false.
 func (object *ObjectConsExpr) RemoveItem(key string) bool {
 	node := object.nodeFor(key)
 	if node == nil {
 		return false
+	}
+
+	maybeTokenNode := node.after
+	for maybeTokenNode != nil {
+		toks, ok := maybeTokenNode.content.(Tokens)
+		if !ok {
+			break
+		}
+
+		tokenNode := maybeTokenNode
+		maybeTokenNode = tokenNode.after
+
+		// Unstructured tokens after an item include a comma separator, newlines, and the closing brace.
+		if toks[len(toks)-1].Type == hclsyntax.TokenCBrace {
+			// Keep the closing brace.
+			if object.isSingleLine() {
+				newToks := toks[len(toks)-1:]
+				tokenNode.ReplaceWith(newToks)
+			} else {
+				newToks := Tokens{newlineToken()}
+				newToks = withToken(newToks, toks[len(toks)-1])
+				tokenNode.ReplaceWith(newToks)
+			}
+		} else {
+			tokenNode.Detach()
+		}
 	}
 
 	node.Detach()

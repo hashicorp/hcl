@@ -75,6 +75,124 @@ func TestObjectConsExprItemFor(t *testing.T) {
 	}
 }
 
+func TestObjectConsExprRemoveItem(t *testing.T) {
+	tests := map[string]struct {
+		src       string
+		removeKey string
+		expectOk  bool
+		want      Tokens
+	}{
+		"remove an item": {
+			src:       `a = { hat = "derby" }`,
+			removeKey: "hat",
+			expectOk:  true,
+			want: Tokens{
+				{Type: hclsyntax.TokenOBrace, Bytes: []uint8("{")},
+				{Type: hclsyntax.TokenCBrace, Bytes: []uint8("}")},
+			},
+		},
+		"remove an item that does not exist": {
+			src:       `a = { hat = "derby" }`,
+			removeKey: "bat",
+			expectOk:  false,
+			want: Tokens{
+				{Type: hclsyntax.TokenOBrace, Bytes: []uint8("{")},
+				{Type: hclsyntax.TokenIdent, Bytes: []uint8("hat"), SpacesBefore: 1},
+				{Type: hclsyntax.TokenEqual, Bytes: []uint8("="), SpacesBefore: 1},
+				{Type: hclsyntax.TokenOQuote, Bytes: []uint8(`"`), SpacesBefore: 1},
+				{Type: hclsyntax.TokenQuotedLit, Bytes: []uint8("derby")},
+				{Type: hclsyntax.TokenCQuote, Bytes: []uint8(`"`)},
+				{Type: hclsyntax.TokenCBrace, Bytes: []uint8("}"), SpacesBefore: 1},
+			},
+		},
+		"remove an item after a comma": {
+			src:       `a = { hat = "derby", bat = "fruit bat" }`,
+			removeKey: "bat",
+			expectOk:  true,
+			want: Tokens{
+				{Type: hclsyntax.TokenOBrace, Bytes: []uint8("{")},
+				{Type: hclsyntax.TokenIdent, Bytes: []uint8("hat"), SpacesBefore: 1},
+				{Type: hclsyntax.TokenEqual, Bytes: []uint8("="), SpacesBefore: 1},
+				{Type: hclsyntax.TokenOQuote, Bytes: []uint8(`"`), SpacesBefore: 1},
+				{Type: hclsyntax.TokenQuotedLit, Bytes: []uint8("derby")},
+				{Type: hclsyntax.TokenCQuote, Bytes: []uint8(`"`)},
+				{Type: hclsyntax.TokenComma, Bytes: []uint8(`,`)},
+				{Type: hclsyntax.TokenCBrace, Bytes: []uint8("}"), SpacesBefore: 1},
+			},
+		},
+		"remove an item before a comma": {
+			src:       `a = { bat = "fruit bat", hat = "derby" }`,
+			removeKey: "bat",
+			expectOk:  true,
+			want: Tokens{
+				{Type: hclsyntax.TokenOBrace, Bytes: []uint8("{")},
+				{Type: hclsyntax.TokenIdent, Bytes: []uint8("hat"), SpacesBefore: 1},
+				{Type: hclsyntax.TokenEqual, Bytes: []uint8("="), SpacesBefore: 1},
+				{Type: hclsyntax.TokenOQuote, Bytes: []uint8(`"`), SpacesBefore: 1},
+				{Type: hclsyntax.TokenQuotedLit, Bytes: []uint8("derby")},
+				{Type: hclsyntax.TokenCQuote, Bytes: []uint8(`"`)},
+				{Type: hclsyntax.TokenCBrace, Bytes: []uint8("}"), SpacesBefore: 1},
+			},
+		},
+		"remove comma-terminated last item in a single-line object": {
+			src:       `a = { hat = "derby", bat = "fruit bat", }`,
+			removeKey: "bat",
+			expectOk:  true,
+			want: Tokens{
+				{Type: hclsyntax.TokenOBrace, Bytes: []uint8("{")},
+				{Type: hclsyntax.TokenIdent, Bytes: []uint8("hat"), SpacesBefore: 1},
+				{Type: hclsyntax.TokenEqual, Bytes: []uint8("="), SpacesBefore: 1},
+				{Type: hclsyntax.TokenOQuote, Bytes: []uint8(`"`), SpacesBefore: 1},
+				{Type: hclsyntax.TokenQuotedLit, Bytes: []uint8("derby")},
+				{Type: hclsyntax.TokenCQuote, Bytes: []uint8(`"`)},
+				{Type: hclsyntax.TokenComma, Bytes: []uint8(`,`)},
+				{Type: hclsyntax.TokenCBrace, Bytes: []uint8("}"), SpacesBefore: 1},
+			},
+		},
+		"remove an item with a line comment": {
+			src: `a = {
+			  bat = "fruit bat" // also known as a megabat
+			  hat = "derby"
+			}`,
+			removeKey: "bat",
+			expectOk:  true,
+			want: Tokens{
+				{Type: hclsyntax.TokenOBrace, Bytes: []uint8("{")},
+				{Type: hclsyntax.TokenNewline, Bytes: []uint8("\n")},
+				{Type: hclsyntax.TokenIdent, Bytes: []uint8("hat"), SpacesBefore: 2},
+				{Type: hclsyntax.TokenEqual, Bytes: []uint8("="), SpacesBefore: 1},
+				{Type: hclsyntax.TokenOQuote, Bytes: []uint8(`"`), SpacesBefore: 1},
+				{Type: hclsyntax.TokenQuotedLit, Bytes: []uint8("derby")},
+				{Type: hclsyntax.TokenCQuote, Bytes: []uint8(`"`)},
+				{Type: hclsyntax.TokenNewline, Bytes: []uint8("\n")},
+				{Type: hclsyntax.TokenCBrace, Bytes: []uint8("}"), SpacesBefore: 0},
+			},
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			f, diags := ParseConfig([]byte(tc.src+"\n"), "", hcl.InitialPos)
+			if diags.HasErrors() {
+				t.Fatalf("unexpected parse errors: %s", diags)
+			}
+			obj := f.Body().GetAttribute("a").Expr().AsObjectConsExpr()
+			ok := obj.RemoveItem(tc.removeKey)
+
+			if ok != tc.expectOk {
+				t.Fatalf("oh")
+			}
+
+			got := obj.BuildTokens(nil)
+			format(got)
+			if !reflect.DeepEqual(got, tc.want) {
+				diff := cmp.Diff(tc.want, got)
+				t.Errorf("wrong result\ngot:  %s\nwant: %s\ndiff:\n%s", spew.Sdump(got), spew.Sdump(tc.want), diff)
+			}
+		})
+	}
+}
+
 // New items with keys that need escaping must produce valid HCL whose key
 // evaluates back to the original string, and must be findable again.
 func TestObjectConsExprSetItem_escapedKey(t *testing.T) {
