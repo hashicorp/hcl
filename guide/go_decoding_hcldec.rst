@@ -191,7 +191,7 @@ to learn which plugins are needed, but process the block bodies dynamically:
    }
 
    for _, sc := range c.Services {
-       pluginName := block.Type
+       pluginName := sc.Type
 
        // Totally-hypothetical plugin manager (not part of HCL)
        plugin, err := pluginMgr.GetPlugin(pluginName)
@@ -220,7 +220,7 @@ Variables and Functions
 -----------------------
 
 The final argument to ``hcldec.Decode`` is an expression evaluation context,
-just as with ``gohcl.DecodeBlock``.
+just as with ``gohcl.DecodeBody``.
 
 This object can be constructed using
 :ref:`the gohcl helper function <go-decoding-gohcl-evalcontext>` as before if desired, but
