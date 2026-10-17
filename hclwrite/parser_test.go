@@ -2012,6 +2012,21 @@ func TestParseExpr(t *testing.T) {
 			},
 		},
 		{
+			`# foo
+
+1
+# bar`,
+			TestTreeNode{
+				Type: "Expression",
+				Children: []TestTreeNode{
+					{
+						Type: "Tokens",
+						Val:  "1",
+					},
+				},
+			},
+		},
+		{
 			`{
 				hat.bat = "derby", (cat) = "calico" }`,
 			TestTreeNode{

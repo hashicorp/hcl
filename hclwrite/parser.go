@@ -98,8 +98,9 @@ func parseExpr(src []byte, filename string, start hcl.Pos) (*Expression, hcl.Dia
 		nativeTokens: nativeTokens,
 		writerTokens: writerTokens,
 	}
+	_, within, _ := from.Partition(expr.Range())
 
-	node := parseExpression(expr, from)
+	node := parseExpression(expr, within)
 	return node.content.(*Expression), diags
 }
 
