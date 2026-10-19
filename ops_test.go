@@ -76,10 +76,24 @@ func TestApplyPath(t *testing.T) {
 			`Invalid index: The given key does not identify an element in this collection value: the collection has no elements.`,
 		},
 		{
+			cty.ListValEmpty(cty.String),
+			(cty.Path)(nil).Index(cty.NumberIntVal(1)),
+			cty.NilVal,
+			`Invalid index: The given key does not identify an element in this collection value: the collection has no elements.`,
+		},
+		{
 			cty.ListVal([]cty.Value{
 				cty.StringVal("hello"),
 			}),
 			(cty.Path)(nil).Index(cty.NumberIntVal(1)),
+			cty.NilVal,
+			`Invalid index: The given key does not identify an element in this collection value: the given index is greater than or equal to the length of the collection.`,
+		},
+		{
+			cty.ListVal([]cty.Value{
+				cty.StringVal("hello"),
+			}),
+			(cty.Path)(nil).Index(cty.NumberIntVal(2)),
 			cty.NilVal,
 			`Invalid index: The given key does not identify an element in this collection value: the given index is greater than or equal to the length of the collection.`,
 		},
@@ -149,10 +163,24 @@ func TestApplyPath(t *testing.T) {
 			`Invalid index: The given key does not identify an element in this collection value: the collection has no elements.`,
 		},
 		{
+			cty.EmptyTupleVal,
+			(cty.Path)(nil).Index(cty.NumberIntVal(1)),
+			cty.NilVal,
+			`Invalid index: The given key does not identify an element in this collection value: the collection has no elements.`,
+		},
+		{
 			cty.TupleVal([]cty.Value{
 				cty.StringVal("hello"),
 			}),
 			(cty.Path)(nil).Index(cty.NumberIntVal(1)),
+			cty.NilVal,
+			`Invalid index: The given key does not identify an element in this collection value: the given index is greater than or equal to the length of the collection.`,
+		},
+		{
+			cty.TupleVal([]cty.Value{
+				cty.StringVal("hello"),
+			}),
+			(cty.Path)(nil).Index(cty.NumberIntVal(2)),
 			cty.NilVal,
 			`Invalid index: The given key does not identify an element in this collection value: the given index is greater than or equal to the length of the collection.`,
 		},
