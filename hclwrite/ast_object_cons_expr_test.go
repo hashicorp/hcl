@@ -91,6 +91,19 @@ func TestObjectConsExprRemoveItem(t *testing.T) {
 				{Type: hclsyntax.TokenCBrace, Bytes: []uint8("}")},
 			},
 		},
+		"remove an item from a multi-line object": {
+			src: `a = {
+				hat = "derby"
+			}`,
+			removeKey: "hat",
+			expectOk:  true,
+			want: Tokens{
+				{Type: hclsyntax.TokenOBrace, Bytes: []uint8("{")},
+				{Type: hclsyntax.TokenNewline, Bytes: []uint8("\n")},
+				{Type: hclsyntax.TokenNewline, Bytes: []uint8("\n")},
+				{Type: hclsyntax.TokenCBrace, Bytes: []uint8("}")},
+			},
+		},
 		"remove an item that does not exist": {
 			src:       `a = { hat = "derby" }`,
 			removeKey: "bat",
@@ -116,7 +129,7 @@ func TestObjectConsExprRemoveItem(t *testing.T) {
 				{Type: hclsyntax.TokenOQuote, Bytes: []uint8(`"`), SpacesBefore: 1},
 				{Type: hclsyntax.TokenQuotedLit, Bytes: []uint8("derby")},
 				{Type: hclsyntax.TokenCQuote, Bytes: []uint8(`"`)},
-				{Type: hclsyntax.TokenComma, Bytes: []uint8(`,`)},
+				{Type: hclsyntax.TokenComma, Bytes: []uint8(",")},
 				{Type: hclsyntax.TokenCBrace, Bytes: []uint8("}"), SpacesBefore: 1},
 			},
 		},
@@ -166,6 +179,26 @@ func TestObjectConsExprRemoveItem(t *testing.T) {
 				{Type: hclsyntax.TokenCQuote, Bytes: []uint8(`"`)},
 				{Type: hclsyntax.TokenNewline, Bytes: []uint8("\n")},
 				{Type: hclsyntax.TokenCBrace, Bytes: []uint8("}"), SpacesBefore: 0},
+			},
+		},
+		"remove an item between two items": {
+			src:       `a = { cat = "calico", bat = "fruit bat", hat = "derby" }`,
+			removeKey: "bat",
+			expectOk:  true,
+			want: Tokens{
+				{Type: hclsyntax.TokenOBrace, Bytes: []uint8("{")},
+				{Type: hclsyntax.TokenIdent, Bytes: []uint8("cat"), SpacesBefore: 1},
+				{Type: hclsyntax.TokenEqual, Bytes: []uint8("="), SpacesBefore: 1},
+				{Type: hclsyntax.TokenOQuote, Bytes: []uint8(`"`), SpacesBefore: 1},
+				{Type: hclsyntax.TokenQuotedLit, Bytes: []uint8("calico")},
+				{Type: hclsyntax.TokenCQuote, Bytes: []uint8(`"`)},
+				{Type: hclsyntax.TokenComma, Bytes: []uint8(",")},
+				{Type: hclsyntax.TokenIdent, Bytes: []uint8("hat"), SpacesBefore: 1},
+				{Type: hclsyntax.TokenEqual, Bytes: []uint8("="), SpacesBefore: 1},
+				{Type: hclsyntax.TokenOQuote, Bytes: []uint8(`"`), SpacesBefore: 1},
+				{Type: hclsyntax.TokenQuotedLit, Bytes: []uint8("derby")},
+				{Type: hclsyntax.TokenCQuote, Bytes: []uint8(`"`)},
+				{Type: hclsyntax.TokenCBrace, Bytes: []uint8("}"), SpacesBefore: 1},
 			},
 		},
 	}
