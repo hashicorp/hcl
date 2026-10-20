@@ -194,3 +194,48 @@ func TestPosScanner(t *testing.T) {
 		})
 	}
 }
+
+func TestPosScannerFragment(t *testing.T) {
+	tests := map[string]struct {
+		Input    string
+		Start    Pos
+		Want     []Range
+		WantToks [][]byte
+	}{
+		"single line": {
+			"hello",
+			Pos{Byte: 10, Line: 2, Column: 1},
+			[]Range{
+				{
+					Start: Pos{Byte: 10, Line: 2, Column: 1},
+					End:   Pos{Byte: 15, Line: 2, Column: 6},
+				},
+			},
+			[][]byte{
+				[]byte("hello"),
+			},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			src := []byte(test.Input)
+			sc := NewRangeScannerFragment(src, "", test.Start, bufio.ScanLines)
+			got := make([]Range, 0)
+			gotToks := make([][]byte, 0)
+			for sc.Scan() {
+				got = append(got, sc.Range())
+				gotToks = append(gotToks, sc.Bytes())
+			}
+			if sc.Err() != nil {
+				t.Fatalf("unexpected error: %s", sc.Err())
+			}
+			if !reflect.DeepEqual(got, test.Want) {
+				t.Errorf("incorrect ranges\ngot: %swant: %s", spew.Sdump(got), spew.Sdump(test.Want))
+			}
+			if !reflect.DeepEqual(gotToks, test.WantToks) {
+				t.Errorf("incorrect tokens\ngot: %swant: %s", spew.Sdump(gotToks), spew.Sdump(test.WantToks))
+			}
+		})
+	}
+}
