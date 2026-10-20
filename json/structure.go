@@ -557,6 +557,52 @@ func (e *expression) Variables() []hcl.Traversal {
 	return vars
 }
 
+func (e *expression) Functions() []hcl.Traversal {
+	// This is based off of the logic in Variables()
+	var funcs []hcl.Traversal
+
+	switch v := e.src.(type) {
+	case *stringVal:
+		templateSrc := v.Value
+		expr, diags := hclsyntax.ParseTemplate(
+			[]byte(templateSrc),
+			v.SrcRange.Filename,
+
+			// This won't produce _exactly_ the right result, since
+			// the hclsyntax parser can't "see" any escapes we removed
+			// while parsing JSON, but it's better than nothing.
+			hcl.Pos{
+				Line: v.SrcRange.Start.Line,
+
+				// skip over the opening quote mark
+				Byte:   v.SrcRange.Start.Byte + 1,
+				Column: v.SrcRange.Start.Column + 1,
+			},
+		)
+		if diags.HasErrors() {
+			return funcs
+		}
+		if fexpr, ok := expr.(hcl.ExpressionWithFunctions); ok {
+			return fexpr.Functions()
+		}
+	case *arrayVal:
+		for _, jsonVal := range v.Values {
+			funcs = append(funcs, (&expression{src: jsonVal}).Functions()...)
+		}
+	case *objectVal:
+		for _, jsonAttr := range v.Attrs {
+			keyExpr := &stringVal{ // we're going to treat key as an expression in this context
+				Value:    jsonAttr.Name,
+				SrcRange: jsonAttr.NameRange,
+			}
+			funcs = append(funcs, (&expression{src: keyExpr}).Functions()...)
+			funcs = append(funcs, (&expression{src: jsonAttr.Value}).Functions()...)
+		}
+	}
+
+	return funcs
+}
+
 func (e *expression) Range() hcl.Range {
 	return e.src.Range()
 }
