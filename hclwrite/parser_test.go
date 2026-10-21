@@ -1202,7 +1202,7 @@ func TestParse(t *testing.T) {
 		},
 		{
 			`a = {
-				hat = "derby", (cat) = "calico" }`,
+				hat = "bowler", (cat) = "calico" }`,
 			TestTreeNode{
 				Type: "Body",
 				Children: []TestTreeNode{
@@ -1231,12 +1231,12 @@ func TestParse(t *testing.T) {
 												Val:  " {",
 											},
 											{
+												Type: "Tokens",
+												Val:  "\n",
+											},
+											{
 												Type: "ObjectConsItem",
 												Children: []TestTreeNode{
-													{
-														Type: "Tokens",
-														Val:  "\n",
-													},
 													{
 														Type: "ObjectConsKeyExpr",
 														Children: []TestTreeNode{
@@ -1258,7 +1258,7 @@ func TestParse(t *testing.T) {
 																Children: []TestTreeNode{
 																	{
 																		Type: "quoted",
-																		Val:  ` "derby"`,
+																		Val:  ` "bowler"`,
 																	},
 																},
 															},
@@ -1267,12 +1267,12 @@ func TestParse(t *testing.T) {
 												},
 											},
 											{
+												Type: "Tokens",
+												Val:  ",",
+											},
+											{
 												Type: "ObjectConsItem",
 												Children: []TestTreeNode{
-													{
-														Type: "Tokens",
-														Val:  ",",
-													},
 													{
 														Type: "ObjectConsKeyExpr",
 														Children: []TestTreeNode{
@@ -1343,7 +1343,7 @@ func TestParse(t *testing.T) {
 		},
 		{
 			`a = {
-				hat = "derby" // a fancy hat
+				hat = "top hat" // a fancy hat
 		   	    (cat) = "calico"
 			}`,
 			TestTreeNode{
@@ -1374,12 +1374,12 @@ func TestParse(t *testing.T) {
 												Val:  " {",
 											},
 											{
+												Type: "Tokens",
+												Val:  "\n",
+											},
+											{
 												Type: "ObjectConsItem",
 												Children: []TestTreeNode{
-													{
-														Type: "Tokens",
-														Val:  "\n",
-													},
 													{
 														Type: "ObjectConsKeyExpr",
 														Children: []TestTreeNode{
@@ -1401,7 +1401,7 @@ func TestParse(t *testing.T) {
 																Children: []TestTreeNode{
 																	{
 																		Type: "quoted",
-																		Val:  ` "derby"`,
+																		Val:  ` "top hat"`,
 																	},
 																},
 															},
@@ -1410,12 +1410,12 @@ func TestParse(t *testing.T) {
 												},
 											},
 											{
+												Type: "Tokens",
+												Val:  " // a fancy hat\n",
+											},
+											{
 												Type: "ObjectConsItem",
 												Children: []TestTreeNode{
-													{
-														Type: "Tokens",
-														Val:  " // a fancy hat\n",
-													},
 													{
 														Type: "ObjectConsKeyExpr",
 														Children: []TestTreeNode{
@@ -1482,7 +1482,7 @@ func TestParse(t *testing.T) {
 		{
 			`a = {
   hat = {
-	style = "derby",
+	style = "kufi",
 	color = (variable)
   },
   cat = "calico"
@@ -1501,10 +1501,10 @@ func TestParse(t *testing.T) {
 								Type: "ObjectConsExpr",
 								Children: []TestTreeNode{
 									{Type: "Tokens", Val: " {"},
+									{Type: "Tokens", Val: "\n"},
 									{
 										Type: "ObjectConsItem",
 										Children: []TestTreeNode{
-											{Type: "Tokens", Val: "\n"},
 											{
 												Type: "ObjectConsKeyExpr",
 												Children: []TestTreeNode{{
@@ -1521,10 +1521,10 @@ func TestParse(t *testing.T) {
 														Type: "ObjectConsExpr",
 														Children: []TestTreeNode{
 															{Type: "Tokens", Val: " {"},
+															{Type: "Tokens", Val: "\n"},
 															{
 																Type: "ObjectConsItem",
 																Children: []TestTreeNode{
-																	{Type: "Tokens", Val: "\n"},
 																	{
 																		Type: "ObjectConsKeyExpr",
 																		Children: []TestTreeNode{
@@ -1537,16 +1537,16 @@ func TestParse(t *testing.T) {
 																		Children: []TestTreeNode{
 																			{
 																				Type:     "Expression",
-																				Children: []TestTreeNode{{Type: "quoted", Val: ` "derby"`}},
+																				Children: []TestTreeNode{{Type: "quoted", Val: ` "kufi"`}},
 																			},
 																		},
 																	},
 																},
 															},
+															{Type: "Tokens", Val: ",\n"},
 															{
 																Type: "ObjectConsItem",
 																Children: []TestTreeNode{
-																	{Type: "Tokens", Val: ",\n"},
 																	{
 																		Type: "ObjectConsKeyExpr",
 																		Children: []TestTreeNode{{
@@ -1580,10 +1580,10 @@ func TestParse(t *testing.T) {
 											},
 										},
 									},
+									{Type: "Tokens", Val: ",\n"},
 									{
 										Type: "ObjectConsItem",
 										Children: []TestTreeNode{
-											{Type: "Tokens", Val: ",\n"},
 											{
 												Type: "ObjectConsKeyExpr",
 												Children: []TestTreeNode{{
@@ -1642,12 +1642,12 @@ func TestParse(t *testing.T) {
 												Val:  " {",
 											},
 											{
+												Type: "Tokens",
+												Val:  "\n",
+											},
+											{
 												Type: "ObjectConsItem",
 												Children: []TestTreeNode{
-													{
-														Type: "Tokens",
-														Val:  "\n",
-													},
 													{
 														Type: "ObjectConsKeyExpr",
 														Children: []TestTreeNode{
@@ -1700,7 +1700,7 @@ func TestParse(t *testing.T) {
 		},
 		{
 			`a = {
-				hat.bat = "derby", (cat) = "calico" }`,
+				hat.bat = "stetson", (cat) = "calico" }`,
 			TestTreeNode{
 				Type: "Body",
 				Children: []TestTreeNode{
@@ -1729,12 +1729,12 @@ func TestParse(t *testing.T) {
 												Val:  " {",
 											},
 											{
+												Type: "Tokens",
+												Val:  "\n",
+											},
+											{
 												Type: "ObjectConsItem",
 												Children: []TestTreeNode{
-													{
-														Type: "Tokens",
-														Val:  "\n",
-													},
 													{
 														Type: "ObjectConsKeyExpr",
 														Children: []TestTreeNode{
@@ -1784,7 +1784,7 @@ func TestParse(t *testing.T) {
 																Children: []TestTreeNode{
 																	{
 																		Type: "quoted",
-																		Val:  ` "derby"`,
+																		Val:  ` "stetson"`,
 																	},
 																},
 															},
@@ -1793,12 +1793,12 @@ func TestParse(t *testing.T) {
 												},
 											},
 											{
+												Type: "Tokens",
+												Val:  ",",
+											},
+											{
 												Type: "ObjectConsItem",
 												Children: []TestTreeNode{
-													{
-														Type: "Tokens",
-														Val:  ",",
-													},
 													{
 														Type: "ObjectConsKeyExpr",
 														Children: []TestTreeNode{
@@ -2028,7 +2028,7 @@ func TestParseExpr(t *testing.T) {
 		},
 		{
 			`{
-				hat.bat = "derby", (cat) = "calico" }`,
+				hat.bat = "toque", (cat) = "calico" }`,
 			TestTreeNode{
 				Type: "Expression",
 				Children: []TestTreeNode{
@@ -2040,12 +2040,12 @@ func TestParseExpr(t *testing.T) {
 								Val:  "{",
 							},
 							{
+								Type: "Tokens",
+								Val:  "\n",
+							},
+							{
 								Type: "ObjectConsItem",
 								Children: []TestTreeNode{
-									{
-										Type: "Tokens",
-										Val:  "\n",
-									},
 									{
 										Type: "ObjectConsKeyExpr",
 										Children: []TestTreeNode{
@@ -2095,7 +2095,7 @@ func TestParseExpr(t *testing.T) {
 												Children: []TestTreeNode{
 													{
 														Type: "quoted",
-														Val:  ` "derby"`,
+														Val:  ` "toque"`,
 													},
 												},
 											},
@@ -2104,12 +2104,12 @@ func TestParseExpr(t *testing.T) {
 								},
 							},
 							{
+								Type: "Tokens",
+								Val:  ",",
+							},
+							{
 								Type: "ObjectConsItem",
 								Children: []TestTreeNode{
-									{
-										Type: "Tokens",
-										Val:  ",",
-									},
 									{
 										Type: "ObjectConsKeyExpr",
 										Children: []TestTreeNode{
@@ -2173,7 +2173,7 @@ func TestParseExpr(t *testing.T) {
 		},
 		{
 			`{
-				hat = "derby" // a fancy hat
+				hat = "party hat" // a fancy hat
 				(cat) = "calico"
 			 }`,
 			TestTreeNode{
@@ -2187,13 +2187,12 @@ func TestParseExpr(t *testing.T) {
 								Val:  "{",
 							},
 							{
+								Type: "Tokens",
+								Val:  "\n",
+							},
+							{
 								Type: "ObjectConsItem",
 								Children: []TestTreeNode{
-									{
-										Type: "Tokens",
-										Val:  "\n",
-									},
-
 									{
 
 										Type: "ObjectConsKeyExpr",
@@ -2213,7 +2212,7 @@ func TestParseExpr(t *testing.T) {
 												Children: []TestTreeNode{
 													{
 														Type: "quoted",
-														Val:  ` "derby"`,
+														Val:  ` "party hat"`,
 													},
 												},
 											},
@@ -2222,12 +2221,12 @@ func TestParseExpr(t *testing.T) {
 								},
 							},
 							{
+								Type: "Tokens",
+								Val:  " // a fancy hat\n",
+							},
+							{
 								Type: "ObjectConsItem",
 								Children: []TestTreeNode{
-									{
-										Type: "Tokens",
-										Val:  " // a fancy hat\n",
-									},
 									{
 										Type: "ObjectConsKeyExpr",
 										Children: []TestTreeNode{
@@ -2287,7 +2286,7 @@ func TestParseExpr(t *testing.T) {
 		{
 			`{
   hat = {
-	style = "derby",
+	style = "beanie",
 	color = (variable)
   },
   cat = "calico"
@@ -2298,10 +2297,10 @@ func TestParseExpr(t *testing.T) {
 					Type: "ObjectConsExpr",
 					Children: []TestTreeNode{
 						{Type: "Tokens", Val: "{"},
+						{Type: "Tokens", Val: "\n"},
 						{
 							Type: "ObjectConsItem",
 							Children: []TestTreeNode{
-								{Type: "Tokens", Val: "\n"},
 								{
 									Type: "ObjectConsKeyExpr",
 									Children: []TestTreeNode{{
@@ -2318,10 +2317,10 @@ func TestParseExpr(t *testing.T) {
 											Type: "ObjectConsExpr",
 											Children: []TestTreeNode{
 												{Type: "Tokens", Val: " {"},
+												{Type: "Tokens", Val: "\n"},
 												{
 													Type: "ObjectConsItem",
 													Children: []TestTreeNode{
-														{Type: "Tokens", Val: "\n"},
 														{
 															Type: "ObjectConsKeyExpr",
 															Children: []TestTreeNode{
@@ -2334,16 +2333,16 @@ func TestParseExpr(t *testing.T) {
 															Children: []TestTreeNode{
 																{
 																	Type:     "Expression",
-																	Children: []TestTreeNode{{Type: "quoted", Val: ` "derby"`}},
+																	Children: []TestTreeNode{{Type: "quoted", Val: ` "beanie"`}},
 																},
 															},
 														},
 													},
 												},
+												{Type: "Tokens", Val: ",\n"},
 												{
 													Type: "ObjectConsItem",
 													Children: []TestTreeNode{
-														{Type: "Tokens", Val: ",\n"},
 														{
 															Type: "ObjectConsKeyExpr",
 															Children: []TestTreeNode{{
@@ -2377,10 +2376,10 @@ func TestParseExpr(t *testing.T) {
 								},
 							},
 						},
+						{Type: "Tokens", Val: ",\n"},
 						{
 							Type: "ObjectConsItem",
 							Children: []TestTreeNode{
-								{Type: "Tokens", Val: ",\n"},
 								{
 									Type: "ObjectConsKeyExpr",
 									Children: []TestTreeNode{{
@@ -2406,7 +2405,7 @@ func TestParseExpr(t *testing.T) {
 		},
 		{
 			`{
-				"hat" = "derby" }`,
+				"hat" = "bonnet" }`,
 			TestTreeNode{
 				Type: "Expression",
 				Children: []TestTreeNode{
@@ -2418,12 +2417,12 @@ func TestParseExpr(t *testing.T) {
 								Val:  "{",
 							},
 							{
+								Type: "Tokens",
+								Val:  "\n",
+							},
+							{
 								Type: "ObjectConsItem",
 								Children: []TestTreeNode{
-									{
-										Type: "Tokens",
-										Val:  "\n",
-									},
 									{
 										Type: "ObjectConsKeyExpr",
 										Children: []TestTreeNode{
@@ -2450,7 +2449,7 @@ func TestParseExpr(t *testing.T) {
 												Children: []TestTreeNode{
 													{
 														Type: "quoted",
-														Val:  ` "derby"`,
+														Val:  ` "bonnet"`,
 													},
 												},
 											},

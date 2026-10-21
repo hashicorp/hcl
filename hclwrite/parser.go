@@ -496,18 +496,19 @@ func parseObjectConsExpr(nativeExpr *hclsyntax.ObjectConsExpr, from inputTokens)
 	children.AppendUnstructuredTokens(open.writerTokens)
 
 	for _, nativeItem := range nativeExpr.Items {
-		item := newObjectConsItem()
-		value := newObjectConsValue()
-
 		nativeKeyExpr := nativeItem.KeyExpr.(*hclsyntax.ObjectConsKeyExpr)
 
 		before, keyTokens, from = from.Partition(nativeKeyExpr.Range())
-		item.children.AppendUnstructuredTokens(before.writerTokens)
+		children.AppendUnstructuredTokens(before.writerTokens)
+
+		item := newObjectConsItem()
 		item.key = parseObjectConsKeyExpr(nativeKeyExpr, keyTokens)
 		item.children.AppendNode(item.key)
 
 		before, valueTokens, from = from.Partition(nativeItem.ValueExpr.Range())
 		item.children.AppendUnstructuredTokens(before.writerTokens)
+
+		value := newObjectConsValue()
 		value.expr = parseExpression(nativeItem.ValueExpr, valueTokens)
 		value.children.AppendNode(value.expr)
 		item.value = item.children.Append(value)
