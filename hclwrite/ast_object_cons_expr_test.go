@@ -553,6 +553,42 @@ func TestObjectConsExprSetItemValue(t *testing.T) {
 	}
 }
 
+func TestObjectConsExprSetItemValue_matchesParsedTree(t *testing.T) {
+	file := NewFile()
+	e, diags := ParseExpression([]byte("{}"), "", hcl.InitialPos)
+	if len(diags) != 0 {
+		for _, diag := range diags {
+			t.Logf("- %s", diag.Error())
+		}
+		t.Fatalf("unexpected diagnostics")
+	}
+
+	file.Body().SetAttribute("a", e)
+	e.AsObjectConsExpr().SetItemValue("hat", cty.NumberIntVal(int64(1)))
+	e.AsObjectConsExpr().SetItemValue("bat", cty.NumberIntVal(int64(2)))
+	got := makeTestTree(file.body)
+
+	parsed, diags := ParseConfig([]byte("a={hat=1,bat=3}\n"), "", hcl.InitialPos)
+	if len(diags) != 0 {
+		for _, diag := range diags {
+			t.Logf("- %s", diag.Error())
+		}
+		t.Fatalf("unexpected diagnostics")
+	}
+
+	want := makeTestTree(parsed.body)
+
+	if !cmp.Equal(got, want) {
+		diff := cmp.Diff(got, want)
+		t.Errorf(
+			"wrong result\n\ngot:\n%s\nwant:%s\n\ndiff:\n%s",
+			spew.Sdump(got),
+			spew.Sdump(want),
+			diff,
+		)
+	}
+}
+
 func TestObjectConsExprSetItemTraversal(t *testing.T) {
 	tests := []struct {
 		src       string
