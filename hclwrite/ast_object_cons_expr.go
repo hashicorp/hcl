@@ -94,6 +94,48 @@ func (o *ObjectConsExpr) ValueExprFor(key string) *ObjectConsValue {
 	}
 }
 
+// RemoveItem removes the object item for the given key. The given key will
+// only be matched against item keys that are identifiers. Items with a name
+// taken from a variable will not be found.
+//
+// It returns true if an item is removed; else, it returns false.
+func (object *ObjectConsExpr) RemoveItem(key string) bool {
+	node := object.nodeFor(key)
+	if node == nil {
+		return false
+	}
+
+	maybeTokenNode := node.after
+	for maybeTokenNode != nil {
+		toks, ok := maybeTokenNode.content.(Tokens)
+		if !ok {
+			break
+		}
+
+		tokenNode := maybeTokenNode
+		maybeTokenNode = tokenNode.after
+
+		// Unstructured tokens after an item include a comma separator, newlines, and the closing brace.
+		if toks[len(toks)-1].Type == hclsyntax.TokenCBrace {
+			// Keep the closing brace.
+			if object.isSingleLine() {
+				newToks := toks[len(toks)-1:]
+				tokenNode.ReplaceWith(newToks)
+			} else {
+				newToks := Tokens{newlineToken()}
+				newToks = withToken(newToks, toks[len(toks)-1])
+				tokenNode.ReplaceWith(newToks)
+			}
+		} else {
+			tokenNode.Detach()
+		}
+	}
+
+	node.Detach()
+	object.items.Remove(node)
+	return true
+}
+
 // SetItem either replaces the expression of an existing item of the given
 // name or adds a new item definition to the end of the object, using the given
 // expression.
@@ -221,6 +263,34 @@ func (object *ObjectConsExpr) SetItemTraversal(key string, traversal hcl.Travers
 func (object *ObjectConsExpr) SetItemValue(key string, val cty.Value) (*ObjectConsKeyExpr, *ObjectConsValue) {
 	expr := NewExpressionLiteral(val)
 	return object.SetItem(key, expr)
+}
+
+// nodeFor finds a node for an object item that matches the given key and returns the node.
+//
+// This is limited to items that have an identifier key. Items with a name
+// taken from a variable will not be found.
+//
+// Example: { hat = "derby", (cat) = "calico" }
+//
+// nodeFor("hat") returns the tree node for the item `hat = "derby"`;
+// however, nodeFor cannot locate the cat.
+func (o *ObjectConsExpr) nodeFor(key string) *node {
+	for _, n := range o.items.List() {
+		if item, ok := n.content.(*ObjectConsItem); ok {
+			k := item.KeyExpr()
+			unwrapped := unwrapUntilType[*identifier](k.wrapped)
+			if unwrapped == nil {
+				continue
+			}
+
+			identifier := unwrapped.content.(*identifier)
+			if identifier.hasName(key) {
+				return n
+			}
+		}
+	}
+
+	return nil
 }
 
 // ObjectConsItem represents the content of a single item in an object-construct expression.
