@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"io"
 	"sort"
+	"unicode"
+	"unicode/utf8"
 
 	wordwrap "github.com/mitchellh/go-wordwrap"
 	"github.com/zclconf/go-cty/cty"
@@ -130,14 +132,14 @@ func (w *diagnosticTextWriter) WriteDiagnostic(diag *Diagnostic) error {
 
 				beforeRange, highlightedRange, afterRange := lineRange.PartitionAround(highlightRange)
 				if highlightedRange.Empty() {
-					_, err = fmt.Fprintf(w.wr, "%4d: %s\n", lineRange.Start.Line, sc.Bytes())
+					_, err = fmt.Fprintf(w.wr, "%4d: %s\n", lineRange.Start.Line, escapeControlChars(sc.Bytes()))
 					if err != nil {
 						return fmt.Errorf("write failed: %w", err)
 					}
 				} else {
-					before := beforeRange.SliceBytes(src)
-					highlighted := highlightedRange.SliceBytes(src)
-					after := afterRange.SliceBytes(src)
+					before := escapeControlChars(beforeRange.SliceBytes(src))
+					highlighted := escapeControlChars(highlightedRange.SliceBytes(src))
+					after := escapeControlChars(afterRange.SliceBytes(src))
 					_, err = fmt.Fprintf(
 						w.wr, "%4d: %s%s%s%s%s\n",
 						lineRange.Start.Line,
@@ -345,4 +347,30 @@ func contextString(file *File, offset int) string {
 		return cser.ContextString(offset)
 	}
 	return ""
+}
+
+// escapeControlChars returns the given source snippet with any control
+// characters other than tab, and any bytes that are not valid UTF-8, replaced
+// by a visible escape sequence. The source being reported on may come from
+// an untrusted file, and so writing it verbatim could allow it to inject
+// terminal control sequences into the diagnostic output.
+func escapeControlChars(src []byte) []byte {
+	var buf []byte
+	for i := 0; i < len(src); {
+		r, size := utf8.DecodeRune(src[i:])
+		switch {
+		case r == utf8.RuneError && size == 1:
+			buf = fmt.Appendf(buf, "\\x%02x", src[i])
+		case r != '\t' && unicode.IsControl(r):
+			if r < utf8.RuneSelf {
+				buf = fmt.Appendf(buf, "\\x%02x", r)
+			} else {
+				buf = fmt.Appendf(buf, "\\u%04x", r)
+			}
+		default:
+			buf = append(buf, src[i:i+size]...)
+		}
+		i += size
+	}
+	return buf
 }

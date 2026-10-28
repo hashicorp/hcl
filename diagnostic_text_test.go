@@ -232,6 +232,45 @@ and an evalcontext.
 	}
 }
 
+func TestDiagnosticTextWriterControlChars(t *testing.T) {
+	// Control characters in the source code must not be written verbatim,
+	// because they could inject terminal escape sequences into the output.
+	src := "foo = \"\x1b]0;title\x07\" # \x1b[2J\x9b\u009b\tok\nbar = 2\n"
+	files := map[string]*File{
+		"": {
+			Bytes: []byte(src),
+			Nav:   &diagnosticTestNav{},
+		},
+	}
+	diag := &Diagnostic{
+		Severity: DiagError,
+		Summary:  "Bad thing",
+		Subject: &Range{
+			Start: Pos{Byte: 6, Column: 7, Line: 1},
+			End:   Pos{Byte: 18, Column: 19, Line: 1},
+		},
+		Context: &Range{
+			Start: Pos{Byte: 0, Column: 1, Line: 1},
+			End:   Pos{Byte: 39, Column: 7, Line: 2},
+		},
+	}
+
+	bwr := &bytes.Buffer{}
+	dwr := NewDiagnosticTextWriter(bwr, files, 40, true)
+	err := dwr.WriteDiagnostic(diag)
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+	got := bwr.String()
+	want := "\x1b[31mError\x1b[0m: Bad thing\n\n" +
+		"  on  line 1, in hardcoded-context:\n" +
+		"   1: foo = \x1b[1;4m\"\\x1b]0;title\\x07\"\x1b[0m # \\x1b[2J\\x9b\\u009b\tok\n" +
+		"   2: bar = 2\n\n"
+	if got != want {
+		t.Errorf("wrong result\n\ngot:  %q\nwant: %q", got, want)
+	}
+}
+
 const testDiagnosticTextWriterSource = `foo = 1
 bar = 2
 baz = 3
