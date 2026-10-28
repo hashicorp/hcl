@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/j178/prek/main/prek-hooks.schema.json
+- id: hclfmt
+  name: hclfmt
+  language: golang
+  types: [hcl]
+  pass_filenames: true
+  entry: hclfmt -w
