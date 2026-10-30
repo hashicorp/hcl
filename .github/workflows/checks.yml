@@ -9,17 +9,14 @@ jobs:
   unit_tests:
     strategy:
       matrix:
-        include:
-          - runs-on: ubuntu-latest
-            target: linux_amd64
-          - runs-on: windows-latest
-            target: windows_amd64
-          - runs-on: macos-latest
-            target: darwin_amd64
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
       fail-fast: false
 
-    name: "Unit Tests on ${{ matrix.target }}"
-    runs-on: "${{ matrix.runs-on }}"
+    name: "Unit Tests"
+    runs-on: "${{ matrix.os }}"
     steps:
       - name: "Disable git crlf conversions"
         if: ${{ runner.os == 'Windows' }}
@@ -44,7 +41,7 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           path: coverage.out
-          name: coverage-report-${{matrix.target}}
+          name: coverage-report-${{ matrix.os }}
       - name: Display coverage report # displayed only for linux and macOS
         if: ${{runner.os != 'Windows'}}
         run: go tool cover -func=coverage.out
