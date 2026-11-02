@@ -9,17 +9,18 @@ jobs:
   unit_tests:
     strategy:
       matrix:
-        include:
-          - runs-on: ubuntu-latest
-            target: linux_amd64
-          - runs-on: windows-latest
-            target: windows_amd64
-          - runs-on: macos-latest
-            target: darwin_amd64
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+        go:
+          - minimum
+          - oldstable
+          - stable
       fail-fast: false
 
-    name: "Unit Tests on ${{ matrix.target }}"
-    runs-on: "${{ matrix.runs-on }}"
+    name: "Unit Tests"
+    runs-on: "${{ matrix.os }}"
     steps:
       - name: "Disable git crlf conversions"
         if: ${{ runner.os == 'Windows' }}
@@ -31,10 +32,16 @@ jobs:
           git config --global core.autocrlf false
       - name: "Fetch source code"
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: Install Go
+      - name: Install minimum Go
+        if: matrix.go == 'minimum'
         uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
         with:
           go-version-file: go.mod
+      - name: Install Go
+        if: matrix.go != 'minimum'
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version: ${{ matrix.go }}
       - name: Go test
         run: |
           go test -v -race -coverprofile="raw-coverage.out" ./... -coverpkg=./...
@@ -44,7 +51,7 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           path: coverage.out
-          name: coverage-report-${{matrix.target}}
+          name: coverage-report-${{ matrix.os }}
       - name: Display coverage report # displayed only for linux and macOS
         if: ${{runner.os != 'Windows'}}
         run: go tool cover -func=coverage.out
