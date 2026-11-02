@@ -763,27 +763,42 @@ func meldConsecutiveStringLiterals(parts *templateParts) {
 		return
 	}
 
-	// Loop over all tokens starting at the second element, as we want to join
-	// pairs of consecutive string literals.
-	i := 1
-	for i < len(parts.Tokens) {
-		if prevLiteral, ok := parts.Tokens[i-1].(*templateLiteralToken); ok {
-			if literal, ok := parts.Tokens[i].(*templateLiteralToken); ok {
-				// The current and previous tokens are both literals: combine
-				prevLiteral.Val = prevLiteral.Val + literal.Val
-				prevLiteral.SrcRange.End = literal.SrcRange.End
-
-				// Remove the current token from the slice
-				parts.Tokens = append(parts.Tokens[:i], parts.Tokens[i+1:]...)
-
-				// Continue without moving forward in the slice
-				continue
-			}
+	// Compact the tokens in place, combining each run of consecutive string
+	// literals into the first literal of the run. Each run is joined in a
+	// single pass so that the cost stays linear in the size of the template,
+	// even when it has many literal tokens in a row (one per heredoc line, for
+	// example).
+	tokens := parts.Tokens[:0]
+	for i := 0; i < len(parts.Tokens); {
+		first, ok := parts.Tokens[i].(*templateLiteralToken)
+		if !ok {
+			tokens = append(tokens, parts.Tokens[i])
+			i++
+			continue
 		}
 
-		// Try the next pair of tokens
-		i++
+		// Find the end of the run of literals that starts at i
+		j := i + 1
+		for j < len(parts.Tokens) {
+			if _, ok := parts.Tokens[j].(*templateLiteralToken); !ok {
+				break
+			}
+			j++
+		}
+
+		if j-i > 1 {
+			var buf strings.Builder
+			for _, tok := range parts.Tokens[i:j] {
+				buf.WriteString(tok.(*templateLiteralToken).Val)
+			}
+			first.Val = buf.String()
+			first.SrcRange.End = parts.Tokens[j-1].(*templateLiteralToken).SrcRange.End
+		}
+
+		tokens = append(tokens, first)
+		i = j
 	}
+	parts.Tokens = tokens
 }
 
 type templateParts struct {

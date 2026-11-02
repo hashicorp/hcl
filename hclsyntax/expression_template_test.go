@@ -1,9 +1,10 @@
-// Copyright IBM Corp. 2014, 2025
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
 
 package hclsyntax
 
 import (
+	"runtime"
 	"strings"
 	"testing"
 
@@ -496,6 +497,58 @@ func TestTemplateExprIsStringLiteral(t *testing.T) {
 				if got != want {
 					t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, want)
 				}
+			}
+		})
+	}
+}
+
+func TestTemplateExprManyLiterals(t *testing.T) {
+	// Each "$" in a quoted string and each line of a heredoc is scanned as a
+	// separate literal token, and the parser then combines consecutive
+	// literals into one. That must take time and memory linear in the size
+	// of the template, rather than quadratic in the number of tokens.
+	const n = 80000
+	tests := map[string]struct {
+		src  string
+		want string
+	}{
+		"quoted": {
+			"a = \"" + strings.Repeat("$", n) + "\"\n",
+			strings.Repeat("$", n),
+		},
+		"heredoc": {
+			"a = <<EOT\n" + strings.Repeat("x\n", n/2) + "EOT\n",
+			strings.Repeat("x\n", n/2),
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			var before, after runtime.MemStats
+			runtime.ReadMemStats(&before)
+			f, diags := ParseConfig([]byte(test.src), "", hcl.InitialPos)
+			runtime.ReadMemStats(&after)
+			if len(diags) != 0 {
+				t.Fatalf("unexpected diags: %s", diags.Error())
+			}
+
+			// Combining the literals one pair at a time allocates gigabytes
+			// for this input, while a linear parse needs a small multiple of
+			// the source size.
+			got, limit := after.TotalAlloc-before.TotalAlloc, uint64(len(test.src))*4096
+			if got > limit {
+				t.Errorf("parsing %d bytes allocated %d bytes; want at most %d", len(test.src), got, limit)
+			}
+
+			expr := f.Body.(*Body).Attributes["a"].Expr.(*TemplateExpr)
+			if len(expr.Parts) != 1 {
+				t.Fatalf("wrong number of template parts %d; want 1", len(expr.Parts))
+			}
+			val, valDiags := expr.Value(nil)
+			if len(valDiags) != 0 {
+				t.Fatalf("unexpected diags: %s", valDiags.Error())
+			}
+			if !val.RawEquals(cty.StringVal(test.want)) {
+				t.Errorf("wrong result for %d-byte string", len(test.want))
 			}
 		})
 	}
