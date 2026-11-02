@@ -477,6 +477,54 @@ func TestTokensForValue(t *testing.T) {
 				},
 			},
 		},
+		{
+			// An object constructor whose first key is the bare identifier
+			// "for" is parsed as a for expression, so this key is quoted.
+			cty.ObjectVal(map[string]cty.Value{
+				"for": cty.True,
+			}),
+			Tokens{
+				{
+					Type:  hclsyntax.TokenOBrace,
+					Bytes: []byte(`{`),
+				},
+				{
+					Type:  hclsyntax.TokenNewline,
+					Bytes: []byte("\n"),
+				},
+				{
+					Type:         hclsyntax.TokenOQuote,
+					Bytes:        []byte(`"`),
+					SpacesBefore: 2,
+				},
+				{
+					Type:  hclsyntax.TokenQuotedLit,
+					Bytes: []byte(`for`),
+				},
+				{
+					Type:  hclsyntax.TokenCQuote,
+					Bytes: []byte(`"`),
+				},
+				{
+					Type:         hclsyntax.TokenEqual,
+					Bytes:        []byte(`=`),
+					SpacesBefore: 1,
+				},
+				{
+					Type:         hclsyntax.TokenIdent,
+					Bytes:        []byte(`true`),
+					SpacesBefore: 1,
+				},
+				{
+					Type:  hclsyntax.TokenNewline,
+					Bytes: []byte("\n"),
+				},
+				{
+					Type:  hclsyntax.TokenCBrace,
+					Bytes: []byte(`}`),
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {

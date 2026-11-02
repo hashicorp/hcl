@@ -351,10 +351,10 @@ func newObjectConsKeyExpr(wrapped *node) *ObjectConsKeyExpr {
 }
 
 // newObjectConsKeyNode returns the node for a new item's key, which is written
-// as an identifier when the key is a valid identifier, or as a quoted string
+// as an identifier when the key can be a bare identifier, or as a quoted string
 // literal otherwise, matching how the parser represents each form.
 func newObjectConsKeyNode(key string) *node {
-	if hclsyntax.ValidIdentifier(key) {
+	if isBareObjectKey(key) {
 		return newNode(newIdentifier(newIdentToken(key)))
 	}
 

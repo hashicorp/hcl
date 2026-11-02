@@ -802,6 +802,23 @@ func TestObjectConsExprSetItem_nonIdentifierKey(t *testing.T) {
 	}
 }
 
+func TestObjectConsExprSetItem_forKey(t *testing.T) {
+	// An object constructor whose first key is the bare identifier "for" is
+	// parsed as a for expression, so the key must be quoted.
+	got := setObjectItem(t, "a = {}\n", func(o *ObjectConsExpr) {
+		o.SetItemValue("for", cty.StringVal("bowler"))
+
+		if o.ItemFor("for") == nil {
+			t.Error(`ItemFor("for") did not find the item just set`)
+		}
+	})
+
+	want := "a = { \"for\" = \"bowler\" }\n"
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("wrong result (-want +got):\n%s", diff)
+	}
+}
+
 // parseTestObjectA parses src and returns the file along with the
 // object-construct expression assigned to attribute "a".
 func parseTestObjectA(t *testing.T, src string) (*File, *ObjectConsExpr) {

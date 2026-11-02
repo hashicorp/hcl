@@ -272,7 +272,7 @@ func appendTokensForValue(val cty.Value, toks Tokens) Tokens {
 		i := 0
 		for it := val.ElementIterator(); it.Next(); {
 			eKey, eVal := it.Element()
-			if hclsyntax.ValidIdentifier(eKey.AsString()) {
+			if isBareObjectKey(eKey.AsString()) {
 				toks = append(toks, &Token{
 					Type:  hclsyntax.TokenIdent,
 					Bytes: []byte(eKey.AsString()),
@@ -345,6 +345,16 @@ func appendTokensForTraversalStep(step hcl.Traverser, toks Tokens) Tokens {
 	}
 
 	return toks
+}
+
+// isBareObjectKey returns true if the given object attribute name can be
+// written as a bare identifier in an object constructor expression.
+//
+// A key named "for" is always quoted even though it is a valid identifier,
+// because an object constructor whose first key is the bare identifier "for"
+// is parsed as a for expression instead.
+func isBareObjectKey(key string) bool {
+	return key != "for" && hclsyntax.ValidIdentifier(key)
 }
 
 func escapeQuotedStringLit(s string) []byte {
