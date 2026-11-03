@@ -13,6 +13,31 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
+type HandlingStrategy = int
+
+const (
+	AsLiteral  = 0
+	AsTemplate = 1
+)
+
+type Handling struct {
+	String HandlingStrategy
+}
+
+type GenerateOptions struct {
+	Handling Handling
+}
+
+type Generator struct{ GenerateOptions }
+
+var defaultGenerator = Generator{
+	GenerateOptions{
+		Handling{
+			String: AsLiteral,
+		},
+	},
+}
+
 // TokensForValue returns a sequence of tokens that represents the given
 // constant value.
 //
@@ -24,7 +49,21 @@ import (
 // values. A caller can call the value's IsWhollyKnown method to verify that
 // no unknown values are present before calling TokensForValue.
 func TokensForValue(val cty.Value) Tokens {
-	toks := appendTokensForValue(val, nil)
+	return defaultGenerator.TokensForValue(val)
+}
+
+// TokensForValue returns a sequence of tokens that represents the given
+// constant value.
+//
+// This function only supports types that are used by HCL. In particular, it
+// does not support capsule types and will panic if given one.
+//
+// It is not possible to express an unknown value in source code, so this
+// function will panic if the given value is unknown or contains any unknown
+// values. A caller can call the value's IsWhollyKnown method to verify that
+// no unknown values are present before calling TokensForValue.
+func (g *Generator) TokensForValue(val cty.Value) Tokens {
+	toks := g.appendTokensForValue(val, nil)
 	format(toks) // fiddle with the SpacesBefore field to get canonical spacing
 	return toks
 }
@@ -37,7 +76,18 @@ func TokensForValue(val cty.Value) Tokens {
 // could be appended to some other expression tokens to traverse into the
 // represented expression.
 func TokensForTraversal(traversal hcl.Traversal) Tokens {
-	toks := appendTokensForTraversal(traversal, nil)
+	return defaultGenerator.TokensForTraversal(traversal)
+}
+
+// TokensForTraversal returns a sequence of tokens that represents the given
+// traversal.
+//
+// If the traversal is absolute then the result is a self-contained, valid
+// reference expression. If the traversal is relative then the returned tokens
+// could be appended to some other expression tokens to traverse into the
+// represented expression.
+func (g *Generator) TokensForTraversal(traversal hcl.Traversal) Tokens {
+	toks := g.appendTokensForTraversal(traversal, nil)
 	format(toks) // fiddle with the SpacesBefore field to get canonical spacing
 	return toks
 }
@@ -53,6 +103,20 @@ func TokensForTraversal(traversal hcl.Traversal) Tokens {
 // for this simple common case. If you need to generate a multi-step traversal,
 // use TokensForTraversal instead.
 func TokensForIdentifier(name string) Tokens {
+	return defaultGenerator.TokensForIdentifier(name)
+}
+
+// TokensForIdentifier returns a sequence of tokens representing just the
+// given identifier.
+//
+// In practice this function can only ever generate exactly one token, because
+// an identifier is always a leaf token in the syntax tree.
+//
+// This is similar to calling TokensForTraversal with a single-step absolute
+// traversal, but avoids the need to construct a separate traversal object
+// for this simple common case. If you need to generate a multi-step traversal,
+// use TokensForTraversal instead.
+func (g *Generator) TokensForIdentifier(name string) Tokens {
 	return Tokens{
 		newIdentToken(name),
 	}
@@ -69,6 +133,20 @@ func TokensForIdentifier(name string) Tokens {
 // TokensForTuple, TokensForObject, and TokensForFunctionCall to
 // generate other nested compound expressions.
 func TokensForTuple(elems []Tokens) Tokens {
+	return defaultGenerator.TokensForTuple(elems)
+}
+
+// TokensForTuple returns a sequence of tokens that represents a tuple
+// constructor, with element expressions populated from the given list
+// of tokens.
+//
+// TokensForTuple includes the given elements verbatim into the element
+// positions in the resulting tuple expression, without any validation to
+// ensure that they represent valid expressions. Use TokensForValue or
+// TokensForTraversal to generate valid leaf expression values, or use
+// TokensForTuple, TokensForObject, and TokensForFunctionCall to
+// generate other nested compound expressions.
+func (g *Generator) TokensForTuple(elems []Tokens) Tokens {
 	var toks Tokens
 	toks = append(toks, &Token{
 		Type:  hclsyntax.TokenOBrack,
@@ -110,6 +188,26 @@ func TokensForTuple(elems []Tokens) Tokens {
 // does not handle that situation automatically, so a caller must add the
 // necessary `TokenOParen` and TokenCParen` manually if needed.
 func TokensForObject(attrs []ObjectAttrTokens) Tokens {
+	return defaultGenerator.TokensForObject(attrs)
+}
+
+// TokensForObject returns a sequence of tokens that represents an object
+// constructor, with attribute name/value pairs populated from the given
+// list of attribute token objects.
+//
+// TokensForObject includes the given tokens verbatim into the name and
+// value positions in the resulting object expression, without any validation
+// to ensure that they represent valid expressions. Use TokensForValue or
+// TokensForTraversal to generate valid leaf expression values, or use
+// TokensForTuple, TokensForObject, and TokensForFunctionCall to
+// generate other nested compound expressions.
+//
+// Note that HCL requires placing a traversal expression in parentheses if
+// you intend to use it as an attribute name expression, because otherwise
+// the parser will interpret it as a literal attribute name. TokensForObject
+// does not handle that situation automatically, so a caller must add the
+// necessary `TokenOParen` and TokenCParen` manually if needed.
+func (g *Generator) TokensForObject(attrs []ObjectAttrTokens) Tokens {
 	var toks Tokens
 	toks = append(toks, &Token{
 		Type:  hclsyntax.TokenOBrace,
@@ -158,6 +256,25 @@ func TokensForObject(attrs []ObjectAttrTokens) Tokens {
 // manually appending a TokenEllipsis with the bytes "..." to the tokens for
 // the final argument.
 func TokensForFunctionCall(funcName string, args ...Tokens) Tokens {
+	return defaultGenerator.TokensForFunctionCall(funcName, args...)
+}
+
+// TokensForFunctionCall returns a sequence of tokens that represents call
+// to the function with the given name, using the argument tokens to
+// populate the argument expressions.
+//
+// TokensForFunctionCall includes the given argument tokens verbatim into the
+// positions in the resulting call expression, without any validation
+// to ensure that they represent valid expressions. Use TokensForValue or
+// TokensForTraversal to generate valid leaf expression values, or use
+// TokensForTuple, TokensForObject, and TokensForFunctionCall to
+// generate other nested compound expressions.
+//
+// This function doesn't include an explicit way to generate the expansion
+// symbol "..." on the final argument. Currently, generating that requires
+// manually appending a TokenEllipsis with the bytes "..." to the tokens for
+// the final argument.
+func (g *Generator) TokensForFunctionCall(funcName string, args ...Tokens) Tokens {
 	var toks Tokens
 	toks = append(toks, TokensForIdentifier(funcName)...)
 	toks = append(toks, &Token{
@@ -182,7 +299,7 @@ func TokensForFunctionCall(funcName string, args ...Tokens) Tokens {
 	return toks
 }
 
-func appendTokensForValue(val cty.Value, toks Tokens) Tokens {
+func (g *Generator) appendTokensForValue(val cty.Value, toks Tokens) Tokens {
 	switch {
 
 	case !val.IsKnown():
@@ -215,19 +332,58 @@ func appendTokensForValue(val cty.Value, toks Tokens) Tokens {
 		})
 
 	case val.Type() == cty.String:
+		s := val.AsString()
+		var content Tokens
+		if len(s) == 0 {
+			content = Tokens{}
+		} else {
+			switch strategy := g.GenerateOptions.Handling.String; strategy {
+			case AsLiteral:
+				src := escapeQuotedStringLit(s)
+				content = Tokens{&Token{
+					Type:  hclsyntax.TokenQuotedLit,
+					Bytes: src,
+				}}
+			case AsTemplate:
+				syntaxTokens, diag := hclsyntax.LexTemplate([]byte(s), s, hcl.Pos{})
+
+				if len(diag.Errs()) > 0 {
+					panic(fmt.Sprintf(`cannot lex "%s" as template`, s))
+				}
+				content = make(Tokens, 0, len(syntaxTokens)-1)
+				var n int
+				for i, v := range syntaxTokens {
+					if v.Type == hclsyntax.TokenEOF {
+						break
+					}
+					n = i
+					content = append(content, &Token{Type: v.Type, Bytes: v.Bytes})
+				}
+				if n > 0 && content[n].Type == hclsyntax.TokenTemplateSeqEnd {
+					findTemplateSequence := func(start int) int {
+						for i, v := range content[start:] {
+							if v.Type == hclsyntax.TokenTemplateControl || v.Type == hclsyntax.TokenTemplateInterp {
+								return i
+							}
+						}
+						return -1
+					}
+					if findTemplateSequence(0) == 0 && findTemplateSequence(1) < 0 {
+						// i.e., the entire string was a single template control or interpolation
+						return append(toks, content[1:n]...)
+					}
+				}
+			default:
+				panic(fmt.Sprintf("Unknown string handling strategy %d", strategy))
+			}
+		}
 		// TODO: If it's a multi-line string ending in a newline, format
 		// it as a HEREDOC instead.
-		src := escapeQuotedStringLit(val.AsString())
 		toks = append(toks, &Token{
 			Type:  hclsyntax.TokenOQuote,
 			Bytes: []byte{'"'},
 		})
-		if len(src) > 0 {
-			toks = append(toks, &Token{
-				Type:  hclsyntax.TokenQuotedLit,
-				Bytes: src,
-			})
-		}
+		toks = append(toks, content...)
 		toks = append(toks, &Token{
 			Type:  hclsyntax.TokenCQuote,
 			Bytes: []byte{'"'},
@@ -248,7 +404,7 @@ func appendTokensForValue(val cty.Value, toks Tokens) Tokens {
 				})
 			}
 			_, eVal := it.Element()
-			toks = appendTokensForValue(eVal, toks)
+			toks = g.appendTokensForValue(eVal, toks)
 			i++
 		}
 
@@ -278,13 +434,13 @@ func appendTokensForValue(val cty.Value, toks Tokens) Tokens {
 					Bytes: []byte(eKey.AsString()),
 				})
 			} else {
-				toks = appendTokensForValue(eKey, toks)
+				toks = g.appendTokensForValue(eKey, toks)
 			}
 			toks = append(toks, &Token{
 				Type:  hclsyntax.TokenEqual,
 				Bytes: []byte{'='},
 			})
-			toks = appendTokensForValue(eVal, toks)
+			toks = g.appendTokensForValue(eVal, toks)
 			toks = append(toks, &Token{
 				Type:  hclsyntax.TokenNewline,
 				Bytes: []byte{'\n'},
@@ -304,14 +460,14 @@ func appendTokensForValue(val cty.Value, toks Tokens) Tokens {
 	return toks
 }
 
-func appendTokensForTraversal(traversal hcl.Traversal, toks Tokens) Tokens {
+func (g *Generator) appendTokensForTraversal(traversal hcl.Traversal, toks Tokens) Tokens {
 	for _, step := range traversal {
-		toks = appendTokensForTraversalStep(step, toks)
+		toks = g.appendTokensForTraversalStep(step, toks)
 	}
 	return toks
 }
 
-func appendTokensForTraversalStep(step hcl.Traverser, toks Tokens) Tokens {
+func (g *Generator) appendTokensForTraversalStep(step hcl.Traverser, toks Tokens) Tokens {
 	switch ts := step.(type) {
 	case hcl.TraverseRoot:
 		toks = append(toks, &Token{
@@ -335,7 +491,7 @@ func appendTokensForTraversalStep(step hcl.Traverser, toks Tokens) Tokens {
 			Type:  hclsyntax.TokenOBrack,
 			Bytes: []byte{'['},
 		})
-		toks = appendTokensForValue(ts.Key, toks)
+		toks = g.appendTokensForValue(ts.Key, toks)
 		toks = append(toks, &Token{
 			Type:  hclsyntax.TokenCBrack,
 			Bytes: []byte{']'},
