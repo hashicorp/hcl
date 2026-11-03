@@ -189,7 +189,7 @@ func TestBlockSetType_buildTokens(t *testing.T) {
 			b := f.Body().FirstMatchingBlock(test.oldTypeName, test.labels)
 			b.SetType(test.newTypeName)
 			got := f.BuildTokens(nil)
-			format(got)
+			got = format(got)
 			if !reflect.DeepEqual(got, test.want) {
 				diff := cmp.Diff(test.want, got)
 				t.Errorf("wrong result\ngot:  %s\nwant: %s\ndiff:\n%s", spew.Sdump(got), spew.Sdump(test.want), diff)
@@ -500,7 +500,7 @@ func TestBlockSetLabels(t *testing.T) {
 			b := f.Body().FirstMatchingBlock(test.typeName, test.oldLabels)
 			b.SetLabels(test.newLabels)
 			got := f.BuildTokens(nil)
-			format(got)
+			got = format(got)
 			if !reflect.DeepEqual(got, test.want) {
 				diff := cmp.Diff(test.want, got)
 				t.Errorf("wrong result\ngot:  %s\nwant: %s\ndiff:\n%s", spew.Sdump(got), spew.Sdump(test.want), diff)

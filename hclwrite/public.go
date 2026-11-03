@@ -46,7 +46,7 @@ func ParseExpression(src []byte, filename string, start hcl.Pos) (*Expression, h
 // desirable.
 func Format(src []byte) []byte {
 	tokens := lexConfig(src)
-	format(tokens)
+	tokens = format(tokens)
 	buf := &bytes.Buffer{}
 	//nolint:errcheck // FIXME: Propogate errors upward.
 	tokens.WriteTo(buf)

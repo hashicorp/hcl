@@ -38,11 +38,12 @@ func (f *File) Body() *Body {
 
 // WriteTo writes the tokens underlying the receiving file to the given writer.
 //
-// The tokens first have a simple formatting pass applied that adjusts only
-// the spaces between them.
+// The tokens first have a simple formatting pass applied that adjusts
+// whitespace, including inserting newlines so a nested block is not left
+// on the same line as its parent opening brace.
 func (f *File) WriteTo(wr io.Writer) (int64, error) {
 	tokens := f.children.BuildTokens(nil)
-	format(tokens)
+	tokens = format(tokens)
 	return tokens.WriteTo(wr)
 }
 
