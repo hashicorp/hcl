@@ -870,6 +870,10 @@ func (e *fixedExpression) Variables() []hcl.Traversal {
 	return nil
 }
 
+func (e *fixedExpression) Functions() []hcl.Traversal {
+	return nil
+}
+
 func makeInstantiateType(target interface{}) func() interface{} {
 	return func() interface{} {
 		return reflect.New(reflect.TypeOf(target)).Interface()
