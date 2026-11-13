@@ -27,6 +27,8 @@ type printer struct {
 	comments           []*ast.CommentGroup // may be nil, contains all comments
 	standaloneComments []*ast.CommentGroup // contains all standalone comments (not assigned to any node)
 
+	listComments []*ast.CommentGroup
+
 	enableTrace bool
 	indentTrace int
 }
@@ -101,6 +103,39 @@ func (p *printer) collectComments(node ast.Node) {
 	for _, c := range standaloneComments {
 		p.standaloneComments = append(p.standaloneComments, c)
 	}
+
+	p.listComments = append([]*ast.CommentGroup(nil), p.standaloneComments...)
+	sort.Sort(ByPosition(p.listComments))
+
+	// List-owned comments must not also be emitted by enclosing objects.
+	var lists []*ast.ListType
+	ast.Walk(node, func(n ast.Node) (ast.Node, bool) {
+		if list, ok := n.(*ast.ListType); ok {
+			lists = append(lists, list)
+		}
+		return n, true
+	})
+
+	var standalone []*ast.CommentGroup
+	for _, group := range p.standaloneComments {
+		var comments []*ast.Comment
+		for _, comment := range group.List {
+			ownedByList := false
+			for _, list := range lists {
+				if isTrailingListComment(list, comment.Pos()) {
+					ownedByList = true
+					break
+				}
+			}
+			if !ownedByList {
+				comments = append(comments, comment)
+			}
+		}
+		if len(comments) > 0 {
+			standalone = append(standalone, &ast.CommentGroup{List: comments})
+		}
+	}
+	p.standaloneComments = standalone
 
 	sort.Sort(ByPosition(p.standaloneComments))
 }
@@ -515,6 +550,23 @@ func (p *printer) alignedItems(items []*ast.ObjectItem) []byte {
 	return buf.Bytes()
 }
 
+// isTrailingListComment identifies comments after the final element and before
+// the closing bracket, excluding comments inside a final nested list or object.
+func isTrailingListComment(l *ast.ListType, pos token.Pos) bool {
+	last := l.Lbrack
+	if len(l.List) > 0 {
+		item := l.List[len(l.List)-1]
+		last = item.Pos()
+		switch item := item.(type) {
+		case *ast.ListType:
+			last = item.Rbrack
+		case *ast.ObjectType:
+			last = item.Rbrace
+		}
+	}
+	return pos.After(last) && pos.Before(l.Rbrack)
+}
+
 // list returns the printable HCL form of an list type.
 func (p *printer) list(l *ast.ListType) []byte {
 	if p.isSingleLineList(l) {
@@ -592,6 +644,16 @@ func (p *printer) list(l *ast.ListType) []byte {
 		}
 	}
 
+	// Keep this collection unchanged because layout measurement renders lists too.
+	for _, group := range p.listComments {
+		for _, comment := range group.List {
+			if isTrailingListComment(l, comment.Pos()) {
+				buf.Write(p.indent([]byte(comment.Text)))
+				buf.WriteByte(newline)
+			}
+		}
+	}
+
 	buf.WriteString("]")
 	return buf.Bytes()
 }
@@ -601,7 +663,15 @@ func (p *printer) list(l *ast.ListType) []byte {
 // * they consist entirely of literals
 // * there are either no heredoc strings or the list has exactly one element
 // * there are no line comments
-func (printer) isSingleLineList(l *ast.ListType) bool {
+func (p *printer) isSingleLineList(l *ast.ListType) bool {
+	for _, group := range p.listComments {
+		for _, comment := range group.List {
+			if isTrailingListComment(l, comment.Pos()) {
+				return false
+			}
+		}
+	}
+
 	for _, item := range l.List {
 		if item.Pos().Line != l.Lbrack.Line {
 			return false
@@ -721,10 +791,9 @@ func (p *printer) heredocIndent(buf []byte) []byte {
 //
 // A single line object:
 //
-//   * has no lead comments (hence multi-line)
-//   * has no assignment
-//   * has no values in the stanza (within {})
-//
+//   - has no lead comments (hence multi-line)
+//   - has no assignment
+//   - has no values in the stanza (within {})
 func (p *printer) isSingleLineObject(val *ast.ObjectItem) bool {
 	// If there is a lead comment, can't be one line
 	if val.LeadComment != nil {
