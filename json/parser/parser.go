@@ -219,7 +219,7 @@ func (p *Parser) listType() (*ast.ListType, error) {
 	for {
 		tok := p.scan()
 		switch tok.Type {
-		case token.NUMBER, token.FLOAT, token.STRING:
+		case token.NUMBER, token.FLOAT, token.STRING, token.BOOL:
 			node, err := p.literalType()
 			if err != nil {
 				return nil, err
@@ -235,8 +235,6 @@ func (p *Parser) listType() (*ast.ListType, error) {
 			}
 
 			l.Add(node)
-		case token.BOOL:
-			// TODO(arslan) should we support? not supported by HCL yet
 		case token.LBRACK:
 			// TODO(arslan) should we support nested lists? Even though it's
 			// written in README of HCL, it's not a part of the grammar
