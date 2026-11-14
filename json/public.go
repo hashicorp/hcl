@@ -108,7 +108,7 @@ func ParseFile(filename string) (rf *hcl.File, diags hcl.Diagnostics) {
 			diags = append(diags, &hcl.Diagnostic{
 				Severity: hcl.DiagWarning,
 				Summary:  "Failed to close file",
-				Detail:   fmt.Sprintf("The file %q was opened, but an error occured while closing it.", filename),
+				Detail:   fmt.Sprintf("The file %q was opened, but an error occurred while closing it.", filename),
 			})
 		}
 	}()
@@ -119,7 +119,7 @@ func ParseFile(filename string) (rf *hcl.File, diags hcl.Diagnostics) {
 			{
 				Severity: hcl.DiagError,
 				Summary:  "Failed to read file",
-				Detail:   fmt.Sprintf("The file %q was opened, but an error occured while reading it.", filename),
+				Detail:   fmt.Sprintf("The file %q was opened, but an error occurred while reading it.", filename),
 			},
 		}
 	}
