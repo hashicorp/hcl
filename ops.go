@@ -140,7 +140,7 @@ func Index(collection, key cty.Value, srcRange *Range) (cty.Value, Diagnostics) 
 						lenBF := lenVal.AsBigFloat()
 						var result big.Float
 						result.Sub(bf, lenBF)
-						if result.Sign() < 1 {
+						if result.Sign() >= 0 {
 							if lenBF.Sign() == 0 {
 								return cty.DynamicVal, Diagnostics{
 									{
