@@ -1,15 +1,17 @@
-// Copyright IBM Corp. 2014, 2025
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
 
 package hclwrite
 
 import (
 	"fmt"
+	"io"
 	"testing"
 
 	"reflect"
 
 	"github.com/davecgh/go-spew/spew"
+	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 )
 
@@ -796,5 +798,17 @@ func TestLinesForFormat(t *testing.T) {
 				t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.want)
 			}
 		})
+	}
+}
+
+func BenchmarkFormat(b *testing.B) {
+	src := []byte("module \"once\" {\n  source = \"../modules/foo\"\n}\n\nmodule \"twice\" {\n  source = \"../modules/foo\"\n}\n")
+	file, err := ParseConfig(src, "", hcl.InitialPos)
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	for b.Loop() {
+		file.WriteTo(io.Discard) //nolint:errcheck
 	}
 }
