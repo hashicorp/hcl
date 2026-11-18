@@ -4,6 +4,7 @@
 package hclsyntax
 
 import (
+	"os"
 	"testing"
 
 	"github.com/hashicorp/hcl/v2"
@@ -59,9 +60,23 @@ func BenchmarkLexConfig(b *testing.B) {
 
 	var tokens Tokens
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		tokens, _ = LexConfig(src, filename, start)
 	}
 
 	T = tokens
+}
+
+func BenchmarkParseConfig_WithHeredoc(b *testing.B) {
+	src, err := os.ReadFile("../specsuite/tests/expressions/heredoc.hcl")
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	for b.Loop() {
+		_, diags := ParseConfig(src, "", hcl.InitialPos)
+		if diags.HasErrors() {
+			b.Fatal(diags)
+		}
+	}
 }
